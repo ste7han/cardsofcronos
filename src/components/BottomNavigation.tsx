@@ -83,7 +83,16 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
         </svg>
       ),
-      href: '#card-form'
+      onClick: () => {
+        // Navigate to home page and open card form
+        if (typeof window !== 'undefined') {
+          if (window.location.pathname !== '/') {
+            window.location.href = '/#card-form';
+          } else {
+            window.location.hash = 'card-form';
+          }
+        }
+      }
     },
     {
       id: 'about',
@@ -108,12 +117,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     }
   ];
   
-  // Arcane rune symbols for decoration
-  const runeSymbols = ['✧', '⚝', '⚜', '✦', '✴', '❈'];
+  // Removed rune symbols
+  const runeSymbols: string[] = [];
   
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-500 transform ${
+      className={`fixed bottom-0 left-0 right-0 z-[100] transition-all duration-500 transform ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
@@ -121,7 +130,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       <div className="relative mx-auto">
         <div className="relative bg-black/80 backdrop-blur-xl border-t border-[#9D4EDD]/30 shadow-lg">
           {/* Navigation items */}
-          <div className="relative z-10 flex justify-around items-center py-4 px-4 max-w-lg mx-auto">
+          <div className="relative z-10 flex justify-around items-center pt-5 pb-6 px-4 max-w-lg mx-auto">
             {navItems.map((item) => {
               const isActive = activeItem === item.id;
               
@@ -131,7 +140,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               return (
                 <div 
                   key={item.id} 
-                  className={`relative ${isForge ? 'px-3' : 'px-2'}`}
+                  className={`relative ${isForge ? 'px-3 z-[60]' : 'px-2'}`}
                 >
                   {/* Animated background for active item */}
                   {isActive && (
@@ -146,11 +155,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   )}
                   
                   {/* Navigation item */}
-                  {item.href ? (
+                  {item.href && !isForge ? (
                     <Link 
                       href={item.href}
                       onClick={() => setActiveItem(item.id)}
-                      className={`flex flex-col items-center transition-all duration-300 ${
+                      className={`flex flex-col items-center transition-all duration-300 z-[60] ${
                         isActive 
                           ? 'text-[#FFD700]' 
                           : 'text-white/70 hover:text-white'
@@ -158,46 +167,69 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     >
                       {/* Icon container with special styling for forge */}
                       <div className={`
-                        relative flex items-center justify-center
-                        ${isForge 
-                          ? 'w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-10 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20' 
-                          : 'w-8 h-8'
-                        }
+                        relative flex items-center justify-center w-8 h-8
                       `}>
                         {/* Icon */}
                         <div className={`
-                          ${isForge 
-                            ? 'text-white' 
-                            : isActive ? 'text-[#FFD700]' : 'text-white/70'
-                          }
+                          ${isActive ? 'text-[#FFD700]' : 'text-white/70'}
                           transition-all duration-300
-                          ${isActive && !isForge ? 'scale-110' : ''}
+                          ${isActive ? 'scale-110' : ''}
                         `}>
                           {item.icon}
                         </div>
                         
+                        {/* Glow effect for active items */}
+                        {isActive && (
+                          <div className="absolute inset-0 rounded-full opacity-60 blur-sm" style={{
+                            background: 'radial-gradient(circle at center, rgba(157, 78, 221, 0.3), transparent 70%)'
+                          }}></div>
+                        )}
+                      </div>
+                      
+                      {/* Label - always show for forge, only show for others when active or on hover */}
+                      <span className={`text-xs mt-1 font-medium transition-all duration-300 ${
+                        isActive || isForge ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'
+                      }`}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  ) : isForge ? (
+                    <button
+                      onClick={() => {
+                        setActiveItem(item.id);
+                        if (item.onClick) item.onClick();
+                      }}
+                      className={`flex flex-col items-center transition-all duration-300 z-[60] ${
+                        isActive 
+                          ? 'text-[#FFD700]' 
+                          : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      {/* Icon container with special styling for forge */}
+                      <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-4 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20 z-[60]">
+                        {/* Icon */}
+                        <div className="text-white transition-all duration-300">
+                          {item.icon}
+                        </div>
+                        
                         {/* Pulse animation for forge button - only show on client side */}
-                        {isClient && isForge && (
+                        {isClient && (
                           <span className="absolute inset-0 rounded-full animate-ping bg-white/20"></span>
                         )}
                         
                         {/* Glow effect for active items */}
                         {isActive && (
                           <div className="absolute inset-0 rounded-full opacity-60 blur-sm" style={{
-                            background: isForge 
-                              ? 'radial-gradient(circle at center, rgba(255, 215, 0, 0.5), transparent 70%)' 
-                              : 'radial-gradient(circle at center, rgba(157, 78, 221, 0.3), transparent 70%)'
+                            background: 'radial-gradient(circle at center, rgba(255, 215, 0, 0.5), transparent 70%)'
                           }}></div>
                         )}
                       </div>
                       
-                      {/* Label - only show for active item or on hover */}
-                      <span className={`text-xs mt-1 font-medium transition-all duration-300 ${
-                        isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'
-                      }`}>
+                      {/* Label - always visible for forge button */}
+                      <span className={`text-xs mt-2 font-medium transition-all duration-300 opacity-100`}>
                         {item.label}
                       </span>
-                    </Link>
+                    </button>
                   ) : (
                     <button
                       onClick={() => {

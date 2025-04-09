@@ -44,21 +44,14 @@ const Header: React.FC<HeaderProps> = ({
     return () => clearTimeout(timer);
   }, []);
   
-  // Arcane rune symbols with fixed positions for SSR consistency
-  const runeSymbols = [
-    { symbol: '✧', top: '4.88531310122855%', left: '0%', delay: '0s' },
-    { symbol: '⚝', top: '81.57575572797326%', left: '16.666666666666664%', delay: '0.5s' },
-    { symbol: '⚜', top: '29.045318572196987%', left: '33.33333333333333%', delay: '1s' },
-    { symbol: '✦', top: '78.44848451160964%', left: '50%', delay: '1.5s' },
-    { symbol: '✴', top: '17.37547120618035%', left: '66.66666666666666%', delay: '2s' },
-    { symbol: '❈', top: '23.803839717093567%', left: '83.33333333333334%', delay: '2.5s' }
-  ];
+  // Empty array for rune symbols (removed as requested)
+  const runeSymbols: { symbol: string; top: string; left: string; delay: string }[] = [];
   
   // Navigation items
   const navItems = [
-    { name: 'Home', icon: '🏠', href: '/' },
-    { name: 'Collection', icon: '🃏', href: '/collection' },
-    { name: 'About', icon: '✨', href: '/about' }
+    { name: 'Home', icon: '', href: '/' },
+    { name: 'Collection', icon: '', href: '/collection' },
+    { name: 'About', icon: '', href: '/about' }
   ];
   
   return (
@@ -246,11 +239,7 @@ const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
         
-        {/* Decorative elements */}
-        <div className="absolute top-20 left-5 text-[var(--primary-glow)] text-xl opacity-20">✧</div>
-        <div className="absolute bottom-24 right-5 text-[var(--primary-glow)] text-xl opacity-20">⚜</div>
-        <div className="absolute top-1/3 right-1/4 text-[var(--primary-glow)] text-lg opacity-10">✦</div>
-        <div className="absolute bottom-1/3 left-1/4 text-[var(--primary-glow)] text-lg opacity-10">❈</div>
+        {/* Decorative elements removed */}
       </div>
       
       {/* Add keyframes for particle animation */}

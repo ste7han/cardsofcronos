@@ -101,79 +101,79 @@ const CardPreview: React.FC<CardPreviewProps> = ({
               <div className="absolute inset-0 rounded-lg border-2 border-white/30 shadow-inner"></div>
               
               {/* Card info overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/70 backdrop-blur-sm rounded-b-lg">
-                <h3 className="text-white font-['Cinzel'] text-center text-base font-bold truncate">
+              <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/70 backdrop-blur-sm rounded-b-lg">
+                <h3 className="text-white font-['Cinzel'] text-center text-xs font-bold truncate">
                   {name || 'Card Name'}
                 </h3>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-[var(--secondary)]">{rarity}</span>
-                  <span className="text-xs text-white/70">{cardType}</span>
+                <div className="flex justify-between items-center mt-0.5">
+                  <span className="text-[10px] text-[var(--secondary)]">{rarity}</span>
+                  <span className="text-[10px] text-white/70">{cardType}</span>
                 </div>
               </div>
               
               {/* Rarity indicator */}
-              <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] shadow-glow"></div>
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] shadow-glow"></div>
               
               {/* Card type icon */}
-              <div className="absolute top-2 left-2 w-6 h-6 flex items-center justify-center bg-black/50 rounded-full">
-                <span className="text-sm">{cardTypeIcons[cardType as keyof typeof cardTypeIcons]}</span>
+              <div className="absolute top-1 left-1 w-4 h-4 flex items-center justify-center bg-black/50 rounded-full">
+                <span className="text-[10px]">{cardTypeIcons[cardType as keyof typeof cardTypeIcons]}</span>
               </div>
               
-              {/* Flip indicator */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/50 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="animate-pulse">Click to flip</span>
+              {/* Flip indicator - hidden on small cards */}
+              <div className="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/50 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="animate-pulse">Flip</span>
               </div>
             </div>
           </div>
           
           {/* Back of card */}
           <div className="absolute inset-0 backface-hidden rounded-lg bg-gradient-to-br from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/70 shadow-xl rotate-y-180">
-            <div className="relative w-full h-full p-4 flex flex-col">
+            <div className="relative w-full h-full p-2 flex flex-col">
               {/* Card border */}
               <div className="absolute inset-0 rounded-lg border-2 border-white/30 shadow-inner"></div>
               
               {/* Arcane symbols */}
-              <div className="absolute top-2 left-2 text-[var(--primary-glow)]/30 text-lg">✧</div>
-              <div className="absolute bottom-2 right-2 text-[var(--primary-glow)]/30 text-lg">⚜</div>
+              <div className="absolute top-1 left-1 text-[var(--primary-glow)]/30 text-xs">✧</div>
+              <div className="absolute bottom-1 right-1 text-[var(--primary-glow)]/30 text-xs">⚜</div>
               
               {/* Card content */}
               <div className="flex-1 flex flex-col justify-center items-center text-center">
-                <h3 className="text-lg font-bold font-['Cinzel'] mb-2 text-[var(--secondary)]">
+                <h3 className="text-sm font-bold font-['Cinzel'] mb-1 text-[var(--secondary)]">
                   {name || 'Card Name'}
                 </h3>
                 
-                <div className="flex gap-2 mb-3">
-                  <span className="px-2 py-0.5 rounded-full bg-[var(--primary)]/20 text-[var(--primary-glow)] text-xs">
+                <div className="flex gap-1 mb-2">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[var(--primary)]/20 text-[var(--primary-glow)] text-[10px]">
                     {rarity}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-[var(--secondary)]/20 text-[var(--secondary)] text-xs">
+                  <span className="px-1.5 py-0.5 rounded-full bg-[var(--secondary)]/20 text-[var(--secondary)] text-[10px]">
                     {cardType}
                   </span>
                 </div>
                 
-                <p className="text-white/80 text-sm mb-4">
+                <p className="text-white/80 text-[10px] mb-2 px-1">
                   {truncatedDescription || 'No description provided.'}
                 </p>
                 
                 {/* Card attributes */}
-                <div className="grid grid-cols-3 gap-2 w-full mt-auto">
-                  <div className="p-1 bg-[var(--cosmic-black)]/30 rounded text-center">
-                    <div className="text-sm font-bold text-[var(--primary-glow)]">
+                <div className="grid grid-cols-3 gap-1 w-full mt-auto">
+                  <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
+                    <div className="text-xs font-bold text-[var(--primary-glow)]">
                       {Math.floor(Math.random() * 30) + 70}
                     </div>
-                    <div className="text-xs text-white/70">Power</div>
+                    <div className="text-[8px] text-white/70">Power</div>
                   </div>
-                  <div className="p-1 bg-[var(--cosmic-black)]/30 rounded text-center">
-                    <div className="text-sm font-bold text-[var(--primary-glow)]">
+                  <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
+                    <div className="text-xs font-bold text-[var(--primary-glow)]">
                       {Math.floor(Math.random() * 30) + 70}
                     </div>
-                    <div className="text-xs text-white/70">Defense</div>
+                    <div className="text-[8px] text-white/70">Defense</div>
                   </div>
-                  <div className="p-1 bg-[var(--cosmic-black)]/30 rounded text-center">
-                    <div className="text-sm font-bold text-[var(--primary-glow)]">
+                  <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
+                    <div className="text-xs font-bold text-[var(--primary-glow)]">
                       {Math.floor(Math.random() * 30) + 70}
                     </div>
-                    <div className="text-xs text-white/70">Magic</div>
+                    <div className="text-[8px] text-white/70">Magic</div>
                   </div>
                 </div>
               </div>

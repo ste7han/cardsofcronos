@@ -250,24 +250,8 @@ export default function Home() {
           <p className="text-sm sm:text-base md:text-lg text-white/90 font-['Spectral'] tracking-wide mb-4 md:mb-6 max-w-2xl mx-auto">
             Pick your type and rarity, burn tokens and get your own Cronos Card.
           </p>
-          <p className="text-xs sm:text-sm text-white/80 font-['Spectral'] mb-6 md:mb-8">
-            Fill in this form to get your card:
-            <a
-              href="#card-form"
-              className="ml-2 text-[var(--secondary)] hover:text-[var(--secondary-glow)] transition-colors duration-300 underline"
-            >
-              Card Form
-            </a>
-          </p>
-          
           {/* CTA buttons */}
           <div className="flex flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-xs sm:max-w-2xl mx-auto">
-            <button
-              onClick={handleConnectWallet}
-              className="modern-btn-primary text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5"
-            >
-              CONNECT WALLET
-            </button>
             <a
               href="#card-form"
               className="modern-btn-secondary text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5"
@@ -335,12 +319,12 @@ export default function Home() {
           
           {/* Mobile CTA for burn section */}
           <div className="mt-6 md:mt-8 text-center">
-            <button
-              onClick={handleConnectWallet}
-              className="modern-btn-primary text-xs sm:text-sm px-5 py-2 sm:py-2.5 mb-2"
+            <a
+              href="#card-form"
+              className="modern-btn-primary text-xs sm:text-sm px-5 py-2 sm:py-2.5 mb-2 inline-block"
             >
               START BURNING
-            </button>
+            </a>
           </div>
         </div>
       </div>

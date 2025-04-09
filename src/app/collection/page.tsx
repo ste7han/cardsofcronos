@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -8,9 +8,26 @@ import Footer from '@/components/Footer';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useAppKit, useAppKitAccount } from '@/lib/appkit';
 import { useAppKitInitialized } from '@/components/AppKitProvider';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 
-// Card data - in a real app, this would come from an API or database
-const cardCollection = [
+// Define card interface
+interface Card {
+  id: string;
+  name: string;
+  image: string;
+  rarity: string;
+  type: string;
+  description: string;
+  attributes: {
+    power: number;
+    defense: number;
+    magic: number;
+  };
+}
+
+// Default cards as fallback
+const defaultCards = [
   {
     id: 'card-001',
     name: 'Cosmic Dragon',
@@ -49,45 +66,6 @@ const cardCollection = [
       defense: 80,
       magic: 65
     }
-  },
-  {
-    id: 'card-004',
-    name: 'Void Elemental',
-    image: '/BGOS4PVp4nxOsRhrupybTvvXMw.jpeg',
-    rarity: 'Epic',
-    type: 'Elemental',
-    description: 'A mysterious entity that draws power from the void between worlds.',
-    attributes: {
-      power: 80,
-      defense: 75,
-      magic: 85
-    }
-  },
-  {
-    id: 'card-005',
-    name: 'Celestial Guardian',
-    image: '/ixf80jUKzkQNqTo81qXYh7m4XE.jpeg',
-    rarity: 'Rare',
-    type: 'Guardian',
-    description: 'A protector of cosmic gateways and keeper of ancient knowledge.',
-    attributes: {
-      power: 75,
-      defense: 90,
-      magic: 70
-    }
-  },
-  {
-    id: 'card-006',
-    name: 'Quantum Shifter',
-    image: '/0sXAL430bJImcrBP10AovPMtQU8-1.jpeg',
-    rarity: 'Mythical',
-    type: 'Spellcaster',
-    description: 'A being that exists in multiple dimensions simultaneously.',
-    attributes: {
-      power: 90,
-      defense: 70,
-      magic: 95
-    }
   }
 ];
 
@@ -104,7 +82,9 @@ export default function CollectionPage() {
   // Add isClient state to prevent hydration mismatch
   const [isClient, setIsClient] = useState<boolean>(false);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const [cards, setCards] = useState(cardCollection);
+  const [cardCollection, setCardCollection] = useState<Card[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filterRarity, setFilterRarity] = useState('All');
   const [filterType, setFilterType] = useState('All');
   const [sortBy, setSortBy] = useState('name');
@@ -120,10 +100,56 @@ export default function CollectionPage() {
   const { isConnected = false, address = undefined } = appKitInitialized ? useAppKitAccount() : { isConnected: false, address: undefined };
   const { open = () => console.log('AppKit not initialized') } = appKitInitialized ? useAppKit() : { open: () => console.log('AppKit not initialized') };
 
+  // Fetch cards from Firestore
+  const fetchCards = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const cardsCollection = collection(db, 'cards');
+      const cardsQuery = query(cardsCollection, orderBy('name', 'asc'));
+      const querySnapshot = await getDocs(cardsQuery);
+      
+      if (querySnapshot.empty) {
+        // Use default cards if no cards in database
+        setCardCollection(defaultCards);
+        setCards(defaultCards);
+      } else {
+        const fetchedCards = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || 'Unnamed Card',
+            image: data.imageUrl || '/sxfdO1IW9tFd2uK7oUg54HWLfM8.png',
+            rarity: data.rarity || 'Common',
+            type: data.type || 'Unknown',
+            description: data.description || 'No description available.',
+            attributes: {
+              power: data.attributes?.power || Math.floor(Math.random() * 30) + 70,
+              defense: data.attributes?.defense || Math.floor(Math.random() * 30) + 70,
+              magic: data.attributes?.magic || Math.floor(Math.random() * 30) + 70
+            }
+          };
+        });
+        
+        setCardCollection(fetchedCards);
+        setCards(fetchedCards);
+      }
+    } catch (error) {
+      console.error('Error fetching cards:', error);
+      // Fallback to default cards on error
+      setCardCollection(defaultCards);
+      setCards(defaultCards);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Set isClient to true once component mounts on client
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (isClient) {
+      fetchCards();
+    }
+  }, [isClient, fetchCards]);
   
   // Handle wallet connection
   const handleConnectWallet = () => {
@@ -140,9 +166,23 @@ export default function CollectionPage() {
     setPageLoaded(true);
   }, [isClient]);
   
-  // Apply filters and sorting - only run on client side after hydration
+  // Add keyboard support to close modal with ESC key
   useEffect(() => {
     if (!isClient) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedCard) {
+        setSelectedCard(null);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isClient, selectedCard]);
+  
+  // Apply filters and sorting - only run on client side after hydration
+  useEffect(() => {
+    if (!isClient || cardCollection.length === 0) return;
     
     let filteredCards = [...cardCollection];
     
@@ -259,8 +299,15 @@ export default function CollectionPage() {
           </div>
           
           {/* Cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-            {cards.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 10 }).map((_, index) => (
+                <div key={`skeleton-${index}`} className="animate-pulse">
+                  <div className="w-full aspect-[2/3] rounded-lg bg-[var(--cosmic-black)]/50"></div>
+                </div>
+              ))
+            ) : cards.length > 0 ? (
               cards.map(card => (
                 <div 
                   key={card.id} 
@@ -292,16 +339,16 @@ export default function CollectionPage() {
                     <div className="absolute inset-0 rounded-lg border-2 border-white/30 shadow-inner"></div>
                     
                     {/* Card info overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/70 backdrop-blur-sm rounded-b-lg">
-                      <h3 className="text-white font-['Cinzel'] text-center text-base font-bold">{card.name}</h3>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-[var(--secondary)]">{card.rarity}</span>
-                        <span className="text-xs text-white/70">{card.type}</span>
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/70 backdrop-blur-sm rounded-b-lg">
+                      <h3 className="text-white font-['Cinzel'] text-center text-xs font-bold truncate">{card.name}</h3>
+                      <div className="flex justify-between items-center mt-0.5">
+                        <span className="text-[10px] text-[var(--secondary)]">{card.rarity}</span>
+                        <span className="text-[10px] text-white/70">{card.type}</span>
                       </div>
                     </div>
                     
                     {/* Rarity indicator */}
-                    <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] shadow-glow"></div>
+                    <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] shadow-glow"></div>
                   </div>
                 </div>
               ))
@@ -326,17 +373,26 @@ export default function CollectionPage() {
             <p className="text-white/70">
               Showing {cards.length} of {cardCollection.length} cards
             </p>
+            <Link href="/admin" className="text-[var(--primary)] hover:text-[var(--primary-glow)] text-sm mt-2 inline-block">
+              Admin Panel
+            </Link>
           </div>
         </div>
       </main>
       
       {/* Card detail modal */}
       {selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedCard(null)}></div>
-          <div className="relative z-10 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-6 rounded-xl border border-[var(--primary)]/30">
-            {/* Card image */}
-            <div className="perspective-1000">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          {/* Backdrop - clicking anywhere outside the modal closes it */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+            onClick={() => setSelectedCard(null)}
+          ></div>
+          
+          {/* Modal container with max height and scrolling */}
+          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-6 rounded-xl border border-[var(--primary)]/30">
+            {/* Card image - reduced size on mobile */}
+            <div className="perspective-1000 mx-auto md:mx-0" style={{ maxWidth: '280px' }}>
               <div className={`card-3d w-full aspect-[2/3] rounded-lg bg-gradient-to-br ${rarityColors[selectedCard.rarity as keyof typeof rarityColors]} flex items-center justify-center transform transition-all duration-500 preserve-3d rotate-y-5`}>
                 <div className="absolute inset-0 rounded-lg backdrop-blur-sm bg-black/20"></div>
                 
@@ -349,8 +405,8 @@ export default function CollectionPage() {
                   <Image 
                     src={selectedCard.image} 
                     alt={selectedCard.name}
-                    width={400}
-                    height={600}
+                    width={300}
+                    height={450}
                     className="object-cover relative z-10 rounded-lg w-full h-full"
                   />
                   
@@ -403,15 +459,21 @@ export default function CollectionPage() {
                 Card ID: {selectedCard.id}
               </div>
               
-              {/* Close button */}
+              {/* Close button - made larger and more prominent */}
               <button 
                 onClick={() => setSelectedCard(null)}
-                className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-full bg-[var(--primary)]/20 hover:bg-[var(--primary)]/30"
+                className="absolute top-2 right-2 md:top-4 md:right-4 text-white hover:text-white p-2 rounded-full bg-[var(--primary)]/40 hover:bg-[var(--primary)]/60 shadow-lg z-50"
+                aria-label="Close card preview"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+            
+            {/* Close instructions text */}
+            <div className="col-span-1 md:col-span-2 text-center mt-2 text-white/60 text-sm">
+              Click outside or press the X button to close
             </div>
           </div>
         </div>
