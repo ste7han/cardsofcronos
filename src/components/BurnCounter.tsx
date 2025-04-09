@@ -2,11 +2,17 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { getBurnStats } from '@/firebase/firestore';
+import { TOKEN_ADDRESS, DEAD_WALLET } from '@/lib/web3';
+import { ethers } from 'ethers';
+
+// Total supply of the token
+const TOTAL_SUPPLY = 1000000000; // 1 billion
 
 const BurnCounter: React.FC = () => {
   // Add isClient state to prevent hydration mismatch
   const [isClient, setIsClient] = useState<boolean>(false);
-  const [totalBurned, setTotalBurned] = useState<number>(0);
+  const [deadWalletBalance, setDeadWalletBalance] = useState<string>("0");
+  const [burnPercentage, setBurnPercentage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [animateCounter, setAnimateCounter] = useState<boolean>(false);
   const [orbEnergy, setOrbEnergy] = useState<number>(20); // Start with a consistent value for SSR
@@ -34,24 +40,55 @@ const BurnCounter: React.FC = () => {
     const fetchBurnStats = async () => {
       try {
         setIsLoading(true);
-        const stats = await getBurnStats();
-        const newTotal = stats?.totalBurned || 0;
         
-        // If we already had a value and got a new one, animate the counter
-        if (totalBurned > 0 && newTotal > totalBurned) {
-          setAnimateCounter(true);
-          setOrbEnergy(100); // Full energy on update
-          setTimeout(() => {
-            setAnimateCounter(false);
-            setOrbEnergy(prev => Math.max(prev - 30, 20)); // Reduce energy after animation
-          }, 2000);
-        } else {
-          // Set initial energy level based on total burned
-          const initialEnergy = Math.min(Math.max(newTotal / 10000000 * 100, 20), 80);
-          setOrbEnergy(initialEnergy);
+        // Get dead wallet balance directly from the blockchain
+        try {
+          // Create a provider directly here instead of using the function from web3.ts
+          const provider = new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
+          
+          // Create the contract instance directly
+          const ERC20_ABI = [
+            'function balanceOf(address owner) view returns (uint256)',
+            'function decimals() view returns (uint8)',
+            'function symbol() view returns (string)'
+          ];
+          const contract = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
+          
+          // Get the balance and decimals
+          const balance = await contract.balanceOf(DEAD_WALLET);
+          const decimals = await contract.decimals();
+          const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+          setDeadWalletBalance(formattedBalance);
+          
+          // Convert to number for animation and percentage calculation
+          const balanceNum = parseFloat(formattedBalance);
+          
+          // Calculate percentage of total supply
+          const percentage = (balanceNum / TOTAL_SUPPLY) * 100;
+          setBurnPercentage(percentage);
+          
+          // If we already had a value and got a new one, animate the counter
+          if (parseFloat(deadWalletBalance) > 0 && balanceNum > parseFloat(deadWalletBalance)) {
+            setAnimateCounter(true);
+            setOrbEnergy(100); // Full energy on update
+            setTimeout(() => {
+              setAnimateCounter(false);
+              setOrbEnergy(prev => Math.max(prev - 30, 20)); // Reduce energy after animation
+            }, 2000);
+          } else {
+            // Set initial energy level based on percentage burned
+            const initialEnergy = Math.min(Math.max(percentage * 1.2, 20), 80);
+            setOrbEnergy(initialEnergy);
+          }
+        } catch (error) {
+          console.error('Error fetching dead wallet balance:', error);
+          
+          // Fallback to Firebase stats if blockchain query fails
+          const stats = await getBurnStats();
+          const newTotal = stats?.totalBurned || 0;
+          setDeadWalletBalance(newTotal.toString());
+          setBurnPercentage((newTotal / TOTAL_SUPPLY) * 100);
         }
-        
-        setTotalBurned(newTotal);
       } catch (error) {
         console.error('Error fetching burn stats:', error);
       } finally {
@@ -75,13 +112,17 @@ const BurnCounter: React.FC = () => {
       clearInterval(intervalId);
       clearInterval(energyFluctuationId);
     };
-  }, [isClient, totalBurned, animateCounter]);
+  }, [isClient, deadWalletBalance, animateCounter]);
 
-  // Format the number with commas - use a consistent format for server and client
-  // Instead of using toLocaleString which can vary between server and client
-  const formattedTotal = isClient 
-    ? totalBurned.toLocaleString() 
-    : totalBurned.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  // Format the dead wallet balance
+  const formattedDeadWalletBalance = isClient
+    ? parseFloat(deadWalletBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })
+    : deadWalletBalance.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  
+  // Format the burn percentage
+  const formattedPercentage = isClient
+    ? burnPercentage.toFixed(4)
+    : burnPercentage.toString();
   
   // Handle mouse interaction with the orb - only on client side
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -133,7 +174,7 @@ const BurnCounter: React.FC = () => {
       ))}
       
       <h2 className="text-lg md:text-2xl font-bold mb-4 md:mb-6 tracking-wider relative z-10 font-['Cinzel'] text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#FFEA80]">
-        TOTAL TOKENS BURNED
+        TOKENS BURNED IN DEAD WALLET
       </h2>
       
       <div className="relative z-10 py-4 flex flex-col items-center">
@@ -192,7 +233,7 @@ const BurnCounter: React.FC = () => {
                       textShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 215, 0, 0.6)'
                     }}
                   >
-                    {formattedTotal}
+                    {formattedPercentage}%
                   </span>
                 </div>
                 
@@ -249,7 +290,7 @@ const BurnCounter: React.FC = () => {
             
             {/* Animated counter below orb */}
             <div className={`text-xl md:text-2xl font-bold text-[#FFD700] tracking-wider ${isClient && animateCounter ? 'scale-110 transition-transform duration-300' : ''}`}>
-              {formattedTotal} <span className="text-lg md:text-xl text-orange-500">🔥</span>
+              {formattedDeadWalletBalance} <span className="text-lg md:text-xl text-orange-500">🔥</span>
             </div>
           </div>
         )}

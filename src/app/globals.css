@@ -1005,3 +1005,13 @@ select:focus {
 .constellation {
   animation: constellation-form 8s ease-in-out infinite;
 }
+
+/* Custom pulse-fade animation for loading elements */
+@keyframes pulse-fade {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-fade {
+  animation: pulse-fade 2s infinite;
+}

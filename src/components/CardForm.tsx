@@ -8,6 +8,8 @@ import { calculateTokenAmount, burnTokens } from '@/lib/web3';
 import { uploadImage, generateImagePath } from '@/firebase/storage';
 import { addCardRequest } from '@/firebase/firestore';
 import { sendCardRequestEmail } from '@/lib/email';
+import CardPreview from './CardPreview';
+import LoadingSpinner from './LoadingSpinner';
 
 interface CardFormProps {
   isWalletConnected: boolean;
@@ -613,7 +615,7 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
   }
   
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="arcane-border glass-card p-6 max-w-3xl mx-auto hexagon-bg relative">
+    <form onSubmit={handleSubmit(onSubmit)} className="arcane-border glass-card p-4 sm:p-6 max-w-3xl mx-auto hexagon-bg relative">
       {/* Decorative arcane elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         {/* Arcane circles */}
@@ -621,10 +623,10 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100%] h-[100%] rounded-full border border-[#FFD700]/10 opacity-30"></div>
         
         {/* Arcane symbols at corners */}
-        <div className="absolute top-4 left-4 text-[#FFD700] opacity-20">✧</div>
-        <div className="absolute top-4 right-4 text-[#FFD700] opacity-20">⚝</div>
-        <div className="absolute bottom-4 left-4 text-[#FFD700] opacity-20">⚜</div>
-        <div className="absolute bottom-4 right-4 text-[#FFD700] opacity-20">✦</div>
+        <div className="absolute top-4 left-4 text-[#FFD700] opacity-20 hidden sm:block">✧</div>
+        <div className="absolute top-4 right-4 text-[#FFD700] opacity-20 hidden sm:block">⚝</div>
+        <div className="absolute bottom-4 left-4 text-[#FFD700] opacity-20 hidden sm:block">⚜</div>
+        <div className="absolute bottom-4 right-4 text-[#FFD700] opacity-20 hidden sm:block">✦</div>
         
         {/* Magical energy lines */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -642,11 +644,40 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
       </div>
       
       {/* Magical book binding */}
-      <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#3A0CA3] to-transparent opacity-50"></div>
+      <div className="absolute left-0 top-0 bottom-0 w-2 sm:w-4 bg-gradient-to-r from-[#3A0CA3] to-transparent opacity-50"></div>
+      
+      {/* Loading overlay */}
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <LoadingSpinner size="lg" color="secondary" className="mb-4" />
+            <p className="text-white/80 animate-pulse">Processing your request...</p>
+          </div>
+        </div>
+      )}
       
       {/* Form content with magical styling */}
       <div className="relative z-10">
-        {renderFormStep()}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="order-2 md:order-1">
+            {renderFormStep()}
+          </div>
+          <div className="order-1 md:order-2 flex items-center justify-center mb-6 md:mb-0">
+            <div className="w-full max-w-xs">
+              <h3 className="text-center text-lg font-bold font-['Cinzel'] mb-4 text-[var(--secondary)]">Card Preview</h3>
+              <div className="transition-all duration-500 transform">
+                <CardPreview 
+                  name={watch('name') || 'Your Card Name'}
+                  description={watch('description') || 'Card description will appear here...'}
+                  cardType={watch('cardType') as 'Project' | 'Roast' | 'Influencer' | 'Special'}
+                  rarity={watch('rarity') as 'Epic' | 'Rare' | 'Mythical'}
+                  imagePreview={imagePreview}
+                  isLoading={isSubmitting}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </form>
   );

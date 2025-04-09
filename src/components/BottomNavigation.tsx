@@ -104,7 +104,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
         </svg>
       ),
       onClick: isWalletConnected ? undefined : onConnectWallet,
-      href: isWalletConnected ? '#' : undefined
+      href: isWalletConnected ? '/orders' : undefined
     }
   ];
   

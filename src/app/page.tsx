@@ -251,12 +251,12 @@ export default function Home() {
             Pick your type and rarity, burn tokens and get your own Cronos Card.
           </p>
           <p className="text-xs sm:text-sm text-white/80 font-['Spectral'] mb-6 md:mb-8">
-            Fill in this sheet to get your card:
+            Fill in this form to get your card:
             <a
-              href="#"
+              href="#card-form"
               className="ml-2 text-[var(--secondary)] hover:text-[var(--secondary-glow)] transition-colors duration-300 underline"
             >
-              Spreadsheet
+              Card Form
             </a>
           </p>
           
