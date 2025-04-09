@@ -615,7 +615,7 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
   }
   
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="arcane-border glass-card p-4 sm:p-6 max-w-3xl mx-auto hexagon-bg relative">
+    <form onSubmit={handleSubmit(onSubmit)} className="arcane-border glass-card p-4 sm:p-6 max-w-3xl mx-auto hexagon-bg relative overflow-hidden">
       {/* Decorative arcane elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         {/* Arcane circles */}

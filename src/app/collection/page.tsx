@@ -390,7 +390,7 @@ export default function CollectionPage() {
           ></div>
           
           {/* Modal container with max height and scrolling */}
-          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-6 rounded-xl border border-[var(--primary)]/30">
+          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-4 sm:p-6 rounded-xl border border-[var(--primary)]/30">
             {/* Card image - reduced size on mobile */}
             <div className="perspective-1000 mx-auto md:mx-0" style={{ maxWidth: '280px' }}>
               <div className={`card-3d w-full aspect-[2/3] rounded-lg bg-gradient-to-br ${rarityColors[selectedCard.rarity as keyof typeof rarityColors]} flex items-center justify-center transform transition-all duration-500 preserve-3d rotate-y-5`}>

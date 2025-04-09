@@ -211,29 +211,64 @@ export default function Home() {
             div[class*="absolute top-[10%] left-[10%]"] {
               top: 15% !important;
               left: 5% !important;
-              width: 25% !important;
+              width: 20% !important;
             }
             
             div[class*="absolute top-[15%] right-[12%]"] {
               top: 15% !important;
               right: 5% !important;
-              width: 25% !important;
+              width: 20% !important;
             }
             
             div[class*="absolute bottom-[15%] left-[15%]"] {
               bottom: 20% !important;
               left: 5% !important;
-              width: 25% !important;
+              width: 20% !important;
             }
             
             div[class*="absolute bottom-[10%] right-[10%]"] {
               bottom: 20% !important;
               right: 5% !important;
-              width: 25% !important;
+              width: 20% !important;
             }
             
             div[class*="absolute top-[50%] left-[50%]"] {
-              width: 30% !important;
+              width: 25% !important;
+            }
+          }
+          
+          /* Ensure no horizontal overflow on small screens */
+          @media (max-width: 480px) {
+            .card-frame {
+              transform: scale(0.6);
+            }
+            
+            div[class*="absolute top-[10%] left-[10%]"] {
+              top: 10% !important;
+              left: 2% !important;
+              width: 18% !important;
+            }
+            
+            div[class*="absolute top-[15%] right-[12%]"] {
+              top: 10% !important;
+              right: 2% !important;
+              width: 18% !important;
+            }
+            
+            div[class*="absolute bottom-[15%] left-[15%]"] {
+              bottom: 15% !important;
+              left: 2% !important;
+              width: 18% !important;
+            }
+            
+            div[class*="absolute bottom-[10%] right-[10%]"] {
+              bottom: 15% !important;
+              right: 2% !important;
+              width: 18% !important;
+            }
+            
+            div[class*="absolute top-[50%] left-[50%]"] {
+              width: 22% !important;
             }
           }
         `}</style>
@@ -336,12 +371,12 @@ export default function Home() {
       />
       
       {/* Card Form Modal */}
-      <div id="card-form" className="fixed inset-0 z-50 flex items-center justify-center hidden scroll-mt-24 target:flex">
+      <div id="card-form" className="fixed inset-0 z-50 flex items-center justify-center hidden scroll-mt-24 target:flex overflow-hidden">
         <div
           className="absolute inset-0 bg-black/80 backdrop-blur-sm"
           onClick={() => (window.location.hash = '')}
         ></div>
-        <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto p-2 sm:p-4">
+        <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto p-2 sm:p-4" style={{ maxWidth: '100vw' }}>
           <div className="modern-card modern-hexagon-bg p-3 sm:p-6">
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-['Cinzel'] text-transparent bg-clip-text bg-gradient-to-r from-[var(--secondary)] to-[var(--secondary-glow)]">

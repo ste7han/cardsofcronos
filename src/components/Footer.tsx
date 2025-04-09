@@ -20,11 +20,11 @@ const Footer: React.FC = () => {
   ];
   
   return (
-    <footer className="py-8 border-t border-[var(--glass-border)] mb-20 md:mb-0 relative overflow-hidden">
+    <footer className="py-8 border-t border-[var(--glass-border)] mb-20 md:mb-0 relative overflow-hidden w-full max-w-[100vw]">
       {/* Glowing top border */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--primary)]/30 to-transparent"></div>
       
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 w-full max-w-[100vw] overflow-x-hidden">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           {/* Left column: Copyright and Joey's credit */}
           <div className="flex flex-col space-y-3 text-white/60 text-sm">
