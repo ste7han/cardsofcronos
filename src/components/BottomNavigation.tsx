@@ -131,7 +131,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       <div className="relative mx-auto w-full max-w-[100vw]">
         <div className="relative bg-black/80 backdrop-blur-xl border-t border-[#9D4EDD]/30 shadow-lg w-full">
           {/* Navigation items */}
-          <div className="relative z-10 flex justify-around items-center pt-5 pb-6 px-4 max-w-lg mx-auto">
+          <div className="relative z-10 flex justify-around items-center pt-5 pb-8 px-4 max-w-lg mx-auto">
             {navItems.map((item) => {
               const isActive = activeItem === item.id;
               
@@ -227,7 +227,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       </div>
                       
                       {/* Label - always visible for forge button */}
-                      <span className={`text-xs mt-2 font-medium transition-all duration-300 opacity-100`}>
+                      <span className={`text-xs mt-1 font-medium transition-all duration-300 opacity-100`}>
                         {item.label}
                       </span>
                     </button>

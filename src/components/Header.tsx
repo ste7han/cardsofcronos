@@ -174,7 +174,7 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Mobile menu overlay */}
       <div 
-        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-70 md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-[70] md:hidden transition-opacity duration-300 ${
           mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileMenuOpen(false)}
@@ -182,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Mobile menu panel */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-80 md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
+        className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-[80] md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ height: '100vh' }}
