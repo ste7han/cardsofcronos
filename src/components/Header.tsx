@@ -147,10 +147,10 @@ const Header: React.FC<HeaderProps> = ({
         
         {/* Mobile menu button - only visible on small screens */}
         <button 
-          className="md:hidden text-white bg-gradient-to-r from-[var(--primary)]/30 to-[var(--primary-glow)]/30 hover:from-[var(--primary)]/40 hover:to-[var(--primary-glow)]/40 rounded-full p-2 transition-all duration-300 border border-[var(--primary)]/20 flex items-center justify-center"
+          className="md:hidden text-white bg-gradient-to-r from-[var(--primary)]/50 to-[var(--primary-glow)]/50 hover:from-[var(--primary)]/60 hover:to-[var(--primary-glow)]/60 rounded-full p-2.5 transition-all duration-300 border-2 border-[var(--primary)]/30 flex items-center justify-center shadow-lg"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
-          style={{ zIndex: 998 }}
+          style={{ zIndex: mobileMenuOpen ? 1001 : 998 }}
         >
           <div className="relative w-6 h-6 flex items-center justify-center">
             <span 
@@ -211,12 +211,12 @@ const Header: React.FC<HeaderProps> = ({
           />
         </div>
         
-        <div className="flex flex-col items-center space-y-6 py-10 mt-20 mb-24">
+        <div className="flex flex-col items-center space-y-4 py-8 mt-16 mb-24 w-full px-4">
           {navItems.map((item, index) => (
             <Link 
               key={index}
               href={item.href} 
-              className="text-white text-lg font-['Cinzel'] tracking-wider relative group px-6 py-2 rounded-lg hover:bg-[var(--primary)]/10 transition-all duration-300"
+              className="w-full text-white text-xl font-medium tracking-wide relative group px-6 py-3 rounded-xl hover:bg-[var(--primary)]/20 transition-all duration-300 border border-transparent hover:border-[var(--primary)]/30 text-center"
               onClick={() => setMobileMenuOpen(false)}
             >
               <span className="inline-block mr-3">{item.icon}</span>
