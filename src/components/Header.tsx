@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({
   
   return (
     <header 
-      className={`w-full max-w-[100vw] py-0.5 px-6 md:px-10 flex justify-between items-center backdrop-blur-xl sticky top-0 z-[200] transition-all duration-500 overflow-x-hidden ${
+      className={`w-full max-w-[100vw] py-0.5 px-6 md:px-10 flex justify-between items-center backdrop-blur-xl sticky top-0 z-[200] transition-all duration-500 ${
         scrolled 
           ? 'bg-gradient-to-r from-[var(--cosmic-black)]/95 to-[var(--cosmic-purple)]/80 shadow-lg shadow-[var(--primary)]/20 border-b border-[var(--glass-border)]' 
           : 'bg-gradient-to-r from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50'
@@ -178,6 +178,7 @@ const Header: React.FC<HeaderProps> = ({
           mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileMenuOpen(false)}
+        style={{ height: '100vh', width: '100vw' }}
       ></div>
       
       {/* Mobile menu panel */}
@@ -185,7 +186,7 @@ const Header: React.FC<HeaderProps> = ({
         className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-[1200] md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ height: '100vh' }}
+        style={{ height: '100vh', position: 'fixed' }}
       >
         {/* Close button */}
         <div className="w-full flex justify-end p-4">
