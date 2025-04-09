@@ -122,7 +122,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 z-[100] transition-all duration-500 transform ${
+      className={`fixed bottom-0 left-0 right-0 z-[300] transition-all duration-500 transform ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
       style={{ width: '100%', maxWidth: '100vw' }}
@@ -131,7 +131,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       <div className="relative mx-auto w-full max-w-[100vw]">
         <div className="relative bg-black/80 backdrop-blur-xl border-t border-[#9D4EDD]/30 shadow-lg w-full">
           {/* Navigation items */}
-          <div className="relative z-10 flex justify-around items-center pt-5 pb-10 px-4 max-w-lg mx-auto">
+          <div className="relative z-[310] flex justify-around items-center pt-5 pb-10 px-4 max-w-lg mx-auto">
             {navItems.map((item) => {
               const isActive = activeItem === item.id;
               
@@ -160,7 +160,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     <Link 
                       href={item.href}
                       onClick={() => setActiveItem(item.id)}
-                      className={`flex flex-col items-center transition-all duration-300 z-[60] ${
+                      className={`flex flex-col items-center transition-all duration-300 z-[320] ${
                         isActive 
                           ? 'text-[#FFD700]' 
                           : 'text-white/70 hover:text-white'
@@ -200,14 +200,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         setActiveItem(item.id);
                         if (item.onClick) item.onClick();
                       }}
-                      className={`flex flex-col items-center transition-all duration-300 z-[60] ${
+                      className={`flex flex-col items-center transition-all duration-300 z-[320] ${
                         isActive 
                           ? 'text-[#FFD700]' 
                           : 'text-white/70 hover:text-white'
                       }`}
                     >
                       {/* Icon container with special styling for forge */}
-                      <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-6 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20 z-[70]">
+                      <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-6 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20 z-[330]">
                         {/* Icon */}
                         <div className="text-white transition-all duration-300">
                           {item.icon}
