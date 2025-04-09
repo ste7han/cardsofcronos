@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({
   
   return (
     <header 
-      className={`w-full max-w-[100vw] py-0.5 px-6 md:px-10 flex justify-between items-center backdrop-blur-xl sticky top-0 z-50 transition-all duration-500 overflow-x-hidden ${
+      className={`w-full max-w-[100vw] py-0.5 px-6 md:px-10 flex justify-between items-center backdrop-blur-xl sticky top-0 z-[200] transition-all duration-500 overflow-x-hidden ${
         scrolled 
           ? 'bg-gradient-to-r from-[var(--cosmic-black)]/95 to-[var(--cosmic-purple)]/80 shadow-lg shadow-[var(--primary)]/20 border-b border-[var(--glass-border)]' 
           : 'bg-gradient-to-r from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50'
@@ -150,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({
           className="md:hidden text-white bg-gradient-to-r from-[var(--primary)]/50 to-[var(--primary-glow)]/50 hover:from-[var(--primary)]/60 hover:to-[var(--primary-glow)]/60 rounded-full p-2.5 transition-all duration-300 border-2 border-[var(--primary)]/30 flex items-center justify-center shadow-lg"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
-          style={{ zIndex: mobileMenuOpen ? 1001 : 998 }}
+          style={{ zIndex: mobileMenuOpen ? 1001 : 201 }}
         >
           <div className="relative w-6 h-6 flex items-center justify-center">
             <span 
@@ -174,7 +174,7 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Mobile menu overlay */}
       <div 
-        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-[999] md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-[1100] md:hidden transition-opacity duration-300 ${
           mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileMenuOpen(false)}
@@ -182,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Mobile menu panel */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-[1000] md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
+        className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-[1200] md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ height: '100vh' }}
