@@ -1,22 +1,44 @@
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './config';
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User
+} from 'firebase/auth';
+import { app, db } from './config';
+
+// Initialize Firebase Auth
+const auth = getAuth(app);
 
 // Collection references
 const adminsCollection = 'admins';
 
-// Check if a user is an admin
-export const isAdmin = async (userAddress: string): Promise<boolean> => {
-  if (!userAddress) return false;
+// Check if a user is an admin by email or user ID
+export const isAdmin = async (emailOrId: string | null | undefined): Promise<boolean> => {
+  if (!emailOrId) return false;
   
   try {
-    // Normalize the address to lowercase for consistency
-    const normalizedAddress = userAddress.toLowerCase();
+    // First try to check by email
+    if (emailOrId.includes('@')) {
+      // Normalize the email to lowercase for consistency
+      const normalizedEmail = emailOrId.toLowerCase();
+      
+      // Check if the user is in the admins collection by email
+      const adminRef = doc(db, adminsCollection, normalizedEmail);
+      const adminDoc = await getDoc(adminRef);
+      
+      if (adminDoc.exists()) {
+        return true;
+      }
+    }
     
-    // Check if the user is in the admins collection
-    const adminRef = doc(db, adminsCollection, normalizedAddress);
-    const adminDoc = await getDoc(adminRef);
+    // If not found by email, check if any admin document has this userId
+    const adminsQuery = query(collection(db, adminsCollection), where('userId', '==', emailOrId));
+    const querySnapshot = await getDocs(adminsQuery);
     
-    return adminDoc.exists();
+    return !querySnapshot.empty;
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;
@@ -24,8 +46,8 @@ export const isAdmin = async (userAddress: string): Promise<boolean> => {
 };
 
 // Add a new admin
-export const addAdmin = async (userAddress: string, addedBy: string): Promise<boolean> => {
-  if (!userAddress) return false;
+export const addAdmin = async (email: string, addedBy: string): Promise<boolean> => {
+  if (!email) return false;
   
   try {
     // First check if the caller is an admin
@@ -34,13 +56,13 @@ export const addAdmin = async (userAddress: string, addedBy: string): Promise<bo
       throw new Error('Only existing admins can add new admins');
     }
     
-    // Normalize the address to lowercase for consistency
-    const normalizedAddress = userAddress.toLowerCase();
+    // Normalize the email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase();
     
     // Add the user to the admins collection
-    const adminRef = doc(db, adminsCollection, normalizedAddress);
+    const adminRef = doc(db, adminsCollection, normalizedEmail);
     await setDoc(adminRef, {
-      address: normalizedAddress,
+      email: normalizedEmail,
       addedBy,
       addedAt: serverTimestamp(),
     });
@@ -53,8 +75,8 @@ export const addAdmin = async (userAddress: string, addedBy: string): Promise<bo
 };
 
 // Remove an admin
-export const removeAdmin = async (userAddress: string, removedBy: string): Promise<boolean> => {
-  if (!userAddress) return false;
+export const removeAdmin = async (email: string, removedBy: string): Promise<boolean> => {
+  if (!email) return false;
   
   try {
     // First check if the caller is an admin
@@ -63,11 +85,11 @@ export const removeAdmin = async (userAddress: string, removedBy: string): Promi
       throw new Error('Only existing admins can remove admins');
     }
     
-    // Normalize the address to lowercase for consistency
-    const normalizedAddress = userAddress.toLowerCase();
+    // Normalize the email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase();
     
     // Remove the user from the admins collection
-    const adminRef = doc(db, adminsCollection, normalizedAddress);
+    const adminRef = doc(db, adminsCollection, normalizedEmail);
     await deleteDoc(adminRef);
     
     return true;
@@ -75,4 +97,46 @@ export const removeAdmin = async (userAddress: string, removedBy: string): Promi
     console.error('Error removing admin:', error);
     throw error;
   }
+};
+
+// Sign up with email and password
+export const signUp = async (email: string, password: string): Promise<User> => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Error signing up:', error);
+    throw error;
+  }
+};
+
+// Sign in with email and password
+export const signIn = async (email: string, password: string): Promise<User> => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Error signing in:', error);
+    throw error;
+  }
+};
+
+// Sign out
+export const signOut = async (): Promise<void> => {
+  try {
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error('Error signing out:', error);
+    throw error;
+  }
+};
+
+// Get current user
+export const getCurrentUser = (): User | null => {
+  return auth.currentUser;
+};
+
+// Listen to auth state changes
+export const onAuthChange = (callback: (user: User | null) => void): () => void => {
+  return onAuthStateChanged(auth, callback);
 };

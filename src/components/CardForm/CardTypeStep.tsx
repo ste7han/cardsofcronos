@@ -143,6 +143,11 @@ const CardTypeOption: React.FC<CardTypeOptionProps> = ({
       className={`card p-4 cursor-pointer transition-all ${
         isSelected ? 'border-[#FFD700] ring-2 ring-[#FFD700]' : 'border-[#9D4EDD]'
       }`}
+      onClick={(e) => {
+        // Prevent default to avoid double-triggering with the input's onChange
+        e.preventDefault();
+        onSelect();
+      }}
     >
       <input
         type="radio"

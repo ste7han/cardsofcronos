@@ -1,8 +1,9 @@
-// Script to add the first admin wallet to the Firestore database
+// Script to add a specific user as admin to the Firestore database
 // This is a one-time operation to bootstrap the admin system
 
 const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, setDoc, serverTimestamp } = require('firebase/firestore');
+const { getFirestore, doc, getDoc, setDoc, serverTimestamp } = require('firebase/firestore');
+const { getAuth, getUser } = require('firebase/auth');
 
 // Firebase configuration
 // Using the same configuration as in firebase-init.js
@@ -18,25 +19,46 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// The wallet address to add as admin
-const adminWalletAddress = '0xd3ebf04f76b67e47093bddd8b14f9090f1c80976';
+// The admin user ID to add
+const adminUserId = 'moUbpO7ou7ZTUtKuN7xpp2S9Xgl1';
 
 // Function to add the admin
 async function addAdmin() {
   try {
-    // Normalize the address to lowercase for consistency
-    const normalizedAddress = adminWalletAddress.toLowerCase();
+    // Get the user from Firebase Auth
+    let userEmail = null;
+    
+    try {
+      // Try to get the user's email from Firestore users collection
+      const userRef = doc(db, 'users', adminUserId);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists() && userDoc.data().email) {
+        userEmail = userDoc.data().email;
+        console.log(`Found user with email: ${userEmail}`);
+      } else {
+        // If we can't find the email, use the user ID as the admin ID
+        userEmail = adminUserId;
+        console.log(`Using user ID as admin ID: ${adminUserId}`);
+      }
+    } catch (error) {
+      console.error('Error getting user:', error);
+      // If we can't find the email, use the user ID as the admin ID
+      userEmail = adminUserId;
+    }
     
     // Add the user to the admins collection
-    const adminRef = doc(db, 'admins', normalizedAddress);
+    const adminRef = doc(db, 'admins', userEmail);
     await setDoc(adminRef, {
-      address: normalizedAddress,
+      userId: adminUserId,
+      email: userEmail,
       addedBy: 'bootstrap-script',
       addedAt: serverTimestamp(),
     });
     
-    console.log(`Successfully added ${adminWalletAddress} as an admin!`);
+    console.log(`Successfully added user ${adminUserId} as an admin!`);
     return true;
   } catch (error) {
     console.error('Error adding admin:', error);

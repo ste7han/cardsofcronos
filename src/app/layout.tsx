@@ -4,7 +4,7 @@ import { Inter, Spectral } from "next/font/google";
 import "../styles/modern-theme.css";
 import StaticBackground from "@/components/StaticBackground";
 import LoadingScreen from "@/components/LoadingScreen";
-import { AppKit } from "@/context/appkit";
+import AppKitProvider from "@/components/AppKitProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,9 +56,9 @@ export default function RootLayout({
         <LoadingScreen timeout={2500} />
         
         <div className="relative z-10">
-          <AppKit>
+          <AppKitProvider>
             {children}
-          </AppKit>
+          </AppKitProvider>
         </div>
         
       </body>

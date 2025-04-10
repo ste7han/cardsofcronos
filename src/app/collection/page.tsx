@@ -131,9 +131,13 @@ export default function CollectionPage() {
   // Check if AppKit is initialized
   const appKitInitialized = useAppKitInitialized();
   
-  // Get wallet connection status from AppKit
-  const { isConnected = false, address = undefined } = appKitInitialized ? useAppKitAccount() : { isConnected: false, address: undefined };
-  const { open = () => console.log('AppKit not initialized') } = appKitInitialized ? useAppKit() : { open: () => console.log('AppKit not initialized') };
+  // Always call hooks unconditionally to maintain hook order
+  const appKitAccount = useAppKitAccount();
+  const appKit = useAppKit();
+  
+  // Then conditionally use the results
+  const { isConnected = false, address = undefined } = appKitInitialized ? appKitAccount : { isConnected: false, address: undefined };
+  const { open = () => console.log('AppKit not initialized') } = appKitInitialized ? appKit : { open: () => console.log('AppKit not initialized') };
 
   // Fetch cards from Firestore
   const fetchCards = useCallback(async () => {

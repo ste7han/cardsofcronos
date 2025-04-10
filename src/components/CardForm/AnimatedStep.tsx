@@ -21,6 +21,10 @@ const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, 
           className={`card p-4 cursor-pointer transition-all ${
             !watchAnimated ? 'border-[#FFD700] ring-2 ring-[#FFD700]' : 'border-[#9D4EDD]'
           }`}
+          onClick={(e) => {
+            e.preventDefault();
+            handleSelectAnimated(false);
+          }}
         >
           <input
             type="radio"
@@ -43,6 +47,10 @@ const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, 
           className={`card p-4 cursor-pointer transition-all ${
             watchAnimated ? 'border-[#FFD700] ring-2 ring-[#FFD700]' : 'border-[#9D4EDD]'
           }`}
+          onClick={(e) => {
+            e.preventDefault();
+            handleSelectAnimated(true);
+          }}
         >
           <input
             type="radio"

@@ -4,16 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import Header from '@/components/Header';
+import AdminHeader from '@/components/AdminHeader';
 import Footer from '@/components/Footer';
-import BottomNavigation from '@/components/BottomNavigation';
+import AdminBottomNavigation from '@/components/AdminBottomNavigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useAppKit, useAppKitAccount } from '@/lib/appkit';
-import { useAppKitInitialized } from '@/components/AppKitProvider';
-import { isAdmin } from '@/firebase/auth';
+import { isAdmin, signIn, signOut, getCurrentUser, onAuthChange } from '@/firebase/auth';
 import { collection, addDoc, getDocs, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { uploadImage, generateImagePath } from '@/firebase/storage';
+import { User } from 'firebase/auth';
+
+interface LoginFormData {
+  email: string;
+  password: string;
+}
 
 interface CardFormData {
   name: string;
@@ -57,17 +61,23 @@ export default function AdminPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // AppKit initialization
-  const appKitInitialized = useAppKitInitialized();
-  const { isConnected = false, address = undefined } = appKitInitialized ? useAppKitAccount() : { isConnected: false, address: undefined };
-  const { open = () => console.log('AppKit not initialized') } = appKitInitialized ? useAppKit() : { open: () => console.log('AppKit not initialized') };
+  // Authentication state
+  const [user, setUser] = useState<User | null>(null);
+  const [loginForm, setLoginForm] = useState<LoginFormData>({
+    email: '',
+    password: ''
+  });
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (isConnected && address) {
+      if (user && user.email) {
         try {
-          const adminStatus = await isAdmin(address);
+          console.log('Checking admin status for email:', user.email);
+          const adminStatus = await isAdmin(user.email);
+          console.log('Admin status result:', adminStatus);
           setIsAdminUser(adminStatus);
         } catch (error) {
           console.error('Error checking admin status:', error);
@@ -82,7 +92,23 @@ export default function AdminPage() {
     if (isClient) {
       checkAdminStatus();
     }
-  }, [isClient, isConnected, address]);
+  }, [isClient, user]);
+  
+  // Listen for auth state changes
+  useEffect(() => {
+    if (!isClient) return;
+    
+    // Check if user is already logged in
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    
+    // Set up auth state listener
+    const unsubscribe = onAuthChange((authUser) => {
+      setUser(authUser);
+    });
+    
+    return () => unsubscribe();
+  }, [isClient]);
 
   // Fetch existing cards
   const fetchCards = async () => {
@@ -120,12 +146,44 @@ export default function AdminPage() {
     setPageLoaded(true);
   }, [isClient]);
   
-  // Handle wallet connection
-  const handleConnectWallet = () => {
-    if (appKitInitialized) {
-      open();
-    } else {
-      console.log('AppKit not initialized yet');
+  // Handle login form input changes
+  const handleLoginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setLoginForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle login form submission
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setIsAuthLoading(true);
+    
+    try {
+      if (!loginForm.email.trim() || !loginForm.password.trim()) {
+        setLoginError('Email and password are required');
+        return;
+      }
+      
+      await signIn(loginForm.email, loginForm.password);
+      // Auth state listener will update the user state
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setLoginError(error.message || 'Failed to login. Please check your credentials.');
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+  
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // Auth state listener will update the user state
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
   
@@ -209,7 +267,7 @@ export default function AdminPage() {
         imageUrl: imageUrl,
         attributes: formData.attributes,
         createdAt: new Date(),
-        createdBy: address || 'unknown'
+        createdBy: user?.email || 'unknown'
       });
       
       // Reset form
@@ -280,15 +338,11 @@ export default function AdminPage() {
     );
   }
   
-  // Render unauthorized state
-  if (!isLoading && !isAdminUser) {
+  // Render login form if not logged in or not admin
+  if (!isLoading && (!user || !isAdminUser)) {
     return (
       <div className="min-h-screen" ref={pageRef}>
-        <Header 
-          onConnectWallet={handleConnectWallet}
-          isWalletConnected={isConnected}
-          walletAddress={address}
-        />
+        <AdminHeader />
         
         <main className="relative pt-24 pb-32">
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--cosmic-black)] via-[var(--cosmic-purple)]/10 to-[var(--cosmic-black)] -z-10"></div>
@@ -300,22 +354,71 @@ export default function AdminPage() {
               </h1>
               
               <div className="modern-card p-8 max-w-md mx-auto">
-                {!isConnected ? (
+                {!user ? (
                   <div>
-                    <p className="text-white/80 mb-6">Please connect your wallet to access the admin panel.</p>
-                    <button
-                      onClick={handleConnectWallet}
-                      className="btn-primary py-3 px-6"
-                    >
-                      Connect Wallet
-                    </button>
+                    <p className="text-white/80 mb-6">Please login to access the admin panel.</p>
+                    
+                    {loginError && (
+                      <div className="bg-red-900/30 border border-red-600 rounded-md p-4 mb-6">
+                        <p className="text-red-500">{loginError}</p>
+                      </div>
+                    )}
+                    
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div>
+                        <label className="block text-white/80 mb-2 text-sm">Email</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={loginForm.email}
+                          onChange={handleLoginInputChange}
+                          className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-2 text-white"
+                          placeholder="Enter your email"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-white/80 mb-2 text-sm">Password</label>
+                        <input
+                          type="password"
+                          name="password"
+                          value={loginForm.password}
+                          onChange={handleLoginInputChange}
+                          className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-2 text-white"
+                          placeholder="Enter your password"
+                        />
+                      </div>
+                      
+                      <button
+                        type="submit"
+                        disabled={isAuthLoading}
+                        className={`w-full btn-primary py-3 ${isAuthLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        {isAuthLoading ? (
+                          <span className="flex items-center justify-center">
+                            <LoadingSpinner size="sm" className="mr-2" />
+                            Logging in...
+                          </span>
+                        ) : (
+                          'Login'
+                        )}
+                      </button>
+                    </form>
                   </div>
                 ) : (
                   <div>
                     <p className="text-white/80 mb-6">You do not have admin privileges to access this page.</p>
-                    <Link href="/" className="btn-primary py-3 px-6 inline-block">
-                      Return to Home
-                    </Link>
+                    <div className="flex flex-col space-y-4">
+                      <button
+                        onClick={handleLogout}
+                        className="btn-secondary py-3 px-6"
+                      >
+                        Logout
+                      </button>
+                      <Link href="/" className="btn-primary py-3 px-6 inline-block">
+                        Return to Home
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
@@ -323,10 +426,7 @@ export default function AdminPage() {
           </div>
         </main>
         
-        <BottomNavigation 
-          isWalletConnected={isConnected}
-          onConnectWallet={handleConnectWallet}
-        />
+        <AdminBottomNavigation onLogout={handleLogout} />
         
         <Footer />
       </div>
@@ -335,11 +435,7 @@ export default function AdminPage() {
   
   return (
     <div className="min-h-screen" ref={pageRef}>
-      <Header 
-        onConnectWallet={handleConnectWallet}
-        isWalletConnected={isConnected}
-        walletAddress={address}
-      />
+      <AdminHeader />
       
       <main className="relative pt-24 pb-32">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--cosmic-black)] via-[var(--cosmic-purple)]/10 to-[var(--cosmic-black)] -z-10"></div>
@@ -439,11 +535,12 @@ export default function AdminPage() {
                       <label htmlFor="image-upload" className="cursor-pointer block">
                         {imagePreview ? (
                           <div className="relative mx-auto w-48 h-48">
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-full h-full object-cover rounded-md"
-                            />
+                        {/* @ts-ignore */}
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover rounded-md"
+                        />
                             <button
                               type="button"
                               onClick={(e) => {
@@ -590,10 +687,7 @@ export default function AdminPage() {
         </div>
       </main>
       
-      <BottomNavigation 
-        isWalletConnected={isConnected}
-        onConnectWallet={handleConnectWallet}
-      />
+      <AdminBottomNavigation onLogout={handleLogout} />
       
       <Footer />
     </div>

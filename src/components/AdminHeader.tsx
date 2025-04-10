@@ -4,19 +4,8 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-interface HeaderProps {
-  onConnectWallet?: () => void;
-  isWalletConnected?: boolean;
-  walletAddress?: string;
-}
-
-const Header: React.FC<HeaderProps> = ({ 
-  onConnectWallet = () => {}, 
-  isWalletConnected = false, 
-  walletAddress 
-}) => {
+const AdminHeader: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [animateRunes, setAnimateRunes] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
   // Set isClient to true once component mounts on client
@@ -38,21 +27,6 @@ const Header: React.FC<HeaderProps> = ({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
-  
-  // Animate runes on load - only on client side
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const timer = setTimeout(() => {
-      setAnimateRunes(true);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  
-  // Empty array for rune symbols (removed as requested)
-  const runeSymbols: { symbol: string; top: string; left: string; delay: string }[] = [];
   
   // Navigation items with icons for mobile
   const navItems = [
@@ -85,44 +59,6 @@ const Header: React.FC<HeaderProps> = ({
     }
   ];
   
-  // Format wallet address for display
-  const formatWalletAddress = (address?: string) => {
-    if (!address) return '';
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
-  
-  // Render wallet button based on connection status
-  const renderWalletButton = () => {
-    if (!isClient) {
-      // Return placeholder during SSR
-      return (
-        <div className="h-10 w-36 rounded-full bg-[var(--cosmic-black)]/50"></div>
-      );
-    }
-    
-    if (isWalletConnected) {
-      return (
-        <div className="flex items-center space-x-2 bg-[var(--cosmic-black)]/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-[var(--glass-border)]">
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-xs font-medium text-white/90">{formatWalletAddress(walletAddress)}</span>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="relative group">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-full opacity-75 group-hover:opacity-100 blur group-hover:blur-md transition duration-500"></div>
-        <button 
-          onClick={onConnectWallet}
-          className="relative bg-[var(--cosmic-black)]/80 text-white px-4 py-2 rounded-full text-sm font-medium border border-[var(--glass-border)] hover:bg-[var(--cosmic-black)] transition-all duration-300 active:scale-95"
-          aria-label="Connect Wallet"
-        >
-          Connect Wallet
-        </button>
-      </div>
-    );
-  };
-  
   return (
     <header 
       className={`w-full max-w-[100vw] py-2 px-4 md:py-0.5 md:px-6 lg:px-10 flex justify-between items-center backdrop-blur-xl sticky top-0 z-[200] transition-all duration-500 ${
@@ -136,21 +72,6 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Top glow line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--primary-glow)]/40 to-transparent opacity-100"></div>
-      
-      {/* Animated arcane runes with fixed positions for SSR consistency */}
-      {runeSymbols.map((rune, index) => (
-        <div 
-          key={index}
-          className={`absolute text-[var(--primary-glow)] text-xs opacity-0 ${animateRunes ? 'rune-activate' : ''}`}
-          style={{
-            top: rune.top,
-            left: rune.left,
-            animationDelay: rune.delay
-          }}
-        >
-          {rune.symbol}
-        </div>
-      ))}
       
       {/* Logo */}
       <div className="flex items-center">
@@ -192,38 +113,15 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </nav>
       
-      {/* Wallet Connection - Different styling for mobile/desktop */}
-      <div className="flex items-center space-x-2">
-        {/* Wallet button - Responsive styling */}
-        <div className="hidden md:block">
-          {/* Custom styled AppKit button wrapper for desktop */}
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-full opacity-75 group-hover:opacity-100 blur group-hover:blur-md transition duration-1000"></div>
-            <div className="relative">
-              {/* @ts-ignore - Custom web component */}
-              <appkit-button />
-            </div>
-          </div>
-        </div>
-        
-        {/* Mobile wallet button */}
-        <div className="md:hidden">
-          {renderWalletButton()}
+      {/* Admin Label */}
+      <div className="flex items-center">
+        <div className="bg-[var(--primary)]/20 text-[var(--primary)] px-3 py-1 rounded-full text-sm font-medium border border-[var(--primary)]/30">
+          Admin Panel
         </div>
       </div>
-      
-      
-      {/* Add keyframes for particle animation - using fixed values to prevent hydration mismatch */}
-      <style jsx>{`
-        @keyframes particle-float {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-          50% { opacity: 0.8; }
-          100% { transform: translate(calc(-50% + 10px), calc(-50% - 20px)) scale(0); opacity: 0; }
-        }
-      `}</style>
     </header>
   );
 };
 
 // Memoize the component to prevent unnecessary re-renders
-export default memo(Header);
+export default memo(AdminHeader);

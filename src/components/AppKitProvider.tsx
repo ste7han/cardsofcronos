@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, createContext, useContext } from 'react';
-import { getAppKit } from '@/lib/appkit';
+import { getAppKit, initAppKit } from '@/lib/appkit';
 
 // Create a context to track AppKit initialization
 const AppKitContext = createContext<boolean>(false);
@@ -23,17 +23,24 @@ const AppKitProvider: React.FC<AppKitProviderProps> = ({ children }) => {
     setIsClient(true);
   }, []);
 
-  // Check if AppKit is initialized on the client side
+  // Initialize AppKit on the client side
   useEffect(() => {
     if (!isClient) return;
     
     // Check if AppKit is already initialized
-    const appKit = getAppKit();
+    let appKit = getAppKit();
     if (appKit) {
       console.log('AppKit is already initialized');
       setInitialized(true);
     } else {
-      console.error('AppKit is not initialized');
+      // Initialize AppKit if not already initialized
+      try {
+        appKit = initAppKit();
+        console.log('AppKit initialized successfully');
+        setInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize AppKit:', error);
+      }
     }
   }, [isClient]);
 
