@@ -101,10 +101,16 @@ const BurnCounter: React.FC = () => {
     // Set up a refresh interval
     const intervalId = setInterval(fetchBurnStats, 60000); // Refresh every minute
     
-    // Subtle energy fluctuation
+    // Subtle energy fluctuation - using a deterministic pattern instead of random
+    let direction = 1;
     const energyFluctuationId = setInterval(() => {
       if (!animateCounter) {
-        setOrbEnergy(prev => prev + (Math.random() * 2 - 1));
+        setOrbEnergy(prev => {
+          // Change direction if reaching bounds
+          if (prev >= 80) direction = -1;
+          if (prev <= 20) direction = 1;
+          return prev + (direction * 0.5);
+        });
       }
     }, 2000);
 
@@ -253,20 +259,7 @@ const BurnCounter: React.FC = () => {
                 )}
               </div>
               
-              {/* Particle effects - only show on client side */}
-              {isClient && Array.from({ length: 8 }).map((_, i) => (
-                <div 
-                  key={i}
-                  className="absolute w-1 h-1 rounded-full bg-[#FFD700]"
-                  style={{
-                    left: '50%',
-                    top: '50%',
-                    opacity: 0,
-                    transform: 'translate(-50%, -50%)',
-                    animation: `particle-float ${3 + i * 0.5}s infinite ${i * 0.2}s`
-                  }}
-                ></div>
-              ))}
+              {/* Particle effects removed to prevent hydration mismatch */}
               
               {/* Hexagonal energy lines - only animate on client side */}
               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
@@ -305,12 +298,6 @@ const BurnCounter: React.FC = () => {
         @keyframes orbit {
           0% { transform: translateX(-50%) rotate(0deg) translateY(-120%) rotate(0deg); }
           100% { transform: translateX(-50%) rotate(360deg) translateY(-120%) rotate(-360deg); }
-        }
-        
-        @keyframes particle-float {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-          50% { opacity: 0.8; }
-          100% { transform: translate(calc(-50% + ${Math.random() * 60 - 30}px), calc(-50% - ${Math.random() * 60}px)) scale(0); opacity: 0; }
         }
       `}</style>
     </div>

@@ -41,10 +41,24 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
+  // Store card attribute values in state to ensure consistency between renders
+  const [cardAttributes, setCardAttributes] = useState({
+    power: 80,
+    defense: 80,
+    magic: 80
+  });
   
   // Set isClient to true once component mounts on client
   useEffect(() => {
     setIsClient(true);
+    // Generate random values only once after component mounts on client
+    if (typeof window !== 'undefined') {
+      setCardAttributes({
+        power: Math.floor(Math.random() * 30) + 70,
+        defense: Math.floor(Math.random() * 30) + 70,
+        magic: Math.floor(Math.random() * 30) + 70
+      });
+    }
   }, []);
 
   // Default image if no preview is provided
@@ -159,19 +173,19 @@ const CardPreview: React.FC<CardPreviewProps> = ({
                 <div className="grid grid-cols-3 gap-1 w-full mt-auto">
                   <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
                     <div className="text-xs font-bold text-[var(--primary-glow)]">
-                      {Math.floor(Math.random() * 30) + 70}
+                      {cardAttributes.power}
                     </div>
                     <div className="text-[8px] text-white/70">Power</div>
                   </div>
                   <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
                     <div className="text-xs font-bold text-[var(--primary-glow)]">
-                      {Math.floor(Math.random() * 30) + 70}
+                      {cardAttributes.defense}
                     </div>
                     <div className="text-[8px] text-white/70">Defense</div>
                   </div>
                   <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
                     <div className="text-xs font-bold text-[var(--primary-glow)]">
-                      {Math.floor(Math.random() * 30) + 70}
+                      {cardAttributes.magic}
                     </div>
                     <div className="text-[8px] text-white/70">Magic</div>
                   </div>

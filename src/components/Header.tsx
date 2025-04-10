@@ -213,12 +213,12 @@ const Header: React.FC<HeaderProps> = ({
       </div>
       
       
-      {/* Add keyframes for particle animation */}
+      {/* Add keyframes for particle animation - using fixed values to prevent hydration mismatch */}
       <style jsx>{`
         @keyframes particle-float {
           0% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
           50% { opacity: 0.8; }
-          100% { transform: translate(calc(-50% + ${Math.random() * 30 - 15}px), calc(-50% - ${Math.random() * 30}px)) scale(0); opacity: 0; }
+          100% { transform: translate(calc(-50% + 10px), calc(-50% - 20px)) scale(0); opacity: 0; }
         }
       `}</style>
     </header>
