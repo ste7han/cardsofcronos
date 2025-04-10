@@ -45,6 +45,7 @@ const metadata = {
 
 // Initialize AppKit at the module level
 let appKitInstance: any = null;
+let initializationError: Error | null = null;
 
 // Only initialize on the client side
 if (typeof window !== 'undefined') {
@@ -62,9 +63,20 @@ if (typeof window !== 'undefined') {
     
     console.log('Reown AppKit initialized with Cronos chain');
   } catch (error) {
+    initializationError = error as Error;
     console.error('Failed to initialize AppKit:', error);
+    // Throw error to prevent application from running with invalid state
+    throw new Error('Failed to initialize AppKit. Please check your configuration and try again.');
   }
 }
+
+// Export function to check initialization status
+export const isAppKitInitialized = () => {
+  if (initializationError) {
+    throw initializationError;
+  }
+  return !!appKitInstance;
+};
 
 // Export hooks for use in components
 export const useAppKit = useReownAppKit;

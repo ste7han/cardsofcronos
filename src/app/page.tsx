@@ -10,7 +10,8 @@ import CardForm from '@/components/CardForm';
 import ScratchCard from '@/components/ScratchCard';
 import BottomNavigation from '@/components/BottomNavigation';
 import { initEmailJS } from '@/lib/email';
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import { useAppKitInitialized } from '@/components/AppKitProvider';
+import { useAppKit as useCustomAppKit } from '@/hooks/useAppKit';
 
 export default function Home() {
   // Add isClient state to prevent hydration mismatch
@@ -84,13 +85,15 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isClient]);
 
-  // Get the appKit and account directly
-  const appKitAccount = useAppKitAccount();
-  const { open } = useAppKit();  // Now properly wrapped in AppKit from context
-
-  // Create refs for wallet state
-  const [isConnected, setIsConnected] = useState(false);
-  const [address, setAddress] = useState<string | undefined>(undefined);
+  // Use our custom hook that safely wraps AppKit hooks
+  const { isInitialized, appKitAccount, appKit } = useCustomAppKit();
+  
+  // Extract values only when initialized
+  const isConnected = appKitAccount?.isConnected || false;
+  const address = appKitAccount?.address;
+  const open = appKit?.open || (() => {
+    console.error('AppKit not initialized yet');
+  });
 
   // Handle wallet connection
   const handleConnectWallet = () => {
@@ -104,15 +107,20 @@ export default function Home() {
     }
   };
 
-  // Update wallet connection status
-  useEffect(() => {
-    if (!isClient) return;
+  // Example functions that demonstrate smart contract interaction based on todo.md
+  const getTokenBalance = async () => {
+    if (!isConnected) throw Error('User disconnected');
     
-    // Use the appKitAccount to check connection status
-    setIsConnected(!!appKitAccount?.isConnected);
-    setAddress(appKitAccount?.address);
-    
-  }, [isClient, appKitAccount]);
+    try {
+      // Implementation would follow the pattern in todo.md
+      console.log(`Getting balance for address: ${address}`);
+      // Actual implementation would use ethersProvider and contract calls
+    } catch (error) {
+      console.error('Error getting token balance:', error);
+    }
+  };
+
+  // No need for the extra effect since we're using the hook values directly
 
   return (
     <div className="min-h-screen">

@@ -1,7 +1,43 @@
 'use client';
 
-import React, { useEffect, useState, createContext, useContext } from 'react';
-import { getAppKit, initAppKit } from '@/lib/appkit';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createAppKit } from '@reown/appkit/react';
+import { Ethers5Adapter } from '@reown/appkit-adapter-ethers5';
+
+// Define Cronos chain
+const cronos = {
+  id: 25,
+  name: 'Cronos',
+  chainNamespace: 'eip155',
+  caipNetworkId: 'eip155:25',
+  nativeCurrency: {
+    name: 'Cronos',
+    symbol: 'CRO',
+    decimals: 18
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://evm.cronos.org']
+    }
+  },
+  blockExplorers: {
+    default: {
+      name: 'Cronoscan',
+      url: 'https://cronoscan.com'
+    }
+  }
+};
+
+// Project ID from Reown Cloud
+const projectId = '8d7572d8e272d20865722c1fe193e098';
+
+// Metadata for the application
+const metadata = {
+  name: 'Cards of Cronos',
+  description: 'The ultimate fantasy card collection for the Cronos blockchain',
+  url: 'https://cardsofcronos.com',
+  icons: ['/logo.svg']
+};
 
 // Create a context to track AppKit initialization
 const AppKitContext = createContext<boolean>(false);
@@ -14,38 +50,30 @@ interface AppKitProviderProps {
 }
 
 const AppKitProvider: React.FC<AppKitProviderProps> = ({ children }) => {
-  // Add isClient state to prevent hydration mismatch
-  const [isClient, setIsClient] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Set isClient to true once component mounts on client
+  // Initialize AppKit on mount
   useEffect(() => {
-    setIsClient(true);
+    try {
+      createAppKit({
+        adapters: [new Ethers5Adapter()],
+        metadata,
+        networks: [cronos],
+        projectId,
+        features: {
+          analytics: true
+        }
+      });
+      setInitialized(true);
+      console.log('AppKit initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize AppKit:', error);
+      // Handle error appropriately (e.g., show error message to user)
+    }
   }, []);
 
-  // Initialize AppKit on the client side
-  useEffect(() => {
-    if (!isClient) return;
-    
-    // Check if AppKit is already initialized
-    let appKit = getAppKit();
-    if (appKit) {
-      console.log('AppKit is already initialized');
-      setInitialized(true);
-    } else {
-      // Initialize AppKit if not already initialized
-      try {
-        appKit = initAppKit();
-        console.log('AppKit initialized successfully');
-        setInitialized(true);
-      } catch (error) {
-        console.error('Failed to initialize AppKit:', error);
-      }
-    }
-  }, [isClient]);
-
   return (
-    <AppKitContext.Provider value={isClient ? initialized : false}>
+    <AppKitContext.Provider value={initialized}>
       {children}
     </AppKitContext.Provider>
   );
