@@ -72,11 +72,46 @@ const defaultCards = [
 // Rarity colors for styling
 const rarityColors = {
   Common: 'from-gray-400 to-gray-600',
-  Uncommon: 'from-green-400 to-green-600',
-  Rare: 'from-[#3A0CA3] to-[#9D4EDD]',
-  Epic: 'from-[#F72585] to-[#3A0CA3]',
-  Mythical: 'from-[#FFD700] to-[#B14EFF]'
+  Rare: 'from-yellow-400 to-yellow-600',
+  Epic: 'from-purple-400 to-purple-600',
+  Legendary: 'from-orange-400 to-orange-600',
+  Mythical: 'from-gray-900 to-gray-700'
 };
+
+// Card type colors for styling
+const typeColors = {
+  Project: 'from-green-400 to-green-600',
+  Founder: 'from-red-400 to-red-600',
+  Crofam: 'from-blue-400 to-blue-600',
+  Influencer: 'from-purple-400 to-purple-600',
+  Event: 'from-yellow-400 to-yellow-600',
+  Roast: 'from-red-400 to-red-600',
+  Special: 'from-gray-900 to-gray-700',
+  Parody: 'from-purple-400 to-purple-600',
+  Fusion: 'from-amber-800 to-amber-600'
+};
+
+// Card types with fire costs
+const cardTypes = [
+  { name: 'Project', emoji: '🟩', cost: '100k 🔥' },
+  { name: 'Founder', emoji: '🟥', cost: '100k 🔥' },
+  { name: 'Crofam', emoji: '🟦', cost: '100k 🔥' },
+  { name: 'Influencer', emoji: '🟪', cost: '100k 🔥' },
+  { name: 'Event', emoji: '🟨', cost: '100k 🔥' },
+  { name: 'Roast', emoji: '🟥', cost: '250k 🔥' },
+  { name: 'Special', emoji: '⚫', cost: '500k 🔥' },
+  { name: 'Parody', emoji: '🟪', cost: '250k 🔥' },
+  { name: 'Fusion', emoji: '🟫', cost: '250k 🔥' }
+];
+
+// Rarity levels with fire costs
+const rarityLevels = [
+  { name: 'Common', emoji: '⚪', cost: '10k 🔥' },
+  { name: 'Rare', emoji: '🟨', cost: '20k 🔥' },
+  { name: 'Epic', emoji: '🟪', cost: '50k 🔥' },
+  { name: 'Legendary', emoji: '🟧', cost: '100k 🔥' },
+  { name: 'Mythical', emoji: '⚫', cost: '250k 🔥' }
+];
 
 export default function CollectionPage() {
   // Add isClient state to prevent hydration mismatch
@@ -87,7 +122,7 @@ export default function CollectionPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filterRarity, setFilterRarity] = useState('All');
   const [filterType, setFilterType] = useState('All');
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('newest');
   const [selectedCard, setSelectedCard] = useState<typeof cardCollection[0] | null>(null);
   
   // Add useRef consistently to maintain hook order
@@ -198,25 +233,24 @@ export default function CollectionPage() {
     
     // Apply sorting
     filteredCards.sort((a, b) => {
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      } else if (sortBy === 'rarity') {
-        const rarityOrder = { 'Common': 1, 'Uncommon': 2, 'Rare': 3, 'Epic': 4, 'Mythical': 5 };
-        return rarityOrder[b.rarity as keyof typeof rarityOrder] - rarityOrder[a.rarity as keyof typeof rarityOrder];
-      } else if (sortBy === 'power') {
-        return b.attributes.power - a.attributes.power;
+      if (sortBy === 'newest') {
+        // Assuming newer cards have higher IDs or would be sorted in reverse order
+        return b.id.localeCompare(a.id);
+      } else if (sortBy === 'oldest') {
+        // Assuming older cards have lower IDs
+        return a.id.localeCompare(b.id);
       }
       return 0;
     });
     
     setCards(filteredCards);
-  }, [isClient, filterRarity, filterType, sortBy]);
+  }, [isClient, filterRarity, filterType, sortBy, cardCollection]);
   
-  // Get unique types for filter
-  const types = ['All', ...new Set(cardCollection.map(card => card.type))];
+  // Predefined types and rarities for filter
+  const types = ['All', ...cardTypes.map(type => type.name)];
   
-  // Get unique rarities for filter
-  const rarities = ['All', ...new Set(cardCollection.map(card => card.rarity))];
+  // Predefined rarities for filter
+  const rarities = ['All', ...rarityLevels.map(rarity => rarity.name)];
   
   return (
     <div className="min-h-screen" ref={pageRef}>
@@ -283,8 +317,11 @@ export default function CollectionPage() {
                   value={filterRarity}
                   onChange={(e) => setFilterRarity(e.target.value)}
                 >
-                  {rarities.map(rarity => (
-                    <option key={rarity} value={rarity}>{rarity}</option>
+                  <option value="All">All Rarities</option>
+                  {rarityLevels.map(rarity => (
+                    <option key={rarity.name} value={rarity.name}>
+                      {rarity.emoji} {rarity.name} ({rarity.cost})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -297,8 +334,11 @@ export default function CollectionPage() {
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
-                  {types.map(type => (
-                    <option key={type} value={type}>{type}</option>
+                  <option value="All">All Types</option>
+                  {cardTypes.map(type => (
+                    <option key={type.name} value={type.name}>
+                      {type.emoji} {type.name} ({type.cost})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -311,9 +351,8 @@ export default function CollectionPage() {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
-                  <option value="name">Name (A-Z)</option>
-                  <option value="rarity">Rarity (Highest)</option>
-                  <option value="power">Power (Highest)</option>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
                 </select>
               </div>
               

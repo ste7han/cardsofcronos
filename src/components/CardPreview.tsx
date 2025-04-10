@@ -6,27 +6,33 @@ import Image from 'next/image';
 interface CardPreviewProps {
   name: string;
   description: string;
-  cardType: 'Project' | 'Roast' | 'Influencer' | 'Special';
-  rarity: 'Epic' | 'Rare' | 'Mythical';
+  cardType: 'Project' | 'Founder' | 'Crofam' | 'Influencer' | 'Event' | 'Roast' | 'Special' | 'Parody' | 'Fusion';
+  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythical';
   imagePreview: string | null;
+  animated?: boolean;
   isLoading?: boolean;
 }
 
 // Rarity colors for styling
 const rarityColors = {
   Common: 'from-gray-400 to-gray-600',
-  Uncommon: 'from-green-400 to-green-600',
-  Rare: 'from-[#3A0CA3] to-[#9D4EDD]',
-  Epic: 'from-[#F72585] to-[#3A0CA3]',
-  Mythical: 'from-[#FFD700] to-[#B14EFF]'
+  Rare: 'from-[#FFD700] to-[#FFA500]',
+  Epic: 'from-[#9D4EDD] to-[#6A0DAD]',
+  Legendary: 'from-[#FF8C00] to-[#FF4500]',
+  Mythical: 'from-[#000000] to-[#333333]'
 };
 
-// Card type icons
+// Card type icons and colors
 const cardTypeIcons = {
-  Project: '🏗️',
-  Roast: '🔥',
-  Influencer: '🌟',
-  Special: '✨'
+  Project: '🟩',
+  Founder: '🟥',
+  Crofam: '🟦',
+  Influencer: '🟪',
+  Event: '🟨',
+  Roast: '🟥',
+  Special: '⚫',
+  Parody: '🟪',
+  Fusion: '🟫'
 };
 
 const CardPreview: React.FC<CardPreviewProps> = ({
@@ -35,6 +41,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   cardType,
   rarity,
   imagePreview,
+  animated = false,
   isLoading = false
 }) => {
   // Add isClient state to prevent hydration mismatch
@@ -77,7 +84,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xs mx-auto perspective-1000">
+    <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs mx-auto perspective-1000">
       {isLoading ? (
         // Loading state
         <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50 animate-pulse flex items-center justify-center">
@@ -88,7 +95,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({
         <div 
           className={`card-3d w-full aspect-[2/3] rounded-lg cursor-pointer transition-all duration-500 preserve-3d ${
             isFlipped ? 'rotate-y-180' : ''
-          } ${isHovered ? 'scale-105' : ''}`}
+          } ${isHovered ? 'scale-105' : ''} max-h-[300px]`}
           onClick={handleFlip}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -132,6 +139,13 @@ const CardPreview: React.FC<CardPreviewProps> = ({
               <div className="absolute top-1 left-1 w-4 h-4 flex items-center justify-center bg-black/50 rounded-full">
                 <span className="text-[10px]">{cardTypeIcons[cardType as keyof typeof cardTypeIcons]}</span>
               </div>
+              
+              {/* Animated indicator */}
+              {animated && (
+                <div className="absolute top-1 right-6 w-4 h-4 flex items-center justify-center bg-[#1E90FF]/70 rounded-full animate-pulse">
+                  <span className="text-[10px]">🟦</span>
+                </div>
+              )}
               
               {/* Flip indicator - hidden on small cards */}
               <div className="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/50 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">

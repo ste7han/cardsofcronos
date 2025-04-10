@@ -143,41 +143,56 @@ export const getWalletAddress = (): string | undefined => {
   }
 };
 
-// Calculate token amount based on card type and rarity
+// Calculate token amount based on card type, rarity, and animated option
 export const calculateTokenAmount = (
-  cardType: 'Project' | 'Roast' | 'Influencer' | 'Special',
-  rarity: 'Epic' | 'Rare' | 'Mythical'
+  cardType: 'Project' | 'Founder' | 'Crofam' | 'Influencer' | 'Event' | 'Roast' | 'Special' | 'Parody' | 'Fusion',
+  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythical',
+  animated: boolean = false
 ): number => {
-  let baseAmount = 0;
+  let totalAmount = 0;
   
   // Base amount from card type
   switch (cardType) {
     case 'Project':
-      baseAmount = 100000;
+    case 'Founder':
+    case 'Crofam':
+    case 'Influencer':
+    case 'Event':
+      totalAmount += 100000;
       break;
     case 'Roast':
-      baseAmount = 250000;
-      break;
-    case 'Influencer':
-      baseAmount = 100000;
+    case 'Parody':
+    case 'Fusion':
+      totalAmount += 250000;
       break;
     case 'Special':
-      baseAmount = 500000;
+      totalAmount += 500000;
       break;
   }
   
   // Additional amount from rarity
   switch (rarity) {
-    case 'Epic':
-      baseAmount += 50000;
+    case 'Common':
+      totalAmount += 10000;
       break;
     case 'Rare':
-      baseAmount += 20000;
+      totalAmount += 20000;
+      break;
+    case 'Epic':
+      totalAmount += 50000;
+      break;
+    case 'Legendary':
+      totalAmount += 100000;
       break;
     case 'Mythical':
-      baseAmount += 250000;
+      totalAmount += 250000;
       break;
   }
   
-  return baseAmount;
+  // Additional amount for animated cards
+  if (animated) {
+    totalAmount += 500000;
+  }
+  
+  return totalAmount;
 };

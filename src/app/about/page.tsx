@@ -76,21 +76,26 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-            <div className="order-1 md:order-2 flex items-center justify-center">
-              <div className="relative w-full max-w-md aspect-square perspective-1000">
-                <div className="absolute inset-0 card-3d rotate-y-5 rotate-x-2 preserve-3d">
+          <div className="order-1 md:order-2 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-md perspective-1000">
+              <div className="card-3d preserve-3d rounded-xl overflow-hidden shadow-2xl transition-all duration-500 hover:shadow-[0_0_30px_rgba(157,78,221,0.6)]">
+                <div className="relative">
                   <Image 
                     src="/sxfdO1IW9tFd2uK7oUg54HWLfM8.png"
                     alt="Cards of Cronos Vision"
-                    width={400}
-                    height={400}
-                    className="rounded-lg object-cover w-full h-full"
+                    width={500}
+                    height={500}
+                    className="rounded-lg object-contain w-full"
+                    style={{ maxHeight: '450px' }}
                   />
-                  <div className="absolute inset-0 rounded-lg border-2 border-white/30 shadow-inner"></div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/30 to-transparent opacity-70"></div>
+                  <div className="absolute inset-0 rounded-lg border border-white/30 shadow-inner"></div>
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/20 to-transparent opacity-60"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--cosmic-black)]/80 via-transparent to-transparent opacity-40"></div>
                 </div>
               </div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-[var(--primary-glow)]/20 to-[var(--secondary)]/20 rounded-xl blur-xl opacity-70 -z-10 animate-pulse-subtle"></div>
             </div>
+          </div>
           </div>
           
           {/* Features section */}

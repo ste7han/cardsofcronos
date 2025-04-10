@@ -16,8 +16,8 @@ import { db } from './config';
 
 // Types
 export interface CardRequest {
-  type: 'Project' | 'Roast' | 'Influencer' | 'Special';
-  rarity: 'Epic' | 'Rare' | 'Mythical';
+  type: 'Project' | 'Founder' | 'Crofam' | 'Influencer' | 'Event' | 'Roast' | 'Special' | 'Parody' | 'Fusion';
+  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythical';
   name: string;
   description: string;
   imageUrl: string;
@@ -29,6 +29,7 @@ export interface CardRequest {
   createdAt: Timestamp;
   userAddress?: string;
   adminNotes?: string;
+  animated?: boolean;
 }
 
 // Collection references
