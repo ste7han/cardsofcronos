@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { StepProps } from './types';
+import Image from 'next/image';
 
 const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, onBack, burnAmount = 0 }) => {
   const watchAnimated = watch('animated');
@@ -34,11 +35,14 @@ const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, 
             onChange={() => handleSelectAnimated(false)}
           />
           <div className="flex flex-col items-center">
-            <div className="w-full h-32 mb-3 overflow-hidden rounded-lg flex items-center justify-center">
-              <img 
+            <div className="w-full h-32 mb-3 overflow-hidden rounded-lg flex items-center justify-center relative">
+              <Image 
                 src="/animated.png" 
                 alt="Static Image"
-                className="w-full h-full object-cover rounded-lg"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                style={{ objectFit: 'contain' }}
+                className="rounded-lg"
               />
             </div>
             <h3 className="text-xl font-bold">No</h3>

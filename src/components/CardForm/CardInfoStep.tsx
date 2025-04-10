@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { StepProps } from './types';
+import Image from 'next/image';
 
 interface CardInfoStepProps extends StepProps {
   image: File | null;
@@ -92,11 +93,15 @@ const CardInfoStep: React.FC<CardInfoStepProps> = ({
             <label htmlFor="image-upload" className="cursor-pointer block min-h-[120px] flex flex-col items-center justify-center">
               {imagePreview ? (
                 <div className="relative mx-auto w-36 h-36 sm:w-40 sm:h-40">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover rounded-md"
-                  />
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={imagePreview}
+                      alt="Preview"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      className="rounded-md"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={(e) => {

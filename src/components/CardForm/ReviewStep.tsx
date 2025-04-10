@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { StepProps } from './types';
+import Image from 'next/image';
 
 interface ReviewStepProps extends Omit<StepProps, 'onNext'> {
   imagePreview: string | null;
@@ -73,8 +74,15 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
         {imagePreview && (
           <div className="mt-4 p-3 bg-[var(--cosmic-black)]/30 rounded-lg">
             <h3 className="text-base font-bold text-[var(--secondary)]">Image</h3>
-            <div className="w-40 h-40 sm:w-32 sm:h-32 mt-2 mx-auto">
-              <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
+            <div className="w-40 h-40 sm:w-32 sm:h-32 mt-2 mx-auto relative">
+              <Image 
+                src={imagePreview} 
+                alt="Preview" 
+                fill
+                sizes="(max-width: 768px) 160px, 128px"
+                style={{ objectFit: 'cover' }}
+                className="rounded-md" 
+              />
             </div>
           </div>
         )}

@@ -6,6 +6,10 @@ const nextConfig = {
   },
   // Explicitly set the output option to ensure consistent bundling
   output: 'export',
+  // Disable the Image Optimization API for static export
+  images: {
+    unoptimized: true,
+  },
   // Server-side package configuration
   serverExternalPackages: []
 };

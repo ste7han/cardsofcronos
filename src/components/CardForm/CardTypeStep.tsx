@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { StepProps, CardType } from './types';
+import Image from 'next/image';
 
 const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }) => {
   const watchCardType = watch('cardType');
@@ -19,8 +20,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Project Card */}
         <CardTypeOption
           type="Project"
-          icon="🟩"
-          color="bg-green-500"
+          imagePath="/project.png"
           cost="100,000 🔥"
           isSelected={watchCardType === 'Project'}
           register={register}
@@ -30,8 +30,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Founder Card */}
         <CardTypeOption
           type="Founder"
-          icon="🟥"
-          color="bg-red-500"
+          imagePath="/founder.png"
           cost="100,000 🔥"
           isSelected={watchCardType === 'Founder'}
           register={register}
@@ -41,8 +40,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Crofam Card */}
         <CardTypeOption
           type="Crofam"
-          icon="🟦"
-          color="bg-blue-500"
+          imagePath="/crofam.png"
           cost="100,000 🔥"
           isSelected={watchCardType === 'Crofam'}
           register={register}
@@ -52,8 +50,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Influencer Card */}
         <CardTypeOption
           type="Influencer"
-          icon="🟪"
-          color="bg-purple-500"
+          imagePath="/influencer.png"
           cost="100,000 🔥"
           isSelected={watchCardType === 'Influencer'}
           register={register}
@@ -63,8 +60,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Event Card */}
         <CardTypeOption
           type="Event"
-          icon="🟨"
-          color="bg-yellow-500"
+          imagePath="/rare.png" // Using rare.png for Event type
           cost="100,000 🔥"
           isSelected={watchCardType === 'Event'}
           register={register}
@@ -74,8 +70,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Roast Card */}
         <CardTypeOption
           type="Roast"
-          icon="🟥"
-          color="bg-red-500"
+          imagePath="/roast.png"
           cost="250,000 🔥"
           isSelected={watchCardType === 'Roast'}
           register={register}
@@ -85,8 +80,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Special Card */}
         <CardTypeOption
           type="Special"
-          icon="⚫"
-          color="bg-black"
+          imagePath="/special.png"
           cost="500,000 🔥"
           isSelected={watchCardType === 'Special'}
           register={register}
@@ -96,8 +90,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Parody Card */}
         <CardTypeOption
           type="Parody"
-          icon="🟪"
-          color="bg-purple-500"
+          imagePath="/parody.png"
           cost="250,000 🔥"
           isSelected={watchCardType === 'Parody'}
           register={register}
@@ -107,8 +100,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Fusion Card */}
         <CardTypeOption
           type="Fusion"
-          icon="🟫"
-          color="bg-amber-800"
+          imagePath="/legendary.png" // Using legendary.png for Fusion type
           cost="250,000 🔥"
           isSelected={watchCardType === 'Fusion'}
           register={register}
@@ -121,8 +113,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
 
 interface CardTypeOptionProps {
   type: CardType;
-  icon: string;
-  color: string;
+  imagePath: string;
   cost: string;
   isSelected: boolean;
   register: StepProps['register'];
@@ -131,8 +122,7 @@ interface CardTypeOptionProps {
 
 const CardTypeOption: React.FC<CardTypeOptionProps> = ({
   type,
-  icon,
-  color,
+  imagePath,
   cost,
   isSelected,
   register,
@@ -157,8 +147,15 @@ const CardTypeOption: React.FC<CardTypeOptionProps> = ({
         onChange={onSelect}
       />
       <div className="flex flex-col items-center">
-        <div className={`w-full h-32 mb-3 overflow-hidden rounded-lg ${color} flex items-center justify-center`}>
-          <span className="text-4xl">{icon}</span>
+        <div className="w-full h-32 mb-3 overflow-hidden rounded-lg flex items-center justify-center relative">
+          <Image 
+            src={imagePath} 
+            alt={`${type} Card Type`}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            style={{ objectFit: 'contain' }}
+            className="rounded-lg"
+          />
         </div>
         <h3 className="text-xl font-bold">{type}</h3>
         <p className="text-sm text-gray-300">{cost}</p>
