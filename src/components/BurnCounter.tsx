@@ -290,7 +290,7 @@ const BurnCounter: React.FC = () => {
       </div>
       
       <p className="text-xs md:text-sm mt-4 md:mt-6 text-white/80 relative z-10 font-medium tracking-wide font-['Spectral']">
-        Join the cosmic community and contribute to the eternal flame!
+        Join the Cronos Cards community and contribute to the eternal flame!
       </p>
       
       {/* Keyframes for orbit animation */}

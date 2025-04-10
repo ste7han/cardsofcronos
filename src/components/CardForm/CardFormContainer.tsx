@@ -161,7 +161,9 @@ const CardFormContainer: React.FC<CardFormProps> = ({ isWalletConnected, onConne
       className="arcane-border glass-card p-4 sm:p-6 max-w-3xl mx-auto hexagon-bg relative overflow-hidden my-8 max-h-[80vh] overflow-y-auto"
       style={{ 
         maxHeight: 'calc(100vh - 160px)', /* Adjust based on header/footer height */
-        margin: '80px auto'
+        margin: '80px auto',
+        position: 'relative',
+        zIndex: 250 /* Higher than header's z-index of 200 */
       }}
     >
       {/* Decorative arcane overlay */}

@@ -312,7 +312,7 @@ export default function Home() {
         >
           <div className="text-center mb-4 md:mb-10">
             <h2 className="text-xl sm:text-3xl md:text-4xl font-bold font-['Cinzel'] mb-2 md:mb-4 tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[var(--secondary)] to-[var(--secondary-glow)]">
-              IN HOMEPAGE BURN
+              BURN TOKENS
             </h2>
             <p className="text-xs sm:text-sm md:text-base text-white/80 font-['Spectral'] max-w-2xl mx-auto px-2">
               Contribute to the ecosystem by burning tokens. Track the community's progress and earn rewards.
@@ -358,7 +358,7 @@ export default function Home() {
               href="#card-form"
               className="modern-btn-primary text-xs sm:text-sm px-5 py-2 sm:py-2.5 mb-2 inline-block"
             >
-              Join the Cronos Cards and forge your card
+              Forge your card
             </a>
           </div>
         </div>
@@ -371,12 +371,12 @@ export default function Home() {
       />
       
       {/* Card Form Modal - Improved for mobile */}
-      <div id="card-form" className="fixed inset-0 z-50 flex items-center justify-center hidden scroll-mt-24 target:flex overflow-y-auto">
+      <div id="card-form" className="fixed inset-0 z-[300] flex items-center justify-center hidden scroll-mt-24 target:flex overflow-y-auto">
         <div
           className="absolute inset-0 bg-black/80 backdrop-blur-sm"
           onClick={() => (window.location.hash = '')}
         ></div>
-        <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto p-2 sm:p-4 my-4" style={{ maxWidth: '100vw' }}>
+        <div className="relative z-[310] w-full max-w-4xl max-h-[90vh] overflow-auto p-2 sm:p-4 my-4" style={{ maxWidth: '100vw' }}>
           <div className="modern-card modern-hexagon-bg p-3 sm:p-6">
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-['Cinzel'] text-transparent bg-clip-text bg-gradient-to-r from-[var(--secondary)] to-[var(--secondary-glow)]">

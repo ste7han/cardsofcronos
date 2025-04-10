@@ -84,7 +84,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs mx-auto perspective-1000">
+    <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs mx-auto perspective-1000 relative z-[260]">
       {isLoading ? (
         // Loading state
         <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50 animate-pulse flex items-center justify-center">

@@ -482,7 +482,7 @@ export default function CollectionPage() {
       
       {/* Card detail modal - Improved for mobile */}
       {selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           {/* Backdrop - clicking anywhere outside the modal closes it */}
           <div 
             className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
@@ -490,7 +490,7 @@ export default function CollectionPage() {
           ></div>
           
           {/* Modal container with max height and scrolling */}
-          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-3 sm:p-6 rounded-xl border border-[var(--primary)]/30">
+          <div className="relative z-[310] w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-3 sm:p-6 rounded-xl border border-[var(--primary)]/30">
             {/* Close button - larger touch target for mobile */}
             <button 
               onClick={() => setSelectedCard(null)}
