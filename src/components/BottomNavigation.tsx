@@ -170,82 +170,34 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <div className="w-10 h-1 bg-white/30 rounded-full"></div>
         </div>
         
-        {/* Navigation bar with glass effect */}
-        <div className="bg-[var(--cosmic-black)]/95 backdrop-blur-xl border-t border-[var(--glass-border)] shadow-lg">
-          <div className="flex justify-around items-center px-2 py-3">
+        {/* Navigation bar with simple dark background */}
+        <div className="bg-[#050314] border-t border-[#1a1a2e]">
+          <div className="flex justify-around items-center px-2 py-4">
             {navItems.map((item) => {
               const isActive = activeItem === item.id;
-              const isForge = item.id === 'forge';
               const isProfile = item.id === 'profile';
               
               // Create the navigation item
               const navItem = (
                 <div 
                   key={item.id}
-                  className={`flex flex-col items-center justify-center ${
-                    isForge ? 'relative -mt-8' : ''
-                  }`}
+                  className="flex flex-col items-center justify-center"
                 >
-                  {/* Icon container with improved touch target */}
-                  <div 
-                    className={`
-                      flex items-center justify-center rounded-full
-                      ${isForge 
-                        ? 'w-16 h-16 bg-gradient-to-br from-[var(--secondary)] to-[var(--primary)] p-3.5 shadow-lg border-2 border-white/20 relative z-10 animate-pulse-subtle' 
-                        : `w-14 h-14 p-3 ${isActive ? 'bg-[var(--primary)]/20' : 'bg-transparent'}`
-                      }
-                      transition-all duration-200 relative
-                    `}
-                  >
-                    {/* Special glow effects for Forge button */}
-                    {isForge && (
-                      <>
-                        {/* Inner glow */}
-                        <div className="absolute inset-0 rounded-full bg-[var(--primary)] opacity-20 blur-md -z-10"></div>
-                        
-                        {/* Outer glow */}
-                        <div className="absolute -inset-2 rounded-full bg-[var(--secondary)] opacity-10 blur-lg -z-20"></div>
-                      </>
-                    )}
-                    {/* Active indicator ring */}
-                    {isActive && !isForge && (
-                      <div className="absolute inset-0 rounded-full border-2 border-[var(--secondary)] animate-pulse-fade"></div>
-                    )}
-                    
-                    <div className={`
-                      ${isActive && !isForge ? 'text-[var(--secondary)]' : 'text-white'}
-                      ${isForge ? 'text-white' : ''}
-                    `}>
+                  {/* Icon container */}
+                  <div className="flex items-center justify-center mb-1">
+                    <div className={`text-[#FFD700] ${isActive ? 'opacity-100' : 'opacity-80'}`}>
                       {item.icon}
                     </div>
                     
-                    {/* Enhanced connection status indicator for profile */}
-                    {isProfile && (
-                      <div className={`absolute top-1 right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center
-                        ${isWalletConnected 
-                          ? 'bg-green-500 animate-pulse-glow' 
-                          : 'bg-red-500'
-                        }`}
-                      >
-                        {isWalletConnected && (
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        )}
-                      </div>
+                    {/* Simple connection status indicator for profile */}
+                    {isProfile && isWalletConnected && (
+                      <div className="absolute top-0 right-0 w-2 h-2 rounded-full bg-green-500"></div>
                     )}
                   </div>
                   
-                  {/* Label with better visibility */}
-                  <span className={`
-                    text-xs mt-1 font-medium tracking-wide
-                    ${isActive ? 'text-[var(--secondary)]' : 'text-white/80'}
-                    ${isForge ? 'text-white font-bold' : ''}
-                  `}>
+                  {/* Simple label */}
+                  <span className={`text-xs font-medium ${isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/80'}`}>
                     {item.label}
-                    
-                    {/* Active indicator dot under label */}
-                    {isActive && !isForge && (
-                      <span className="block mx-auto mt-1 w-1 h-1 rounded-full bg-[var(--secondary)]"></span>
-                    )}
                   </span>
                 </div>
               );
@@ -256,7 +208,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   <Link 
                     key={item.id}
                     href={item.href}
-                    className="flex flex-col items-center touch-manipulation active:opacity-80 transition-opacity"
+                    className="flex flex-col items-center touch-manipulation active:opacity-70 transition-opacity"
                     onClick={() => setActiveItem(item.id)}
                     aria-label={item.label}
                     aria-current={isActive ? 'page' : undefined}
@@ -268,7 +220,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 return (
                   <button
                     key={item.id}
-                    className="flex flex-col items-center touch-manipulation bg-transparent border-0 active:opacity-80 transition-opacity"
+                    className="flex flex-col items-center touch-manipulation bg-transparent border-0 active:opacity-70 transition-opacity"
                     onClick={() => {
                       setActiveItem(item.id);
                       if (item.onClick) item.onClick();

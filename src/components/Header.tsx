@@ -17,7 +17,6 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [animateRunes, setAnimateRunes] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
   // Set isClient to true once component mounts on client
@@ -51,25 +50,6 @@ const Header: React.FC<HeaderProps> = ({
     return () => clearTimeout(timer);
   }, []);
   
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    if (!mobileMenuOpen || typeof window === 'undefined') return;
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('#mobile-menu') && !target.closest('#menu-toggle')) {
-        setMobileMenuOpen(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [mobileMenuOpen]);
-  
-  // Close mobile menu on navigation
-  const handleNavigation = () => {
-    setMobileMenuOpen(false);
-  };
   
   // Empty array for rune symbols (removed as requested)
   const runeSymbols: { symbol: string; top: string; left: string; delay: string }[] = [];
@@ -146,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <header 
       className={`w-full max-w-[100vw] py-2 px-4 md:py-0.5 md:px-6 lg:px-10 flex justify-between items-center backdrop-blur-xl sticky top-0 z-[200] transition-all duration-500 ${
-        scrolled || mobileMenuOpen
+        scrolled
           ? 'bg-gradient-to-r from-[var(--cosmic-black)]/95 to-[var(--cosmic-purple)]/80 shadow-lg shadow-[var(--primary)]/20 border-b border-[var(--glass-border)]' 
           : 'bg-gradient-to-r from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50'
       }`}
@@ -200,7 +180,7 @@ const Header: React.FC<HeaderProps> = ({
               key={index}
               href={item.href} 
               className="text-white/80 hover:text-[var(--primary-glow)] transition-all duration-300 relative group text-xs uppercase tracking-wider flex flex-col items-center px-2 py-1"
-              onClick={handleNavigation}
+              
             >
               {/* Text */}
               <span className="relative">
@@ -230,100 +210,8 @@ const Header: React.FC<HeaderProps> = ({
         <div className="md:hidden">
           {renderWalletButton()}
         </div>
-        
-        {/* Mobile menu toggle button */}
-        <button 
-          id="menu-toggle"
-          className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-[var(--cosmic-black)]/60 border border-[var(--glass-border)] active:scale-95 transition-transform duration-200"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileMenuOpen}
-        >
-          <div className="relative w-5 h-5">
-            <span 
-              className={`absolute h-0.5 w-5 bg-white rounded-full transition-all duration-300 ${
-                mobileMenuOpen ? 'rotate-45 top-2' : 'rotate-0 top-1'
-              }`}
-            ></span>
-            <span 
-              className={`absolute h-0.5 w-5 bg-white rounded-full transition-all duration-300 ${
-                mobileMenuOpen ? 'opacity-0' : 'opacity-100'
-              } top-2`}
-            ></span>
-            <span 
-              className={`absolute h-0.5 w-5 bg-white rounded-full transition-all duration-300 ${
-                mobileMenuOpen ? '-rotate-45 top-2' : 'rotate-0 top-3'
-              }`}
-            ></span>
-          </div>
-        </button>
       </div>
       
-      {/* Mobile Menu - Slide in from right */}
-      <div 
-        id="mobile-menu"
-        className={`fixed top-[60px] right-0 bottom-0 w-[250px] bg-[var(--cosmic-black)]/95 backdrop-blur-xl border-l border-[var(--glass-border)] z-[201] transition-transform duration-300 ease-in-out transform ${
-          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        } md:hidden`}
-        aria-hidden={!mobileMenuOpen}
-      >
-        {/* Mobile menu content */}
-        <div className="flex flex-col h-full p-5">
-          {/* Navigation links */}
-          <nav className="flex-1">
-            <ul className="space-y-4">
-              {navItems.map((item, index) => (
-                <li key={index}>
-                  <Link 
-                    href={item.href}
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--primary)]/10 active:bg-[var(--primary)]/20 transition-colors duration-200"
-                    onClick={handleNavigation}
-                  >
-                    <span className="text-[var(--primary-glow)]">{item.icon}</span>
-                    <span className="text-white font-medium">{item.name}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          
-          {/* Mobile menu footer */}
-          <div className="pt-4 border-t border-[var(--glass-border)]">
-            {/* Wallet status */}
-            {isWalletConnected && walletAddress && (
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                <span className="text-xs text-white/80">Connected: {formatWalletAddress(walletAddress)}</span>
-              </div>
-            )}
-            
-            {/* Mobile AppKit button */}
-            <div className="hidden">
-              {/* @ts-ignore - Custom web component */}
-              <appkit-button />
-            </div>
-            
-            {/* Custom connect button for mobile */}
-            {!isWalletConnected && (
-              <button 
-                onClick={onConnectWallet}
-                className="w-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] text-white py-3 rounded-lg font-medium text-sm uppercase tracking-wider active:scale-98 transition-transform duration-200"
-              >
-                Connect Wallet
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Backdrop for mobile menu */}
-      <div 
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] md:hidden transition-opacity duration-300 ${
-          mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={() => setMobileMenuOpen(false)}
-        aria-hidden="true"
-      ></div>
       
       {/* Add keyframes for particle animation */}
       <style jsx>{`
