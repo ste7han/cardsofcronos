@@ -312,7 +312,7 @@ export default function Home() {
         >
           <div className="text-center mb-4 md:mb-10">
             <h2 className="text-xl sm:text-3xl md:text-4xl font-bold font-['Cinzel'] mb-2 md:mb-4 tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[var(--secondary)] to-[var(--secondary-glow)]">
-              BURN TO EARN
+              IN HOMEPAGE BURN
             </h2>
             <p className="text-xs sm:text-sm md:text-base text-white/80 font-['Spectral'] max-w-2xl mx-auto px-2">
               Contribute to the ecosystem by burning tokens. Track the community's progress and earn rewards.
@@ -336,9 +336,9 @@ export default function Home() {
               
               <div className="modern-card p-4 md:p-6 text-center">
                 <div className="text-[var(--secondary)] text-2xl md:text-3xl mb-2 md:mb-3">✨</div>
-                <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2 font-['Cinzel']">Earn Rewards</h3>
+                <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2 font-['Cinzel']">Forge your Cronos Card</h3>
                 <p className="text-xs md:text-sm text-white/70">
-                  Get exclusive rewards and NFTs based on your burn contribution
+                  Get yourself or your project a custom card
                 </p>
               </div>
               
@@ -346,7 +346,7 @@ export default function Home() {
                 <div className="text-[var(--secondary)] text-2xl md:text-3xl mb-2 md:mb-3">📈</div>
                 <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2 font-['Cinzel']">Track Progress</h3>
                 <p className="text-xs md:text-sm text-white/70">
-                  Monitor the community's burn progress and your contribution
+                  On going development of Cronos Cards
                 </p>
               </div>
             </div>
@@ -358,7 +358,7 @@ export default function Home() {
               href="#card-form"
               className="modern-btn-primary text-xs sm:text-sm px-5 py-2 sm:py-2.5 mb-2 inline-block"
             >
-              START BURNING
+              Join the Cronos Cards and forge your card
             </a>
           </div>
         </div>

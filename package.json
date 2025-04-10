@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "firebase:init": "node scripts/firebase-init.js",
-    "emailjs:guide": "node scripts/emailjs-template.js"
+    "emailjs:guide": "node scripts/emailjs-template.js",
+    "add:admin": "node scripts/add-admin.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
