@@ -85,15 +85,44 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isClient]);
 
-  // Use our custom hook that safely wraps AppKit hooks
-  const { isInitialized, appKitAccount, appKit } = useCustomAppKit();
+  // Check if AppKit is initialized
+  const isAppKitReady = useAppKitInitialized();
   
-  // Extract values only when initialized
-  const isConnected = appKitAccount?.isConnected || false;
-  const address = appKitAccount?.address;
-  const open = appKit?.open || (() => {
-    console.error('AppKit not initialized yet');
+  // Only access AppKit when it's initialized
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | undefined>(undefined);
+  const [openAppKit, setOpenAppKit] = useState<() => void>(() => () => {
+    console.warn('AppKit not initialized yet');
   });
+  
+  // Use direct imports from @reown/appkit/react for wallet data
+  useEffect(() => {
+    if (!isClient || !isAppKitReady) return;
+    
+    // Wait a moment for AppKit to be fully initialized
+    const timer = setTimeout(() => {
+      try {
+        // Use the global window AppKit instance that was initialized in the provider
+        if (window.AppKitInstance) {
+          const walletInfo = window.AppKitInstance.getWalletInfo?.();
+          
+          if (walletInfo) {
+            setIsConnected(!!walletInfo.isConnected);
+            setAddress(walletInfo.address);
+          }
+          
+          // Set the open function
+          setOpenAppKit(() => () => {
+            window.AppKitInstance?.open?.();
+          });
+        }
+      } catch (error) {
+        console.error('Error accessing AppKit instance:', error);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [isClient, isAppKitReady]);
 
   // Handle wallet connection
   const handleConnectWallet = () => {
@@ -101,7 +130,7 @@ export default function Home() {
     
     try {
       // Open the AppKit modal
-      open();
+      openAppKit();
     } catch (error) {
       console.error('Error opening AppKit modal:', error);
     }

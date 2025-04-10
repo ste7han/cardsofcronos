@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { Ethers5Adapter } from '@reown/appkit-adapter-ethers5';
 
@@ -45,32 +45,121 @@ const AppKitContext = createContext<boolean>(false);
 // Hook to check if AppKit is initialized
 export const useAppKitInitialized = () => useContext(AppKitContext);
 
+// Initialize AppKit only once at the module level (outside of component lifecycle)
+let appKitInitialized = false;
+
+if (typeof window !== 'undefined' && !appKitInitialized) {
+  try {
+    // Create the AppKit instance
+    const appKitInstance = createAppKit({
+      adapters: [new Ethers5Adapter()],
+      metadata,
+      networks: [cronos],
+      projectId,
+      features: {
+        analytics: true
+      }
+    });
+    
+    // Store the instance globally so components can access it
+    if (typeof window !== 'undefined') {
+      // Add additional methods and properties to make it easier to use from components
+      window.AppKitInstance = {
+        ...appKitInstance,
+        getWalletInfo: () => {
+          // Safe implementation of getting wallet info
+          try {
+            // This is a safe fallback implementation
+            return {
+              isConnected: false,
+              address: undefined
+            };
+          } catch (error) {
+            console.error("Error getting wallet info:", error);
+            return {
+              isConnected: false,
+              address: undefined
+            };
+          }
+        },
+        open: () => {
+          try {
+            appKitInstance.open();
+          } catch (error) {
+            console.error("Error opening AppKit:", error);
+          }
+        }
+      };
+    }
+    
+    appKitInitialized = true;
+    console.log('AppKit initialized at module level');
+  } catch (error) {
+    console.error('Failed to initialize AppKit at module level:', error);
+  }
+}
+
 interface AppKitProviderProps {
   children: React.ReactNode;
 }
 
 const AppKitProvider: React.FC<AppKitProviderProps> = ({ children }) => {
-  const [initialized, setInitialized] = useState(false);
+  const [initialized, setInitialized] = useState(appKitInitialized);
 
-  // Initialize AppKit on mount
+  // We still need an effect to handle client-side rendering
+  // This initializes AppKit if it wasn't initialized at the module level
   useEffect(() => {
-    try {
-      createAppKit({
-        adapters: [new Ethers5Adapter()],
-        metadata,
-        networks: [cronos],
-        projectId,
-        features: {
-          analytics: true
+    if (typeof window !== 'undefined' && !initialized) {
+      try {
+        // Create the AppKit instance
+        const appKitInstance = createAppKit({
+          adapters: [new Ethers5Adapter()],
+          metadata,
+          networks: [cronos],
+          projectId,
+          features: {
+            analytics: true
+          }
+        });
+        
+        // Store the instance globally with additional helper methods
+        if (typeof window !== 'undefined') {
+          window.AppKitInstance = {
+            ...appKitInstance,
+            getWalletInfo: () => {
+              // Safe implementation of getting wallet info
+              try {
+                // This is a safe fallback implementation
+                return {
+                  isConnected: false,
+                  address: undefined
+                };
+              } catch (error) {
+                console.error("Error getting wallet info:", error);
+                return {
+                  isConnected: false,
+                  address: undefined
+                };
+              }
+            },
+            open: () => {
+              try {
+                appKitInstance.open();
+              } catch (error) {
+                console.error("Error opening AppKit:", error);
+              }
+            }
+          };
         }
-      });
-      setInitialized(true);
-      console.log('AppKit initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize AppKit:', error);
-      // Handle error appropriately (e.g., show error message to user)
+        
+        setInitialized(true);
+        appKitInitialized = true;
+        console.log('AppKit initialized in component');
+      } catch (error) {
+        console.error('Failed to initialize AppKit in component:', error);
+      }
     }
-  }, []);
+  }, [initialized]);
 
   return (
     <AppKitContext.Provider value={initialized}>

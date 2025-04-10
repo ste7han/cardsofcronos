@@ -1,15 +1,40 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StepProps, Rarity } from './types';
+import Image from 'next/image';
 
 const RarityStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, onBack, burnAmount = 0 }) => {
   const watchRarity = watch('rarity');
+  const watchCardType = watch('cardType');
+
+  // Set default rarity based on card type
+  useEffect(() => {
+    if (watchCardType === 'Roast' && watchRarity !== 'Mythical') {
+      setValue('rarity', 'Mythical');
+    } else if (watchCardType === 'Founder' && 
+              !['Epic', 'Legendary', 'Mythical'].includes(watchRarity)) {
+      setValue('rarity', 'Epic');
+    }
+  }, [watchCardType, watchRarity, setValue]);
 
   const handleSelectRarity = (rarity: Rarity) => {
     setValue('rarity', rarity);
     setTimeout(() => onNext(), 300); // Auto-advance after selection
   };
+
+  // Filter rarities based on card type
+  const getAvailableRarities = () => {
+    if (watchCardType === 'Roast') {
+      return ['Mythical'];
+    } else if (watchCardType === 'Founder') {
+      return ['Epic', 'Legendary', 'Mythical'];
+    } else {
+      return ['Common', 'Rare', 'Epic', 'Legendary', 'Mythical'];
+    }
+  };
+
+  const availableRarities = getAvailableRarities();
 
   return (
     <div className="space-y-6">
@@ -17,59 +42,65 @@ const RarityStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, on
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {/* Common Rarity */}
-        <RarityOption
-          rarity="Common"
-          icon="⚪"
-          color="bg-gray-500"
-          cost="10,000 🔥"
-          isSelected={watchRarity === 'Common'}
-          register={register}
-          onSelect={() => handleSelectRarity('Common')}
-        />
+        {availableRarities.includes('Common') && (
+          <RarityOption
+            rarity="Common"
+            imagePath="/common.png"
+            cost="10,000 🔥"
+            isSelected={watchRarity === 'Common'}
+            register={register}
+            onSelect={() => handleSelectRarity('Common')}
+          />
+        )}
 
         {/* Rare Rarity */}
-        <RarityOption
-          rarity="Rare"
-          icon="🟨"
-          color="bg-yellow-500"
-          cost="20,000 🔥"
-          isSelected={watchRarity === 'Rare'}
-          register={register}
-          onSelect={() => handleSelectRarity('Rare')}
-        />
+        {availableRarities.includes('Rare') && (
+          <RarityOption
+            rarity="Rare"
+            imagePath="/rare.png"
+            cost="20,000 🔥"
+            isSelected={watchRarity === 'Rare'}
+            register={register}
+            onSelect={() => handleSelectRarity('Rare')}
+          />
+        )}
 
         {/* Epic Rarity */}
-        <RarityOption
-          rarity="Epic"
-          icon="🟪"
-          color="bg-purple-500"
-          cost="50,000 🔥"
-          isSelected={watchRarity === 'Epic'}
-          register={register}
-          onSelect={() => handleSelectRarity('Epic')}
-        />
+        {availableRarities.includes('Epic') && (
+          <RarityOption
+            rarity="Epic"
+            imagePath={watchCardType === 'Founder' ? "/founderepic.png" : "/epic.png"}
+            cost="50,000 🔥"
+            isSelected={watchRarity === 'Epic'}
+            register={register}
+            onSelect={() => handleSelectRarity('Epic')}
+          />
+        )}
 
         {/* Legendary Rarity */}
-        <RarityOption
-          rarity="Legendary"
-          icon="🟧"
-          color="bg-orange-500"
-          cost="100,000 🔥"
-          isSelected={watchRarity === 'Legendary'}
-          register={register}
-          onSelect={() => handleSelectRarity('Legendary')}
-        />
+        {availableRarities.includes('Legendary') && (
+          <RarityOption
+            rarity="Legendary"
+            imagePath={watchCardType === 'Founder' ? "/founderlegendary.png" : "/legendary.png"}
+            cost="100,000 🔥"
+            isSelected={watchRarity === 'Legendary'}
+            register={register}
+            onSelect={() => handleSelectRarity('Legendary')}
+          />
+        )}
 
         {/* Mythical Rarity */}
-        <RarityOption
-          rarity="Mythical"
-          icon="⚫"
-          color="bg-black"
-          cost="250,000 🔥"
-          isSelected={watchRarity === 'Mythical'}
-          register={register}
-          onSelect={() => handleSelectRarity('Mythical')}
-        />
+        {availableRarities.includes('Mythical') && (
+          <RarityOption
+            rarity="Mythical"
+            imagePath={watchCardType === 'Founder' ? "/foundermythical.png" : 
+                       watchCardType === 'Roast' ? "/roast.png" : "/mythical.png"}
+            cost="250,000 🔥"
+            isSelected={watchRarity === 'Mythical'}
+            register={register}
+            onSelect={() => handleSelectRarity('Mythical')}
+          />
+        )}
       </div>
 
       <div className="card p-4 text-center">
@@ -95,8 +126,7 @@ const RarityStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, on
 
 interface RarityOptionProps {
   rarity: Rarity;
-  icon: string;
-  color: string;
+  imagePath: string;
   cost: string;
   isSelected: boolean;
   register: StepProps['register'];
@@ -105,8 +135,7 @@ interface RarityOptionProps {
 
 const RarityOption: React.FC<RarityOptionProps> = ({
   rarity,
-  icon,
-  color,
+  imagePath,
   cost,
   isSelected,
   register,
@@ -131,8 +160,15 @@ const RarityOption: React.FC<RarityOptionProps> = ({
         onChange={onSelect}
       />
       <div className="flex flex-col items-center">
-        <div className={`w-full h-32 mb-3 overflow-hidden rounded-lg ${color} flex items-center justify-center`}>
-          <span className="text-4xl">{icon}</span>
+        <div className="w-full h-32 mb-3 overflow-hidden rounded-lg flex items-center justify-center relative">
+          <Image 
+            src={imagePath} 
+            alt={`${rarity} Rarity`}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            style={{ objectFit: 'contain' }}
+            className="rounded-lg"
+          />
         </div>
         <h3 className="text-xl font-bold">{rarity}</h3>
         <p className="text-sm text-gray-300">{cost}</p>

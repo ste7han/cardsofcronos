@@ -34,8 +34,12 @@ const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, 
             onChange={() => handleSelectAnimated(false)}
           />
           <div className="flex flex-col items-center">
-            <div className="w-full h-32 mb-3 overflow-hidden rounded-lg bg-gray-500 flex items-center justify-center">
-              <span className="text-4xl">⚪</span>
+            <div className="w-full h-32 mb-3 overflow-hidden rounded-lg flex items-center justify-center">
+              <img 
+                src="/animated.png" 
+                alt="Static Image"
+                className="w-full h-full object-cover rounded-lg"
+              />
             </div>
             <h3 className="text-xl font-bold">No</h3>
             <p className="text-sm text-gray-300">Static Image</p>
@@ -60,8 +64,15 @@ const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, 
             onChange={() => handleSelectAnimated(true)}
           />
           <div className="flex flex-col items-center">
-            <div className="w-full h-32 mb-3 overflow-hidden rounded-lg bg-blue-500 flex items-center justify-center animate-pulse">
-              <span className="text-4xl">🟦</span>
+            <div className="w-full h-32 mb-3 overflow-hidden rounded-lg flex items-center justify-center">
+              <video 
+                src="/currycro_mythical.mp4" 
+                className="w-full h-full object-cover rounded-lg"
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+              />
             </div>
             <h3 className="text-xl font-bold">Yes</h3>
             <p className="text-sm text-gray-300">500,000 🔥</p>

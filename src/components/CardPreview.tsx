@@ -84,7 +84,20 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs mx-auto perspective-1000 relative z-[260]">
+    <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs mx-auto relative z-[260]" style={{ perspective: '1000px', position: 'relative' }}>
+      {/* Close button - only visible on mobile */}
+      <button 
+        className="md:hidden absolute top-2 right-2 text-white hover:text-white p-3 rounded-full bg-[var(--primary)]/40 hover:bg-[var(--primary)]/60 shadow-lg z-50" 
+        aria-label="Close card preview"
+        onClick={(e) => {
+          e.stopPropagation();
+          // Close functionality here
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
       {isLoading ? (
         // Loading state
         <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50 animate-pulse flex items-center justify-center">
@@ -93,15 +106,22 @@ const CardPreview: React.FC<CardPreviewProps> = ({
       ) : (
         // Card with 3D flip effect
         <div 
-          className={`card-3d w-full aspect-[2/3] rounded-lg cursor-pointer transition-all duration-500 preserve-3d ${
-            isFlipped ? 'rotate-y-180' : ''
-          } ${isHovered ? 'scale-105' : ''} max-h-[300px]`}
+          className={`w-full aspect-[2/3] rounded-lg cursor-pointer transition-all duration-500 ${
+            isHovered ? 'scale-105' : ''
+          } max-h-[300px]`}
+          style={{ 
+            transformStyle: 'preserve-3d',
+            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+          }}
           onClick={handleFlip}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Front of card */}
-          <div className={`absolute inset-0 backface-hidden rounded-lg bg-gradient-to-br ${rarityColors[rarity as keyof typeof rarityColors]} shadow-xl`}>
+          <div 
+            className={`absolute inset-0 rounded-lg bg-gradient-to-br ${rarityColors[rarity as keyof typeof rarityColors]} shadow-xl`}
+            style={{ backfaceVisibility: 'hidden' }}
+          >
             {/* Card image */}
             <div className="relative w-full h-full">
               {/* Background layer */}
@@ -155,7 +175,13 @@ const CardPreview: React.FC<CardPreviewProps> = ({
           </div>
           
           {/* Back of card */}
-          <div className="absolute inset-0 backface-hidden rounded-lg bg-gradient-to-br from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/70 shadow-xl rotate-y-180">
+          <div 
+            className="absolute inset-0 rounded-lg bg-gradient-to-br from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/70 shadow-xl"
+            style={{ 
+              backfaceVisibility: 'hidden', 
+              transform: 'rotateY(180deg)'
+            }}
+          >
             <div className="relative w-full h-full p-2 flex flex-col">
               {/* Card border */}
               <div className="absolute inset-0 rounded-lg border-2 border-white/30 shadow-inner"></div>
@@ -210,24 +236,6 @@ const CardPreview: React.FC<CardPreviewProps> = ({
         </div>
       )}
       
-      {/* Add styles for 3D card effect */}
-      <style jsx>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-        
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
     </div>
   );
 };

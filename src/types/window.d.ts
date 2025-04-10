@@ -1,24 +1,8 @@
-import { ExternalProvider } from '@ethersproject/providers';
-
-declare global {
-  interface Window {
-    ethereum?: ExternalProvider;
-    appkit?: {
-      open: () => void;
-      account?: {
-        address: string;
-        isConnected: boolean;
-      };
-    };
-  }
-}
-
-// Add AppKit web components
-declare namespace JSX {
-  interface IntrinsicElements {
-    'appkit-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-    'appkit-account-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-    'appkit-connect-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-    'appkit-network-button': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
-  }
+interface Window {
+  AppKitInstance?: any;
+  appKitHooks?: {
+    useAppKit: any;
+    useAppKitAccount: any;
+  };
+  appKitInitialized?: boolean;
 }

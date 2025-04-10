@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BottomNavigation from '@/components/BottomNavigation';
-import { useAppKit, useAppKitAccount } from '@/lib/appkit';
 import { useAppKitInitialized } from '@/components/AppKitProvider';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/firebase/config';
@@ -131,13 +130,41 @@ export default function CollectionPage() {
   // Check if AppKit is initialized
   const appKitInitialized = useAppKitInitialized();
   
-  // Always call hooks unconditionally to maintain hook order
-  const appKitAccount = useAppKitAccount();
-  const appKit = useAppKit();
+  // Default values if not connected
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | undefined>(undefined);
+  const [openAppKit, setOpenAppKit] = useState<() => void>(() => () => {
+    console.warn('AppKit not initialized yet');
+  });
   
-  // Then conditionally use the results
-  const { isConnected = false, address = undefined } = appKitInitialized ? appKitAccount : { isConnected: false, address: undefined };
-  const { open = () => console.log('AppKit not initialized') } = appKitInitialized ? appKit : { open: () => console.log('AppKit not initialized') };
+  // Initialize wallet connection once on client
+  useEffect(() => {
+    if (!isClient || !appKitInitialized) return;
+    
+    // Wait a moment for AppKit to be fully initialized
+    const timer = setTimeout(() => {
+      try {
+        // Use the global window AppKit instance that was initialized in the provider
+        if (window.AppKitInstance) {
+          const walletInfo = window.AppKitInstance.getWalletInfo?.();
+          
+          if (walletInfo) {
+            setIsConnected(!!walletInfo.isConnected);
+            setAddress(walletInfo.address);
+          }
+          
+          // Set the open function
+          setOpenAppKit(() => () => {
+            window.AppKitInstance?.open?.();
+          });
+        }
+      } catch (error) {
+        console.error('Error accessing AppKit instance:', error);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [isClient, appKitInitialized]);
 
   // Fetch cards from Firestore
   const fetchCards = useCallback(async () => {
@@ -193,7 +220,7 @@ export default function CollectionPage() {
   // Handle wallet connection
   const handleConnectWallet = () => {
     if (appKitInitialized) {
-      open();
+      openAppKit();
     } else {
       console.log('AppKit not initialized yet');
     }
