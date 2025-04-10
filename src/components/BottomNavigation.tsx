@@ -12,7 +12,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   isWalletConnected, 
   onConnectWallet 
 }) => {
-  // Add isClient state to prevent hydration mismatch
   const [isClient, setIsClient] = useState<boolean>(false);
   const [activeItem, setActiveItem] = useState<string>('home');
   const [isVisible, setIsVisible] = useState<boolean>(true);
@@ -28,17 +27,18 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       if (path === '/') setActiveItem('home');
       else if (path === '/collection') setActiveItem('collection');
       else if (path === '/about') setActiveItem('about');
+      else if (path === '/orders') setActiveItem('profile');
     }
   }, []);
   
   // Handle scroll behavior - hide on scroll down, show on scroll up
-  // Only run on client side after hydration
   useEffect(() => {
     if (!isClient) return;
     
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
+      // Only hide when scrolling down and past 100px threshold
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
       } else {
@@ -78,7 +78,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       id: 'forge',
       label: 'Forge',
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
         </svg>
@@ -117,184 +117,103 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     }
   ];
   
-  // Removed rune symbols
-  const runeSymbols: string[] = [];
+  if (!isClient) {
+    // Return a placeholder during SSR to prevent hydration mismatch
+    return <div className="h-16 md:hidden"></div>;
+  }
   
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 z-[290] transition-all duration-500 transform ${
+      className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 md:hidden ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
       style={{ 
-        width: '100%', 
-        maxWidth: '100vw',
         paddingBottom: 'env(safe-area-inset-bottom, 0)' 
       }}
     >
-      {/* Simple, clean bottom navigation bar */}
-          <div className="relative mx-auto w-full max-w-screen-xl px-4">
-        <div className="relative bg-black/80 backdrop-blur-xl border-t border-[#9D4EDD]/30 shadow-lg w-full">
-          {/* Navigation items */}
-          <div className="relative z-[310] flex justify-between items-center py-4 px-2 sm:px-6 mx-auto gap-2">
-            {navItems.map((item) => {
-              const isActive = activeItem === item.id;
-              
-              // Determine if this is the forge (center) item
-              const isForge = item.id === 'forge';
-              
-              return (
+      {/* Simple bottom navigation bar */}
+      <div className="bg-black/90 backdrop-blur-md border-t border-[#9D4EDD]/30 shadow-lg">
+        <div className="flex justify-around items-center px-2 py-2">
+          {navItems.map((item) => {
+            const isActive = activeItem === item.id;
+            const isForge = item.id === 'forge';
+            
+            // Create the navigation item
+            const navItem = (
+              <div 
+                key={item.id}
+                className={`flex flex-col items-center justify-center ${
+                  isForge ? 'relative -mt-5' : ''
+                }`}
+              >
+                {/* Icon container */}
                 <div 
-                  key={item.id} 
-                  className={`relative ${isForge ? 'px-3 z-[70]' : 'px-2'}`}
+                  className={`
+                    flex items-center justify-center rounded-full
+                    ${isForge 
+                      ? 'w-14 h-14 bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] p-3 shadow-lg border-2 border-white/20' 
+                      : `w-12 h-12 p-2 ${isActive ? 'bg-[#9D4EDD]/20' : 'bg-transparent'}`
+                    }
+                    transition-all duration-200
+                  `}
                 >
-                  {/* Animated background for active item */}
-                  {isActive && (
-                    <div className="absolute inset-0 -m-1 rounded-full bg-[#9D4EDD]/10 animate-pulse"></div>
-                  )}
+                  <div className={`
+                    ${isActive && !isForge ? 'text-[#FFD700]' : 'text-white'}
+                    ${isForge ? 'text-white' : ''}
+                  `}>
+                    {item.icon}
+                  </div>
                   
-                  {/* Rune symbol that appears when active - only show on client side */}
-                  {isClient && isActive && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-[#FFD700] text-xs opacity-0 animate-fadeIn">
-                      {runeSymbols[item.id.length % runeSymbols.length]}
-                    </div>
-                  )}
-                  
-                  {/* Navigation item */}
-                  {item.href && !isForge ? (
-                    <Link 
-                      href={item.href}
-                      onClick={() => setActiveItem(item.id)}
-                      className={`flex flex-col items-center transition-all duration-300 z-[320] ${
-                        isActive 
-                          ? 'text-[#FFD700]' 
-                          : 'text-white/70 hover:text-white'
-                      }`}
-                    >
-                      {/* Icon container with special styling for forge */}
-                      <div className={`
-                        relative flex items-center justify-center w-8 h-8
-                      `}>
-                        {/* Icon */}
-                        <div className={`
-                          ${isActive ? 'text-[#FFD700]' : 'text-white/70'}
-                          transition-all duration-300
-                          ${isActive ? 'scale-110' : ''}
-                        `}>
-                          {item.icon}
-                        </div>
-                        
-                        {/* Glow effect for active items */}
-                        {isActive && (
-                          <div className="absolute inset-0 rounded-full opacity-60 blur-sm" style={{
-                            background: 'radial-gradient(circle at center, rgba(157, 78, 221, 0.3), transparent 70%)'
-                          }}></div>
-                        )}
-                      </div>
-                      
-                      {/* Label - always show for forge, only show for others when active or on hover */}
-                      <span className={`text-xs mt-1 font-medium transition-all duration-300 ${
-                        isActive || isForge ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'
-                      }`}>
-                        {item.label}
-                      </span>
-                    </Link>
-                  ) : isForge ? (
-                    <button
-                      onClick={() => {
-                        setActiveItem(item.id);
-                        if (item.onClick) item.onClick();
-                      }}
-                      className={`flex flex-col items-center transition-all duration-300 z-[320] ${
-                        isActive 
-                          ? 'text-[#FFD700]' 
-                          : 'text-white/70 hover:text-white'
-                      }`}
-                    >
-                      {/* Icon container with special styling for forge */}
-                      <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-2 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20 z-[300]">
-                        {/* Icon */}
-                        <div className="text-white transition-all duration-300">
-                          {item.icon}
-                        </div>
-                        
-                        {/* Pulse animation for forge button - only show on client side */}
-                        {isClient && (
-                          <span className="absolute inset-0 rounded-full animate-ping bg-white/20"></span>
-                        )}
-                        
-                        {/* Glow effect for active items */}
-                        {isActive && (
-                          <div className="absolute inset-0 rounded-full opacity-60 blur-sm" style={{
-                            background: 'radial-gradient(circle at center, rgba(255, 215, 0, 0.5), transparent 70%)'
-                          }}></div>
-                        )}
-                      </div>
-                      
-                      {/* Label - always visible for forge button */}
-                      <span className={`text-xs mt-1 font-medium transition-all duration-300 opacity-100`}>
-                        {item.label}
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setActiveItem(item.id);
-                        if (item.onClick) item.onClick();
-                      }}
-                      className={`flex flex-col items-center transition-all duration-300 ${
-                        isActive 
-                          ? 'text-[#FFD700]' 
-                          : 'text-white/70 hover:text-white'
-                      }`}
-                    >
-                      {/* Icon container */}
-                      <div className="relative w-10 h-10 flex items-center justify-center">
-                        {/* Icon */}
-                        <div className={`
-                          transition-all duration-300
-                          ${isActive ? 'text-[#FFD700] scale-110' : 'text-white/70'}
-                        `}>
-                          {item.icon}
-                        </div>
-                        
-                        {/* Connection status indicator for profile */}
-                        {item.id === 'profile' && (
-                          <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                            isWalletConnected ? 'bg-green-500' : 'bg-red-500'
-                          }`}></div>
-                        )}
-                        
-                        {/* Glow effect for active items */}
-                        {isActive && (
-                          <div className="absolute inset-0 rounded-full opacity-60 blur-sm bg-[#9D4EDD]/20"></div>
-                        )}
-                      </div>
-                      
-                      {/* Label - only show for active item or on hover */}
-                      <span className={`text-xs mt-1 font-medium transition-all duration-300 ${
-                        isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'
-                      }`}>
-                        {item.label}
-                      </span>
-                    </button>
+                  {/* Connection status indicator for profile */}
+                  {item.id === 'profile' && (
+                    <div className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full ${
+                      isWalletConnected ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
                   )}
                 </div>
+                
+                {/* Label */}
+                <span className={`
+                  text-xs mt-1 font-medium
+                  ${isActive ? 'text-[#FFD700]' : 'text-white/70'}
+                  ${isForge ? 'text-white' : ''}
+                `}>
+                  {item.label}
+                </span>
+              </div>
+            );
+            
+            // Wrap with Link or Button based on item configuration
+            if (item.href) {
+              return (
+                <Link 
+                  key={item.id}
+                  href={item.href}
+                  className="flex flex-col items-center touch-manipulation"
+                  onClick={() => setActiveItem(item.id)}
+                  aria-label={item.label}
+                >
+                  {navItem}
+                </Link>
               );
-            })}
-          </div>
+            } else {
+              return (
+                <button
+                  key={item.id}
+                  className="flex flex-col items-center touch-manipulation bg-transparent border-0"
+                  onClick={() => {
+                    setActiveItem(item.id);
+                    if (item.onClick) item.onClick();
+                  }}
+                  aria-label={item.label}
+                >
+                  {navItem}
+                </button>
+              );
+            }
+          })}
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(-10px) translateX(-50%); }
-          100% { opacity: 1; transform: translateY(0) translateX(-50%); }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.3s forwards;
-        }
-      `}</style>
     </nav>
   );
 };

@@ -105,9 +105,9 @@ export default function OrdersPage() {
             </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Order List - Left Side */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 mb-4 lg:mb-0">
               <div className="card p-4">
                 <h2 className="text-xl font-bold mb-4 text-[var(--secondary)]">Your Card Requests</h2>
                 <div className="space-y-3">

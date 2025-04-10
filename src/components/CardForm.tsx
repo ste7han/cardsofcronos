@@ -409,48 +409,48 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Image</label>
-                <div className="border-2 border-dashed border-[#9D4EDD] rounded-md p-4 text-center">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload"
-                  />
-                  <label htmlFor="image-upload" className="cursor-pointer block min-h-[120px] flex flex-col items-center justify-center">
-                    {imagePreview ? (
-                      <div className="relative mx-auto w-48 h-48 sm:w-40 sm:h-40">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setImage(null);
-                            setImagePreview(null);
-                          }}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="py-8 px-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-[#9D4EDD]/50 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-[#9D4EDD] font-medium">Tap to upload image</p>
-                        <p className="text-sm text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
-                      </div>
-                    )}
-                  </label>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Image</label>
+                  <div className="border-2 border-dashed border-[#9D4EDD] rounded-md p-4 text-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className="cursor-pointer block min-h-[120px] flex flex-col items-center justify-center">
+                      {imagePreview ? (
+                        <div className="relative mx-auto w-36 h-36 sm:w-40 sm:h-40">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setImage(null);
+                              setImagePreview(null);
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center touch-manipulation"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="py-6 px-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-[#9D4EDD]/50 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-[#9D4EDD] font-medium">Tap to upload image</p>
+                          <p className="text-sm text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
                 </div>
-              </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6">
@@ -658,13 +658,12 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
       
       {/* Form content with magical styling */}
       <div className="relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="order-2 md:order-1">
-            {renderFormStep()}
-          </div>
-          <div className="order-1 md:order-2 flex items-center justify-center mb-6 md:mb-0">
-            <div className="w-full max-w-xs">
-              <h3 className="text-center text-lg font-bold font-['Cinzel'] mb-4 text-[var(--secondary)]">Card Preview</h3>
+        {/* Mobile-friendly layout with preview at top on mobile, side-by-side on desktop */}
+        <div className="flex flex-col md:grid md:grid-cols-2 gap-6">
+          {/* Card Preview - Always visible at top on mobile, right side on desktop */}
+          <div className="md:order-2 flex items-center justify-center mb-4 md:mb-0">
+            <div className="w-full max-w-[200px] md:max-w-xs">
+              <h3 className="text-center text-lg font-bold font-['Cinzel'] mb-3 text-[var(--secondary)]">Card Preview</h3>
               <div className="transition-all duration-500 transform">
                 <CardPreview 
                   name={watch('name') || 'Your Card Name'}
@@ -676,6 +675,11 @@ const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet 
                 />
               </div>
             </div>
+          </div>
+          
+          {/* Form Steps - Below preview on mobile, left side on desktop */}
+          <div className="md:order-1">
+            {renderFormStep()}
           </div>
         </div>
       </div>

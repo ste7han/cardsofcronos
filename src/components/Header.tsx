@@ -33,6 +33,39 @@ const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
   
+  // Handle body scroll locking when mobile menu is open
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
+    if (mobileMenuOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Add styles to body to prevent scrolling
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflowY = 'hidden';
+    } else {
+      // Restore scrolling
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflowY = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
+      }
+    }
+    
+    return () => {
+      // Cleanup function to ensure scroll is restored if component unmounts while menu is open
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflowY = '';
+    };
+  }, [mobileMenuOpen]);
+  
   // Animate runes on load - only on client side
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -178,7 +211,6 @@ const Header: React.FC<HeaderProps> = ({
           mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileMenuOpen(false)}
-        style={{ height: '100vh', width: '100vw' }}
       ></div>
       
       {/* Mobile menu panel */}
@@ -186,7 +218,6 @@ const Header: React.FC<HeaderProps> = ({
         className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-[1200] md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ height: '100dvh', position: 'fixed' }}
       >
         {/* Close button */}
         <div className="w-full flex justify-end p-4">

@@ -370,13 +370,13 @@ export default function Home() {
         onConnectWallet={handleConnectWallet}
       />
       
-      {/* Card Form Modal */}
-      <div id="card-form" className="fixed inset-0 z-50 flex items-center justify-center hidden scroll-mt-24 target:flex overflow-hidden">
+      {/* Card Form Modal - Improved for mobile */}
+      <div id="card-form" className="fixed inset-0 z-50 flex items-center justify-center hidden scroll-mt-24 target:flex overflow-y-auto">
         <div
           className="absolute inset-0 bg-black/80 backdrop-blur-sm"
           onClick={() => (window.location.hash = '')}
         ></div>
-        <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto p-2 sm:p-4" style={{ maxWidth: '100vw' }}>
+        <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-auto p-2 sm:p-4 my-4" style={{ maxWidth: '100vw' }}>
           <div className="modern-card modern-hexagon-bg p-3 sm:p-6">
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-['Cinzel'] text-transparent bg-clip-text bg-gradient-to-r from-[var(--secondary)] to-[var(--secondary-glow)]">
@@ -384,7 +384,8 @@ export default function Home() {
               </h2>
               <button
                 onClick={() => (window.location.hash = '')}
-                className="text-white/80 hover:text-white p-1 rounded-full bg-[var(--primary)]/20 hover:bg-[var(--primary)]/30"
+                className="text-white/80 hover:text-white p-2 rounded-full bg-[var(--primary)]/20 hover:bg-[var(--primary)]/30 touch-manipulation"
+                aria-label="Close form"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

@@ -253,53 +253,114 @@ export default function CollectionPage() {
             </p>
           </div>
           
-          {/* Filters and sorting */}
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Rarity filter */}
-            <div className="modern-card p-4">
-              <label className="block text-white/80 mb-2 text-sm">Filter by Rarity</label>
-              <select 
-                className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-2 text-white"
-                value={filterRarity}
-                onChange={(e) => setFilterRarity(e.target.value)}
+          {/* Filters and sorting - Improved mobile layout */}
+          <div className="mb-8">
+            {/* Filter toggle for mobile */}
+            <div className="md:hidden mb-4">
+              <button 
+                className="w-full py-3 px-4 bg-[var(--primary)]/20 hover:bg-[var(--primary)]/30 rounded-lg text-white flex items-center justify-between"
+                onClick={() => {
+                  const filterSection = document.getElementById('filter-section');
+                  if (filterSection) {
+                    filterSection.classList.toggle('hidden');
+                  }
+                }}
               >
-                {rarities.map(rarity => (
-                  <option key={rarity} value={rarity}>{rarity}</option>
-                ))}
-              </select>
+                <span>Filters & Sorting</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
             
-            {/* Type filter */}
-            <div className="modern-card p-4">
-              <label className="block text-white/80 mb-2 text-sm">Filter by Type</label>
-              <select 
-                className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-2 text-white"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                {types.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Sort options */}
-            <div className="modern-card p-4">
-              <label className="block text-white/80 mb-2 text-sm">Sort by</label>
-              <select 
-                className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-2 text-white"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="name">Name (A-Z)</option>
-                <option value="rarity">Rarity (Highest)</option>
-                <option value="power">Power (Highest)</option>
-              </select>
+            {/* Filter controls - hidden by default on mobile */}
+            <div id="filter-section" className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Rarity filter */}
+              <div className="modern-card p-4">
+                <label className="block text-white/80 mb-2 text-sm">Filter by Rarity</label>
+                <select 
+                  className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-3 text-white"
+                  value={filterRarity}
+                  onChange={(e) => setFilterRarity(e.target.value)}
+                >
+                  {rarities.map(rarity => (
+                    <option key={rarity} value={rarity}>{rarity}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Type filter */}
+              <div className="modern-card p-4">
+                <label className="block text-white/80 mb-2 text-sm">Filter by Type</label>
+                <select 
+                  className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-3 text-white"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  {types.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Sort options */}
+              <div className="modern-card p-4">
+                <label className="block text-white/80 mb-2 text-sm">Sort by</label>
+                <select 
+                  className="w-full bg-[var(--cosmic-black)] border border-[var(--primary)]/30 rounded-md p-3 text-white"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="name">Name (A-Z)</option>
+                  <option value="rarity">Rarity (Highest)</option>
+                  <option value="power">Power (Highest)</option>
+                </select>
+              </div>
+              
+              {/* Active filters display and reset button */}
+              <div className="md:col-span-3 flex flex-wrap items-center justify-between mt-2 px-2">
+                <div className="flex flex-wrap gap-2">
+                  {filterRarity !== 'All' && (
+                    <div className="bg-[var(--primary)]/20 px-3 py-1 rounded-full text-xs flex items-center">
+                      <span>Rarity: {filterRarity}</span>
+                      <button 
+                        className="ml-2 text-white/70 hover:text-white"
+                        onClick={() => setFilterRarity('All')}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  {filterType !== 'All' && (
+                    <div className="bg-[var(--primary)]/20 px-3 py-1 rounded-full text-xs flex items-center">
+                      <span>Type: {filterType}</span>
+                      <button 
+                        className="ml-2 text-white/70 hover:text-white"
+                        onClick={() => setFilterType('All')}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {(filterRarity !== 'All' || filterType !== 'All') && (
+                  <button 
+                    className="text-xs text-[var(--primary)] hover:text-[var(--primary-glow)]"
+                    onClick={() => {
+                      setFilterRarity('All');
+                      setFilterType('All');
+                    }}
+                  >
+                    Reset All
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           
-          {/* Cards grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+          {/* Cards grid - Improved mobile layout with better spacing */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
             {isLoading ? (
               // Loading skeleton
               Array.from({ length: 10 }).map((_, index) => (
@@ -380,9 +441,9 @@ export default function CollectionPage() {
         </div>
       </main>
       
-      {/* Card detail modal */}
+      {/* Card detail modal - Improved for mobile */}
       {selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           {/* Backdrop - clicking anywhere outside the modal closes it */}
           <div 
             className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
@@ -390,9 +451,20 @@ export default function CollectionPage() {
           ></div>
           
           {/* Modal container with max height and scrolling */}
-          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-4 sm:p-6 rounded-xl border border-[var(--primary)]/30">
+          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-3 sm:p-6 rounded-xl border border-[var(--primary)]/30">
+            {/* Close button - larger touch target for mobile */}
+            <button 
+              onClick={() => setSelectedCard(null)}
+              className="absolute top-2 right-2 md:top-4 md:right-4 text-white hover:text-white p-3 rounded-full bg-[var(--primary)]/40 hover:bg-[var(--primary)]/60 shadow-lg z-50"
+              aria-label="Close card preview"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
             {/* Card image - reduced size on mobile */}
-            <div className="perspective-1000 mx-auto md:mx-0" style={{ maxWidth: '280px' }}>
+            <div className="perspective-1000 mx-auto md:mx-0 mt-4 md:mt-0" style={{ maxWidth: '240px', width: '100%' }}>
               <div className={`card-3d w-full aspect-[2/3] rounded-lg bg-gradient-to-br ${rarityColors[selectedCard.rarity as keyof typeof rarityColors]} flex items-center justify-center transform transition-all duration-500 preserve-3d rotate-y-5`}>
                 <div className="absolute inset-0 rounded-lg backdrop-blur-sm bg-black/20"></div>
                 
