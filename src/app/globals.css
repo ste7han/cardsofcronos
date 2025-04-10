@@ -1032,3 +1032,14 @@ select:focus {
 .animate-pulse-fade {
   animation: pulse-fade 2s infinite;
 }
+
+/* Subtle pulsing animation for UI elements */
+@keyframes pulse-subtle {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 
 interface BottomNavigationProps {
@@ -16,6 +16,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const [activeItem, setActiveItem] = useState<string>('home');
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [lastScrollY, setLastScrollY] = useState<number>(0);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   
   // Set isClient to true once component mounts on client
   useEffect(() => {
@@ -31,26 +32,46 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     }
   }, []);
   
+  // Memoized scroll handler to improve performance
+  const handleScroll = useCallback(() => {
+    const currentScrollY = window.scrollY;
+    
+    // Only hide when scrolling down and past 100px threshold
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      setIsVisible(false);
+    } else {
+      setIsVisible(true);
+    }
+    
+    setLastScrollY(currentScrollY);
+  }, [lastScrollY]);
+  
   // Handle scroll behavior - hide on scroll down, show on scroll up
   useEffect(() => {
     if (!isClient) return;
     
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Only hide when scrolling down and past 100px threshold
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-    
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isClient, lastScrollY]);
+  }, [isClient, handleScroll]);
+  
+  // Handle touch events to allow swiping up to reveal the navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    
+    const touchEndY = e.changedTouches[0].clientY;
+    const diff = touchStartY - touchEndY;
+    
+    // If swiped up significantly, show the navigation
+    if (diff < -50 && !isVisible) {
+      setIsVisible(true);
+    }
+    
+    setTouchStartY(null);
+  };
   
   // Navigation items with icons and labels
   const navItems = [
@@ -119,103 +140,152 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   
   if (!isClient) {
     // Return a placeholder during SSR to prevent hydration mismatch
-    return <div className="h-16 md:hidden"></div>;
+    return <div className="h-20 md:hidden"></div>;
   }
   
   return (
-    <nav 
-      className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 md:hidden ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
-      }`}
-      style={{ 
-        paddingBottom: 'env(safe-area-inset-bottom, 0)' 
-      }}
-    >
-      {/* Simple bottom navigation bar */}
-      <div className="bg-black/90 backdrop-blur-md border-t border-[#9D4EDD]/30 shadow-lg">
-        <div className="flex justify-around items-center px-2 py-2">
-          {navItems.map((item) => {
-            const isActive = activeItem === item.id;
-            const isForge = item.id === 'forge';
-            
-            // Create the navigation item
-            const navItem = (
-              <div 
-                key={item.id}
-                className={`flex flex-col items-center justify-center ${
-                  isForge ? 'relative -mt-5' : ''
-                }`}
-              >
-                {/* Icon container */}
+    <>
+      {/* Spacer to prevent content from being hidden behind the navigation */}
+      <div className="h-20 md:hidden"></div>
+      
+      {/* Bottom navigation bar */}
+      <nav 
+        className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 md:hidden ${
+          isVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ 
+          paddingBottom: 'env(safe-area-inset-bottom, 0)' 
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        aria-label="Mobile navigation"
+      >
+        {/* Pull indicator - visible when nav is hidden */}
+        <div 
+          className={`absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-6 
+            bg-gradient-to-b from-transparent to-black/80 rounded-t-lg flex justify-center items-center
+            transition-opacity duration-300 ${isVisible ? 'opacity-0' : 'opacity-100'}`}
+          onClick={() => setIsVisible(true)}
+        >
+          <div className="w-10 h-1 bg-white/30 rounded-full"></div>
+        </div>
+        
+        {/* Navigation bar with glass effect */}
+        <div className="bg-[var(--cosmic-black)]/95 backdrop-blur-xl border-t border-[var(--glass-border)] shadow-lg">
+          <div className="flex justify-around items-center px-2 py-3">
+            {navItems.map((item) => {
+              const isActive = activeItem === item.id;
+              const isForge = item.id === 'forge';
+              const isProfile = item.id === 'profile';
+              
+              // Create the navigation item
+              const navItem = (
                 <div 
-                  className={`
-                    flex items-center justify-center rounded-full
-                    ${isForge 
-                      ? 'w-14 h-14 bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] p-3 shadow-lg border-2 border-white/20' 
-                      : `w-12 h-12 p-2 ${isActive ? 'bg-[#9D4EDD]/20' : 'bg-transparent'}`
-                    }
-                    transition-all duration-200
-                  `}
+                  key={item.id}
+                  className={`flex flex-col items-center justify-center ${
+                    isForge ? 'relative -mt-8' : ''
+                  }`}
                 >
-                  <div className={`
-                    ${isActive && !isForge ? 'text-[#FFD700]' : 'text-white'}
-                    ${isForge ? 'text-white' : ''}
-                  `}>
-                    {item.icon}
+                  {/* Icon container with improved touch target */}
+                  <div 
+                    className={`
+                      flex items-center justify-center rounded-full
+                      ${isForge 
+                        ? 'w-16 h-16 bg-gradient-to-br from-[var(--secondary)] to-[var(--primary)] p-3.5 shadow-lg border-2 border-white/20 relative z-10 animate-pulse-subtle' 
+                        : `w-14 h-14 p-3 ${isActive ? 'bg-[var(--primary)]/20' : 'bg-transparent'}`
+                      }
+                      transition-all duration-200 relative
+                    `}
+                  >
+                    {/* Special glow effects for Forge button */}
+                    {isForge && (
+                      <>
+                        {/* Inner glow */}
+                        <div className="absolute inset-0 rounded-full bg-[var(--primary)] opacity-20 blur-md -z-10"></div>
+                        
+                        {/* Outer glow */}
+                        <div className="absolute -inset-2 rounded-full bg-[var(--secondary)] opacity-10 blur-lg -z-20"></div>
+                      </>
+                    )}
+                    {/* Active indicator ring */}
+                    {isActive && !isForge && (
+                      <div className="absolute inset-0 rounded-full border-2 border-[var(--secondary)] animate-pulse-fade"></div>
+                    )}
+                    
+                    <div className={`
+                      ${isActive && !isForge ? 'text-[var(--secondary)]' : 'text-white'}
+                      ${isForge ? 'text-white' : ''}
+                    `}>
+                      {item.icon}
+                    </div>
+                    
+                    {/* Enhanced connection status indicator for profile */}
+                    {isProfile && (
+                      <div className={`absolute top-1 right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center
+                        ${isWalletConnected 
+                          ? 'bg-green-500 animate-pulse-glow' 
+                          : 'bg-red-500'
+                        }`}
+                      >
+                        {isWalletConnected && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
-                  {/* Connection status indicator for profile */}
-                  {item.id === 'profile' && (
-                    <div className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full ${
-                      isWalletConnected ? 'bg-green-500' : 'bg-red-500'
-                    }`}></div>
-                  )}
+                  {/* Label with better visibility */}
+                  <span className={`
+                    text-xs mt-1 font-medium tracking-wide
+                    ${isActive ? 'text-[var(--secondary)]' : 'text-white/80'}
+                    ${isForge ? 'text-white font-bold' : ''}
+                  `}>
+                    {item.label}
+                    
+                    {/* Active indicator dot under label */}
+                    {isActive && !isForge && (
+                      <span className="block mx-auto mt-1 w-1 h-1 rounded-full bg-[var(--secondary)]"></span>
+                    )}
+                  </span>
                 </div>
-                
-                {/* Label */}
-                <span className={`
-                  text-xs mt-1 font-medium
-                  ${isActive ? 'text-[#FFD700]' : 'text-white/70'}
-                  ${isForge ? 'text-white' : ''}
-                `}>
-                  {item.label}
-                </span>
-              </div>
-            );
-            
-            // Wrap with Link or Button based on item configuration
-            if (item.href) {
-              return (
-                <Link 
-                  key={item.id}
-                  href={item.href}
-                  className="flex flex-col items-center touch-manipulation"
-                  onClick={() => setActiveItem(item.id)}
-                  aria-label={item.label}
-                >
-                  {navItem}
-                </Link>
               );
-            } else {
-              return (
-                <button
-                  key={item.id}
-                  className="flex flex-col items-center touch-manipulation bg-transparent border-0"
-                  onClick={() => {
-                    setActiveItem(item.id);
-                    if (item.onClick) item.onClick();
-                  }}
-                  aria-label={item.label}
-                >
-                  {navItem}
-                </button>
-              );
-            }
-          })}
+              
+              // Wrap with Link or Button based on item configuration
+              if (item.href) {
+                return (
+                  <Link 
+                    key={item.id}
+                    href={item.href}
+                    className="flex flex-col items-center touch-manipulation active:opacity-80 transition-opacity"
+                    onClick={() => setActiveItem(item.id)}
+                    aria-label={item.label}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {navItem}
+                  </Link>
+                );
+              } else {
+                return (
+                  <button
+                    key={item.id}
+                    className="flex flex-col items-center touch-manipulation bg-transparent border-0 active:opacity-80 transition-opacity"
+                    onClick={() => {
+                      setActiveItem(item.id);
+                      if (item.onClick) item.onClick();
+                    }}
+                    aria-label={item.label}
+                  >
+                    {navItem}
+                  </button>
+                );
+              }
+            })}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 };
 
-export default BottomNavigation;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(BottomNavigation);
