@@ -6,14 +6,15 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BottomNavigation from '@/components/BottomNavigation';
-import { useAppKit, useAppKitAccount } from '@/lib/appkit';
+import { useAppKit } from '@/hooks/useAppKit';
 
 export default function AboutPage() {
   const [pageLoaded, setPageLoaded] = useState(false);
   
-  // Get wallet connection status from AppKit
-  const { isConnected, address } = useAppKitAccount();
-  const { open } = useAppKit();
+  // Get wallet connection status from AppKit using the safer hook implementation
+  const { appKitAccount, appKit } = useAppKit();
+  const { isConnected, address } = appKitAccount || { isConnected: false, address: undefined };
+  const { open } = appKit || { open: () => console.warn('AppKit not available') };
 
   // Handle wallet connection
   const handleConnectWallet = () => {
