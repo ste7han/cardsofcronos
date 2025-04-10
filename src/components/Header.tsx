@@ -186,7 +186,7 @@ const Header: React.FC<HeaderProps> = ({
         className={`fixed right-0 top-0 bottom-0 w-72 max-w-[90vw] bg-gradient-to-b from-[var(--cosmic-black)] to-[var(--cosmic-purple)]/90 backdrop-blur-lg z-[1200] md:hidden flex flex-col items-center transition-all duration-500 shadow-2xl overflow-y-auto ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ height: '100vh', position: 'fixed' }}
+        style={{ height: '100dvh', position: 'fixed' }}
       >
         {/* Close button */}
         <div className="w-full flex justify-end p-4">

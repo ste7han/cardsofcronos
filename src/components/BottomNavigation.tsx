@@ -122,16 +122,20 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   
   return (
     <nav 
-      className={`fixed bottom-0 left-0 right-0 z-[300] transition-all duration-500 transform ${
+      className={`fixed bottom-0 left-0 right-0 z-[290] transition-all duration-500 transform ${
         isVisible ? 'translate-y-0' : 'translate-y-full'
       }`}
-      style={{ width: '100%', maxWidth: '100vw' }}
+      style={{ 
+        width: '100%', 
+        maxWidth: '100vw',
+        paddingBottom: 'env(safe-area-inset-bottom, 0)' 
+      }}
     >
       {/* Simple, clean bottom navigation bar */}
-      <div className="relative mx-auto w-full max-w-[100vw]">
+          <div className="relative mx-auto w-full max-w-screen-xl px-4">
         <div className="relative bg-black/80 backdrop-blur-xl border-t border-[#9D4EDD]/30 shadow-lg w-full">
           {/* Navigation items */}
-          <div className="relative z-[310] flex justify-around items-center pt-5 pb-10 px-4 max-w-lg mx-auto">
+          <div className="relative z-[310] flex justify-between items-center py-4 px-2 sm:px-6 mx-auto gap-2">
             {navItems.map((item) => {
               const isActive = activeItem === item.id;
               
@@ -207,7 +211,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       }`}
                     >
                       {/* Icon container with special styling for forge */}
-                      <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-6 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20 z-[330]">
+                      <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-[#FFD700] to-[#9D4EDD] -mt-2 shadow-lg shadow-[#9D4EDD]/50 border-2 border-white/20 z-[300]">
                         {/* Icon */}
                         <div className="text-white transition-all duration-300">
                           {item.icon}
