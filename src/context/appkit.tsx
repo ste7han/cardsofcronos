@@ -2,7 +2,7 @@
 
 import { createAppKit } from '@reown/appkit/react'
 import { Ethers5Adapter } from '@reown/appkit-adapter-ethers5'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 // Define Cronos chain
 const cronos = {
@@ -39,18 +39,61 @@ const metadata = {
   icons: ['/logo.svg']
 }
 
-// 3. Create the AppKit instance
-createAppKit({
-  adapters: [new Ethers5Adapter()],
-  metadata,
-  networks: [cronos],
-  projectId,
-  features: {
-    analytics: true
+// Track if AppKit has been initialized
+let appKitInitialized = false;
+
+// Ensure createAppKit is called before any hooks are used
+if (typeof window !== 'undefined' && !appKitInitialized) {
+  try {
+    console.log('Initializing AppKit in context/appkit.tsx');
+    
+    // Create the AppKit instance
+    createAppKit({
+      adapters: [new Ethers5Adapter()],
+      metadata,
+      networks: [cronos],
+      projectId,
+      features: {
+        analytics: true
+      }
+    });
+    
+    appKitInitialized = true;
+    console.log('AppKit initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize AppKit:', error);
   }
-})
+}
 
 export function AppKit({ children }: { children: React.ReactNode }) {
+  const [initialized, setInitialized] = useState(appKitInitialized);
+
+  // Handle client-side initialization if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !initialized) {
+      try {
+        console.log('Initializing AppKit in client-side effect');
+        
+        // Create the AppKit instance
+        createAppKit({
+          adapters: [new Ethers5Adapter()],
+          metadata,
+          networks: [cronos],
+          projectId,
+          features: {
+            analytics: true
+          }
+        });
+        
+        setInitialized(true);
+        appKitInitialized = true;
+        console.log('AppKit initialized successfully in client-side effect');
+      } catch (error) {
+        console.error('Failed to initialize AppKit in client-side effect:', error);
+      }
+    }
+  }, [initialized]);
+
   return (
     <>{children}</>
   )

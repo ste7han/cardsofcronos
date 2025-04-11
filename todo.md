@@ -1,4 +1,16 @@
-Next.js
+# Cards of Cronos - Reown AppKit Integration
+
+## Fixed Issues
+- ✅ Resolved: "Please call 'createAppKit' before using 'useAppKit' hook" error
+- ✅ Properly initialized AppKit in a Next.js app router context
+
+## Architecture Overview
+The AppKit integration now follows this pattern:
+1. `src/context/appkit.tsx` - Initializes the AppKit instance both during module load and in client-side effect
+2. `src/app/layout.tsx` - Uses the AppKit component to wrap the application
+3. `src/lib/appkit.ts` - Exports hooks from @reown/appkit/react for component use
+
+## AppKit Features
 AppKit has support for Wagmi and Ethers v6 on Ethereum, @solana/web3.js on Solana and Bitcoin. Choose one of these to get started.
 
 Note
@@ -775,18 +787,6 @@ namespace	Option to show specific namespace account info. Note: `eip155` is for 
 <appkit-account-button />
 Variable	Description	Type
 disabled	Enable or disable the button.
-boolean
-balance	Show or hide the user's balance.
-'show' | 'hide'
-<appkit-connect-button />
-Variable	Description	Type
-size	Default size for the button.
-'md' | 'sm'
-label	The text shown in the button.
-string
-loadingLabel	The text shown in the button when the modal is open.
-string
-<appkit-network-button />
 Variable	Description	Type
 disabled	Enable or disable the button.
 boolean

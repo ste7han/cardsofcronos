@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import CardFormContainer from './CardForm/CardFormContainer';
+import InitializedCardFormContainer from './CardForm/InitializedCardFormContainer';
 
-// No props needed as CardFormContainer now handles wallet connection internally
+// Use the wrapper component that ensures AppKit is initialized
 const CardForm: React.FC = () => {
-  return <CardFormContainer />;
+  return <InitializedCardFormContainer />;
 };
 
 export default CardForm;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { Ethers5Adapter } from '@reown/appkit-adapter-ethers5';
 
@@ -45,58 +45,58 @@ const AppKitContext = createContext<boolean>(false);
 // Hook to check if AppKit is initialized
 export const useAppKitInitialized = () => useContext(AppKitContext);
 
-// Initialize AppKit only once at the module level (outside of component lifecycle)
+// Global variable to track if AppKit was initialized
 let appKitInitialized = false;
+let appKitInstance = null;
 
-if (typeof window !== 'undefined' && !appKitInitialized) {
-  try {
-    // Create the AppKit instance
-    const appKitInstance = createAppKit({
-      adapters: [new Ethers5Adapter()],
-      metadata,
-      networks: [cronos],
-      projectId,
-      features: {
-        analytics: true
-      }
-    });
-    
-    // Store the instance globally so components can access it
-    if (typeof window !== 'undefined') {
-      // Add additional methods and properties to make it easier to use from components
-      window.AppKitInstance = {
-        ...appKitInstance,
-        getWalletInfo: () => {
-          // Safe implementation of getting wallet info
-          try {
-            // This is a safe fallback implementation
-            return {
-              isConnected: false,
-              address: undefined
-            };
-          } catch (error) {
-            console.error("Error getting wallet info:", error);
-            return {
-              isConnected: false,
-              address: undefined
-            };
-          }
-        },
-        open: () => {
-          try {
-            appKitInstance.open();
-          } catch (error) {
-            console.error("Error opening AppKit:", error);
-          }
+// Function to initialize AppKit - exported for use in other files
+export const initializeAppKit = () => {
+  if (typeof window !== 'undefined' && !appKitInitialized) {
+    try {
+      console.log('Creating AppKit instance...');
+      // Create the AppKit instance with Cronos chain support
+      appKitInstance = createAppKit({
+        adapters: [new Ethers5Adapter()],
+        metadata,
+        networks: [cronos],
+        projectId,
+        features: {
+          analytics: true
         }
-      };
+      });
+      
+      // Mark as initialized globally
+      appKitInitialized = true;
+      (window as any).AppKitInitialized = true;
+      console.log('AppKit initialized successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize AppKit:', error);
+      return false;
     }
-    
-    appKitInitialized = true;
-    console.log('AppKit initialized at module level');
-  } catch (error) {
-    console.error('Failed to initialize AppKit at module level:', error);
   }
+  return appKitInitialized;
+};
+
+// Export for type declaration
+declare global {
+  interface Window {
+    AppKitInitialized?: boolean;
+  }
+}
+
+// Initialize at module level in browser environment
+if (typeof window !== 'undefined') {
+  // Immediate initialization attempt
+  initializeAppKit();
+  
+  // Fallback initialization after window is fully loaded
+  window.addEventListener('load', () => {
+    if (!appKitInitialized) {
+      console.log('Initializing AppKit on window load');
+      initializeAppKit();
+    }
+  });
 }
 
 interface AppKitProviderProps {
@@ -106,58 +106,19 @@ interface AppKitProviderProps {
 const AppKitProvider: React.FC<AppKitProviderProps> = ({ children }) => {
   const [initialized, setInitialized] = useState(appKitInitialized);
 
-  // We still need an effect to handle client-side rendering
-  // This initializes AppKit if it wasn't initialized at the module level
   useEffect(() => {
-    if (typeof window !== 'undefined' && !initialized) {
-      try {
-        // Create the AppKit instance
-        const appKitInstance = createAppKit({
-          adapters: [new Ethers5Adapter()],
-          metadata,
-          networks: [cronos],
-          projectId,
-          features: {
-            analytics: true
-          }
-        });
-        
-        // Store the instance globally with additional helper methods
-        if (typeof window !== 'undefined') {
-          window.AppKitInstance = {
-            ...appKitInstance,
-            getWalletInfo: () => {
-              // Safe implementation of getting wallet info
-              try {
-                // This is a safe fallback implementation
-                return {
-                  isConnected: false,
-                  address: undefined
-                };
-              } catch (error) {
-                console.error("Error getting wallet info:", error);
-                return {
-                  isConnected: false,
-                  address: undefined
-                };
-              }
-            },
-            open: () => {
-              try {
-                appKitInstance.open();
-              } catch (error) {
-                console.error("Error opening AppKit:", error);
-              }
-            }
-          };
-        }
-        
-        setInitialized(true);
-        appKitInitialized = true;
-        console.log('AppKit initialized in component');
-      } catch (error) {
-        console.error('Failed to initialize AppKit in component:', error);
-      }
+    // Try to initialize if not already done
+    if (!initialized) {
+      const result = initializeAppKit();
+      setInitialized(result);
+    }
+  }, [initialized]);
+
+  // Make sure the AppKit instance is globally available
+  useEffect(() => {
+    if (initialized && typeof window !== 'undefined') {
+      // Use a safer way to store initialization state
+      (window as any).AppKitInitialized = true;
     }
   }, [initialized]);
 

@@ -10,8 +10,8 @@ import CardPreview from '../CardPreview';
 import LoadingSpinner from '../LoadingSpinner';
 import { FormInputs } from './types';
 import { CardTypeStep, RarityStep, AnimatedStep, CardInfoStep, ReviewStep, SuccessScreen } from './';
-// Import Reown AppKit hooks
-import { useAppKit, useAppKitAccount, useAppKitProvider } from '@/lib/appkit';
+// Import Reown AppKit hooks directly from reown/appkit/react to avoid initialization issues
+import { useAppKit, useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 
 const CardFormContainer: React.FC = () => {
   // Use Reown hooks for wallet connection
@@ -21,7 +21,11 @@ const CardFormContainer: React.FC = () => {
   
   // Function to open wallet modal
   const handleConnectWallet = () => {
-    openAppKit({ view: 'Connect' });
+    if (openAppKit) {
+      openAppKit({ view: 'Connect' });
+    } else {
+      console.error('AppKit open function not available yet');
+    }
   };
   const [step, setStep] = useState<number>(1);
   const [burnAmount, setBurnAmount] = useState<number>(0);
