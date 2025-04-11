@@ -95,7 +95,7 @@ const AnimatedStep: React.FC<StepProps> = ({ register, watch, setValue, onNext, 
           <button
             type="button"
             onClick={onBack}
-            className="btn-secondary py-2 px-6 text-sm font-medium"
+            className="btn-secondary w-full sm:flex-1 py-4 text-lg font-bold shadow-lg shadow-[#FFD700]/20 hover:shadow-[#FFD700]/30"
           >
             Back
           </button>

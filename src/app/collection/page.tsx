@@ -569,24 +569,6 @@ export default function CollectionPage() {
               
               <p className="text-white/80 mb-6">{selectedCard.description}</p>
               
-              <h3 className="text-lg font-bold font-['Cinzel'] mb-3 text-[var(--secondary)]">Attributes</h3>
-              
-              {/* Attributes */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="modern-card p-3 text-center">
-                  <div className="text-2xl font-bold text-[var(--primary-glow)]">{selectedCard.attributes.power}</div>
-                  <div className="text-xs text-white/70">Power</div>
-                </div>
-                <div className="modern-card p-3 text-center">
-                  <div className="text-2xl font-bold text-[var(--primary-glow)]">{selectedCard.attributes.defense}</div>
-                  <div className="text-xs text-white/70">Defense</div>
-                </div>
-                <div className="modern-card p-3 text-center">
-                  <div className="text-2xl font-bold text-[var(--primary-glow)]">{selectedCard.attributes.magic}</div>
-                  <div className="text-xs text-white/70">Magic</div>
-                </div>
-              </div>
-              
               {/* Card ID */}
               <div className="mt-auto text-xs text-white/50">
                 Card ID: {selectedCard.id}

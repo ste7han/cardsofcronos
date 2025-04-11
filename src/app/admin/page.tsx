@@ -8,6 +8,7 @@ import AdminHeader from '@/components/AdminHeader';
 import Footer from '@/components/Footer';
 import AdminBottomNavigation from '@/components/AdminBottomNavigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ChatInterface from '@/components/ChatInterface';
 import { isAdmin, signIn, signOut, getCurrentUser, onAuthChange } from '@/firebase/auth';
 import { collection, addDoc, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
@@ -48,6 +49,7 @@ export default function AdminPage() {
     status: 'pending',
     adminNotes: '',
   });
+  const [orderFilter, setOrderFilter] = useState<'active' | 'completed'>('active');
   
   // Form state
   const [formData, setFormData] = useState<CardFormData>({
@@ -763,7 +765,35 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
               {/* Orders List */}
               <div className="modern-card p-6">
-                <h2 className="text-xl font-bold font-['Cinzel'] mb-6 text-[var(--secondary)]">Card Orders</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold font-['Cinzel'] text-[var(--secondary)]">Card Orders</h2>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setOrderFilter('active')}
+                      className={`px-3 py-1 text-xs font-medium rounded-l-md ${
+                        orderFilter === 'active'
+                          ? 'bg-[var(--primary)] text-white'
+                          : 'bg-[var(--cosmic-black)]/70 text-white/70'
+                      }`}
+                    >
+                      Active
+                    </button>
+                    <button
+                      onClick={() => {
+                        setOrderFilter('completed');
+                        // Clear selection when switching views
+                        setSelectedOrder(null);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium rounded-r-md ${
+                        orderFilter === 'completed'
+                          ? 'bg-[var(--primary)] text-white'
+                          : 'bg-[var(--cosmic-black)]/70 text-white/70'
+                      }`}
+                    >
+                      Completed
+                    </button>
+                  </div>
+                </div>
                 
                 {error && (
                   <div className="bg-red-900/30 border border-red-600 rounded-md p-4 mb-6">
@@ -785,7 +815,13 @@ export default function AdminPage() {
                   <p className="text-center text-white/60 py-8">No orders found.</p>
                 ) : (
                   <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                    {orders.map(order => (
+                    {orders
+                      .filter(order => 
+                        orderFilter === 'active' 
+                          ? (order.status === 'pending' || order.status === 'approved')
+                          : (order.status === 'completed' || order.status === 'rejected')
+                      )
+                      .map(order => (
                       <div 
                         key={order.id} 
                         onClick={() => {
@@ -884,6 +920,19 @@ export default function AdminPage() {
                             </div>
                           </div>
                         )}
+                        
+                        {/* Chat Interface */}
+                        <div className="mt-6">
+                          <h3 className="text-lg font-semibold mb-4">Customer Communication</h3>
+                          <div className="bg-[var(--cosmic-black)]/50 p-4 rounded-lg">
+                            {selectedOrder && (
+                              <ChatInterface 
+                                orderId={selectedOrder}
+                                userAddress={user?.email || 'admin'}
+                              />
+                            )}
+                          </div>
+                        </div>
                         
                         {/* Status Update Form */}
                         <div className="mt-6">

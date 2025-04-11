@@ -211,26 +211,28 @@ const CardFormContainer: React.FC = () => {
 
       {/* Main form content */}
       <div className="relative z-10">
-        <div className="flex flex-col md:grid md:grid-cols-2 gap-6">
-          {/* Card Preview */}
-          <div className="md:order-2 flex items-center justify-center mb-4 md:mb-0">
-            <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs">
-              <h3 className="text-center text-lg font-bold font-['Cinzel'] mb-3 text-[var(--secondary)]">
-                Card Preview
-              </h3>
-              <div className="transition-all duration-500 transform">
-                <CardPreview
-                  name={watch('name') || 'Your Card Name'}
-                  description={watch('description') || 'Card description will appear here...'}
-                  cardType={watchCardType}
-                  rarity={watchRarity}
-                  animated={watchAnimated || false}
-                  imagePreview={imagePreview}
-                  isLoading={isSubmitting}
-                />
+        <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:min-h-[400px]">
+          {/* Card Preview - Only shown in steps 4 and 5 */}
+          {step >= 4 && (
+            <div className="md:order-2 flex items-center justify-center mb-4 md:mb-0">
+              <div className="w-full max-w-[220px] sm:max-w-[250px] md:max-w-xs">
+                <h3 className="text-center text-lg font-bold font-['Cinzel'] mb-3 text-[var(--secondary)]">
+                  Card Preview
+                </h3>
+                <div className="transition-all duration-500 transform">
+                  <CardPreview
+                    name={watch('name') || 'Your Card Name'}
+                    description={watch('description') || 'Card description will appear here...'}
+                    cardType={watchCardType}
+                    rarity={watchRarity}
+                    animated={watchAnimated || false}
+                    imagePreview={imagePreview}
+                    isLoading={isSubmitting}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Steps */}
           <div className="md:order-1">

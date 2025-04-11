@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { getBurnStats } from '@/firebase/firestore';
-import { TOKEN_ADDRESS, DEAD_WALLET } from '@/lib/web3';
-import { ethers } from 'ethers';
+import { getDeadWalletBalance } from '@/lib/web3';
 
 // Total supply of the token
 const TOTAL_SUPPLY = 1000000000; // 1 billion
@@ -41,23 +40,9 @@ const BurnCounter: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // Get dead wallet balance directly from the blockchain
+        // Get dead wallet balance using the helper function from web3.ts
         try {
-          // Create a provider directly here instead of using the function from web3.ts
-          const provider = new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
-          
-          // Create the contract instance directly
-          const ERC20_ABI = [
-            'function balanceOf(address owner) view returns (uint256)',
-            'function decimals() view returns (uint8)',
-            'function symbol() view returns (string)'
-          ];
-          const contract = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
-          
-          // Get the balance and decimals
-          const balance = await contract.balanceOf(DEAD_WALLET);
-          const decimals = await contract.decimals();
-          const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+          const formattedBalance = await getDeadWalletBalance();
           setDeadWalletBalance(formattedBalance);
           
           // Convert to number for animation and percentage calculation

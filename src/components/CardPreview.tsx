@@ -44,28 +44,14 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   animated = false,
   isLoading = false
 }) => {
-  // Add isClient state to prevent hydration mismatch
+  // State for card interaction
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  // Store card attribute values in state to ensure consistency between renders
-  const [cardAttributes, setCardAttributes] = useState({
-    power: 80,
-    defense: 80,
-    magic: 80
-  });
   
-  // Set isClient to true once component mounts on client
+  // Set isClient to true once component mounts
   useEffect(() => {
     setIsClient(true);
-    // Generate random values only once after component mounts on client
-    if (typeof window !== 'undefined') {
-      setCardAttributes({
-        power: Math.floor(Math.random() * 30) + 70,
-        defense: Math.floor(Math.random() * 30) + 70,
-        magic: Math.floor(Math.random() * 30) + 70
-      });
-    }
   }, []);
 
   // Default image if no preview is provided
@@ -84,7 +70,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-xs mx-auto relative z-[260]" style={{ perspective: '1000px', position: 'relative' }}>
+    <div className="w-full max-w-[220px] sm:max-w-[250px] md:max-w-xs mx-auto relative z-[260]" style={{ perspective: '1000px', position: 'relative' }}>
       {isLoading ? (
         // Loading state
         <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-[var(--cosmic-black)]/70 to-[var(--cosmic-purple)]/50 animate-pulse flex items-center justify-center">
@@ -95,7 +81,7 @@ const CardPreview: React.FC<CardPreviewProps> = ({
         <div 
           className={`w-full aspect-[2/3] rounded-lg cursor-pointer transition-all duration-500 ${
             isHovered ? 'scale-105' : ''
-          } max-h-[300px]`}
+          } max-h-[340px]`}
           style={{ 
             transformStyle: 'preserve-3d',
             transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
@@ -179,39 +165,18 @@ const CardPreview: React.FC<CardPreviewProps> = ({
                 <h3 className="text-sm font-bold font-['Cinzel'] mb-1 text-[var(--secondary)]">
                   {name || 'Card Name'}
                 </h3>
-                
-                <div className="flex gap-1 mb-2">
-                  <span className="px-1.5 py-0.5 rounded-full bg-[var(--primary)]/20 text-[var(--primary-glow)] text-[10px]">
-                    {rarity}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded-full bg-[var(--secondary)]/20 text-[var(--secondary)] text-[10px]">
-                    {cardType}
-                  </span>
-                </div>
-                
-                <p className="text-white/80 text-[10px] mb-2 px-1">
-                  {truncatedDescription || 'No description provided.'}
-                </p>
-                
-                {/* Card attributes */}
-                <div className="grid grid-cols-3 gap-1 w-full mt-auto">
-                  <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
-                    <div className="text-xs font-bold text-[var(--primary-glow)]">
-                      {cardAttributes.power}
-                    </div>
-                    <div className="text-[8px] text-white/70">Power</div>
+                <div className="mt-2">
+                  <div className="flex gap-1 mb-3 justify-center">
+                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--primary)]/20 text-[var(--primary-glow)] text-[10px]">
+                      {rarity}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--secondary)]/20 text-[var(--secondary)] text-[10px]">
+                      {cardType}
+                    </span>
                   </div>
-                  <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
-                    <div className="text-xs font-bold text-[var(--primary-glow)]">
-                      {cardAttributes.defense}
-                    </div>
-                    <div className="text-[8px] text-white/70">Defense</div>
-                  </div>
-                  <div className="p-0.5 bg-[var(--cosmic-black)]/30 rounded text-center">
-                    <div className="text-xs font-bold text-[var(--primary-glow)]">
-                      {cardAttributes.magic}
-                    </div>
-                    <div className="text-[8px] text-white/70">Magic</div>
+                  
+                  <div className="text-white/80 text-[10px] px-1">
+                    {truncatedDescription || 'No description provided.'}
                   </div>
                 </div>
               </div>

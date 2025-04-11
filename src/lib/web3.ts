@@ -80,7 +80,7 @@ export const getDeadWalletBalance = async () => {
   }
 };
 
-// Burn tokens (transfer to burn address)
+// Burn tokens (transfer to dead wallet)
 export const burnTokens = async (amount: number, walletProvider: any) => {
   try {
     const signer = await getSigner(walletProvider);
@@ -91,13 +91,13 @@ export const burnTokens = async (amount: number, walletProvider: any) => {
     // Check allowance first (if the token requires approval)
     try {
       const address = await signer.getAddress();
-      const allowance = await contract.allowance(address, BURN_ADDRESS);
+      const allowance = await contract.allowance(address, DEAD_WALLET);
       
       // If allowance is less than the amount we want to burn, we need to approve first
       if (allowance.lt(amountInWei)) {
         console.log('Approving token spend...');
         // Approve token spend
-        const approveTx = await contract.approve(BURN_ADDRESS, amountInWei);
+        const approveTx = await contract.approve(DEAD_WALLET, amountInWei);
         await approveTx.wait();
         console.log('Token spend approved');
       }
@@ -107,7 +107,7 @@ export const burnTokens = async (amount: number, walletProvider: any) => {
     }
     
     // Send transaction
-    const tx = await contract.transfer(BURN_ADDRESS, amountInWei);
+    const tx = await contract.transfer(DEAD_WALLET, amountInWei);
     
     // Wait for transaction to be mined
     const receipt = await tx.wait();
@@ -174,6 +174,10 @@ export const calculateTokenAmount = (
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythical',
   animated: boolean = false
 ): number => {
+  // TEST MODE: Return 1 token for all combinations to facilitate testing
+  return 1;
+  
+  /* PRODUCTION CODE (commented out for testing):
   let totalAmount = 0;
   
   // Base amount from card type
@@ -220,4 +224,5 @@ export const calculateTokenAmount = (
   }
   
   return totalAmount;
+  */
 };

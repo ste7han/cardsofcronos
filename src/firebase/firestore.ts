@@ -152,6 +152,32 @@ export const getOrderById = async (id: string) => {
   return getCardRequestById(id);
 };
 
+// Get order by transaction hash
+export const getOrderByTransactionHash = async (transactionHash: string) => {
+  try {
+    const q = query(
+      requestsCollection,
+      where('transactionHash', '==', transactionHash),
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const doc = querySnapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    };
+  } catch (error) {
+    console.error('Error getting order by transaction hash:', error);
+    throw error;
+  }
+};
+
 // Update order status
 export const updateOrderStatus = async (id: string, status: CardRequest['status'], adminNotes?: string) => {
   try {
