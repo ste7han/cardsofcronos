@@ -430,10 +430,7 @@ export default function Home() {
                 </svg>
               </button>
             </div>
-            <CardForm 
-              isWalletConnected={isConnected}
-              onConnectWallet={handleConnectWallet}
-            />
+            <CardForm />
           </div>
         </div>
       </div>

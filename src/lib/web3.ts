@@ -29,19 +29,15 @@ export const getProvider = () => {
   return new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
 };
 
-// Get signer using AppKit - this function should only be called from within a React component
-export const getSigner = async () => {
+// Get signer using passed walletProvider - to be called from a component that has the hook values
+export const getSigner = async (walletProvider: any) => {
   // Check if we're in a client component
   if (typeof window === 'undefined') {
     throw new Error('Cannot get signer in server component');
   }
   
   try {
-    // Get the wallet provider from AppKit - passing 'eip155' as the chainNamespace parameter
-    const { walletProvider } = useAppKitProvider('eip155');
-    const { address } = useAppKitAccount();
-    
-    if (!walletProvider || !address) {
+    if (!walletProvider) {
       throw new Error('No wallet connected');
     }
     
@@ -85,12 +81,30 @@ export const getDeadWalletBalance = async () => {
 };
 
 // Burn tokens (transfer to burn address)
-export const burnTokens = async (amount: number) => {
+export const burnTokens = async (amount: number, walletProvider: any) => {
   try {
-    const signer = await getSigner();
+    const signer = await getSigner(walletProvider);
     const contract = getTokenContract(signer);
     const decimals = await contract.decimals();
     const amountInWei = ethers.utils.parseUnits(amount.toString(), decimals);
+    
+    // Check allowance first (if the token requires approval)
+    try {
+      const address = await signer.getAddress();
+      const allowance = await contract.allowance(address, BURN_ADDRESS);
+      
+      // If allowance is less than the amount we want to burn, we need to approve first
+      if (allowance.lt(amountInWei)) {
+        console.log('Approving token spend...');
+        // Approve token spend
+        const approveTx = await contract.approve(BURN_ADDRESS, amountInWei);
+        await approveTx.wait();
+        console.log('Token spend approved');
+      }
+    } catch (allowanceError) {
+      console.log('Could not check/set allowance, proceeding with transfer', allowanceError);
+      // Some tokens don't have allowance functions, so we'll just try the transfer directly
+    }
     
     // Send transaction
     const tx = await contract.transfer(BURN_ADDRESS, amountInWei);
@@ -104,9 +118,20 @@ export const burnTokens = async (amount: number) => {
     };
   } catch (error) {
     console.error('Error burning tokens:', error);
+    
+    // Handle common error messages more user-friendly
+    let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (errorMessage.includes('insufficient funds') || 
+        errorMessage.includes('exceeds balance')) {
+      errorMessage = 'You don\'t have enough tokens to complete this transaction.';
+    } else if (errorMessage.includes('execution reverted')) {
+      errorMessage = 'Transaction failed. This could be due to insufficient tokens or contract restrictions.';
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
     };
   }
 };

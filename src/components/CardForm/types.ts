@@ -22,8 +22,3 @@ export interface StepProps {
   onBack?: () => void;
   burnAmount?: number;
 }
-
-export interface CardFormProps {
-  isWalletConnected: boolean;
-  onConnectWallet: () => void;
-}

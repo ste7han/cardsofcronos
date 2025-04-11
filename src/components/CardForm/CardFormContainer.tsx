@@ -8,10 +8,21 @@ import { addCardRequest } from '@/firebase/firestore';
 import { sendCardRequestEmail } from '@/lib/email';
 import CardPreview from '../CardPreview';
 import LoadingSpinner from '../LoadingSpinner';
-import { CardFormProps, FormInputs } from './types';
+import { FormInputs } from './types';
 import { CardTypeStep, RarityStep, AnimatedStep, CardInfoStep, ReviewStep, SuccessScreen } from './';
+// Import Reown AppKit hooks
+import { useAppKit, useAppKitAccount, useAppKitProvider } from '@/lib/appkit';
 
-const CardFormContainer: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet }) => {
+const CardFormContainer: React.FC = () => {
+  // Use Reown hooks for wallet connection
+  const { open: openAppKit } = useAppKit();
+  const { isConnected: isWalletConnected, address } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider('eip155'); // Get the wallet provider for EVM chains
+  
+  // Function to open wallet modal
+  const handleConnectWallet = () => {
+    openAppKit({ view: 'Connect' });
+  };
   const [step, setStep] = useState<number>(1);
   const [burnAmount, setBurnAmount] = useState<number>(0);
   const [image, setImage] = useState<File | null>(null);
@@ -86,7 +97,7 @@ const CardFormContainer: React.FC<CardFormProps> = ({ isWalletConnected, onConne
       }
 
       // 1. Burn tokens
-      const burnResult = await burnTokens(burnAmount);
+      const burnResult = await burnTokens(burnAmount, walletProvider);
       if (!burnResult.success) {
         setError(`Transaction failed: ${burnResult.error}`);
         return;
@@ -109,7 +120,7 @@ const CardFormContainer: React.FC<CardFormProps> = ({ isWalletConnected, onConne
         burnAmount: burnAmount,
         email: data.email,
         status: 'pending',
-        userAddress: window.appkit?.account?.address || '',
+        userAddress: address || '',
         animated: data.animated,
       });
 
@@ -282,7 +293,7 @@ const CardFormContainer: React.FC<CardFormProps> = ({ isWalletConnected, onConne
                 imagePreview={imagePreview}
                 burnAmount={burnAmount}
                 isWalletConnected={isWalletConnected}
-                onConnectWallet={onConnectWallet}
+                onConnectWallet={handleConnectWallet}
                 isSubmitting={isSubmitting}
                 error={error}
                 onSubmit={handleSubmit(onSubmit)}

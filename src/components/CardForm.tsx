@@ -3,18 +3,9 @@
 import React from 'react';
 import CardFormContainer from './CardForm/CardFormContainer';
 
-interface CardFormProps {
-  isWalletConnected: boolean;
-  onConnectWallet: () => void;
-}
-
-const CardForm: React.FC<CardFormProps> = ({ isWalletConnected, onConnectWallet }) => {
-  return (
-    <CardFormContainer 
-      isWalletConnected={isWalletConnected} 
-      onConnectWallet={onConnectWallet} 
-    />
-  );
+// No props needed as CardFormContainer now handles wallet connection internally
+const CardForm: React.FC = () => {
+  return <CardFormContainer />;
 };
 
 export default CardForm;
