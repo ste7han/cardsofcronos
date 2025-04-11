@@ -12,12 +12,12 @@ const {
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDLMTb0x2yfmjh6MRAfRd6G-pLQ1I-fri8",
-  authDomain: "cardsofcronos-8219c.firebaseapp.com",
-  projectId: "cardsofcronos-8219c",
-  storageBucket: "cardsofcronos-8219c.firebasestorage.app",
-  messagingSenderId: "826047115111",
-  appId: "1:826047115111:web:4313d139cab01d86b009c2"
+  apiKey: "AIzaSyDZ3cU6ruwdMvqgQgRzljbwY-bU9tPdtvY",
+  authDomain: "my-project-1472564361903.firebaseapp.com",
+  projectId: "my-project-1472564361903",
+  storageBucket: "my-project-1472564361903.firebasestorage.app",
+  messagingSenderId: "526423901383",
+  appId: "1:526423901383:web:8f9b7c708bf63783616ae2"
 };
 
 // Initialize Firebase

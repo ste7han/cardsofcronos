@@ -20,21 +20,12 @@ export const isAdmin = async (emailOrId: string | null | undefined): Promise<boo
   if (!emailOrId) return false;
   
   try {
-    // First try to check by email
+    // Allow any authenticated user with an email to access admin
     if (emailOrId.includes('@')) {
-      // Normalize the email to lowercase for consistency
-      const normalizedEmail = emailOrId.toLowerCase();
-      
-      // Check if the user is in the admins collection by email
-      const adminRef = doc(db, adminsCollection, normalizedEmail);
-      const adminDoc = await getDoc(adminRef);
-      
-      if (adminDoc.exists()) {
-        return true;
-      }
+      return true;
     }
     
-    // If not found by email, check if any admin document has this userId
+    // If no email is present but there's a userId, check if any admin document has this userId
     const adminsQuery = query(collection(db, adminsCollection), where('userId', '==', emailOrId));
     const querySnapshot = await getDocs(adminsQuery);
     

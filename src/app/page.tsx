@@ -167,11 +167,6 @@ export default function Home() {
         {/* Pure black background */}
         <div className="absolute inset-0 bg-black"></div>
         
-        {/* Subtle purple glow in center */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[80%] h-[80%] rounded-full bg-[var(--cosmic-purple)]/5 blur-[100px]"></div>
-        </div>
-        
         {/* Animated background cards */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Top left floating card */}

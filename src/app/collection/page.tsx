@@ -522,16 +522,7 @@ export default function CollectionPage() {
           
           {/* Modal container with max height and scrolling */}
           <div className="relative z-[310] w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 bg-[var(--cosmic-black)]/90 backdrop-blur-xl p-3 sm:p-6 rounded-xl border border-[var(--primary)]/30">
-            {/* Close button - larger touch target for mobile */}
-            <button 
-              onClick={() => setSelectedCard(null)}
-              className="absolute top-2 right-2 md:top-4 md:right-4 text-white hover:text-white p-3 rounded-full bg-[var(--primary)]/40 hover:bg-[var(--primary)]/60 shadow-lg z-50"
-              aria-label="Close card preview"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {/* No close button - Modal can be closed by clicking outside or pressing ESC */}
             
             {/* Card image - reduced size on mobile */}
             <div className="perspective-1000 mx-auto md:mx-0 mt-4 md:mt-0" style={{ maxWidth: '240px', width: '100%' }}>
