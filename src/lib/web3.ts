@@ -174,10 +174,6 @@ export const calculateTokenAmount = (
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythical',
   animated: boolean = false
 ): number => {
-  // TEST MODE: Return 1 token for all combinations to facilitate testing
-  return 1;
-  
-  /* PRODUCTION CODE (commented out for testing):
   let totalAmount = 0;
   
   // Base amount from card type
@@ -224,5 +220,4 @@ export const calculateTokenAmount = (
   }
   
   return totalAmount;
-  */
 };

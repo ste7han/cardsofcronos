@@ -128,18 +128,7 @@ const CardFormContainer: React.FC = () => {
         animated: data.animated,
       });
 
-      // 4. Send email notification
-      await sendCardRequestEmail(
-        data.cardType,
-        data.rarity,
-        data.name,
-        data.description,
-        data.socialLink,
-        imageUrl,
-        burnResult.transactionHash,
-        burnAmount,
-        data.email
-      );
+      // Email notifications have been removed
 
       // Success!
       setSuccess(true);

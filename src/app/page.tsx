@@ -10,6 +10,7 @@ import CardForm from '@/components/CardForm';
 import ScratchCard from '@/components/ScratchCard';
 import BottomNavigation from '@/components/BottomNavigation';
 import { initEmailJS } from '@/lib/email';
+import BuyTokenButton from '@/components/BuyTokenButton';
 import { useAppKitInitialized } from '@/components/AppKitProvider';
 import { useAppKit as useCustomAppKit } from '@/hooks/useAppKit';
 
@@ -331,6 +332,7 @@ export default function Home() {
             >
               VIEW COLLECTION
             </a>
+            <BuyTokenButton variant="secondary" />
           </div>
         </div>
       </div>
@@ -388,10 +390,11 @@ export default function Home() {
           <div className="mt-6 md:mt-8 text-center">
             <a
               href="#card-form"
-              className="modern-btn-primary text-xs sm:text-sm px-5 py-2 sm:py-2.5 mb-2 inline-block"
+              className="modern-btn-primary text-xs sm:text-sm px-5 py-2 sm:py-2.5 mb-2 inline-block mr-2"
             >
               Forge your card
             </a>
+            <BuyTokenButton className="mb-2 inline-block" />
           </div>
         </div>
       </div>
