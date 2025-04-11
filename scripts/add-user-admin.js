@@ -17,8 +17,8 @@ if (admin.apps.length === 0) {
 
 const db = admin.firestore();
 
-// The user ID to add as admin
-const userId = 'DLZkLpD1ZvPv4rZqwKnUNHvmZrs1';
+// Get the user ID from command line arguments, or use default
+const userId = process.argv[2] || 'DLZkLpD1ZvPv4rZqwKnUNHvmZrs1';
 
 async function addUserAsAdmin() {
   console.log(`Adding user ${userId} as admin...`);

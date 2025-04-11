@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { getBurnStats } from '@/firebase/firestore';
-import { getDeadWalletBalance } from '@/lib/web3';
+import { getDeadWalletBalance, DEAD_WALLET, TOKEN_ADDRESS } from '@/lib/web3';
+import { ethers } from 'ethers';
 
 // Total supply of the token
 const TOTAL_SUPPLY = 1000000000; // 1 billion
@@ -33,6 +33,12 @@ const BurnCounter: React.FC = () => {
   }, []);
 
   // Only fetch data and set up animations on the client side after hydration
+  // ERC20 Token ABI (minimal for balanceOf)
+  const ERC20_ABI = [
+    'function balanceOf(address owner) view returns (uint256)',
+    'function decimals() view returns (uint8)'
+  ];
+
   useEffect(() => {
     if (!isClient) return;
     
@@ -40,9 +46,29 @@ const BurnCounter: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // Get dead wallet balance using the helper function from web3.ts
+        // Direct blockchain query using ethers.js
         try {
-          const formattedBalance = await getDeadWalletBalance();
+          console.log(`Fetching burn stats for token: ${TOKEN_ADDRESS}`);
+          console.log(`Dead wallet address: ${DEAD_WALLET}`);
+          
+          // Create provider connection to Cronos
+          const provider = new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
+          
+          // Create contract instance
+          const contract = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
+          
+          // Get token decimals
+          const decimals = await contract.decimals();
+          console.log(`Token decimals: ${decimals}`);
+          
+          // Get balance
+          const balance = await contract.balanceOf(DEAD_WALLET);
+          console.log(`Raw balance: ${balance.toString()}`);
+          
+          // Format balance
+          const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+          console.log(`Formatted balance: ${formattedBalance}`);
+          
           setDeadWalletBalance(formattedBalance);
           
           // Convert to number for animation and percentage calculation
@@ -66,16 +92,26 @@ const BurnCounter: React.FC = () => {
             setOrbEnergy(initialEnergy);
           }
         } catch (error) {
-          console.error('Error fetching dead wallet balance:', error);
+          console.error('Direct blockchain query failed with error:', error);
           
-          // Fallback to Firebase stats if blockchain query fails
-          const stats = await getBurnStats();
-          const newTotal = stats?.totalBurned || 0;
-          setDeadWalletBalance(newTotal.toString());
-          setBurnPercentage((newTotal / TOTAL_SUPPLY) * 100);
+          // Fall back to helper function
+          console.log('Falling back to getDeadWalletBalance helper function');
+          const formattedBalance = await getDeadWalletBalance();
+          console.log(`Helper function returned: ${formattedBalance}`);
+          
+          if (formattedBalance !== '0') {
+            setDeadWalletBalance(formattedBalance);
+            
+            // Convert to number for animation and percentage calculation
+            const balanceNum = parseFloat(formattedBalance);
+            
+            // Calculate percentage of total supply
+            const percentage = (balanceNum / TOTAL_SUPPLY) * 100;
+            setBurnPercentage(percentage);
+          }
         }
       } catch (error) {
-        console.error('Error fetching burn stats:', error);
+        console.error('Error fetching burn stats from blockchain:', error);
       } finally {
         setIsLoading(false);
       }
