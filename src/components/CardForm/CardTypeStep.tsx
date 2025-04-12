@@ -60,7 +60,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Event Card */}
         <CardTypeOption
           type="Event"
-          imagePath="/rare.png" // Using rare.png for Event type
+          imagePath="/event.jpg" // Updated to correct event.jpg image
           cost="100,000 🔥"
           isSelected={watchCardType === 'Event'}
           register={register}
@@ -100,7 +100,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         {/* Fusion Card */}
         <CardTypeOption
           type="Fusion"
-          imagePath="/legendary.png" // Using legendary.png for Fusion type
+          imagePath="/fusion.png" // Updated to correct fusion.png image
           cost="250,000 🔥"
           isSelected={watchCardType === 'Fusion'}
           register={register}
