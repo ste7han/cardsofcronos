@@ -21,7 +21,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Project"
           imagePath="/project.png"
-          cost="100,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Project'}
           register={register}
           onSelect={() => handleSelectCardType('Project')}
@@ -31,7 +31,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Founder"
           imagePath="/founder.png"
-          cost="100,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Founder'}
           register={register}
           onSelect={() => handleSelectCardType('Founder')}
@@ -41,7 +41,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Crofam"
           imagePath="/crofam.png"
-          cost="100,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Crofam'}
           register={register}
           onSelect={() => handleSelectCardType('Crofam')}
@@ -51,7 +51,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Influencer"
           imagePath="/influencer.png"
-          cost="100,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Influencer'}
           register={register}
           onSelect={() => handleSelectCardType('Influencer')}
@@ -61,7 +61,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Event"
           imagePath="/event.jpg" // Updated to correct event.jpg image
-          cost="100,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Event'}
           register={register}
           onSelect={() => handleSelectCardType('Event')}
@@ -71,7 +71,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Roast"
           imagePath="/roast.png"
-          cost="250,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Roast'}
           register={register}
           onSelect={() => handleSelectCardType('Roast')}
@@ -81,7 +81,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Special"
           imagePath="/special.png"
-          cost="500,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Special'}
           register={register}
           onSelect={() => handleSelectCardType('Special')}
@@ -91,7 +91,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Parody"
           imagePath="/parody.png"
-          cost="250,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Parody'}
           register={register}
           onSelect={() => handleSelectCardType('Parody')}
@@ -101,7 +101,7 @@ const CardTypeStep: React.FC<StepProps> = ({ register, watch, setValue, onNext }
         <CardTypeOption
           type="Fusion"
           imagePath="/fusion.png" // Updated to correct fusion.png image
-          cost="250,000 🔥"
+          cost="1 🔥"
           isSelected={watchCardType === 'Fusion'}
           register={register}
           onSelect={() => handleSelectCardType('Fusion')}

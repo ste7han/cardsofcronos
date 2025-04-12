@@ -174,50 +174,6 @@ export const calculateTokenAmount = (
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythical',
   animated: boolean = false
 ): number => {
-  let totalAmount = 0;
-  
-  // Base amount from card type
-  switch (cardType) {
-    case 'Project':
-    case 'Founder':
-    case 'Crofam':
-    case 'Influencer':
-    case 'Event':
-      totalAmount += 100000;
-      break;
-    case 'Roast':
-    case 'Parody':
-    case 'Fusion':
-      totalAmount += 250000;
-      break;
-    case 'Special':
-      totalAmount += 500000;
-      break;
-  }
-  
-  // Additional amount from rarity
-  switch (rarity) {
-    case 'Common':
-      totalAmount += 10000;
-      break;
-    case 'Rare':
-      totalAmount += 20000;
-      break;
-    case 'Epic':
-      totalAmount += 50000;
-      break;
-    case 'Legendary':
-      totalAmount += 100000;
-      break;
-    case 'Mythical':
-      totalAmount += 250000;
-      break;
-  }
-  
-  // Additional amount for animated cards
-  if (animated) {
-    totalAmount += 500000;
-  }
-  
-  return totalAmount;
+  // Return 1 token for all card types, rarities, and animation options
+  return 1;
 };

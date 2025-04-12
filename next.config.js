@@ -8,7 +8,13 @@ const nextConfig = {
   
   // Disable tracing which can cause permission issues on Windows
   experimental: {
-    outputFileTracing: false
+    outputFileTracing: false,
+    turbo: {
+      resolveAlias: {
+        'react-server-dom-webpack/server.edge': 'react-server-dom-turbopack/server.edge',
+        'react-server-dom-webpack/client.edge': 'react-server-dom-turbopack/client.edge'
+      }
+    }
   },
   
   // Remove static export for now to troubleshoot build
