@@ -4,6 +4,10 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import BuyTokenButton from './BuyTokenButton';
+import dynamic from 'next/dynamic';
+
+// Import types only
+import type { useAppKit as UseAppKitType } from '@reown/appkit/react';
 
 interface HeaderProps {
   onConnectWallet?: () => void;
@@ -11,6 +15,7 @@ interface HeaderProps {
   walletAddress?: string;
 }
 
+// Use noSSR to ensure this component only loads on the client side
 const Header: React.FC<HeaderProps> = ({ 
   onConnectWallet = () => {}, 
   isWalletConnected = false, 
@@ -19,10 +24,26 @@ const Header: React.FC<HeaderProps> = ({
   const [scrolled, setScrolled] = useState(false);
   const [animateRunes, setAnimateRunes] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [openAppKit, setOpenAppKit] = useState<any>(null);
   
-  // Set isClient to true once component mounts on client
+  // Only load AppKit hooks and set client state on the client side
   useEffect(() => {
-    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      // Dynamically import the hook only on the client side
+      import('@reown/appkit/react').then(({ useAppKit }) => {
+        // Get the open function from the imported hook
+        try {
+          const { open } = useAppKit();
+          setOpenAppKit(() => open);
+        } catch (error) {
+          console.error('Failed to load AppKit:', error);
+        }
+      }).catch(err => {
+        console.error('Error importing AppKit:', err);
+      });
+      
+      setIsClient(true);
+    }
   }, []);
   
   // Handle scroll effect with memoized callback for better performance
@@ -123,7 +144,12 @@ const Header: React.FC<HeaderProps> = ({
       <div className="relative group">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-full opacity-75 group-hover:opacity-100 blur group-hover:blur-md transition duration-500"></div>
         <button 
-          onClick={onConnectWallet}
+          onClick={() => {
+            // Use both the original onConnectWallet (for state updates in parent)
+            // and our direct AppKit connection function
+            onConnectWallet();
+            openAppKit();
+          }}
           className="relative bg-[var(--cosmic-black)]/80 text-white px-4 py-2 rounded-full text-sm font-medium border border-[var(--glass-border)] hover:bg-[var(--cosmic-black)] transition-all duration-300 active:scale-95"
           aria-label="Connect Wallet"
         >

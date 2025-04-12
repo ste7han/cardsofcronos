@@ -3,6 +3,10 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import BuyTokenButton from './BuyTokenButton';
+import dynamic from 'next/dynamic';
+
+// Import types only
+import type { useAppKit as UseAppKitType } from '@reown/appkit/react';
 
 interface BottomNavigationProps {
   isWalletConnected: boolean;
@@ -13,23 +17,38 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   isWalletConnected, 
   onConnectWallet 
 }) => {
+  // Client-side AppKit integration
+  const [openAppKit, setOpenAppKit] = useState<any>(null);
   const [isClient, setIsClient] = useState<boolean>(false);
   const [activeItem, setActiveItem] = useState<string>('home');
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [lastScrollY, setLastScrollY] = useState<number>(0);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   
-  // Set isClient to true once component mounts on client
+  // Set isClient to true once component mounts on client and initialize AppKit
   useEffect(() => {
-    setIsClient(true);
-    
-    // Set active item based on current path
     if (typeof window !== 'undefined') {
+      // Dynamically import the hook only on the client side
+      import('@reown/appkit/react').then(({ useAppKit }) => {
+        // Get the open function from the imported hook
+        try {
+          const { open } = useAppKit();
+          setOpenAppKit(() => open);
+        } catch (error) {
+          console.error('Failed to load AppKit:', error);
+        }
+      }).catch(err => {
+        console.error('Error importing AppKit:', err);
+      });
+      
+      // Set active item based on current path
       const path = window.location.pathname;
       if (path === '/') setActiveItem('home');
       else if (path === '/collection') setActiveItem('collection');
       else if (path === '/about') setActiveItem('about');
       else if (path === '/orders') setActiveItem('profile');
+      
+      setIsClient(true);
     }
   }, []);
   
@@ -153,7 +172,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
-      onClick: isWalletConnected ? undefined : onConnectWallet,
+      onClick: isWalletConnected ? undefined : () => {
+        // Use both callbacks to ensure state is updated in parent component
+        onConnectWallet();
+        openAppKit();
+      },
       href: isWalletConnected ? '/orders' : undefined
     }
   ];

@@ -45,9 +45,17 @@ const AppKitContext = createContext<boolean>(false);
 // Hook to check if AppKit is initialized
 export const useAppKitInitialized = () => useContext(AppKitContext);
 
+// Type definition for AppKit instance - using a more generic approach to avoid type mismatches
+interface AppKitInstance {
+  open: () => void;
+  close: () => void;
+  getAccount?: () => any;
+  getWalletInfo?: () => any; // Use any to avoid type mismatch issues
+}
+
 // Global variable to track if AppKit was initialized
 let appKitInitialized = false;
-let appKitInstance = null;
+let appKitInstance: AppKitInstance | null = null;
 
 // Function to initialize AppKit - exported for use in other files
 export const initializeAppKit = () => {
@@ -63,7 +71,10 @@ export const initializeAppKit = () => {
         features: {
           analytics: true
         }
-      });
+      }) as AppKitInstance;
+      
+      // Make AppKit instance globally available
+      window.AppKitInstance = appKitInstance;
       
       // Mark as initialized globally
       appKitInitialized = true;
@@ -78,12 +89,7 @@ export const initializeAppKit = () => {
   return appKitInitialized;
 };
 
-// Export for type declaration
-declare global {
-  interface Window {
-    AppKitInitialized?: boolean;
-  }
-}
+// Type definition for AppKit is now in window.d.ts
 
 // Initialize at module level in browser environment
 if (typeof window !== 'undefined') {

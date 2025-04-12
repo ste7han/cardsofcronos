@@ -3,15 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useAppKitInitialized } from '@/components/AppKitProvider';
 
-// Extend Window interface to include our custom properties
-declare global {
-  interface Window {
-    appKitHooks?: {
-      useAppKit: any;
-      useAppKitAccount: any;
-    };
-    appKitInitialized?: boolean;
-  }
+// Type definitions now defined in window.d.ts
+
+// Local interface for the AppKit instance
+interface AppKitInstance {
+  open: () => void;
+  close: () => void;
+  getAccount?: () => any;
+  getWalletInfo?: () => any;
 }
 
 /**
@@ -22,59 +21,61 @@ export function useAppKit() {
   const isInitialized = useAppKitInitialized();
   const [account, setAccount] = useState<any>(null);
   const [kit, setKit] = useState<any>(null);
+  const [openFunction, setOpenFunction] = useState<() => void>(() => {
+    console.warn('AppKit not yet initialized');
+  });
 
   // This effect runs only on client side and when initialization changes
   useEffect(() => {
     if (typeof window === 'undefined' || !isInitialized) return;
 
-    // Initialize a dummy object to return when not initialized
-    const dummyKit = {
-      open: () => console.warn('AppKit not yet initialized'),
-      close: () => console.warn('AppKit not yet initialized')
-    };
+    let appKitInstance: AppKitInstance | null = null;
 
-    // Set initial values for safety
-    setKit(dummyKit);
-    setAccount({ isConnected: false, address: undefined });
-
-    // This is a separate function we'll call to access actual AppKit functionality
-    const initRealAppKit = () => {
-      try {
-        // Import directly to prevent React hook rules violations
-        const { useAppKit, useAppKitAccount } = require('@reown/appkit/react');
-        
-        // We're not calling the hooks here, just making them available to the component
-        // The component will call these hooks directly
-        window.appKitHooks = {
-          useAppKit,
-          useAppKitAccount
-        };
-        
-        // Signal to the component that it can now safely use the real hooks
-        window.appKitInitialized = true;
-      } catch (error) {
-        console.error('Failed to initialize AppKit hooks:', error);
+    // Try to get the AppKit instance directly
+    try {
+      const { getAppKit } = require('@reown/appkit/react');
+      appKitInstance = getAppKit() as AppKitInstance;
+      window.AppKitInstance = appKitInstance;
+      
+      // Create a real open function that will work on mobile
+      if (appKitInstance && typeof appKitInstance.open === 'function') {
+        setOpenFunction(() => () => {
+          if (appKitInstance) appKitInstance.open();
+        });
       }
-    };
 
-    // Initialize the real AppKit hooks if not done already
-    if (isInitialized && !window.appKitInitialized) {
-      initRealAppKit();
+      // Get account info if available
+      if (appKitInstance && typeof appKitInstance.getAccount === 'function') {
+        const accountInfo = appKitInstance.getAccount();
+        setAccount(accountInfo || { isConnected: false, address: undefined });
+      }
+
+      setKit(appKitInstance || {
+        open: () => console.warn('AppKit not yet initialized'),
+        close: () => console.warn('AppKit not yet initialized')
+      });
+
+      // This function is used to open the wallet connection dialog
+      window.openAppKitWalletModal = () => {
+        if (appKitInstance && typeof appKitInstance.open === 'function') {
+          console.log('Opening AppKit wallet modal from global function');
+          appKitInstance.open();
+        } else {
+          console.warn('AppKit instance is not available');
+        }
+      };
+
+      // Log successful initialization for debugging
+      console.log('AppKit is properly initialized for mobile wallet connection');
+    } catch (error) {
+      console.error('Failed to get AppKit instance:', error);
     }
   }, [isInitialized]);
 
   return {
     isInitialized,
-    appKitAccount: { isConnected: false, address: undefined },
-    appKit: {
-      open: () => {
-        if (window.appKitInitialized) {
-          // This would be replaced with direct AppKit usage in the component
-          console.log('Would open AppKit (safe wrapper)');
-        } else {
-          console.warn('AppKit not yet initialized');
-        }
-      }
-    }
+    appKitAccount: account,
+    appKit: kit,
+    openAppKit: openFunction
   };
 }
