@@ -25,7 +25,7 @@ export interface CardRequest {
   transactionHash: string;
   burnAmount: number;
   email: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'payment_failed';
   createdAt: Timestamp;
   userAddress?: string;
   adminNotes?: string;

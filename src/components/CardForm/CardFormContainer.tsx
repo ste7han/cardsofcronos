@@ -83,10 +83,15 @@ const CardFormContainer: React.FC = () => {
   };
 
   // Handle form submission
+  const [orderReference, setOrderReference] = useState<string | null>(null);
+  const [paymentFailed, setPaymentFailed] = useState<boolean>(false);
+
   const onSubmit: SubmitHandler<FormInputs> = async (data) => {
     try {
       setIsSubmitting(true);
       setError(null);
+      setPaymentFailed(false);
+      setOrderReference(null);
 
       // Check if wallet is connected
       if (!isWalletConnected) {
@@ -100,19 +105,37 @@ const CardFormContainer: React.FC = () => {
         return;
       }
 
-      // 1. Burn tokens
-      const burnResult = await burnTokens(burnAmount, walletProvider);
-      if (!burnResult.success) {
-        setError(`Transaction failed: ${burnResult.error}`);
-        return;
-      }
-      setTransactionHash(burnResult.transactionHash);
-
-      // 2. Upload image to Firebase Storage
+      // 1. Upload image to Firebase Storage first
       const imagePath = generateImagePath(image.name);
       const imageUrl = await uploadImage(image, imagePath);
+      
+      let transactionStatus: 'pending' | 'payment_failed' = 'pending';
+      let txHash = '';
+      let txError = '';
+      
+      // 2. Attempt to burn tokens
+      try {
+        const burnResult = await burnTokens(burnAmount, walletProvider);
+        
+        if (burnResult.success) {
+          // Success - set the transaction hash
+          txHash = burnResult.transactionHash;
+          setTransactionHash(txHash);
+          transactionStatus = 'pending';
+        } else {
+          // Payment failed but we'll still save the request
+          txError = burnResult.error || 'Unknown transaction error';
+          transactionStatus = 'payment_failed';
+          setPaymentFailed(true);
+        }
+      } catch (burnError: any) {
+        // Handle any unexpected errors in the burn process
+        txError = burnError?.message || 'Unexpected error during payment';
+        transactionStatus = 'payment_failed';
+        setPaymentFailed(true);
+      }
 
-      // 3. Save request to Firestore
+      // 3. Save request to Firestore (regardless of payment success)
       const requestId = await addCardRequest({
         type: data.cardType,
         rarity: data.rarity,
@@ -120,18 +143,24 @@ const CardFormContainer: React.FC = () => {
         description: data.description,
         imageUrl: imageUrl,
         socialLink: data.socialLink,
-        transactionHash: burnResult.transactionHash,
+        transactionHash: txHash || 'payment_failed',
         burnAmount: burnAmount,
         email: data.email,
-        status: 'pending',
+        status: transactionStatus,
         userAddress: address || '',
         animated: data.animated,
+        ...(txError ? { adminNotes: `Payment Failed: ${txError}` } : {})
       });
+      
+      // Set the order reference for the success screen
+      setOrderReference(requestId);
 
-      // Email notifications have been removed
-
-      // Success!
+      // Success! (Either complete or partial with payment failure)
       setSuccess(true);
+      
+      if (paymentFailed) {
+        setError(txError);
+      }
     } catch (err) {
       console.error('Error submitting card request:', err);
       setError('An error occurred while submitting your request. Please try again.');
@@ -155,7 +184,15 @@ const CardFormContainer: React.FC = () => {
 
   // Success screen
   if (success) {
-    return <SuccessScreen transactionHash={transactionHash} onCreateAnother={handleCreateAnother} />;
+    return (
+      <SuccessScreen 
+        transactionHash={transactionHash} 
+        onCreateAnother={handleCreateAnother}
+        paymentFailed={paymentFailed}
+        errorMessage={error || ''}
+        orderReference={orderReference || ''}
+      />
+    );
   }
 
   // Render the form with the current step

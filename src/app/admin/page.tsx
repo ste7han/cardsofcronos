@@ -28,7 +28,7 @@ interface CardFormData {
 }
 
 interface OrderStatusData {
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'payment_failed';
   adminNotes: string;
 }
 
@@ -49,7 +49,7 @@ export default function AdminPage() {
     status: 'pending',
     adminNotes: '',
   });
-  const [orderFilter, setOrderFilter] = useState<'active' | 'completed'>('active');
+  const [orderFilter, setOrderFilter] = useState<'active' | 'completed' | 'payment_failed'>('active');
   
   // Form state
   const [formData, setFormData] = useState<CardFormData>({
@@ -765,11 +765,16 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
               {/* Orders List */}
               <div className="modern-card p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold font-['Cinzel'] text-[var(--secondary)]">Card Orders</h2>
+                <div className="flex flex-col mb-6">
+                  <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-xl font-bold font-['Cinzel'] text-[var(--secondary)]">Card Orders</h2>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => setOrderFilter('active')}
+                      onClick={() => {
+                        setOrderFilter('active');
+                        setSelectedOrder(null);
+                      }}
                       className={`px-3 py-1 text-xs font-medium rounded-l-md ${
                         orderFilter === 'active'
                           ? 'bg-[var(--primary)] text-white'
@@ -780,8 +785,20 @@ export default function AdminPage() {
                     </button>
                     <button
                       onClick={() => {
+                        setOrderFilter('payment_failed');
+                        setSelectedOrder(null);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium ${
+                        orderFilter === 'payment_failed'
+                          ? 'bg-[var(--primary)] text-white'
+                          : 'bg-[var(--cosmic-black)]/70 text-white/70'
+                      }`}
+                    >
+                      Payment Failed
+                    </button>
+                    <button
+                      onClick={() => {
                         setOrderFilter('completed');
-                        // Clear selection when switching views
                         setSelectedOrder(null);
                       }}
                       className={`px-3 py-1 text-xs font-medium rounded-r-md ${
@@ -816,11 +833,15 @@ export default function AdminPage() {
                 ) : (
                   <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                     {orders
-                      .filter(order => 
-                        orderFilter === 'active' 
-                          ? (order.status === 'pending' || order.status === 'approved')
-                          : (order.status === 'completed' || order.status === 'rejected')
-                      )
+                      .filter(order => {
+                        if (orderFilter === 'active') {
+                          return (order.status === 'pending' || order.status === 'approved');
+                        } else if (orderFilter === 'payment_failed') {
+                          return order.status === 'payment_failed';
+                        } else { // completed
+                          return (order.status === 'completed' || order.status === 'rejected');
+                        }
+                      })
                       .map(order => (
                       <div 
                         key={order.id} 
@@ -948,6 +969,7 @@ export default function AdminPage() {
                                 >
                                   <option value="pending">Not Started</option>
                                   <option value="approved">In Progress</option>
+                                  <option value="payment_failed">Payment Failed</option>
                                   <option value="completed">Completed</option>
                                   <option value="rejected">Rejected</option>
                                 </select>
