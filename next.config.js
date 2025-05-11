@@ -6,9 +6,9 @@ const nextConfig = {
     return config;
   },
   
-  // Disable tracing which can cause permission issues on Windows
+  // Configure experimental features
   experimental: {
-    outputFileTracing: false,
+    // turbo configuration
     turbo: {
       resolveAlias: {
         'react-server-dom-webpack/server.edge': 'react-server-dom-turbopack/server.edge',

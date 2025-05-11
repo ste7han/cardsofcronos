@@ -196,7 +196,10 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       onClick: isWalletConnected ? undefined : () => {
         // Use both callbacks to ensure state is updated in parent component
         onConnectWallet();
-        openAppKit();
+        // Only call openAppKit if it's available
+        if (openAppKit) {
+          openAppKit();
+        }
       },
       href: isWalletConnected ? '/orders' : undefined
     }

@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import NFTMintingForm from '@/components/NFTMinting/NFTMintingForm';
+import dynamic from 'next/dynamic';
 import StarryBackground from '@/components/StarryBackground';
-import AppKitProvider from '@/components/AppKitProvider';
-import AppKitStatusCheck from '@/components/AppKitStatusCheck';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import BottomNavigation from '@/components/BottomNavigation';
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+
+// Dynamically import components that use AppKit with ssr: false
+const NFTMintingForm = dynamic(() => import('@/components/NFTMinting/NFTMintingForm'), { ssr: false });
+const AppKitStatusCheck = dynamic(() => import('@/components/AppKitStatusCheck'), { ssr: false });
+const BottomNavigation = dynamic(() => import('@/components/BottomNavigation'), { ssr: false });
 
 // Collection card images for floating background
 const cardImages = [
@@ -37,6 +38,7 @@ const rarities = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythical'];
 
 const MintPage = () => {
   const [isClient, setIsClient] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   
   // Set isClient to true once component mounts on client
   useEffect(() => {
@@ -68,78 +70,123 @@ const MintPage = () => {
       detail: `Mint page loaded at ${new Date().toISOString()}`
     }));
     
+    // Check wallet connection status on client side only
+    if (typeof window !== 'undefined') {
+      try {
+        // Dynamically import AppKit
+        import('@reown/appkit/react').then(({ useAppKitAccount }) => {
+          try {
+            const { isConnected } = useAppKitAccount();
+            setIsConnected(isConnected);
+          } catch (error) {
+            console.error('Error checking wallet connection:', error);
+          }
+        });
+      } catch (error) {
+        console.error('Error importing AppKit:', error);
+      }
+    }
+    
     return () => {
       document.removeEventListener('debug-log', handleDebugLog as EventListener);
       console.error = originalConsoleError;
     };
   }, []);
   
-  // Wrap the component with AppKitProvider
-  return (
-    <AppKitProvider>
-      <MintPageContent isClient={isClient} />
-    </AppKitProvider>
-  );
-};
-
-// Separate component to use AppKit hooks within the provider context
-const MintPageContent = ({ isClient }: { isClient: boolean }) => {
-  // Now these hooks are used within the AppKitProvider context
-  const { isConnected } = useAppKitAccount();
-  const { open: openAppKit } = useAppKit();
+  // Create a function to open AppKit that will be passed to BottomNavigation
+  const handleOpenAppKit = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        // Dynamically import AppKit
+        import('@reown/appkit/react').then(({ useAppKit }) => {
+          try {
+            const { open } = useAppKit();
+            if (open) {
+              open();
+            }
+          } catch (error) {
+            console.error('Error opening AppKit:', error);
+          }
+        });
+      } catch (error) {
+        console.error('Error importing AppKit:', error);
+      }
+    }
+  };
+  
+  // Only render the full content on the client side
+  if (!isClient) {
+    return (
+      <div className="flex flex-col min-h-screen relative">
+        <StarryBackground />
+        <Header />
+        <main className="flex-grow flex flex-col items-center justify-center py-12 px-4 relative">
+          <div className="w-full max-w-4xl mx-auto z-10 text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-center text-white mb-3 font-['Cinzel']">
+              Mint Your NFT
+            </h1>
+            <p className="text-lg md:text-xl text-center text-white/70 max-w-2xl mx-auto">
+              Loading...
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col min-h-screen relative">
       <StarryBackground />
       <Header />
       <AppKitStatusCheck />
-        
-        <main className="flex-grow flex flex-col items-center justify-center py-12 px-4 relative">
-          <div className="w-full max-w-4xl mx-auto z-10">
-            {/* Decorative elements */}
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-[var(--primary)]/30 to-transparent"></div>
-            
-            <div className="text-center mb-8 relative">
-              <h1 className="text-4xl md:text-6xl font-bold text-center text-white mb-3 font-['Cinzel'] relative inline-block">
-                Mint Your NFT
-                <div className="absolute -bottom-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--primary-glow)]/70 to-transparent"></div>
-              </h1>
-              <p className="text-lg md:text-xl text-center text-white/70 max-w-2xl mx-auto">
-                Mint your exclusive Cards of Cronos NFTs and join the cosmic collection
-              </p>
-            </div>
-            
-            {/* Background removed as requested */}
-            
-            <div className="relative">
-              {/* Decorative corner elements */}
-              <div className="absolute -top-2 -left-2 text-[var(--primary-glow)] text-xl opacity-50">✧</div>
-              <div className="absolute -top-2 -right-2 text-[var(--primary-glow)] text-xl opacity-50">✦</div>
-              <div className="absolute -bottom-2 -left-2 text-[var(--primary-glow)] text-xl opacity-50">⚜</div>
-              <div className="absolute -bottom-2 -right-2 text-[var(--primary-glow)] text-xl opacity-50">⚝</div>
-              
-              <NFTMintingForm />
-            </div>
+      
+      <main className="flex-grow flex flex-col items-center justify-center py-12 px-4 relative">
+        <div className="w-full max-w-4xl mx-auto z-10">
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-[var(--primary)]/30 to-transparent"></div>
+          
+          <div className="text-center mb-8 relative">
+            <h1 className="text-4xl md:text-6xl font-bold text-center text-white mb-3 font-['Cinzel'] relative inline-block">
+              Mint Your NFT
+              <div className="absolute -bottom-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--primary-glow)]/70 to-transparent"></div>
+            </h1>
+            <p className="text-lg md:text-xl text-center text-white/70 max-w-2xl mx-auto">
+              Mint your exclusive Cards of Cronos NFTs and join the cosmic collection
+            </p>
           </div>
           
-          {/* Simplified styles */}
-          <style jsx>{`
-            @keyframes rotate-y {
-              0% { transform: rotateY(0deg); }
-              100% { transform: rotateY(360deg); }
-            }
-            .rotate-y-5 {
-              transform: rotateY(5deg);
-            }
-          `}</style>
-        </main>
+          {/* Background removed as requested */}
+          
+          <div className="relative">
+            {/* Decorative corner elements */}
+            <div className="absolute -top-2 -left-2 text-[var(--primary-glow)] text-xl opacity-50">✧</div>
+            <div className="absolute -top-2 -right-2 text-[var(--primary-glow)] text-xl opacity-50">✦</div>
+            <div className="absolute -bottom-2 -left-2 text-[var(--primary-glow)] text-xl opacity-50">⚜</div>
+            <div className="absolute -bottom-2 -right-2 text-[var(--primary-glow)] text-xl opacity-50">⚝</div>
+            
+            <NFTMintingForm />
+          </div>
+        </div>
         
-        <Footer />
-        <BottomNavigation
-          isWalletConnected={isConnected}
-          onConnectWallet={openAppKit}
-        />
-      </div>
+        {/* Simplified styles */}
+        <style jsx>{`
+          @keyframes rotate-y {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+          }
+          .rotate-y-5 {
+            transform: rotateY(5deg);
+          }
+        `}</style>
+      </main>
+      
+      <Footer />
+      <BottomNavigation
+        isWalletConnected={isConnected}
+        onConnectWallet={handleOpenAppKit}
+      />
+    </div>
   );
 };
 
