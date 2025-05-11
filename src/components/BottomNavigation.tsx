@@ -120,16 +120,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       href: '/collection'
     },
     {
-      id: 'bag',
-      label: 'My NFTs',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-        </svg>
-      ),
-      href: '/nfts'
-    },
-    {
       id: 'mint',
       label: 'Mint',
       icon: (
@@ -184,24 +174,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           }
         }
       }
-    },
-    {
-      id: 'profile',
-      label: 'Profile',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-      onClick: isWalletConnected ? undefined : () => {
-        // Use both callbacks to ensure state is updated in parent component
-        onConnectWallet();
-        // Only call openAppKit if it's available
-        if (openAppKit) {
-          openAppKit();
-        }
-      },
-      href: isWalletConnected ? '/orders' : undefined
     }
   ];
   
@@ -242,11 +214,10 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <div className="flex justify-around items-center px-2 py-4">
             {navItems.map((item) => {
               const isActive = activeItem === item.id;
-              const isProfile = item.id === 'profile';
               
               // Create the navigation item
               const navItem = (
-                <div 
+                <div
                   key={item.id}
                   className="flex flex-col items-center justify-center"
                 >
@@ -255,11 +226,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     <div className={`text-[#FFD700] ${isActive ? 'opacity-100' : 'opacity-80'}`}>
                       {item.icon}
                     </div>
-                    
-                    {/* Simple connection status indicator for profile */}
-                    {isProfile && isWalletConnected && (
-                      <div className="absolute top-0 right-0 w-2 h-2 rounded-full bg-green-500"></div>
-                    )}
                   </div>
                   
                   {/* Simple label */}
