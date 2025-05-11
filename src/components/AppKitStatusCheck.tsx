@@ -29,22 +29,7 @@ const AppKitStatusCheck: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
   
-  return (
-    <div className="fixed bottom-4 right-4 p-2 bg-black/50 backdrop-blur-sm rounded text-xs z-[1000]">
-      <div>
-        <span className="text-gray-400">Context: </span>
-        <span className={isInitialized ? 'text-green-400' : 'text-red-400'}>
-          {isInitialized ? 'Initialized' : 'Not Initialized'}
-        </span>
-      </div>
-      <div>
-        <span className="text-gray-400">Window: </span>
-        <span className={windowStatus === 'Initialized' ? 'text-green-400' : 'text-red-400'}>
-          {windowStatus}
-        </span>
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export default AppKitStatusCheck;
