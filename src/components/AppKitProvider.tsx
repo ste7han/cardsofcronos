@@ -67,10 +67,18 @@ export const initializeAppKit = () => {
         adapters: [new Ethers5Adapter()],
         metadata,
         networks: [cronos],
+        defaultNetwork: cronos,         // Set cronos as default network
         projectId,
+        enableNetworkSwitch: true,      // Enable network switching
         features: {
           analytics: true
-        }
+        },
+        // Better handle chain mismatches
+        defaultAccountTypes: {
+          eip155: "eoa"                 // Use EOA for EVM chains
+        },
+        // Debug mode for development
+        debug: true
       }) as AppKitInstance;
       
       // Make AppKit instance globally available

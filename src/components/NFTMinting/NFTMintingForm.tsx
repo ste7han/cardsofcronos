@@ -10,17 +10,27 @@ import {
   prepareProvider,
   checkNFTContract,
   NFT_CONTRACT_ADDRESS,
-  useERC721AABI
+  useERC721AABI,
+  getDiscountRate,
+  getDiscountedPrice,
+  getNextTokenId,
+  getProvider,
+  getNFTContract,
+  ensureABILoaded
 } from '@/lib/web3';
+import { ethers } from 'ethers';
 import { useAppKit, useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
 import LoadingSpinner from '../LoadingSpinner';
 import Confetti from './Confetti';
 
 const NFTMintingForm = () => {
-  // Initialize with default values to ensure UI shows something
-  const [price, setPrice] = useState<string>('0.5');
-  const [totalSupply, setTotalSupply] = useState<number>(150);
-  const [maxSupply, setMaxSupply] = useState<number>(1000);
+  // Initialize with loading state values
+  const [price, setPrice] = useState<string>('...');
+  const [discountRate, setDiscountRate] = useState<number>(0);
+  const [discountedPrice, setDiscountedPrice] = useState<string>('...');
+  const [totalSupply, setTotalSupply] = useState<number>(0);
+  const [nextTokenId, setNextTokenId] = useState<number>(0);
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [mintCount, setMintCount] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
@@ -28,6 +38,12 @@ const NFTMintingForm = () => {
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [mintedTokenId, setMintedTokenId] = useState<number | null>(null);
+  
+  // New state variables for tracking fallback usage
+  const [usingFallbackPrice, setUsingFallbackPrice] = useState<boolean>(false);
+  const [usingFallbackDiscount, setUsingFallbackDiscount] = useState<boolean>(false);
+  const [usingFallbackNextId, setUsingFallbackNextId] = useState<boolean>(false);
+  const [contractWarning, setContractWarning] = useState<string | null>(null);
   
   // Get wallet provider and connection status from AppKit
   const { walletProvider } = useAppKitProvider('eip155');
@@ -41,6 +57,17 @@ const NFTMintingForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // First ensure ABI is loaded
+        console.log('NFTMintingForm: Ensuring ABI is loaded before proceeding');
+        try {
+          const abi = await ensureABILoaded();
+          console.log('NFTMintingForm: ABI loaded successfully, length:', abi.length);
+        } catch (abiError) {
+          console.error('NFTMintingForm: Error loading ABI:', abiError);
+          setError('Failed to load contract ABI. Please refresh the page.');
+          return;
+        }
+        
         // Force log to console directly
         document.dispatchEvent(new CustomEvent('debug-log', {
           detail: `NFTMintingForm fetchData started at ${new Date().toISOString()}`
@@ -87,25 +114,41 @@ const NFTMintingForm = () => {
           return;
         }
         
-        // Check if contract has required functions
-        if (!contractCheck.hasCurrentPrice || !contractCheck.hasTotalSupply || !contractCheck.hasMaxSupply) {
+        // Check if contract has required functions - updated for new contract
+        if (!contractCheck.hasMintPrice || !contractCheck.hasTotalSupply ||
+            !contractCheck.hasIsMintPaused || !contractCheck.hasGetDiscountRate) {
           console.warn('NFTMintingForm: Contract missing required functions:', {
-            hasCurrentPrice: contractCheck.hasCurrentPrice,
+            hasMintPrice: contractCheck.hasMintPrice,
             hasTotalSupply: contractCheck.hasTotalSupply,
-            hasMaxSupply: contractCheck.hasMaxSupply
+            hasIsMintPaused: contractCheck.hasIsMintPaused,
+            hasGetDiscountRate: contractCheck.hasGetDiscountRate
           });
           
           // Continue with fetching, but log the warning
           document.dispatchEvent(new CustomEvent('debug-log', {
-            detail: `Contract missing functions: currentPrice=${contractCheck.hasCurrentPrice}, totalSupply=${contractCheck.hasTotalSupply}, MAX_SUPPLY=${contractCheck.hasMaxSupply}`
+            detail: `Contract missing functions: mintPrice=${contractCheck.hasMintPrice}, totalSupply=${contractCheck.hasTotalSupply}, isMintPaused=${contractCheck.hasIsMintPaused}, getDiscountRate=${contractCheck.hasGetDiscountRate}`
           }));
         }
         
         // Fetch price first and log the result
         console.log('NFTMintingForm: Fetching price...');
-        const priceData = await getNFTPrice();
-        console.log('NFTMintingForm: Price fetched:', priceData);
-        setPrice(priceData);
+        let fetchedPrice;
+        try {
+          const provider = getProvider();
+          const contract = getNFTContract(provider);
+          const contractPrice = await contract.mintPrice();
+          fetchedPrice = ethers.utils.formatEther(contractPrice);
+          console.log('NFTMintingForm: Price fetched from contract directly:', fetchedPrice);
+          setPrice(fetchedPrice);
+          setUsingFallbackPrice(false);
+        } catch (priceError) {
+          console.warn('NFTMintingForm: Could not fetch price directly, using fallback:', priceError);
+          fetchedPrice = await getNFTPrice();
+          console.log('NFTMintingForm: Fallback price:', fetchedPrice);
+          setPrice(fetchedPrice);
+          setUsingFallbackPrice(true);
+          setContractWarning('Some contract functions are not directly accessible. Using fallback values where needed.');
+        }
         
         // Fetch total supply and log the result
         console.log('NFTMintingForm: Fetching total supply...');
@@ -113,21 +156,64 @@ const NFTMintingForm = () => {
         console.log('NFTMintingForm: Total supply fetched:', totalSupplyData);
         setTotalSupply(totalSupplyData);
         
-        // Fetch max supply and log the result
-        console.log('NFTMintingForm: Fetching max supply...');
-        const maxSupplyData = await getNFTMaxSupply();
-        console.log('NFTMintingForm: Max supply fetched:', maxSupplyData);
-        setMaxSupply(maxSupplyData);
+        // Fetch next token ID (replaces max supply)
+        console.log('NFTMintingForm: Fetching next token ID...');
+        let fetchedNextId;
+        try {
+          const provider = getProvider();
+          const contract = getNFTContract(provider);
+          const directNextId = await contract.nextTokenId();
+          console.log('NFTMintingForm: Next token ID fetched directly:', directNextId.toString());
+          fetchedNextId = parseInt(directNextId.toString());
+          setNextTokenId(fetchedNextId);
+          setUsingFallbackNextId(false);
+        } catch (tokenIdError) {
+          console.warn('NFTMintingForm: Could not fetch next token ID directly, using fallback:', tokenIdError);
+          fetchedNextId = await getNextTokenId();
+          console.log('NFTMintingForm: Fallback next token ID:', fetchedNextId);
+          setNextTokenId(fetchedNextId);
+          setUsingFallbackNextId(true);
+          setContractWarning('Some contract functions are not directly accessible. Using fallback values where needed.');
+        }
         
+        // If user is connected, get discount rate and discounted price
+        if (isConnected && address) {
+          console.log('NFTMintingForm: Fetching discount rate for address:', address);
+          try {
+            const provider = getProvider();
+            const contract = getNFTContract(provider);
+            const directDiscount = await contract.getDiscountRate(address);
+            console.log('NFTMintingForm: Discount rate fetched directly:', directDiscount.toString());
+            setDiscountRate(parseInt(directDiscount.toString()));
+            setUsingFallbackDiscount(false);
+          } catch (discountError) {
+            console.warn('NFTMintingForm: Could not fetch discount directly, using fallback:', discountError);
+            const discountRateData = await getDiscountRate(address);
+            console.log('NFTMintingForm: Fallback discount rate:', discountRateData);
+            setDiscountRate(discountRateData);
+            setUsingFallbackDiscount(true);
+            setContractWarning('Some contract functions are not directly accessible. Using fallback values where needed.');
+          }
+          
+          console.log('NFTMintingForm: Calculating discounted price...');
+          const discountedPriceData = await getDiscountedPrice(address);
+          console.log('NFTMintingForm: Discounted price calculated:', discountedPriceData);
+          setDiscountedPrice(discountedPriceData);
+        }
         console.log('NFTMintingForm: All data fetched successfully:', {
-          price: priceData,
+          price: fetchedPrice,
           totalSupply: totalSupplyData,
-          maxSupply: maxSupplyData
+          nextTokenId: fetchedNextId,
+          discountRate: isConnected ? discountRate : 'not connected',
+          discountedPrice: isConnected ? discountedPrice : 'not connected'
         });
         
         document.dispatchEvent(new CustomEvent('debug-log', {
-          detail: `Data fetched: price=${priceData}, totalSupply=${totalSupplyData}, maxSupply=${maxSupplyData}`
+          detail: `Data fetched: price=${fetchedPrice}, totalSupply=${totalSupplyData}, nextTokenId=${fetchedNextId}${isConnected ? ', discountRate=' + discountRate + ', discountedPrice=' + discountedPrice : ''}`
         }));
+
+        // Mark data as loaded
+        setDataLoaded(true);
         
       } catch (err) {
         console.error('NFTMintingForm: Error fetching data:', err);
@@ -158,7 +244,7 @@ const NFTMintingForm = () => {
       console.log('NFTMintingForm: Cleaning up interval');
       clearInterval(intervalId);
     };
-  }, [isConnected, walletProvider, address, abi]);
+  }, [isConnected, walletProvider, address, abi, discountRate, discountedPrice]);
 
   const handleMint = async () => {
     console.log('NFTMintingForm: handleMint called with mintCount:', mintCount);
@@ -301,6 +387,30 @@ const NFTMintingForm = () => {
           </div>
         )}
         
+        {contractWarning && !error && (
+          <div className="bg-amber-500/20 border border-amber-500/50 text-amber-100 p-4 rounded-md mb-6 shadow-lg animate-fadeIn">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 mr-2 mt-0.5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>
+                <span className="font-medium block mb-1">Note: Using Fallback Data</span>
+                <p className="text-sm">
+                  {contractWarning}
+                  {(usingFallbackPrice || usingFallbackDiscount || usingFallbackNextId) && (
+                    <span className="block mt-1 text-xs opacity-80">
+                      Using fallback for:
+                      {usingFallbackPrice ? ' Price' : ''}
+                      {usingFallbackDiscount ? ' Discount' : ''}
+                      {usingFallbackNextId ? ' TokenID' : ''}
+                    </span>
+                  )}
+                </p>
+              </span>
+            </div>
+          </div>
+        )}
+
         {success && (
           <div className="bg-green-500/20 border border-green-500/50 text-green-100 p-4 rounded-md mb-6 shadow-lg animate-fadeIn">
             <div className="flex items-center mb-2">
@@ -325,29 +435,52 @@ const NFTMintingForm = () => {
           </div>
         )}
         
-        <div className="space-y-8">
-          {/* NFT Info */}
+        {!dataLoaded ? (
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <LoadingSpinner />
+            <p className="mt-4 text-white/70">Loading contract data...</p>
+            <p className="text-xs mt-2 text-[var(--secondary)]/60">Connecting to contract at {NFT_CONTRACT_ADDRESS.slice(0, 6)}...{NFT_CONTRACT_ADDRESS.slice(-4)}</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* NFT Info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
-              <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">Price</p>
-              <p className="text-xl font-bold text-white">{price} <span className="text-[var(--secondary)]">CRO</span></p>
+              <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">
+                Price {usingFallbackPrice && <span className="text-amber-400 ml-1">(Estimated)</span>}
+              </p>
+              <p className="text-xl font-bold text-white">
+                {price} <span className="text-[var(--secondary)]">CRO</span>
+                {discountRate > 0 && (
+                  <span className="ml-2 text-sm text-green-400">
+                    ({discountRate}% discount {usingFallbackDiscount ? 'est.' : ''})
+                  </span>
+                )}
+              </p>
             </div>
             <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
               <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">Supply</p>
-              <p className="text-xl font-bold text-white">{totalSupply} / {maxSupply}</p>
+              <p className="text-xl font-bold text-white">{totalSupply} / Unlimited</p>
             </div>
           </div>
           
           {/* Supply Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-white/70">
+              <span>
+                Current Token ID
+                {usingFallbackNextId && <span className="text-amber-400 ml-1">(Est.)</span>}
+              </span>
+              <span>{nextTokenId}</span>
+            </div>
+            <div className="flex justify-between text-xs text-white/70">
               <span>Total Minted</span>
-              <span>{Math.round((totalSupply / maxSupply) * 100)}%</span>
+              <span>{totalSupply}</span>
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${(totalSupply / maxSupply) * 100}%` }}
+                style={{ width: '100%' }}
               ></div>
             </div>
           </div>
@@ -378,7 +511,13 @@ const NFTMintingForm = () => {
           {/* Total Price */}
           <div className="text-center bg-[var(--cosmic-black)]/40 p-4 rounded-lg border border-[var(--glass-border)]/50">
             <p className="text-sm text-[var(--secondary)]/80 uppercase tracking-wider font-medium mb-1">Total Price</p>
-            <p className="text-2xl font-bold text-white">{(parseFloat(price) * mintCount).toFixed(4)} <span className="text-[var(--secondary)]">CRO</span></p>
+            <p className="text-2xl font-bold text-white">
+              {(parseFloat(isConnected && discountRate > 0 ? discountedPrice : price) * mintCount).toFixed(4)}
+              <span className="text-[var(--secondary)]">CRO</span>
+              {discountRate > 0 && (
+                <span className="ml-2 text-sm text-green-400">({discountRate}% discount applied)</span>
+              )}
+            </p>
           </div>
           
           {/* Mint Button */}
@@ -417,9 +556,11 @@ const NFTMintingForm = () => {
             <div className="text-center text-sm text-white/70 mt-2 p-3 border border-[var(--glass-border)]/30 rounded-lg bg-[var(--cosmic-black)]/30">
               <p>Please connect your wallet using the button in the header</p>
               <p className="text-xs mt-1 text-[var(--secondary)]/70">Cronos Chain Required</p>
+              <p className="text-xs mt-1 text-green-400">Connect to earn discounts based on your token holdings!</p>
             </div>
           )}
         </div>
+        )}
         
         {/* Add keyframes for animations */}
         <style jsx>{`

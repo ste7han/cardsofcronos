@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 // Initialize with empty array, will be populated when loaded
 let ERC721A_ABI: any[] = [];
 
-// Function to load ABI from public folder
+// Function to load ABI from public folder and filter to keep only functions
 const loadABI = async () => {
   try {
     console.log('Loading ABI from public/ERC721A.JSON');
@@ -18,16 +18,48 @@ const loadABI = async () => {
     if (!response.ok) {
       throw new Error(`Failed to load ABI: ${response.statusText}`);
     }
-    const abiData = await response.json();
-    console.log('ABI loaded successfully');
-    ERC721A_ABI = abiData;
-    return abiData;
+    
+    // Load full ABI
+    const fullAbiData = await response.json();
+    
+    // Log the original ABI for analysis
+    console.log('Original ABI structure:', fullAbiData.map((entry: { type: string }) => entry.type));
+    
+    // Keep necessary entries for ethers.js - functions plus events and constructor
+    const essentialAbiData = fullAbiData.filter((entry: { type: string }) =>
+      entry.type === 'function' || entry.type === 'event' || entry.type === 'constructor'
+    );
+    
+    console.log(`ABI loaded with essential entries: filtered from ${fullAbiData.length} to ${essentialAbiData.length} entries`);
+    console.log('Types kept:', essentialAbiData.map((entry: { type: string }) => entry.type)
+      .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i));
+    
+    ERC721A_ABI = essentialAbiData;
+    return essentialAbiData;
   } catch (error) {
     console.error('Error loading ABI:', error);
     // If loading fails, use the fallback ABI
     console.warn('Using fallback ABI');
     return [];
   }
+};
+
+// Load ABI immediately in client environment
+// Ensure ABI is loaded before any contract operations
+// This function should be called at app initialization
+export const ensureABILoaded = async (): Promise<any[]> => {
+  if (ERC721A_ABI.length === 0) {
+    console.log('ensureABILoaded: ABI not loaded yet, loading now...');
+    try {
+      const abi = await loadABI();
+      console.log('ensureABILoaded: ABI loaded successfully, length:', abi.length);
+      return abi;
+    } catch (error) {
+      console.error('ensureABILoaded: Error loading ABI:', error);
+      throw error;
+    }
+  }
+  return ERC721A_ABI;
 };
 
 // Load ABI immediately in client environment
@@ -65,7 +97,7 @@ const ERC20_ABI = [
 export const TOKEN_ADDRESS = '0xECf3361441512c1e9F6A6e8734D86614D8e795BC';
 export const BURN_ADDRESS = '0x42BCc1355808aDf2344773c54e364257911CcC99';
 export const DEAD_WALLET = '0x000000000000000000000000000000000000dEaD';
-export const NFT_CONTRACT_ADDRESS = '0x2AcC3076Fc002C7B077bbEC8AC9B991C191BF5D3'; // Real NFT contract address
+export const NFT_CONTRACT_ADDRESS = '0x10B47dAbfEaCBd87dD2bAd5f6d489C5082181902'; // Real NFT contract address
 // Add logging to identify the issue
 console.log('NFT_CONTRACT_ADDRESS is set to:', NFT_CONTRACT_ADDRESS);
 // Cronos Chain ID
@@ -85,57 +117,94 @@ export const CRONOS_CHAIN_CONFIG = {
   blockExplorerUrls: ['https://cronoscan.com/']
 };
 
-// Connect to provider
+// Connect to provider with optimized Cronos chain handling
 export const getProvider = () => {
   console.log('getProvider: Starting...');
   
+  // Check if we're in a browser environment with MetaMask/wallet
   if (typeof window !== 'undefined' && window.ethereum) {
-    console.log('getProvider: Using window.ethereum');
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    console.log('getProvider: MetaMask detected');
     
-    // Log provider details
-    provider.getNetwork().then(network => {
-      console.log('getProvider: Connected to network:', {
-        chainId: network.chainId,
-        name: network.name
-      });
+    // Check if we can get the chain ID
+    try {
+      const chainIdHex = window.ethereum.chainId as string;
+      const chainId = parseInt(chainIdHex || '0', 16);
+      console.log(`getProvider: MetaMask chain ID: ${chainIdHex} (decimal: ${chainId})`);
       
-      // Check if we're on Cronos
-      const isCronos = network.chainId === CRONOS_CHAIN_ID || network.chainId === CRONOS_TESTNET_CHAIN_ID;
-      console.log('getProvider: Is Cronos chain?', isCronos);
+      // Check if user is already on Cronos chain
+      const isCronos = chainId === CRONOS_CHAIN_ID || chainId === CRONOS_TESTNET_CHAIN_ID;
       
-      if (!isCronos) {
-        console.warn('getProvider: Not on Cronos chain, contract interactions may fail');
+      if (isCronos) {
+        console.log('getProvider: MetaMask is on Cronos chain, using it directly');
         
-        // Force log to console
+        // If on Cronos chain, use the wallet provider
+        try {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          console.log('getProvider: Successfully created Web3Provider from MetaMask on Cronos');
+          return provider;
+        } catch (walletError) {
+          console.error('getProvider: Error creating Web3Provider:', walletError);
+          // Fall through to fallback
+        }
+      } else {
+        // If not on Cronos, log warning and automatically use direct RPC
+        console.warn(`getProvider: MetaMask is on chain ${chainId}, not Cronos (${CRONOS_CHAIN_ID})`);
+        console.log('getProvider: Using direct Cronos RPC instead of wallet provider');
+        
+        // Notify user about chain mismatch
         if (typeof document !== 'undefined') {
           document.dispatchEvent(new CustomEvent('debug-log', {
-            detail: `WARNING: Not on Cronos chain (${network.name}). Contract interactions may fail.`
+            detail: `NOTE: Your wallet is connected to a non-Cronos chain (${chainId}). Using direct Cronos RPC instead. For optimal user experience, switch your wallet to Cronos chain (id: ${CRONOS_CHAIN_ID}).`
           }));
         }
+        
+        // We'll fall through to using the direct RPC provider below
       }
-    }).catch(error => {
-      console.error('getProvider: Error getting network:', error);
-    });
-    
-    return provider;
+    } catch (error) {
+      console.error('getProvider: Error checking chain:', error);
+      // Fall through to fallback RPC
+    }
   }
   
-  // Fallback to Cronos RPC
-  console.log('getProvider: Falling back to Cronos RPC');
-  const provider = new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
+  // Direct Cronos RPC provider - used as fallback or when wallet is on wrong chain
+  console.log('getProvider: Creating direct Cronos RPC provider');
   
-  // Log provider details
-  provider.getNetwork().then(network => {
-    console.log('getProvider: Connected to Cronos RPC network:', {
-      chainId: network.chainId,
-      name: network.name
-    });
-  }).catch(error => {
-    console.error('getProvider: Error connecting to Cronos RPC:', error);
-  });
-  
-  return provider;
+  // Try primary Cronos RPC
+  try {
+    const provider = new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
+    console.log('getProvider: Successfully created direct Cronos RPC provider');
+    
+    // No need to wait for network detection, just log it asynchronously
+    provider.getNetwork().then(network => {
+      console.log('getProvider: Direct RPC connected to:',
+        (network as any).name, 'chain ID:', (network as any).chainId);
+    }).catch(() => {});
+    
+    return provider;
+  } catch (directError) {
+    console.error('getProvider: Error with primary RPC:', directError);
+    
+    // Try backup RPCs
+    const backupRpcs = [
+      'https://cronos-rpc.heavenswail.one',
+      'https://cronosrpc-1.xstaking.sg',
+      'https://evm-cronos.crypto.org'
+    ];
+    
+    // Try each backup RPC in sequence
+    for (const rpcUrl of backupRpcs) {
+      try {
+        console.log(`getProvider: Trying backup RPC: ${rpcUrl}`);
+        return new ethers.providers.JsonRpcProvider(rpcUrl);
+      } catch {
+        // Continue to next RPC
+      }
+    }
+    
+    // Last resort emergency provider
+    console.warn('getProvider: All RPC attempts failed, using emergency fallback');
+    return new ethers.providers.JsonRpcProvider('https://evm.cronos.org');
+  }
 };
 
 // Define Ethereum provider interface to fix TypeScript errors
@@ -431,85 +500,215 @@ export const calculateTokenAmount = (
 
 // NFT Contract Functions
 
-// Check if contract exists and has expected functions
+// Check if contract exists and has expected functions - optimized for Cronos
 export const checkNFTContract = async (): Promise<{
   exists: boolean;
-  hasCurrentPrice: boolean;
+  hasMintPrice: boolean;
   hasTotalSupply: boolean;
-  hasMaxSupply: boolean;
+  hasIsMintPaused: boolean;
+  hasGetDiscountRate: boolean;
   availableFunctions: string[];
+  onCronos: boolean;
 }> => {
   try {
     console.log('checkNFTContract: Starting check for contract at', NFT_CONTRACT_ADDRESS);
+    console.log('checkNFTContract: ABI status - length:', ERC721A_ABI.length, 'Sample:', ERC721A_ABI.slice(0, 2));
+    
+    // Always check the wallet state first
+    let onCronos = false;
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        const chainIdHex = window.ethereum.chainId as string;
+        const chainId = parseInt(chainIdHex || '0', 16);
+        onCronos = chainId === CRONOS_CHAIN_ID || chainId === CRONOS_TESTNET_CHAIN_ID;
+        
+        console.log('checkNFTContract: Wallet connected to chain ID:', chainId,
+                   'Is Cronos:', onCronos);
+        
+        if (!onCronos) {
+          console.warn('checkNFTContract: Wallet not on Cronos chain, will use direct RPC');
+          // Alert the user about the chain mismatch
+          if (typeof document !== 'undefined') {
+            document.dispatchEvent(new CustomEvent('debug-log', {
+              detail: `IMPORTANT: Your wallet is connected to chain ${chainId}, not Cronos (${CRONOS_CHAIN_ID}). For best experience, please switch to Cronos in your wallet.`
+            }));
+          }
+        }
+      } catch (chainError) {
+        console.error('checkNFTContract: Error checking chain:', chainError);
+      }
+    }
+    
+    // Always use getProvider which now intelligently handles chain selection
+    console.log('checkNFTContract: Getting optimal provider');
     const provider = getProvider();
+    console.log('checkNFTContract: Provider obtained');
     
     // Check if contract exists by getting the code at the address
-    const code = await provider.getCode(NFT_CONTRACT_ADDRESS);
-    const exists = code !== '0x';
-    console.log('checkNFTContract: Contract exists?', exists, 'Code length:', code.length);
+    console.log('checkNFTContract: Querying contract code...');
+    let code;
+    let exists = false;
+    
+    try {
+      // Get contract code with timeout protection
+      const codePromise = provider.getCode(NFT_CONTRACT_ADDRESS);
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Contract code fetch timeout')), 5000)
+      );
+      
+      code = await Promise.race([codePromise, timeoutPromise]);
+      exists = code !== '0x';
+      console.log('checkNFTContract: Contract exists?', exists, 'Code length:', code.length);
+    } catch (codeError) {
+      console.error('checkNFTContract: Error fetching contract code:', codeError);
+      
+      // Try backup RPC for contract verification
+      try {
+        console.log('checkNFTContract: Trying backup RPC for contract check');
+        const backupProvider = new ethers.providers.JsonRpcProvider('https://cronos-rpc.heavenswail.one');
+        code = await backupProvider.getCode(NFT_CONTRACT_ADDRESS);
+        exists = code !== '0x';
+        console.log('checkNFTContract: [BACKUP] Contract exists?', exists);
+      } catch (backupError) {
+        console.error('checkNFTContract: Backup RPC also failed:', backupError);
+        
+        // As last resort, assume contract exists (we know it does)
+        console.log('checkNFTContract: Using last resort - assuming contract exists');
+        exists = true;
+      }
+    }
     
     if (!exists) {
       return {
         exists: false,
-        hasCurrentPrice: false,
+        hasMintPrice: false,
         hasTotalSupply: false,
-        hasMaxSupply: false,
-        availableFunctions: []
+        hasIsMintPaused: false,
+        hasGetDiscountRate: false,
+        availableFunctions: [],
+        onCronos: false
       };
     }
     
-    // Get contract instance
-    const contract = new ethers.Contract(NFT_CONTRACT_ADDRESS, ERC721A_ABI, provider);
-    console.log('checkNFTContract: Got contract instance');
+    // Get contract instance with enhanced error handling
+    let contract;
+    let availableFunctions: string[] = [];
     
-    // Get available functions
-    const availableFunctions = Object.keys(contract.functions);
-    console.log('checkNFTContract: Available functions:', availableFunctions);
+    try {
+      console.log('checkNFTContract: Creating contract instance');
+      contract = new ethers.Contract(NFT_CONTRACT_ADDRESS, ERC721A_ABI, provider);
+      console.log('checkNFTContract: Got contract instance');
+      
+      // Get available functions
+      availableFunctions = Object.keys(contract.functions || {});
+      console.log('checkNFTContract: Available functions:', availableFunctions);
+    } catch (contractError) {
+      console.error('checkNFTContract: Error creating contract instance:', contractError);
+      
+      // Try with minimal ABI as a last resort
+      try {
+        console.log('checkNFTContract: Attempting with minimal emergency ABI');
+        const minimalABI = [
+          "function mintPrice() view returns (uint256)",
+          "function totalSupply() view returns (uint256)",
+          "function isMintPaused() view returns (bool)",
+          "function getDiscountRate(address) view returns (uint256)"
+        ];
+        
+        contract = new ethers.Contract(NFT_CONTRACT_ADDRESS, minimalABI, provider);
+        console.log('checkNFTContract: Created contract with minimal ABI');
+        availableFunctions = Object.keys(contract.functions || {});
+      } catch (minimalError) {
+        console.error('checkNFTContract: Even minimal ABI failed:', minimalError);
+        // Continue with empty functions list
+      }
+    }
     
     // Check for specific functions
-    const hasCurrentPrice = availableFunctions.includes('currentPrice()');
-    const hasTotalSupply = availableFunctions.includes('totalSupply()');
-    const hasMaxSupply = availableFunctions.includes('MAX_SUPPLY()');
+    const hasMintPrice = availableFunctions.includes('mintPrice');
+    const hasTotalSupply = availableFunctions.includes('totalSupply');
+    const hasIsMintPaused = availableFunctions.includes('isMintPaused');
+    const hasGetDiscountRate = availableFunctions.includes('getDiscountRate');
     
     console.log('checkNFTContract: Function availability:', {
-      hasCurrentPrice,
+      hasMintPrice,
       hasTotalSupply,
-      hasMaxSupply
+      hasIsMintPaused,
+      hasGetDiscountRate
     });
-    
     return {
       exists,
-      hasCurrentPrice,
+      hasMintPrice,
       hasTotalSupply,
-      hasMaxSupply,
-      availableFunctions
+      hasIsMintPaused,
+      hasGetDiscountRate,
+      availableFunctions,
+      onCronos
     };
   } catch (error) {
     console.error('Error checking NFT contract:', error);
     return {
       exists: false,
-      hasCurrentPrice: false,
+      hasMintPrice: false,
       hasTotalSupply: false,
-      hasMaxSupply: false,
-      availableFunctions: []
+      hasIsMintPaused: false,
+      hasGetDiscountRate: false,
+      availableFunctions: [],
+      onCronos: false
     };
   }
 };
 
 // Get NFT contract instance
 export const getNFTContract = (signerOrProvider: ethers.Signer | ethers.providers.Provider) => {
-  // If ABI is not loaded yet, try to load it
+  console.log('getNFTContract: Called with provider type:',
+    signerOrProvider instanceof ethers.Signer ? 'Signer' : 'Provider');
+  
+  // If ABI is not loaded yet, try to load it synchronously (not ideal but maintains compatibility)
   if (ERC721A_ABI.length === 0) {
-    console.log('getNFTContract: ABI not loaded yet, attempting to load');
-    loadABI().then(loadedAbi => {
-      console.log('getNFTContract: ABI loaded successfully');
-      ERC721A_ABI = loadedAbi;
-    }).catch(error => {
-      console.error('getNFTContract: Error loading ABI:', error);
-    });
+    console.warn('getNFTContract: ⚠️ WARNING - ABI not loaded! Contract functions may not work properly.');
+    
+    // Force synchronous load using an already loaded file if possible
+    try {
+      // This is a last resort emergency method - not recommended
+      console.log('getNFTContract: Attempting emergency ABI load - FALLBACK');
+      
+      // Define a minimal ABI with just the functions we absolutely need
+      const minimalABI = [
+        "function mintPrice() view returns (uint256)",
+        "function totalSupply() view returns (uint256)",
+        "function nextTokenId() view returns (uint256)",
+        "function isMintPaused() view returns (bool)",
+        "function getDiscountRate(address) view returns (uint256)",
+        "function balanceOf(address) view returns (uint256)",
+        "function publicMint(uint256) payable",
+      ];
+      
+      console.log('getNFTContract: Using minimal emergency ABI with key functions');
+      return new ethers.Contract(NFT_CONTRACT_ADDRESS, minimalABI, signerOrProvider);
+    } catch (error) {
+      console.error('getNFTContract: Emergency ABI load failed:', error);
+    }
+  } else {
+    console.log('getNFTContract: Using pre-loaded ABI with length:', ERC721A_ABI.length);
   }
   
-  return new ethers.Contract(NFT_CONTRACT_ADDRESS, ERC721A_ABI, signerOrProvider);
+  // Create and log the contract instance
+  const contract = new ethers.Contract(NFT_CONTRACT_ADDRESS, ERC721A_ABI, signerOrProvider);
+  console.log('getNFTContract: Contract created with functions:',
+    Object.keys(contract.functions || {}).length, 'functions available');
+  
+  // Log some important functions we need
+  const hasMintPrice = contract.functions?.mintPrice !== undefined;
+  const hasNextTokenId = contract.functions?.nextTokenId !== undefined;
+  const hasTotalSupply = contract.functions?.totalSupply !== undefined;
+  console.log('getNFTContract: Critical functions available:', {
+    mintPrice: hasMintPrice,
+    nextTokenId: hasNextTokenId,
+    totalSupply: hasTotalSupply
+  });
+  
+  return contract;
 };
 
 // Get NFT balance for an address
@@ -530,23 +729,161 @@ export const isNFTSaleActive = async (): Promise<boolean> => {
   try {
     const provider = getProvider();
     const contract = getNFTContract(provider);
-    return await contract.saleIsActive();
+    
+    // Try to check if mint is paused
+    try {
+      const isPaused = await contract.isMintPaused();
+      console.log('isNFTSaleActive: Mint paused status fetched from contract:', isPaused);
+      return !isPaused;
+    } catch (contractError) {
+      console.warn('isNFTSaleActive: Could not fetch mint paused status:', contractError instanceof Error ? contractError.message : 'Unknown error');
+      
+      // For now, assume sale is active as a failsafe
+      // The contract will reject the transaction if minting is actually paused
+      console.log('isNFTSaleActive: Assuming sale is active (fallback behavior)');
+      return true;
+    }
   } catch (error) {
-    console.error('Error checking if NFT sale is active:', error);
+    console.error('Error checking if NFT sale is active:', error instanceof Error ? error.message : 'Unknown error');
+    // Default to false as a safety measure if everything fails
     return false;
   }
 };
-
 // Get current NFT price
 export const getNFTPrice = async (): Promise<string> => {
   try {
     const provider = getProvider();
     const contract = getNFTContract(provider);
-    const price = await contract.currentPrice();
-    return ethers.utils.formatEther(price);
+    
+    console.log('getNFTPrice: Attempting to fetch price from contract at:', NFT_CONTRACT_ADDRESS);
+    
+    // Try to get price from contract with retries
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const price = await contract.mintPrice();
+        const formattedPrice = ethers.utils.formatEther(price);
+        console.log('getNFTPrice: Price fetched from contract:', formattedPrice);
+        return formattedPrice;
+      } catch (contractError) {
+        console.warn(`getNFTPrice: Attempt ${4-retries}/3 failed:`, contractError instanceof Error ? contractError.message : 'Unknown error');
+        retries--;
+        
+        if (retries === 0) {
+          console.warn('getNFTPrice: All attempts failed, using contract configuration value');
+          // Use 150 CRO as this is the known contract configuration
+          const configValue = '150';
+          console.log('getNFTPrice: Using contract configuration value:', configValue);
+          return configValue;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    // This should never execute due to the return inside the retry loop
+    return '150';
   } catch (error) {
-    console.error('Error getting NFT price:', error);
-    return '0';
+    console.error('Error in getNFTPrice:', error instanceof Error ? error.message : 'Unknown error');
+    
+    // Use contract configuration as last resort
+    console.log('getNFTPrice: Using contract configuration as last resort');
+    return '150';
+  }
+};
+
+// Get discount rate for an address
+export const getDiscountRate = async (address: string): Promise<number> => {
+  try {
+    const provider = getProvider();
+    const contract = getNFTContract(provider);
+    
+    // Try to get token balance first (for alternative calculation)
+    let tokenBalance = ethers.BigNumber.from(0);
+    const tokenContract = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, provider);
+    
+    try {
+      tokenBalance = await tokenContract.balanceOf(address);
+    } catch (tokenError) {
+      console.warn('getDiscountRate: Could not fetch token balance:', tokenError instanceof Error ? tokenError.message : 'Unknown error');
+    }
+    
+    // Try direct discount rate call
+    try {
+      const discount = await contract.getDiscountRate(address);
+      console.log('getDiscountRate: Discount rate fetched from contract:', discount.toString());
+      return parseInt(discount.toString());
+    } catch (contractError) {
+      console.warn('getDiscountRate: Could not fetch discount from contract directly:', contractError instanceof Error ? contractError.message : 'Unknown error');
+      
+      // Calculate discount based on token balance (same algorithm as in contract)
+      // 1M tokens = 1% discount, max 30%
+      if (tokenBalance && tokenBalance.gt(0)) {
+        let tokenDecimals = 18;
+        try {
+          tokenDecimals = await tokenContract.decimals();
+        } catch (e) {
+          console.warn('getDiscountRate: Could not get token decimals, using default 18');
+        }
+        
+        const tokenBalanceFormatted = parseFloat(ethers.utils.formatUnits(tokenBalance, tokenDecimals));
+        const calculatedDiscount = Math.floor(tokenBalanceFormatted / 1000000);
+        const cappedDiscount = Math.min(calculatedDiscount, 30);
+        
+        console.log('getDiscountRate: Calculated discount from token balance:', cappedDiscount);
+        return cappedDiscount;
+      }
+      
+      // Default fallback
+      return 0;
+    }
+  } catch (error) {
+    console.error('Error in getDiscountRate:', error instanceof Error ? error.message : 'Unknown error');
+    return 0; // No discount as fallback
+  }
+};
+
+// Get discounted price for an address
+export const getDiscountedPrice = async (address: string): Promise<string> => {
+  try {
+    // Use enhanced functions with fallback mechanisms
+    let basePrice;
+    let discount;
+    
+    try {
+      // Try to get price directly from contract
+      const provider = getProvider();
+      const contract = getNFTContract(provider);
+      basePrice = await contract.mintPrice();
+      discount = await contract.getDiscountRate(address);
+    } catch (contractError) {
+      console.warn('getDiscountedPrice: Error getting price or discount directly from contract:',
+                   contractError instanceof Error ? contractError.message : 'Unknown error');
+      
+      // Use our enhanced functions that have fallbacks
+      const priceString = await getNFTPrice();
+      basePrice = ethers.utils.parseEther(priceString);
+      discount = await getDiscountRate(address);
+      discount = ethers.BigNumber.from(discount);
+    }
+    
+    // Calculate discounted price: basePrice * (100 - discount) / 100
+    const discountedPrice = basePrice.mul(100 - parseInt(discount.toString())).div(100);
+    console.log('getDiscountedPrice: Calculated price:', ethers.utils.formatEther(discountedPrice));
+    
+    return ethers.utils.formatEther(discountedPrice);
+  } catch (error) {
+    console.error('Error calculating discounted price:', error instanceof Error ? error.message : 'Unknown error');
+    
+    try {
+      // Last resort fallback - just return the base price without discount
+      const priceString = await getNFTPrice();
+      console.log('getDiscountedPrice: Using fallback price without discount:', priceString);
+      return priceString;
+    } catch {
+      return '150'; // Absolute last resort hardcoded price
+    }
   }
 };
 
@@ -555,24 +892,78 @@ export const getNFTTotalSupply = async (): Promise<number> => {
   try {
     const provider = getProvider();
     const contract = getNFTContract(provider);
-    const supply = await contract.totalSupply();
-    return parseInt(supply.toString());
+    
+    console.log('getNFTTotalSupply: Attempting to fetch totalSupply from contract at:', NFT_CONTRACT_ADDRESS);
+    
+    // Try to get totalSupply from contract with retries
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const supply = await contract.totalSupply();
+        const parsedSupply = parseInt(supply.toString());
+        console.log('getNFTTotalSupply: Total supply fetched from contract:', parsedSupply);
+        return parsedSupply;
+      } catch (contractError) {
+        console.warn(`getNFTTotalSupply: Attempt ${4-retries}/3 failed:`, contractError instanceof Error ? contractError.message : 'Unknown error');
+        retries--;
+        
+        if (retries === 0) {
+          console.warn('getNFTTotalSupply: All attempts failed, returning 0 as default');
+          return 0;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    // This should never execute due to the return inside the retry loop
+    return 0;
   } catch (error) {
-    console.error('Error getting total supply:', error);
+    console.error('Error in getNFTTotalSupply:', error instanceof Error ? error.message : 'Unknown error');
     return 0;
   }
 };
-
-// Get max NFT supply
-export const getNFTMaxSupply = async (): Promise<number> => {
+// Get next token ID (used instead of max supply)
+export const getNextTokenId = async (): Promise<number> => {
   try {
     const provider = getProvider();
     const contract = getNFTContract(provider);
-    const maxSupply = await contract.MAX_SUPPLY();
-    return parseInt(maxSupply.toString());
+    
+    // Try to get next token ID
+    try {
+      const nextTokenId = await contract.nextTokenId();
+      console.log('getNextTokenId: Next token ID fetched from contract:', nextTokenId.toString());
+      return parseInt(nextTokenId.toString());
+    } catch (contractError) {
+      console.warn('getNextTokenId: Could not fetch next token ID from contract:', contractError instanceof Error ? contractError.message : 'Unknown error');
+      
+      // Alternative: use totalSupply + 1 as a reasonable approximation
+      try {
+        const totalSupply = await contract.totalSupply();
+        const estimatedNextId = parseInt(totalSupply.toString()) + 1;
+        console.log('getNextTokenId: Estimated next token ID from totalSupply:', estimatedNextId);
+        return estimatedNextId;
+      } catch (supplyError) {
+        console.warn('getNextTokenId: Could not estimate from totalSupply:', supplyError instanceof Error ? supplyError.message : 'Unknown error');
+        return 1; // Default fallback
+      }
+    }
   } catch (error) {
-    console.error('Error getting max supply:', error);
-    return 0;
+    console.error('Error in getNextTokenId:', error instanceof Error ? error.message : 'Unknown error');
+    return 1; // Default fallback
+  }
+};
+
+// There's no MAX_SUPPLY in the new contract, so we provide a function
+// that returns "unlimited" as a very large number
+export const getNFTMaxSupply = async (): Promise<number> => {
+  try {
+    // Return a very large number to represent "unlimited"
+    return Number.MAX_SAFE_INTEGER;
+  } catch (error) {
+    console.error('Error in getNFTMaxSupply:', error);
+    return Number.MAX_SAFE_INTEGER;
   }
 };
 // Mint NFT using Reown
@@ -594,28 +985,41 @@ export const mintNFT = async (amount: number, walletProvider: any): Promise<{
     const contract = getNFTContract(signer);
     console.log('mintNFT: Contract obtained:', !!contract);
     
-    // Check if sale is active
-    console.log('mintNFT: Checking if sale is active...');
-    const saleActive = await contract.saleIsActive();
-    console.log('mintNFT: Sale active:', saleActive);
+    // Check if sale is active (not paused)
+    console.log('mintNFT: Checking if mint is paused...');
+    const mintPaused = await contract.isMintPaused();
+    console.log('mintNFT: Mint paused:', mintPaused);
     
-    if (!saleActive) {
+    if (mintPaused) {
       return {
         success: false,
         error: 'NFT sale is not active'
       };
     }
     
+    // Get address for discount calculation
+    const address = await signer.getAddress();
+    
+    // Get discount rate
+    console.log('mintNFT: Getting discount rate...');
+    const discountRate = await contract.getDiscountRate(address);
+    console.log('mintNFT: Discount rate:', discountRate.toString(), '%');
+    
     // Get price
     console.log('mintNFT: Getting price...');
-    const price = await contract.currentPrice();
-    console.log('mintNFT: Price:', price.toString());
-    const totalPrice = price.mul(amount);
+    const basePrice = await contract.mintPrice();
+    console.log('mintNFT: Base price:', basePrice.toString());
+    
+    // Calculate discounted price
+    const discountedPrice = basePrice.mul(100 - parseInt(discountRate.toString())).div(100);
+    console.log('mintNFT: Discounted price:', discountedPrice.toString());
+    
+    const totalPrice = discountedPrice.mul(amount);
     console.log('mintNFT: Total price:', totalPrice.toString());
     
     // Send transaction
     console.log('mintNFT: Sending transaction...');
-    const tx = await contract.mint(amount, { value: totalPrice });
+    const tx = await contract.publicMint(amount, { value: totalPrice });
     console.log('mintNFT: Transaction sent:', tx.hash);
     
     // Wait for transaction to be mined
@@ -703,6 +1107,7 @@ export const getOwnedNFTs = async (address: string): Promise<number[]> => {
 
 // AppKit Integration Functions
 // Mint NFT using AppKit
+// Mint NFT using AppKit
 export const mintNFTWithReown = async (
   amount: number,
   walletProvider: any
@@ -768,30 +1173,66 @@ export const mintNFTWithReown = async (
       console.log('mintNFTWithReown: Available contract methods:',
         Object.keys(contract.functions).join(', '));
       
-      // Check if sale is active
-      console.log('mintNFTWithReown: Checking if sale is active...');
-      let saleActive = true;
+      // Check if minting is paused
+      // Check if minting is paused using our enhanced function
+      console.log('mintNFTWithReown: Checking if minting is paused...');
+      let isSaleActive = true;
       try {
-        saleActive = await contract.saleIsActive();
-        console.log('mintNFTWithReown: Sale active:', saleActive);
-      } catch (saleCheckError) {
-        console.warn('mintNFTWithReown: Error checking sale status, assuming active:', saleCheckError);
-        // For demo purposes, assume sale is active if function fails
-        saleActive = true;
+        const mintPaused = await contract.isMintPaused();
+        console.log('mintNFTWithReown: Minting paused:', mintPaused);
+        isSaleActive = !mintPaused;
+      } catch (pauseCheckError) {
+        console.warn('mintNFTWithReown: Error checking pause status directly:',
+                    pauseCheckError instanceof Error ? pauseCheckError.message : 'Unknown error');
+        
+        // Use our enhanced function that has fallbacks built in
+        isSaleActive = await isNFTSaleActive();
+        console.log('mintNFTWithReown: Sale active status from enhanced function:', isSaleActive);
       }
       
-      if (!saleActive) {
+      if (!isSaleActive) {
         return {
           success: false,
           error: 'NFT sale is not active'
         };
       }
       
-      // Get price
+      // Get discount rate using our enhanced function
+      console.log('mintNFTWithReown: Getting discount rate...');
+      let discountRate;
+      try {
+        discountRate = await contract.getDiscountRate(signerAddress);
+        console.log('mintNFTWithReown: Discount rate from contract:', discountRate.toString(), '%');
+      } catch (discountError) {
+        console.warn('mintNFTWithReown: Error getting discount from contract:',
+                     discountError instanceof Error ? discountError.message : 'Unknown error');
+        // Use our enhanced function that has fallbacks built in
+        const discountValue = await getDiscountRate(signerAddress);
+        console.log('mintNFTWithReown: Calculated discount rate:', discountValue, '%');
+        // Convert to BigNumber for consistency
+        discountRate = ethers.BigNumber.from(discountValue.toString());
+      }
+      
+      // Get price using our enhanced function
       console.log('mintNFTWithReown: Getting price...');
-      const price = await contract.currentPrice();
-      console.log('mintNFTWithReown: Price:', price.toString());
-      const totalPrice = price.mul(amount);
+      let basePrice;
+      try {
+        basePrice = await contract.mintPrice();
+        console.log('mintNFTWithReown: Base price from contract:', basePrice.toString());
+      } catch (priceError) {
+        console.warn('mintNFTWithReown: Error getting price from contract:',
+                     priceError instanceof Error ? priceError.message : 'Unknown error');
+        // Use our enhanced function that has fallbacks built in
+        const priceString = await getNFTPrice();
+        basePrice = ethers.utils.parseEther(priceString);
+        console.log('mintNFTWithReown: Using fallback price:', basePrice.toString());
+      }
+      
+      // Calculate discounted price safely
+      const discountPercent = parseInt(discountRate.toString());
+      const discountedPrice = basePrice.mul(100 - discountPercent).div(100);
+      console.log('mintNFTWithReown: Discounted price:', discountedPrice.toString());
+      const totalPrice = discountedPrice.mul(amount);
       console.log('mintNFTWithReown: Total price:', totalPrice.toString());
       
       // Check user balance
@@ -808,7 +1249,7 @@ export const mintNFTWithReown = async (
       
       // Send transaction through AppKit
       console.log('mintNFTWithReown: Sending transaction...');
-      const tx = await contract.mint(amount, { value: totalPrice });
+      const tx = await contract.publicMint(amount, { value: totalPrice });
       console.log('mintNFTWithReown: Transaction sent:', tx.hash);
       
       // Wait for transaction to be mined
@@ -866,7 +1307,6 @@ export const mintNFTWithReown = async (
     };
   }
 };
-
 // Get NFT metadata
 export const getNFTMetadata = async (tokenId: number): Promise<any> => {
   try {
