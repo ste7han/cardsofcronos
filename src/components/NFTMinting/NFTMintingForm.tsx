@@ -16,7 +16,11 @@ import {
   getNextTokenId,
   getProvider,
   getNFTContract,
-  ensureABILoaded
+  ensureABILoaded,
+  isWalletConnected,
+  getWalletAddress,
+  useWalletConnectionStatus,
+  useWalletAddress
 } from '@/lib/web3';
 import { ethers } from 'ethers';
 import { useAppKit, useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
@@ -47,8 +51,11 @@ const NFTMintingForm = () => {
   
   // Get wallet provider and connection status from AppKit
   const { walletProvider } = useAppKitProvider('eip155');
-  const { isConnected, address } = useAppKitAccount();
   const { open: openAppKit } = useAppKit();
+  
+  // Use our custom hooks that safely wrap the AppKit hooks
+  const isConnected = useWalletConnectionStatus();
+  const address = useWalletAddress();
   
   // Get the ABI from our custom hook
   const abi = useERC721AABI();
@@ -444,122 +451,128 @@ const NFTMintingForm = () => {
         ) : (
           <div className="space-y-8">
             {/* NFT Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
-              <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">
-                Price {usingFallbackPrice && <span className="text-amber-400 ml-1">(Estimated)</span>}
-              </p>
-              <p className="text-xl font-bold text-white">
-                {price} <span className="text-[var(--secondary)]">CRO</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
+                <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">
+                  Price {usingFallbackPrice && <span className="text-amber-400 ml-1">(Estimated)</span>}
+                </p>
+                <p className="text-xl font-bold text-white">
+                  {price} <span className="text-[var(--secondary)]">CRO</span>
+                  {discountRate > 0 && (
+                    <span className="ml-2 text-sm text-green-400">
+                      ({discountRate}% discount {usingFallbackDiscount ? 'est.' : ''})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
+                <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">Supply</p>
+                <p className="text-xl font-bold text-white">{totalSupply} / Unlimited</p>
+              </div>
+            </div>
+            
+            {/* Supply Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs text-white/70">
+                <span>
+                  Current Token ID
+                  {usingFallbackNextId && <span className="text-amber-400 ml-1">(Est.)</span>}
+                </span>
+                <span>{nextTokenId}</span>
+              </div>
+              <div className="flex justify-between text-xs text-white/70">
+                <span>Total Minted</span>
+                <span>{totalSupply}</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: '100%' }}
+                ></div>
+              </div>
+            </div>
+            
+            {/* Mint Count Selector */}
+            <div className="flex items-center justify-center space-x-6">
+              <button
+                onClick={decrementCount}
+                disabled={mintCount <= 1 || isLoading}
+                className="w-12 h-12 rounded-full bg-[var(--cosmic-black)]/80 text-white flex items-center justify-center border border-[var(--glass-border)] hover:bg-[var(--cosmic-black)] hover:shadow-[0_0_10px_rgba(157,78,221,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 active:scale-95"
+                aria-label="Decrease mint count"
+              >
+                <span className="text-2xl">-</span>
+              </button>
+              
+              <div className="text-3xl font-bold text-white w-16 text-center">{mintCount}</div>
+              
+              <button
+                onClick={incrementCount}
+                disabled={isLoading}
+                className="w-12 h-12 rounded-full bg-[var(--cosmic-black)]/80 text-white flex items-center justify-center border border-[var(--glass-border)] hover:bg-[var(--cosmic-black)] hover:shadow-[0_0_10px_rgba(157,78,221,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 active:scale-95"
+                aria-label="Increase mint count"
+              >
+                <span className="text-2xl">+</span>
+              </button>
+            </div>
+            
+            {/* Total Price */}
+            <div className="text-center bg-[var(--cosmic-black)]/40 p-4 rounded-lg border border-[var(--glass-border)]/50">
+              <p className="text-sm text-[var(--secondary)]/80 uppercase tracking-wider font-medium mb-1">Total Price</p>
+              <p className="text-2xl font-bold text-white">
+                {(parseFloat(isConnected && discountRate > 0 ? discountedPrice : price) * mintCount).toFixed(4)}
+                <span className="text-[var(--secondary)]">CRO</span>
                 {discountRate > 0 && (
-                  <span className="ml-2 text-sm text-green-400">
-                    ({discountRate}% discount {usingFallbackDiscount ? 'est.' : ''})
-                  </span>
+                  <span className="ml-2 text-sm text-green-400">({discountRate}% discount applied)</span>
                 )}
               </p>
             </div>
-            <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
-              <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">Supply</p>
-              <p className="text-xl font-bold text-white">{totalSupply} / Unlimited</p>
-            </div>
-          </div>
-          
-          {/* Supply Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-white/70">
-              <span>
-                Current Token ID
-                {usingFallbackNextId && <span className="text-amber-400 ml-1">(Est.)</span>}
-              </span>
-              <span>{nextTokenId}</span>
-            </div>
-            <div className="flex justify-between text-xs text-white/70">
-              <span>Total Minted</span>
-              <span>{totalSupply}</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-full transition-all duration-1000 ease-out"
-                style={{ width: '100%' }}
-              ></div>
-            </div>
-          </div>
-          
-          {/* Mint Count Selector */}
-          <div className="flex items-center justify-center space-x-6">
-            <button
-              onClick={decrementCount}
-              disabled={mintCount <= 1 || isLoading}
-              className="w-12 h-12 rounded-full bg-[var(--cosmic-black)]/80 text-white flex items-center justify-center border border-[var(--glass-border)] hover:bg-[var(--cosmic-black)] hover:shadow-[0_0_10px_rgba(157,78,221,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 active:scale-95"
-              aria-label="Decrease mint count"
-            >
-              <span className="text-2xl">-</span>
-            </button>
             
-            <div className="text-3xl font-bold text-white w-16 text-center">{mintCount}</div>
-            
-            <button
-              onClick={incrementCount}
-              disabled={isLoading}
-              className="w-12 h-12 rounded-full bg-[var(--cosmic-black)]/80 text-white flex items-center justify-center border border-[var(--glass-border)] hover:bg-[var(--cosmic-black)] hover:shadow-[0_0_10px_rgba(157,78,221,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 active:scale-95"
-              aria-label="Increase mint count"
-            >
-              <span className="text-2xl">+</span>
-            </button>
-          </div>
-          
-          {/* Total Price */}
-          <div className="text-center bg-[var(--cosmic-black)]/40 p-4 rounded-lg border border-[var(--glass-border)]/50">
-            <p className="text-sm text-[var(--secondary)]/80 uppercase tracking-wider font-medium mb-1">Total Price</p>
-            <p className="text-2xl font-bold text-white">
-              {(parseFloat(isConnected && discountRate > 0 ? discountedPrice : price) * mintCount).toFixed(4)}
-              <span className="text-[var(--secondary)]">CRO</span>
-              {discountRate > 0 && (
-                <span className="ml-2 text-sm text-green-400">({discountRate}% discount applied)</span>
-              )}
-            </p>
-          </div>
-          
-          {/* Mint Button */}
-          <div className="relative group z-10">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-md opacity-75 group-hover:opacity-100 blur group-hover:blur-md transition duration-1000"></div>
-            <button
-              onClick={handleMint}
-              disabled={isLoading || !isConnected}
-              className="relative w-full py-4 px-6 bg-[var(--cosmic-black)]/90 text-white font-bold rounded-md hover:bg-[var(--cosmic-black)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 overflow-hidden group-hover:shadow-lg"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center animate-pulse">
-                  <LoadingSpinner size="sm" />
-                  <span className="ml-2">Minting...</span>
-                </div>
-              ) : !isConnected ? (
-                <span className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
-                  Connect Wallet to Mint
-                </span>
+            {/* Mint Button */}
+            <div className="relative group z-10">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-glow)] rounded-md opacity-75 group-hover:opacity-100 blur group-hover:blur-md transition duration-1000"></div>
+              {isConnected ? (
+                <button
+                  onClick={handleMint}
+                  disabled={isLoading}
+                  className="relative w-full py-4 px-6 bg-[var(--cosmic-black)]/90 text-white font-bold rounded-md hover:bg-[var(--cosmic-black)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 overflow-hidden group-hover:shadow-lg"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center animate-pulse">
+                      <LoadingSpinner size="sm" />
+                      <span className="ml-2">Minting...</span>
+                    </div>
+                  ) : (
+                    <span className="flex items-center justify-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                      </svg>
+                      Mint {mintCount} NFT{mintCount > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </button>
               ) : (
-                <span className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                  </svg>
-                  Mint {mintCount} NFT{mintCount > 1 ? 's' : ''}
-                </span>
+                <button
+                  onClick={() => openAppKit()}
+                  className="relative w-full py-4 px-6 bg-[var(--cosmic-black)]/90 text-white font-bold rounded-md hover:bg-[var(--cosmic-black)] transition-all duration-500 overflow-hidden group-hover:shadow-lg"
+                >
+                  <span className="flex items-center justify-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Connect Wallet to Mint
+                  </span>
+                </button>
               )}
-            </button>
-          </div>
-          
-          {/* Connect Wallet Message */}
-          {!isConnected && (
-            <div className="text-center text-sm text-white/70 mt-2 p-3 border border-[var(--glass-border)]/30 rounded-lg bg-[var(--cosmic-black)]/30">
-              <p>Please connect your wallet using the button in the header</p>
-              <p className="text-xs mt-1 text-[var(--secondary)]/70">Cronos Chain Required</p>
-              <p className="text-xs mt-1 text-green-400">Connect to earn discounts based on your token holdings!</p>
             </div>
-          )}
-        </div>
+            
+            {/* Connect Wallet Message */}
+            {!isConnected && (
+              <div className="text-center text-sm text-white/70 mt-2 p-3 border border-[var(--glass-border)]/30 rounded-lg bg-[var(--cosmic-black)]/30">
+                <p className="text-xs mt-1 text-[var(--secondary)]/70">Cronos Chain Required</p>
+                <p className="text-xs mt-1 text-green-400">Connect to earn discounts based on your token holdings!</p>
+              </div>
+            )}
+          </div>
         )}
         
         {/* Add keyframes for animations */}

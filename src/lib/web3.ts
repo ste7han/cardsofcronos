@@ -412,8 +412,8 @@ export const burnTokens = async (amount: number, walletProvider: any) => {
   }
 };
 
-// Check if wallet is connected using AppKit - this function should only be called from within a React component
-export const isWalletConnected = (): boolean => {
+// Create a React hook for wallet connection status
+export const useWalletConnectionStatus = (): boolean => {
   // Check if we're in a client component
   if (typeof window === 'undefined') {
     return false;
@@ -428,8 +428,8 @@ export const isWalletConnected = (): boolean => {
   }
 };
 
-// Get connected wallet address using AppKit - this function should only be called from within a React component
-export const getWalletAddress = (): string | undefined => {
+// Create a React hook for wallet address
+export const useWalletAddress = (): string | undefined => {
   // Check if we're in a client component
   if (typeof window === 'undefined') {
     return undefined;
@@ -442,6 +442,15 @@ export const getWalletAddress = (): string | undefined => {
     console.error('Error getting wallet address:', error);
     return undefined;
   }
+};
+
+// Non-hook functions for components that can't use hooks directly
+export const isWalletConnected = (isConnected: boolean): boolean => {
+  return isConnected;
+};
+
+export const getWalletAddress = (address: string | undefined): string | undefined => {
+  return address;
 };
 
 // Calculate token amount based on card type, rarity, and animated option
