@@ -97,7 +97,7 @@ const ERC20_ABI = [
 export const TOKEN_ADDRESS = '0xECf3361441512c1e9F6A6e8734D86614D8e795BC';
 export const BURN_ADDRESS = '0x42BCc1355808aDf2344773c54e364257911CcC99';
 export const DEAD_WALLET = '0x000000000000000000000000000000000000dEaD';
-export const NFT_CONTRACT_ADDRESS = '0x10B47dAbfEaCBd87dD2bAd5f6d489C5082181902'; // Real NFT contract address
+export const NFT_CONTRACT_ADDRESS = '0x53d911322b58DFc4e6693645262235F0119206ea'; // Real NFT contract address
 // Add logging to identify the issue
 console.log('NFT_CONTRACT_ADDRESS is set to:', NFT_CONTRACT_ADDRESS);
 // Cronos Chain ID
