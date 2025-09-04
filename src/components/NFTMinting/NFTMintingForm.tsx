@@ -467,7 +467,7 @@ const NFTMintingForm = () => {
               </div>
               <div className="bg-[var(--cosmic-black)]/60 backdrop-blur-sm p-4 rounded-lg border border-[var(--glass-border)] shadow-inner transition-all duration-300 hover:shadow-[0_0_15px_rgba(157,78,221,0.2)]">
                 <p className="text-xs text-[var(--secondary)]/80 mb-1 uppercase tracking-wider font-medium">Supply</p>
-                <p className="text-xl font-bold text-white">{totalSupply} / Unlimited</p>
+                <p className="text-xl font-bold text-white">{totalSupply} / 1894</p>
               </div>
             </div>
             
