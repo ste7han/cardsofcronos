@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { parseBattleLine } from './battleLog';
+import { parseBattleLine, buildBattleScript, type Beat, type Perspective } from './battleLog';
 
 // --- TYPES ---
 export interface Card {
@@ -11,17 +11,13 @@ export interface Card {
   owner?: string;
 }
 
-// Welke kant van het serverresultaat de kijker is. De server denkt altijd in
-// "Player 1" (host) en "Player 2" (guest); de UI moet dat naar "jij" vertalen.
-export type Perspective = 'p1' | 'p2';
+// De server denkt altijd in "Player 1" (host) en "Player 2" (guest); de UI
+// vertaalt dat naar "jij". Het type staat in battleLog.ts omdat het draaiboek
+// het ook nodig heeft.
+export type { Perspective };
 
 // --- HELPERS ---
 const getCardImage = (cardId: string) => `/NFTCARDS/${cardId.trim().replace(/\s+/g, '_')}.png`;
-
-// De Python-engine logt per fase een autoritatieve stand (match_simulator.py:1599
-// en :1574). Die lezen we liever dan dat we kaartwaarden uit proza optellen.
-const SCORE_AFTER_RE = /Player\s+([12])\s+MC after\s+\w+:\s*([-\d.]+)/;
-const SCORE_OPEN_RE = /Player\s+([12])\s+(?:opens with|responds with)\s*([-\d.]+)\s*MC/;
 
 const sumProjects = (cards: any[] | undefined) =>
   (cards || [])
@@ -43,7 +39,7 @@ const RollingNumber = ({ value }: { value: number }) => {
 };
 
 // --- COMPONENT: BATTLE CARD ---
-export const BattleCard = ({ card, activeType, lastChange }: { card: Card | undefined, activeType: string | null, lastChange: number | null }) => {
+export const BattleCard = ({ card, activeType, lastChange, floatUp = true }: { card: Card | undefined, activeType: string | null, lastChange: number | null, floatUp?: boolean }) => {
   const [imgError, setImgError] = useState(false);
   // Afmeting via CSS-variabelen, zodat het bord op een telefoon in beeld past
   // zonder dat je horizontaal moet scrollen. Zie GlobalStyles.
@@ -75,11 +71,14 @@ export const BattleCard = ({ card, activeType, lastChange }: { card: Card | unde
     <div style={{ ...cardStyle, ...glowStyle }} className={`relative flex-shrink-0 transition-all duration-300 rounded-xl ${animClass} ${card.destroyed ? 'opacity-20 grayscale blur-[1px]' : 'opacity-100'}`}>
       <AnimatePresence>
         {activeType && lastChange !== null && lastChange !== 0 && (
+          // Het getal zweeft weg van het midden van het scherm: bij de bovenste
+          // rij omhoog, bij de onderste omlaag. Anders landt het bovenop de
+          // aankondigingstekst in de balk ertussen.
           <motion.div
             initial={{ opacity: 0, y: 0, scale: 0.5 }}
-            animate={{ opacity: 1, y: -100, scale: 1.5 }}
+            animate={{ opacity: 1, y: floatUp ? -52 : 52, scale: 1.4 }}
             exit={{ opacity: 0 }}
-            className={`absolute inset-x-0 -top-6 md:-top-10 text-center text-2xl md:text-4xl font-black z-[999] pointer-events-none drop-shadow-[0_4px_4px_rgba(0,0,0,1)] ${lastChange > 0 ? 'text-green-400' : 'text-red-500'}`}
+            className={`absolute inset-x-0 ${floatUp ? '-top-4' : '-bottom-4'} text-center text-2xl md:text-4xl font-black z-[999] pointer-events-none drop-shadow-[0_4px_4px_rgba(0,0,0,1)] ${lastChange > 0 ? 'text-green-400' : 'text-red-500'}`}
           >
             {lastChange > 0 ? `+${lastChange.toFixed(0)}` : lastChange.toFixed(0)}
           </motion.div>
@@ -172,12 +171,12 @@ const Formation = ({ cards, isPlayer, activeActions, lastChanges }: {
     // naast elkaar past het niet en werd je gedwongen horizontaal te scrollen.
     <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-12 w-full md:min-w-[1000px] px-2 md:px-10 relative z-10">
       <div className="flex flex-col items-center">
-        <BattleCard card={founder} activeType={activeActions[founder?.card_id || ""]} lastChange={lastChanges[founder?.card_id || ""] ?? null} />
+        <BattleCard card={founder} activeType={activeActions[founder?.card_id || ""]} lastChange={lastChanges[founder?.card_id || ""] ?? null} floatUp={!isPlayer} />
         <p className={`text-[9px] md:text-[10px] font-black mt-1 md:mt-3 uppercase tracking-widest ${isPlayer ? 'text-blue-500' : 'text-red-500'}`}>Leader</p>
       </div>
       <div className="flex flex-col gap-2 md:gap-6">
-        <div className="flex flex-row gap-1.5 md:gap-4">{frontRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
-        <div className="flex flex-row gap-1.5 md:gap-4">{backRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
+        <div className="flex flex-row gap-1.5 md:gap-4">{frontRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} floatUp={!isPlayer} />)}</div>
+        <div className="flex flex-row gap-1.5 md:gap-4">{backRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} floatUp={!isPlayer} />)}</div>
       </div>
     </div>
   );
@@ -195,7 +194,7 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
   const [p2Cards, setP2Cards] = useState<Card[]>([]);
   const [activeActions, setActiveActions] = useState<Record<string, string | null>>({});
   const [lastChanges, setLastChanges] = useState<Record<string, number | null>>({});
-  const [announcerText, setAnnouncerText] = useState("Initializing Combat Protocol...");
+  const [currentBeat, setCurrentBeat] = useState<Beat | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [currentStep, setCurrentStep] = useState(0);
@@ -236,15 +235,12 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
     p2: result?.finalScores?.p2 ?? sumProjects(result?.finalFields?.p2),
   }), [resultKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const eventQueue = useMemo(() => {
-    if (!result?.logs) return ["--- FINALIZE ---"];
-    const clean = (t: string) => t.replace(/\*\*/g, '').replace(/[\n\r]+/g, ' ').trim();
-    const logs = result.logs
-        .flatMap((log: string) => log.split('\n'))
-        .map(clean)
-        .filter((l: string) => l.length > 5);
-    return [...logs, "--- FINALIZE ---"];
-  }, [resultKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Het draaiboek: de ruwe log omgezet naar beats met eigen tempo. De volledige
+  // log blijft ongefilterd beschikbaar onder VIEW LOG.
+  const script = useMemo(
+    () => buildBattleScript(result?.logs, perspective),
+    [resultKey, perspective] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   useEffect(() => {
     const init = (cards: any[] | undefined) => (cards || []).map(c => ({
@@ -258,6 +254,7 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
     setP2Cards(next2);
     setLiveScores({ p1: sumProjects(next1), p2: sumProjects(next2) });
     setCurrentStep(0);
+    setCurrentBeat(null);
     setActiveActions({});
     setLastChanges({});
     setIsFinished(false);
@@ -267,33 +264,37 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
   useEffect(() => {
     if (isFinished) return;
 
-    const stepTimer = setTimeout(() => {
-      if (currentStep >= eventQueue.length) return;
-      const log = eventQueue[currentStep];
+    const beat = script[currentStep];
 
-      if (log === "--- FINALIZE ---") {
-        setAnnouncerText("Match Concluded.");
+    // Een score-beat heeft geen tekst en geen tijdsduur: alleen de stand bijwerken
+    // en meteen door naar de volgende.
+    if (beat && beat.kind === 'score') {
+      if (beat.score) setLiveScores(prev => ({ ...prev, ...beat.score }));
+      setCurrentStep(step => step + 1);
+      return;
+    }
+
+    const stepTimer = setTimeout(() => {
+      if (currentStep >= script.length) return;
+
+      if (!beat || beat.kind === 'finale') {
+        setCurrentBeat(beat ?? null);
         setActiveActions({});
         setLiveScores(serverScores);
         visualTimers.current.push(
-          setTimeout(() => finish(serverScores.p1, serverScores.p2), 1000 / speedMultiplier)
+          setTimeout(() => finish(serverScores.p1, serverScores.p2), 900 / speedMultiplier)
         );
         return;
       }
 
-      setAnnouncerText(log);
+      const log = beat.raw;
+      setCurrentBeat(beat);
       setActiveActions({});
       setLastChanges({});
 
-      // 1. Autoritatieve stand uit de engine-log heeft altijd voorrang.
-      const scoreLine = log.match(SCORE_AFTER_RE) || log.match(SCORE_OPEN_RE);
-      if (scoreLine) {
-        const side = scoreLine[1] === '1' ? 'p1' : 'p2';
-        const value = parseFloat(scoreLine[2]);
-        if (Number.isFinite(value)) setLiveScores(prev => ({ ...prev, [side]: value }));
-      }
+      if (beat.score) setLiveScores(prev => ({ ...prev, ...beat.score }));
 
-      // 2. Kaartanimaties uit de regel lezen (zie battleLog.ts).
+      // Kaartanimaties uit de originele regel lezen (zie battleLog.ts).
       const parsed = parseBattleLine(log);
       if (Object.keys(parsed.glow).length > 0) {
         // Even resetten en dan pas zetten, zodat AnimatePresence het schadegetal
@@ -326,17 +327,17 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
       }
 
       setCurrentStep(step => step + 1);
-    }, 2500 / speedMultiplier);
+    }, (beat?.duration ?? 2300) / speedMultiplier);
 
     return () => clearTimeout(stepTimer);
-  }, [currentStep, eventQueue, isFinished, speedMultiplier, serverScores, finish]);
+  }, [currentStep, script, isFinished, speedMultiplier, serverScores, finish]);
 
   const skipToEnd = () => {
     // Toon het echte eindbord van de server in plaats van de half afgespeelde staat.
     setP1Cards(result?.finalFields?.p1 ?? []);
     setP2Cards(result?.finalFields?.p2 ?? []);
     setLiveScores(serverScores);
-    setAnnouncerText("Match Concluded.");
+    setCurrentBeat(null);
     setActiveActions({});
     setLastChanges({});
     finish(serverScores.p1, serverScores.p2);
@@ -361,7 +362,37 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
               <div className="flex flex-col items-center justify-center"><div className="px-4 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-[9px] font-black text-blue-400 tracking-[0.2em] mb-2 uppercase animate-pulse">Match Active</div><div className="text-gray-600 font-['Cinzel'] italic text-xl">VS</div></div>
               <div className="flex flex-col items-end"><span className="text-[10px] text-red-500 font-black tracking-[0.3em] mb-1 uppercase">{opponentLabel}</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={theirScore} /></div></div>
             </div>
-            <div className="relative flex items-center justify-center min-h-[3.5rem] md:min-h-[3rem] px-3 md:px-8"><AnimatePresence mode="wait"><motion.p key={`${currentStep}-${announcerText}`} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-center text-sm md:text-xl font-['Spectral'] italic text-blue-100 leading-snug md:leading-tight">{announcerText}</motion.p></AnimatePresence></div>
+            <div className="relative flex items-center justify-center min-h-[4rem] md:min-h-[4.5rem] px-3 md:px-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.22 }}
+                  className="text-center w-full"
+                >
+                  {currentBeat?.kind === 'phase' ? (
+                    <span className="inline-block px-6 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 font-['Cinzel'] font-black uppercase text-sm md:text-lg tracking-[0.25em]">
+                      {currentBeat.text}
+                    </span>
+                  ) : currentBeat?.kind === 'title' || currentBeat?.kind === 'finale' ? (
+                    <span className="font-['Cinzel'] font-black uppercase text-lg md:text-3xl tracking-[0.2em] text-white">
+                      {currentBeat.text}
+                    </span>
+                  ) : currentBeat?.kind === 'lineup' ? (
+                    <>
+                      <p className="font-['Cinzel'] font-black uppercase text-sm md:text-lg tracking-widest text-white">{currentBeat.card}</p>
+                      <p className="text-[11px] md:text-sm text-blue-200/70 leading-snug mt-0.5 line-clamp-2">{currentBeat.text}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm md:text-xl font-['Spectral'] italic text-blue-100 leading-snug">
+                      {currentBeat?.text ?? 'Preparing the field…'}
+                    </p>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
             <div className="flex gap-6 mt-4 justify-center">
               <button onClick={() => setSpeedMultiplier(speedMultiplier === 1 ? 5 : 1)} className={`px-5 py-1.5 rounded-full text-[9px] font-black border transition-all ${speedMultiplier > 1 ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-transparent border-white/20 text-gray-400'}`}>{speedMultiplier > 1 ? '⚡ WARP SPEED' : '🐢 NORMAL TIME'}</button>
               <button onClick={skipToEnd} className="px-5 py-1.5 rounded-full text-[9px] font-black border border-white/10 text-gray-500 hover:text-white transition-all">SKIP TO END</button>

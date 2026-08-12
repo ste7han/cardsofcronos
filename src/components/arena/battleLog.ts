@@ -13,6 +13,9 @@
 
 export type GlowType = 'acting' | 'buff' | 'debuff';
 
+/** Welke kant van het serverresultaat de kijker is. */
+export type Perspective = 'p1' | 'p2';
+
 export interface ParsedLine {
   /** Welke kaart welke gloed krijgt. */
   glow: Record<string, GlowType>;
@@ -132,4 +135,196 @@ export function parseBattleLine(log: string): ParsedLine {
   if (!out.glow[actor]) out.glow[actor] = 'acting';
 
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Het draaiboek: van ruwe engine-log naar een reeks beats om af te spelen.
+//
+// De ruwe log is een verslag voor mensen die alles willen nalezen — dat blijft
+// integraal in het Combat Log staan. De aankondiger in het midden van het
+// scherm is iets anders: een hoogtepuntenreel. Regel-voor-regel afdraaien gaf
+// 219 beats van 2,5s = ruim 9 minuten, waarvan ~45 scheidingslijnen, tientallen
+// kopjes, en de opstelling in 55 losse stappen omdat kaartnaam en kaarttekst
+// apart kwamen.
+// ---------------------------------------------------------------------------
+
+export type BeatKind = 'title' | 'phase' | 'lineup' | 'action' | 'score' | 'finale';
+
+export interface Beat {
+  kind: BeatKind;
+  /** Wat de speler leest. */
+  text: string;
+  /** Naam van de kaart, bij een opstellingsbeat. */
+  card?: string;
+  /** De originele regel(s), voor parseBattleLine — die heeft de COC_-id's nodig. */
+  raw: string;
+  /** Speelduur in ms bij normale snelheid. */
+  duration: number;
+  /** Standen die bij deze beat horen. */
+  score?: { p1?: number; p2?: number };
+}
+
+// Getoetst op de echte regels, die er zo uitzien (mét ** eromheen):
+//   "🔄 **Start Phase Begins!**"      "🧱 **Projects**"
+//   "• 🟩 `COC_FFS_E2` — 💰 29 MC"    "   ↳ *Steal +4 MC from an enemy Project*"
+//   "📊 Player 1 MC after Start: **127.0**"      "---------------"
+const DROP_PATTERNS: RegExp[] = [
+  /^[━─—–\-_=*·.]{3,}$/,                     // scheidingslijnen, dik en dun
+  /^(Projects|Supports|Founder)$/i,          // kopjes binnen de opstelling
+  /Lineup$/i,
+  /—\s*triggered\s*\(/i,                     // kopje boven de ↳-regels die het al zeggen
+  /could not act|⛔|skipped\b|no valid targets/i,
+  /→\s*[✅❌]/,                                // conditie-toets zonder gevolg
+  /starts with base MC/i,                    // staat al als badge op elke kaart
+];
+
+const SCORE_AFTER = /Player\s+([12])\s+MC after\s+\w+:\s*([-\d.]+)/;
+const SCORE_OPEN = /Player\s+([12])\s+(?:opens with|responds with)\s*([-\d.]+)\s*MC/;
+const PHASE_BANNER = /^(\w[\w ]*?)\s+Phase(?:\s+Begins!?)?$/i;
+// Bewust [^`]* voor de kleur-emoji: een emoji-tekenklasse is een surrogaatpaar
+// en gedraagt zich onbetrouwbaar zonder de u-vlag.
+const LINEUP_CARD = new RegExp(String.raw`^•\s*[^\`]*\`?(${CARD_PATTERN})\`?\s*(?:—\s*💰\s*([\d.]+)\s*MC)?$`);
+const CONTINUATION = /^\s*↳/;
+// Geen ^-anker: de regel begint met een pijltje en een emoji.
+const REDUNDANT_BUFF = new RegExp(String.raw`(${CARD_PATTERN})\s+(?:buffed|debuffed)\s*\([-+]`, 'i');
+
+/** Haalt de sierregels weg: bullets, pijltjes, backticks, sterretjes, dubbele emoji. */
+function tidy(line: string): string {
+  return line
+    .replace(/\*\*/g, '')
+    .replace(/^\s*[↳•]\s*/, '')
+    .replace(/[`*]/g, '')
+    .replace(/([\p{Extended_Pictographic}☀-➿])(\s*\1)+/gu, '$1') // 💥 💥 -> 💥
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/** COC_EVT_High_risk_high_reward -> "High risk high reward" */
+export function prettyCardName(id: string): string {
+  return id
+    .replace(/^COC_/, '')
+    .replace(/^(?:INF|EVT|COM)_/, '')
+    .replace(/_/g, ' ')
+    .trim();
+}
+
+// Emoji dragen hier geen betekenis die de gloed en de kaarten niet al geven.
+// Ze maken de zin alleen langer en rommeliger.
+const EMOJI = /[\p{Extended_Pictographic}\u{FE0F}\u{20E3}\u{1F3FB}-\u{1F3FF}]/gu;
+
+function humanise(line: string, perspective: Perspective): string {
+  const mine = perspective === 'p2' ? '2' : '1';
+  return tidy(line)
+    .replace(new RegExp(String.raw`Player\s+${mine}['’]s`, 'g'), 'Your')
+    .replace(/Player\s+[12]['’]s/g, 'Their')
+    .replace(new RegExp(String.raw`\bPlayer\s+${mine}\b`, 'g'), 'You')
+    .replace(/\bPlayer\s+[12]\b/g, 'Opponent')
+    .replace(new RegExp(CARD_PATTERN, 'g'), (m) => prettyCardName(m))
+    .replace(EMOJI, '')
+    // "Player 1 gains" wordt "You gains"; de werkwoordsvorm moet mee.
+    .replace(/\bYou (gain|lose|steal|boost|reduce|destroy|hold|draw|swap)s\b/g, 'You $1')
+    // 29.0 -> 29: hele getallen lezen rustiger, halve waarden blijven staan.
+    .replace(/(\d+)\.0\b/g, '$1')
+    .replace(/\s+([.,!?])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[\s—–-]+/, '')
+    .trim();
+}
+
+export function buildBattleScript(logs: string[] | undefined, perspective: Perspective = 'p1'): Beat[] {
+  const lines = (logs || [])
+    .flatMap((block) => String(block).split('\n'))
+    .map((l) => l.replace(/[\r]/g, ' ').trimEnd())
+    .filter((l) => l.trim().length > 0);
+
+  const beats: Beat[] = [];
+  const pushScore = (side: 'p1' | 'p2', value: number) => {
+    const last = beats[beats.length - 1];
+    if (last && last.kind === 'score') { last.score = { ...last.score, [side]: value }; return; }
+    beats.push({ kind: 'score', text: '', raw: '', duration: 0, score: { [side]: value } });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    // De engine zet ** rond van alles; dat moet eraf vóór we iets herkennen.
+    const bare = lines[i].replace(/\*\*/g, '').trim();
+    // Zonder aanloop-emoji, zodat "🔄 Start Phase Begins!" gewoon matcht.
+    const letters = bare.replace(/^[^\p{L}\p{N}•]+/u, '').trim();
+
+    const score = bare.match(SCORE_AFTER) || bare.match(SCORE_OPEN);
+    if (score) { pushScore(score[1] === '1' ? 'p1' : 'p2', parseFloat(score[2])); continue; }
+
+    if (DROP_PATTERNS.some((re) => re.test(bare) || re.test(letters))) continue;
+
+    if (/Battle Begins/i.test(bare)) {
+      beats.push({ kind: 'title', text: 'The Battle Begins', raw: bare, duration: 1800 });
+      continue;
+    }
+
+    const phase = letters.match(PHASE_BANNER);
+    if (phase) {
+      beats.push({ kind: 'phase', text: `${phase[1].trim()} Phase`, raw: bare, duration: 1500 });
+      continue;
+    }
+
+    // Opstelling: kaartregel plus de bijbehorende beschrijving tot één beat.
+    // De beschrijving staat tussen sterretjes en loopt soms over meerdere
+    // regels door; we lezen door tot het sterretje weer sluit.
+    const lineup = bare.match(LINEUP_CARD);
+    if (lineup) {
+      const parts: string[] = [];
+      let stars = 0;
+      let j = i + 1;
+      while (j < lines.length) {
+        const next = lines[j].replace(/\*\*/g, '');
+        if (parts.length === 0 ? !CONTINUATION.test(next) : stars % 2 === 0) break;
+        parts.push(tidy(next));
+        stars += (next.match(/\*/g) || []).length;
+        j++;
+      }
+      i = j - 1;
+      const mc = lineup[2] ? `${parseFloat(lineup[2])} MC` : '';
+      const omschrijving = parts.join(' ').replace(EMOJI, '').replace(/\s{2,}/g, ' ').trim();
+      beats.push({
+        kind: 'lineup',
+        card: prettyCardName(lineup[1]),
+        text: [mc, omschrijving].filter(Boolean).join(' · '),
+        raw: bare,
+        duration: omschrijving.length > 90 ? 1800 : 1300,
+      });
+      continue;
+    }
+
+    // Een "X buffed (+2.0)" die direct gevolgd wordt door de volledige zin over
+    // dezelfde kaart is dubbelop.
+    const redundant = tidy(bare).match(REDUNDANT_BUFF);
+    if (redundant) {
+      const next = lines.slice(i + 1, i + 4).find((l) => l.includes(redundant[1]) && l.includes('→'));
+      if (next) continue;
+    }
+
+    const text = humanise(bare, perspective);
+    if (text.replace(/[^\p{L}\p{N}]/gu, '').length < 3) continue;
+
+    // De engine meldt een vernietiging soms twee keer achter elkaar, in andere
+    // bewoordingen ("destroyed Their X!" en "destroys enemy X (75% branch)").
+    // Er kan een tussenregel tussen staan ("First friendly Project destroyed"),
+    // dus we kijken een paar beats terug.
+    const gesloopt = bare.match(DESTROY_RE)?.[1];
+    if (gesloopt) {
+      const recent = beats.filter((b) => b.kind === 'action').slice(-3);
+      if (recent.some((b) => b.raw.match(DESTROY_RE)?.[1] === gesloopt)) continue;
+    }
+
+    const heavy = /destroy|steals|reflect|doubl/i.test(bare);
+    beats.push({ kind: 'action', text, raw: bare, duration: heavy ? 3000 : 2300 });
+  }
+
+  beats.push({ kind: 'finale', text: 'Match Concluded', raw: '--- FINALIZE ---', duration: 1200 });
+
+  // Een fase waarin niemand iets deed hoeft niet aangekondigd te worden.
+  return beats.filter((b, i) => {
+    if (b.kind !== 'phase') return true;
+    const volgende = beats.slice(i + 1).find((n) => n.kind !== 'score');
+    return volgende !== undefined && volgende.kind !== 'phase' && volgende.kind !== 'finale';
+  });
 }
