@@ -1,3 +1,5 @@
+import re
+
 from targeting import get_targets
 from constants import RARITY_ORDER
 from action import check_lost_mc_due_to_effect
@@ -392,7 +394,6 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
     elif condition_type == "enemy_projects_count":
         try:
-            import re
             from operator import ge, gt, le, lt, eq
 
             normalized = (
@@ -463,7 +464,13 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         except:
             threshold = 0
 
-        destroyed_count = len(getattr(player, "destroyed_cards", []) or [])
+        # player.destroyed_cards wordt niet door alle vernietigingspaden gevuld;
+        # het veld zelf is de betrouwbare bron.
+        veld = list(getattr(player, "field", None) or field or [])
+        destroyed_count = max(
+            len([c for c in veld if isinstance(c, dict) and c.get("destroyed")]),
+            len(getattr(player, "destroyed_cards", []) or []),
+        )
 
         if destroyed_count < threshold:
             if log is not None:
@@ -472,13 +479,17 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
                     f"needs ≥{threshold} destroyed friendly Projects "
                     f"(currently {destroyed_count})"
                 )
-            return  # 🚫 stop, condition not met
+            return False
         else:
             if log is not None:
                 log.append(
                     f"🧪 {card.get('card_id', '???')} condition met "
                     f"(destroyed friendly count {destroyed_count} ≥ {threshold})"
                 )
+            # Zonder deze return viel de voorwaarde door naar het einde van de
+            # functie, en dat is `return False` — de kaart meldde dus "condition
+            # met" en deed vervolgens niets.
+            return True
 
 
 
@@ -1082,24 +1093,35 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
             return False
         
     elif condition_type == "count_rarity":
-        # Parse: "Rare ≥ 2"
-        parts = condition_value.split("≥")
-        if len(parts) == 2:
-            rarity = parts[0].strip().lower()
-            required = int(parts[1].strip())
-
-            count = sum(
-                1 for c in field
-                if c.get("card_type") == "Project"
-                and not c.get("destroyed")
-                and c.get("rarity", "").lower() == rarity
-            )
-
-            print(f"[TRACE] Count rarity '{rarity}': found {count}, needed ≥ {required}")
-            return count >= required
-        else:
-            print(f"⚠️ Invalid format for count_rarity: {condition_value}")
+        # "Rare ≥ 2" maar ook een kale "Rare". Die tweede vorm hoort bij teksten
+        # als "plus 2mc voor elke andere Rare kaart op het veld" en werd eerder
+        # afgewezen omdat er geen ≥ in stond.
+        rauw = str(condition_value or "").replace("≥", ">=").strip()
+        m = re.match(r"([A-Za-z]+)\s*(>=|<=|==|>|<)?\s*(\d+)?", rauw)
+        if not m:
             return False
+        rarity = m.group(1).strip().lower()
+        operator = m.group(2) or ">="
+        drempel = int(m.group(3)) if m.group(3) else None
+
+        count = sum(
+            1 for c in field
+            if c.get("card_type") == "Project"
+            and not c.get("destroyed")
+            and c.get("rarity", "").lower() == rarity
+        )
+        if drempel is None:
+            # Geen getal: er moet minstens één ándere kaart van die rarity liggen.
+            eigen_telt_mee = (card.get("rarity", "").lower() == rarity
+                              and not card.get("destroyed")
+                              and card.get("card_type") == "Project")
+            return (count - (1 if eigen_telt_mee else 0)) >= 1
+
+        if operator == "<=": return count <= drempel
+        if operator == "<":  return count < drempel
+        if operator == ">":  return count > drempel
+        if operator == "==": return count == drempel
+        return count >= drempel
 
 
 
@@ -1451,7 +1473,20 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
 
     elif condition_type == "card_on_field":
-        return any(condition_value.lower() in c.get("card_id", "").lower() for c in deck)
+        # "Crooks Founder" is geen deel van "COC_CF_Founder_C1", dus een simpele
+        # substring-vergelijking vond nooit iets. Alle woorden moeten voorkomen
+        # in het card_id óf in de tags van een kaart die je bestuurt.
+        woorden = [w.lower() for w in re.split(r"[\s_]+", str(condition_value or "")) if w]
+        if not woorden:
+            return False
+        for c in deck:
+            if c.get("destroyed"):
+                continue
+            hooiberg = (str(c.get("card_id", "")) + " " +
+                        " ".join(str(t) for t in (c.get("tags") or []))).lower()
+            if all(w in hooiberg for w in woorden):
+                return True
+        return False
     
     elif condition_type == "is_only_rarity":
         return all(c.get("rarity") == condition_value for c in deck if c["card_type"] == "Project")
@@ -1527,13 +1562,24 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
             return False
         
     elif condition_type == "mc_range":
-        try:
-            parts = condition_value.replace(" ", "").split("_and_")
-            mc = card.get("current_mc", 0)
-            checks = [eval(f"{mc}{cond}") for cond in parts]
-            return all(checks)
-        except:
+        # De kaarttekst gaat over je Projecten samen ("je hebt zowel een kaart
+        # onder de 10 als een boven de 30"), niet over de MC van de bronkaart
+        # zelf. Die kan nooit tegelijk onder 10 en boven 30 zijn, dus dit was
+        # altijd False.
+        veld = list(getattr(player, "field", None) or field or [])
+        projecten = [c for c in veld
+                     if isinstance(c, dict) and c.get("card_type") == "Project"
+                     and not c.get("destroyed")]
+        grenzen = re.findall(r"([<>]=?)\s*(\d+(?:\.\d+)?)", str(condition_value or ""))
+        if not projecten or not grenzen:
             return False
+        for teken, grens in grenzen:
+            grens = float(grens)
+            if teken.startswith("<") and not any(c.get("current_mc", 0) < grens for c in projecten):
+                return False
+            if teken.startswith(">") and not any(c.get("current_mc", 0) > grens for c in projecten):
+                return False
+        return True
         
     elif condition_type == "target_nova_project":
         return any("Nova" in c.get("tags", []) for c in deck)
@@ -1548,7 +1594,6 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     
     
     elif condition_type == "own_debuffed_count":
-        import re
         from operator import ge, gt, le, lt, eq
 
         # Count own Projects that were marked as debuffed
@@ -1632,7 +1677,11 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return count >= threshold
     
     elif condition_type == "self_debuffed":
-        return card.get("was_debuffed", False)
+        # 'was_debuffed' wordt nergens in de engine gezet. De vlaggen die wél
+        # bestaan zijn targeted_by_debuff (per fase) en de match-totalen.
+        return bool(card.get("_ever_debuffed") or card.get("targeted_by_debuff")
+                    or card.get("_mc_lost_total") or card.get("lost_mc_this_phase")
+                    or card.get("was_debuffed"))
 
     elif condition_type == "final_calc_survivors":
         required = int(condition_value.lstrip(">="))
@@ -1681,6 +1730,146 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     
     elif condition_type == "highest_immune":
         return True
+
+    # =========================================================================
+    # Voorwaarden die eerder ontbraken.
+    #
+    # check_condition_core valt aan het eind door naar False. Een voorwaarde die
+    # hier niet stond maakte de kaart dus permanent stil: de engine meldde
+    # "could not act — in_play (True)" terwijl de kaart gewoon in het spel lag.
+    # Een audit over 25.000 matches wees 31 kaarten aan die hierdoor nooit iets
+    # deden. Onderstaande blokken volgen de kaartteksten.
+    # =========================================================================
+
+    _eigen = list(getattr(player, "field", None) or field or [])
+    _vijand = list(getattr(opponent, "field", None) or opponent_field or [])
+
+    def _levend(cs):
+        return [c for c in cs if isinstance(c, dict) and not c.get("destroyed")]
+
+    def _projects(cs):
+        return [c for c in _levend(cs) if c.get("card_type") == "Project"]
+
+    def _kapot(cs):
+        return [c for c in cs if isinstance(c, dict) and c.get("destroyed")]
+
+    def _heeft_tag(c, tag):
+        return any(str(t).strip().lower() == str(tag).strip().lower() for t in (c.get("tags") or []))
+
+    def _drempel(spec, standaard_op=">=", standaard_n=1):
+        """'>=2', '≥4', 'Rare ≥ 2', '3' -> (operator, getal)."""
+        s = str(spec if spec is not None else "").replace("≥", ">=").replace("≤", "<=")
+        m = re.search(r"(>=|<=|==|>|<)?\s*(\d+(?:\.\d+)?)", s)
+        if not m:
+            return standaard_op, standaard_n
+        return (m.group(1) or standaard_op), float(m.group(2))
+
+    def _vergelijk(waarde, op, grens):
+        if op == ">=": return waarde >= grens
+        if op == "<=": return waarde <= grens
+        if op == ">":  return waarde > grens
+        if op == "<":  return waarde < grens
+        return waarde == grens
+
+    # --- de kaart ligt er gewoon ---------------------------------------------
+    if condition_type in ("in_play", "valid"):
+        # 'valid' hoort bij een swap tussen hoogste en laagste: dat vraagt er twee.
+        if condition_type == "valid":
+            return len(_projects(_eigen)) >= 2
+        return not card.get("destroyed", False)
+
+    elif condition_type == "survives_destruction":
+        return not card.get("destroyed", False)
+
+    elif condition_type == "after_all_resolve":
+        # Deze effecten staan in de Final-fase; daar is 'alles is afgehandeld' waar.
+        return True
+
+    elif condition_type == "during_debuff_phase":
+        fase = (context or {}).get("phase") or (effect or {}).get("phase")
+        return str(fase or "Debuff").lower() == "debuff"
+
+    # --- tellingen op het eigen veld -----------------------------------------
+    elif condition_type == "count_tag_on_field":
+        tag = re.split(r"[><=≥≤]", str(condition_value or ""))[0].strip()
+        op, n = _drempel(condition_value, ">=", 2)
+        return _vergelijk(sum(1 for c in _levend(_eigen) if _heeft_tag(c, tag)), op, n)
+
+    elif condition_type == "meme_tagged":
+        return any(_heeft_tag(c, "Meme") for c in _levend(_eigen))
+
+    elif condition_type == "control_all_rarities":
+        aanwezig = {str(c.get("rarity", "")).lower() for c in _projects(_eigen)}
+        return {"common", "rare", "epic", "legendary", "mythical"}.issubset(aanwezig)
+
+    # --- vernietiging ---------------------------------------------------------
+    elif condition_type == "own_destroyed_count":
+        op, n = _drempel(condition_value, ">=", 2)
+        return _vergelijk(len(_kapot(_eigen)), op, n)
+
+    elif condition_type == "projects_destroyed":
+        op, n = _drempel(condition_value, ">=", 3)
+        aantal = len([c for c in _kapot(_eigen) + _kapot(_vijand) if c.get("card_type") == "Project"])
+        return _vergelijk(aantal, op, n)
+
+    elif condition_type == "destroyed_friendly_wolfswap":
+        return any(c is not card and _heeft_tag(c, "Wolfswap") for c in _kapot(_eigen))
+
+    elif condition_type == "cr00ts_destroyed_count":
+        op, n = _drempel(condition_value, ">=", 2)
+        aantal = len([c for c in _kapot(_eigen) + _kapot(_vijand) if _heeft_tag(c, "Cr00ts")])
+        return _vergelijk(aantal, op, n)
+
+    elif condition_type == "destroyed_enemy_by_friendly":
+        return len([c for c in _kapot(_vijand) if c.get("card_type") == "Project"]) > 0
+
+    elif condition_type == "COC_RR_M1_exploded":
+        return any("RR_M1" in str(c.get("card_id", "")) for c in _kapot(_eigen) + _kapot(_vijand))
+
+    elif condition_type == "survivor_count_eq":
+        op, n = _drempel(condition_value, "==", 3)
+        return _vergelijk(len(_projects(_eigen)), op if op != ">=" else "==", n)
+
+    # --- schade en MC-verlies -------------------------------------------------
+    elif condition_type in ("hit_by_debuff", "any_project_takes_damage"):
+        return any(c.get("_ever_debuffed") or c.get("targeted_by_debuff") or c.get("_mc_lost_total")
+                   for c in _projects(_eigen))
+
+    elif condition_type == "loses_mc_from_effect":
+        return bool(card.get("_ever_debuffed") or card.get("targeted_by_debuff")
+                    or card.get("_mc_lost_total") or card.get("lost_mc_this_phase"))
+
+    elif condition_type == "cards_lost_mc":
+        op, n = _drempel(condition_value, ">=", 2)
+        aantal = len([c for c in _eigen if c.get("_mc_lost_total") or c.get("lost_mc_this_phase")])
+        return _vergelijk(aantal, op, n)
+
+    elif condition_type == "causes_mc_loss":
+        # De kaarttekst zegt "aan welke kaart dan ook, vriend of vijand", dus we
+        # kijken naar beide velden en niet alleen naar de tegenstander.
+        return any(c.get("_mc_lost_total") or c.get("lost_mc_this_phase")
+                   for c in (_eigen + _vijand))
+
+    # --- MC-vergelijkingen ----------------------------------------------------
+    elif condition_type == "total_mc_lt_opponent":
+        eigen_mc = sum(c.get("current_mc", 0) for c in _projects(_eigen))
+        vijand_mc = sum(c.get("current_mc", 0) for c in _projects(_vijand))
+        return eigen_mc < vijand_mc
+
+    elif condition_type == "lowest_project_mc_lt":
+        _op, n = _drempel(condition_value, "<", 10)
+        projecten = _projects(_eigen)
+        return bool(projecten) and min(c.get("current_mc", 0) for c in projecten) < n
+
+    elif condition_type == "total_mc_mod":
+        _op, n = _drempel(condition_value, "==", 7)
+        totaal = sum(c.get("current_mc", 0) for c in _projects(_eigen))
+        return n > 0 and round(totaal) % int(n) == 0
+
+    elif condition_type == "own_projects_mc_end_7":
+        op, n = _drempel(condition_value, ">=", 3)
+        aantal = len([c for c in _projects(_eigen) if int(abs(c.get("current_mc", 0))) % 10 == 7])
+        return _vergelijk(aantal, op, n)
 
 
 

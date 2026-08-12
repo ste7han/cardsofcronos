@@ -15,6 +15,7 @@ scheelt). Per kaart onderscheiden we drie uitkomsten:
 hebben dat nergens gelogd wordt. Maar het is wel de lijst om na te lopen.
 """
 import collections
+import zlib
 import contextlib
 import io
 import json
@@ -65,7 +66,7 @@ def onderzoek(args):
     card_id, runs = args
     from match_simulator import simulate_match_with_decks
 
-    rng = random.Random(hash(card_id) & 0xFFFF)
+    rng = random.Random(zlib.crc32(card_id.encode()))
     vuurt = skipt = 0
     fouten = []
     voorbeeld = None

@@ -11,6 +11,7 @@ vernietigd zijn"-voorwaarden.
 Vuurt een kaart dan nog steeds nooit, dan is hij kapot en niet zeldzaam.
 """
 import os
+import zlib
 import contextlib, io, json, multiprocessing as mp, os, random, re, sys
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +82,7 @@ def onderzoek(args):
     if orig is None:
         return cid, 0
 
-    rng = random.Random(hash(cid) & 0xFFFF)
+    rng = random.Random(zlib.crc32(cid.encode()))
     verschil = 0
     for i in range(runs):
         eigen = bouw_deck(cid, rng)

@@ -10,6 +10,7 @@ Dit is onafhankelijk van hoe de engine logt, dus geen last van kaarten die onder
 een mooiere naam in het logboek staan.
 """
 import os
+import zlib
 import contextlib, io, json, multiprocessing as mp, os, random, sys
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -47,7 +48,7 @@ def onderzoek(args):
     if origineel is None:
         return cid, 0, runs, "kaart niet in ALL_CARDS"
 
-    rng = random.Random(hash(cid) & 0xFFFF)
+    rng = random.Random(zlib.crc32(cid.encode()))
     verschil = gelijk = 0
 
     for i in range(runs):

@@ -1363,6 +1363,14 @@ def simulate_match():
 
         # Reset per-phase flags
         for c in deck1 + deck2:
+            # Eerst het resultaat van de vorige fase optellen bij de match-totalen.
+            # De per-fase vlaggen worden hieronder gewist, maar voorwaarden als
+            # "als deze kaart deze match MC verloor" hebben de hele match nodig.
+            if c.get("targeted_by_debuff"):
+                c["_ever_debuffed"] = True
+            if c.get("lost_mc_this_phase"):
+                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
+
             c["targeted_by_debuff"] = False
             c["lost_mc_this_phase"] = 0
             c["phase_triggers"] = {}
@@ -1381,6 +1389,14 @@ def simulate_match():
             player2.first_debuff_data = None
 
         apply_phase(deck1, deck2, phase_block, "Player 1", phase, player1, player2)
+
+        # Ook na de laatste fase de totalen bijwerken; de reset hierboven draait
+        # alleen aan het begin van een fase, dus Final zou anders wegvallen.
+        for c in deck1 + deck2:
+            if c.get("targeted_by_debuff"):
+                c["_ever_debuffed"] = True
+            if c.get("lost_mc_this_phase"):
+                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
         p1_mc = calculate_total_mc(deck1)
         p2_mc = calculate_total_mc(deck2)
@@ -1520,6 +1536,14 @@ def simulate_match_with_decks(
         print(f"[DEBUG] Starting {phase} Phase → clearing phase_triggers")
 
         for c in deck1 + deck2:
+            # Eerst het resultaat van de vorige fase optellen bij de match-totalen.
+            # De per-fase vlaggen worden hieronder gewist, maar voorwaarden als
+            # "als deze kaart deze match MC verloor" hebben de hele match nodig.
+            if c.get("targeted_by_debuff"):
+                c["_ever_debuffed"] = True
+            if c.get("lost_mc_this_phase"):
+                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
+
             c["targeted_by_debuff"] = False
             c["lost_mc_this_phase"] = 0
             c["phase_triggers"] = {}
@@ -1538,6 +1562,14 @@ def simulate_match_with_decks(
             player2.first_debuff_data = None
 
         apply_phase(deck1, deck2, phase_block, "Player 1", phase, player1, player2)
+
+        # Ook na de laatste fase de totalen bijwerken; de reset hierboven draait
+        # alleen aan het begin van een fase, dus Final zou anders wegvallen.
+        for c in deck1 + deck2:
+            if c.get("targeted_by_debuff"):
+                c["_ever_debuffed"] = True
+            if c.get("lost_mc_this_phase"):
+                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
         p1_mc = calculate_total_mc(deck1)
         p2_mc = calculate_total_mc(deck2)

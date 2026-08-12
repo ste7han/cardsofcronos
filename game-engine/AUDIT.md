@@ -280,3 +280,39 @@ factie; slechts 6 kwamen daarmee alsnog tot leven.
   - "Destroy an enemy Project with MC lower than this one"
 - `COC_Wolfswap_R3` (Project/Rare) — cond `effect_targeted_highest`, act `redirect`
   - "Redirect all effects targeting your highest Project to this card"
+
+---
+
+## Vervolg: 30 ontbrekende voorwaarden geïmplementeerd
+
+Na deze audit zijn de ontbrekende voorwaarden in `condition.py` toegevoegd en zijn
+vijf bestaande, kapotte implementaties gerepareerd:
+
+| voorwaarde | wat er mis was |
+|---|---|
+| `count_rarity` | accepteerde alleen "Rare ≥ 2"; een kale "Rare" werd afgewezen |
+| `card_on_field` | zocht "crooks founder" als substring in "COC_CF_Founder_C1" |
+| `destroyed_friendly_count` | logde "condition met" maar gaf niets terug, dus viel door naar False |
+| `self_debuffed` | las `was_debuffed`, een vlag die de engine nergens zet |
+| `mc_range` | toetste de MC van de bronkaart zelf; die kan nooit tegelijk onder 10 en boven 30 zijn |
+
+Resultaat, gemeten met `check_fixed.py` (35 effecten, elk 30 decks van eigen factie):
+
+- **20 van de 35 werken nu**, waar het er eerst 0 waren
+- dode kaarten over alle 235: **110 -> 91**
+
+De overige 15 stranden niet meer op de voorwaarde maar op de laag erna:
+
+- 4 halen hun voorwaarde nu wél en krijgen "no valid targets" — hun `target_type`
+  (`highest_lowest`, `own_projects`, `meme_tagged`) kent `targeting.py` niet
+- `COC_CF_Founder_E1` heeft `target_type: self`, maar de tekst zegt dat de
+  gedebuffde Project +5 MC krijgt; een Founder heeft zelf geen MC
+- 2 wachten op de actie `redirect`, die niet bestaat
+- de rest heeft een voorwaarde die klopt maar zelden voorkomt (≥4 eigen kaarten
+  vernietigd, een Project van elke rarity, COC_RR_M1 die ontploft)
+
+### Volgende laag: target_types
+
+Dezelfde soort fout zit in `targeting.py`: **42 `target_type`-waarden komen in de
+kaartdata voor maar niet in de engine**, samen goed voor circa 43 kaarten. Een
+onbekend doel geeft "no valid targets" en de kaart doet niets.
