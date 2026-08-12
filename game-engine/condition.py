@@ -507,10 +507,14 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
     
     elif condition_type == "own_project_loses_mc":
-        # ✅ Trigger if any own project lost MC this phase
-        mc_loss_count = getattr(player, "mc_loss_this_phase", 0)
-        print(f"[DEBUG] Checking own_project_loses_mc → {mc_loss_count} losses this phase")
-        return mc_loss_count > 0
+        # De kaart zegt "elke keer dat een van je Projects MC verliest", dus over
+        # de hele match. Alleen naar deze fase kijken maakte hem onbruikbaar:
+        # het effect staat in de Counter-fase terwijl het verlies in Debuff valt.
+        if getattr(player, "mc_loss_this_phase", 0) > 0:
+            return True
+        veld = list(getattr(player, "field", None) or field or [])
+        return any(c.get("_mc_lost_total") or c.get("lost_mc_this_phase")
+                   for c in veld if isinstance(c, dict))
     
     elif condition_type == "project_targeted_by_debuff":
         return player.was_any_project_debuffed
@@ -1771,8 +1775,15 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         if op == "<":  return waarde < grens
         return waarde == grens
 
+    # --- passieve effecten wapenen zichzelf ----------------------------------
+    # "Kan niet meer dan 5 MC verliezen" en "telt als hoogste kaart voor
+    # vernietiging" zijn eigenschappen van de kaart zelf; er is niets te toetsen
+    # behalve dat de kaart er ligt.
+    if condition_type in ("limit_loss", "destruction_targeting"):
+        return not card.get("destroyed", False)
+
     # --- de kaart ligt er gewoon ---------------------------------------------
-    if condition_type in ("in_play", "valid"):
+    elif condition_type in ("in_play", "valid"):
         # 'valid' hoort bij een swap tussen hoogste en laagste: dat vraagt er twee.
         if condition_type == "valid":
             return len(_projects(_eigen)) >= 2

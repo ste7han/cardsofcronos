@@ -1,3 +1,4 @@
+import re
 import random
 from targeting import get_targets
 from utils import (
@@ -298,6 +299,34 @@ def destroy_card(card, log, player=None, opponent=None, source=None, context=Non
 # ---------------------------
 
 def track_mc_change(target, before, after, player=None, action_type=None, log=None, context=None):
+    # Twee kaarten dempen inkomend verlies: "kan niet meer dan 5 MC verliezen"
+    # (limit_loss) en "de eerste debuff wordt met 50% verminderd"
+    # (reduce_debuff_percentage). Dit is het enige punt waar élke MC-wijziging
+    # langskomt, dus hier wordt het nageleefd — en de waarde teruggeschreven.
+    if after < before:
+        verlies = before - after
+        korting = target.get("_debuff_reduction")
+        if korting and not target.get("_debuff_reduction_gebruikt"):
+            verlies *= (1.0 - float(korting))
+            target["_debuff_reduction_gebruikt"] = True
+            if log is not None:
+                log_event(context, log, "immune",
+                          f"🛡️ {target.get('card_id','???')} absorbs part of the first debuff")
+
+        plafond = target.get("_max_total_loss")
+        if plafond is not None:
+            al_verloren = float(target.get("_verlies_tot_nu", 0.0))
+            ruimte = max(0.0, float(plafond) - al_verloren)
+            if verlies > ruimte:
+                verlies = ruimte
+                if log is not None:
+                    log_event(context, log, "immune",
+                              f"🛡️ {target.get('card_id','???')} cannot lose more MC this match")
+            target["_verlies_tot_nu"] = al_verloren + verlies
+
+        after = before - verlies
+        target["current_mc"] = after
+
     change = after - before
 
     if change > 0:
@@ -596,6 +625,268 @@ def apply_action(card, action_type, action_value, player_name, log, context=None
             log_event(context, log, "warn", f"⚠️ Invert ran but found no Projects.")
         elif total_inverted == 0:
             log_event(context, log, "warn", f"⚠️ Invert found no buffs/debuffs to invert.")
+        return
+
+    # =========================================================================
+    # Acties die eerder ontbraken.
+    #
+    # Een onbekend action_type viel door de hele keten zonder iets te doen. De
+    # kaart werd wel als "triggered" gelogd, maar had geen enkel gevolg — precies
+    # wat de audit als "dode kaart" aanwees.
+    # =========================================================================
+
+    def _levend(cs):
+        return [c for c in (cs or []) if isinstance(c, dict) and not c.get("destroyed")]
+
+    def _proj(cs):
+        return [c for c in _levend(cs) if c.get("card_type") == "Project"]
+
+    def _zet_mc(target, nieuw, soort):
+        before = float(target.get("current_mc", 0.0))
+        after = max(0.0, float(nieuw))
+        target["current_mc"] = after
+        track_mc_change(target, before, after, player=player,
+                        action_type=soort, log=log, context=context)
+        return before, after
+
+    def _bron_id():
+        return (source_card or {}).get("card_id", "???")
+
+    _eigen_proj = _proj(field)
+    _vijand_proj = _proj(opp_field)
+
+    if act_type == "remove_mc_percent":
+        pct = (value or 0) / 100.0
+        doelen = _proj(targets) or _vijand_proj
+        for t in doelen:
+            voor, na = _zet_mc(t, t.get("current_mc", 0) * (1 - pct), "subtract_mc")
+            log_event(context, log, "debuff",
+                      f"➖ {_bron_id()} takes {value:.0f}% off {t['card_id']} → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "add_mc_per_card_type":
+        soorten = {c.get("card_type") for c in _levend(field) if c.get("card_type")}
+        bonus = (value or 0) * len(soorten)
+        doelen = _proj(targets) or ([source_card] if source_card.get("card_type") == "Project" else [])
+        for t in doelen:
+            voor, na = _zet_mc(t, t.get("current_mc", 0) + bonus, "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {t['card_id']} gains +{bonus:.1f} MC ({len(soorten)} card types) → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type in ("add_mc_lowest", "add_mc_dak", "add_mc_random_two", "add_mc_btd"):
+        if act_type == "add_mc_lowest":
+            doelen = _proj(targets) or ([min(_eigen_proj, key=lambda c: c.get("current_mc", 0))] if _eigen_proj else [])
+        elif act_type == "add_mc_btd":
+            doelen = [c for c in _eigen_proj if c.get("_mc_lost_total") or c.get("lost_mc_this_phase")]
+        else:
+            doelen = _proj(targets)
+        if not doelen:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} found no target for {act_type}.")
+            return
+        for t in doelen:
+            voor, na = _zet_mc(t, t.get("current_mc", 0) + (value or 0), "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {_bron_id()} boosts {t['card_id']} by +{value:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "subtract_mc_and_add":
+        # "-6 aan alle overgebleven Projects, daarna een bonus voor de bronkaart."
+        verlies, bonus = 6.0, 20.0
+        m = re.findall(r"[-+]?\d+(?:\.\d+)?", str(act_value or ""))
+        if len(m) >= 2:
+            verlies, bonus = abs(float(m[0])), abs(float(m[1]))
+        for t in _proj(targets) or (_eigen_proj + _vijand_proj):
+            if t is source_card:
+                continue
+            voor, na = _zet_mc(t, t.get("current_mc", 0) - verlies, "subtract_mc")
+            log_event(context, log, "debuff",
+                      f"➖ {t['card_id']} loses -{verlies:.1f} MC → {voor:.1f} → {na:.1f}")
+        if source_card.get("card_type") == "Project":
+            voor, na = _zet_mc(source_card, source_card.get("current_mc", 0) + bonus, "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {_bron_id()} gains +{bonus:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "self_destruct_and_add_mc":
+        source_card["destroyed"] = True
+        try:
+            player.destroyed_cards.append(source_card)
+        except Exception:
+            pass
+        log_event(context, log, "death", f"💥 {_bron_id()} destroys itself")
+        for t in _proj(targets):
+            if t is source_card:
+                continue
+            voor, na = _zet_mc(t, t.get("current_mc", 0) + (value or 0), "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {t['card_id']} gains +{value:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "add_mc_stack":
+        # "+2 telkens als een van je Projects MC verliest, tot maximaal +10."
+        per, plafond = 2.0, 10.0
+        m = re.findall(r"\d+(?:\.\d+)?", str(act_value or ""))
+        if m:
+            per = float(m[0])
+        if len(m) >= 2:
+            plafond = float(m[1])
+        gedaald = len([c for c in _eigen_proj if c.get("_mc_lost_total") or c.get("lost_mc_this_phase")])
+        gestapeld = min(per * gedaald, plafond) - float(source_card.get("_stack_gegeven", 0))
+        if gestapeld <= 0:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} has nothing to stack yet.")
+            return
+        source_card["_stack_gegeven"] = float(source_card.get("_stack_gegeven", 0)) + gestapeld
+        voor, na = _zet_mc(source_card, source_card.get("current_mc", 0) + gestapeld, "add_mc")
+        log_event(context, log, "buff",
+                  f"➕ {_bron_id()} stacks +{gestapeld:.1f} MC ({gedaald} Projects lost MC) → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type in ("destroy_and_gain", "destroy_and_steal"):
+        doelen = _proj(targets) or _vijand_proj
+        if not doelen:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} found no enemy Project.")
+            return
+        buit = 0.0
+        for t in doelen:
+            buit += float(t.get("current_mc", 0)) if act_type == "destroy_and_steal" else 0.0
+            t["destroyed"] = True
+            t["current_mc"] = 0
+            try:
+                opponent.destroyed_cards.append(t)
+            except Exception:
+                pass
+            log_event(context, log, "death", f"💥 {_bron_id()} destroys {t['card_id']}")
+        winst = buit if act_type == "destroy_and_steal" else float(value or 0)
+        if winst and source_card.get("card_type") == "Project":
+            voor, na = _zet_mc(source_card, source_card.get("current_mc", 0) + winst, "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {_bron_id()} gains +{winst:.1f} MC → {voor:.1f} → {na:.1f}")
+        elif winst:
+            begunstigde = max(_eigen_proj, key=lambda c: c.get("current_mc", 0)) if _eigen_proj else None
+            if begunstigde:
+                voor, na = _zet_mc(begunstigde, begunstigde.get("current_mc", 0) + winst, "add_mc")
+                log_event(context, log, "buff",
+                          f"➕ {begunstigde['card_id']} gains +{winst:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "caw_r2_effect":
+        # "Buff twee willekeurige vijandelijke Projects met +7, daarna jezelf met +14."
+        vijanden = [t for t in _proj(targets) if t is not source_card] or _vijand_proj[:2]
+        for t in vijanden[:2]:
+            voor, na = _zet_mc(t, t.get("current_mc", 0) + (value or 0), "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {_bron_id()} boosts enemy {t['card_id']} by +{value:.1f} MC → {voor:.1f} → {na:.1f}")
+        eigen = (value or 0) * 2
+        voor, na = _zet_mc(source_card, source_card.get("current_mc", 0) + eigen, "add_mc")
+        log_event(context, log, "buff",
+                  f"➕ {_bron_id()} boosts itself by +{eigen:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type in ("steal_mc_caw_e2", "steal_and_give_to_lowest"):
+        doelen = _proj(targets) or _vijand_proj
+        if not doelen:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} found no enemy Project to steal from.")
+            return
+        buit = 0.0
+        for t in doelen:
+            pak = min(float(value or 0), float(t.get("current_mc", 0)))
+            if pak <= 0:
+                continue
+            voor, na = _zet_mc(t, t.get("current_mc", 0) - pak, "steal_mc")
+            buit += pak
+            log_event(context, log, "debuff",
+                      f"💰 {_bron_id()} steals {pak:.1f} MC from {t['card_id']} → {voor:.1f} → {na:.1f}")
+        if buit <= 0:
+            return
+        if act_type == "steal_and_give_to_lowest":
+            ontvanger = min(_eigen_proj, key=lambda c: c.get("current_mc", 0)) if _eigen_proj else None
+        else:
+            ontvanger = source_card if source_card.get("card_type") == "Project" else None
+        if ontvanger:
+            voor, na = _zet_mc(ontvanger, ontvanger.get("current_mc", 0) + buit, "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ {ontvanger['card_id']} receives +{buit:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "base_mc_of_lowest":
+        if len(_eigen_proj) < 2:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} needs two Projects.")
+            return
+        laagste = min(_eigen_proj, key=lambda c: c.get("current_mc", 0))
+        hoogste = max(_eigen_proj, key=lambda c: c.get("current_mc", 0))
+        bonus = float(laagste.get("base_mc", 0))
+        voor, na = _zet_mc(hoogste, hoogste.get("current_mc", 0) + bonus, "add_mc")
+        log_event(context, log, "buff",
+                  f"➕ {_bron_id()} copies {laagste['card_id']}'s base {bonus:.1f} MC onto "
+                  f"{hoogste['card_id']} → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "subtract_and_opponent_buff":
+        eigen = _proj(targets) or ([min(_eigen_proj, key=lambda c: c.get("current_mc", 0))] if _eigen_proj else [])
+        for t in eigen[:1]:
+            voor, na = _zet_mc(t, t.get("current_mc", 0) - (value or 0), "subtract_mc")
+            log_event(context, log, "debuff",
+                      f"➖ {t['card_id']} loses -{value:.1f} MC → {voor:.1f} → {na:.1f}")
+        if _vijand_proj:
+            begunstigde = random.choice(_vijand_proj)
+            voor, na = _zet_mc(begunstigde, begunstigde.get("current_mc", 0) + (value or 0), "add_mc")
+            log_event(context, log, "buff",
+                      f"➕ enemy {begunstigde['card_id']} gains +{value:.1f} MC → {voor:.1f} → {na:.1f}")
+        return
+
+    if act_type == "multi_action":
+        subs = act_value if isinstance(act_value, list) else []
+        if not subs:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} has no sub-actions.")
+            return
+        for sub in subs:
+            if not isinstance(sub, dict) or sub.get("action_type") == "multi_action":
+                continue
+            try:
+                sub_doelen = get_targets(sub.get("target_type"), player, opponent, source_card,
+                                         field, opp_field, effect=sub, context=dict(context), log=log)
+            except Exception:
+                sub_doelen = []
+            sub_ctx = dict(context)
+            sub_ctx["targets"] = sub_doelen
+            sub_ctx["effect"] = sub
+            apply_action(source_card, sub.get("action_type"), sub.get("action_value"),
+                         getattr(player, "name", player_name), log, sub_ctx)
+        return
+
+    if act_type == "prevent_destruction":
+        # "Beschermt je laagste MC Project één keer tegen vernietiging."
+        doelen = _proj(targets)
+        if not doelen and _eigen_proj:
+            doelen = [min(_eigen_proj, key=lambda c: c.get("current_mc", 0))]
+        for t in doelen[:1]:
+            t["_destroy_shield"] = int(t.get("_destroy_shield", 0)) + 1
+            log_event(context, log, "immune",
+                      f"🛡️ {t['card_id']} is protected from destruction once")
+        return
+
+    if act_type == "override_mc_value":
+        # "Telt als de hoogste MC-kaart voor vernietiging."
+        doelen = _proj(targets) or ([source_card] if source_card.get("card_type") == "Project" else [])
+        for t in doelen:
+            t["_counts_as_highest"] = True
+            log_event(context, log, "immune",
+                      f"🛡️ {t['card_id']} counts as the highest MC card for targeting")
+        return
+
+    # --- passieve effecten: een vlag zetten die elders wordt nageleefd -------
+    if act_type in ("limit_loss", "reduce_debuff_percentage"):
+        doelen = _proj(targets) or ([source_card] if source_card.get("card_type") == "Project" else _eigen_proj[:1])
+        for t in doelen:
+            if act_type == "limit_loss":
+                t["_max_total_loss"] = float(value or 0)
+                log_event(context, log, "immune",
+                          f"🛡️ {t['card_id']} cannot lose more than {value:.0f} MC this match")
+            else:
+                t["_debuff_reduction"] = max(0.0, min(1.0, float(value or 0) / 100.0))
+                log_event(context, log, "immune",
+                          f"🛡️ {t['card_id']}'s first debuff is reduced by {value:.0f}%")
         return
 
     # ---- ADD_MC ----

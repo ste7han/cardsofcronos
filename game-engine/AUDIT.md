@@ -383,3 +383,59 @@ dezelfde seed, één keer met deck A als speler 1 en één keer als speler 2:
 
 Beide resteren binnen de ruismarge. Invarianten, determinisme, de engine-testsuite
 en de 44 unit-tests op de voorwaarden blijven schoon.
+
+---
+
+## Vervolg 4: de actielaag
+
+Dezelfde fout, één laag dieper: een `action_type` dat `action.py` niet kende viel
+door de hele keten zonder iets te doen. De kaart werd wél als "triggered" gelogd,
+maar had geen enkel gevolg. 25 acties ontbraken, goed voor 27 kaarten.
+
+Geïmplementeerd: `remove_mc_percent`, `add_mc_per_card_type`, `add_mc_lowest`,
+`add_mc_dak`, `add_mc_random_two`, `add_mc_btd`, `subtract_mc_and_add`,
+`self_destruct_and_add_mc`, `add_mc_stack`, `destroy_and_gain`,
+`destroy_and_steal`, `caw_r2_effect`, `steal_mc_caw_e2`,
+`steal_and_give_to_lowest`, `base_mc_of_lowest`, `subtract_and_opponent_buff`,
+`multi_action`, `limit_loss`, `reduce_debuff_percentage`, `prevent_destruction`
+en `override_mc_value`.
+
+`limit_loss` en `reduce_debuff_percentage` worden afgedwongen in
+`track_mc_change` — het enige punt waar elke MC-wijziging langskomt.
+`prevent_destruction` wordt aan het eind van elke fase nageleefd: een beschermde
+kaart die vernietigd werd komt terug en verbruikt daarbij zijn schild.
+
+### En een fase die nooit matchte
+
+Zes kaarten hebben `phase: "Any"`. `_effects_for_phase` vergeleek dat letterlijk
+met "start", "buff" enzovoort, dus die kaarten werden nooit overwogen — geen
+effect, geen skip-regel, niets. Het zijn passieve eigenschappen ("kan niet meer
+dan 5 MC verliezen", "beschermt je laagste Project"), dus ze worden nu in de
+Start-fase gezet.
+
+Eerder in deze audit concludeerde ik dat die kaarten "elders als passief effect
+werken". Dat was onjuist; de A/B-test toonde aan dat ze geen enkel gevolg hadden.
+
+## Eindstand
+
+| | begin | nu |
+|---|---|---|
+| kaarten die de uitslag beïnvloeden | 107 | **139** |
+| kaarten die aantoonbaar niets doen | 110 | **62** |
+| positievoordeel speler 2 | +1,45 MC | +0,35 MC (binnen ruis) |
+
+Geen crashes, geen negatieve MC, eindstand altijd gelijk aan het logboek,
+determinisme intact, 44/44 unit-tests op de voorwaarden.
+
+## Wat er nog ligt
+
+Vier effecten vragen om onderschepping diep in de engine en zijn niet gebouwd:
+
+- `redirect` (2 kaarten) — effecten die op je hoogste Project mikken omleiden
+- `reflect` / `reflect_and_amplify` — de eerste debuff terugkaatsen naar de bron
+- `override_mc_value` — de vlag wordt gezet, maar de targeting-selectors kijken
+  er nog niet naar
+
+Verder zijn er kaarten met een voorwaarde die klopt maar zelden voorkomt: vier
+eigen kaarten vernietigd, een Project van élke rarity, drie vijandelijke
+Projects vernietigd.

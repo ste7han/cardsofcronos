@@ -177,13 +177,21 @@ def iter_effects(card):
             yield eff
 
 def _effects_for_phase(card, phase_name):
-    """Yield only valid dict effects that match the current phase."""
+    """Yield only valid dict effects that match the current phase.
+
+    Zes kaarten hebben `phase: "Any"`. Die werd hier letterlijk vergeleken met
+    "start", "buff" enzovoort en matchte dus nooit — die kaarten deden hun hele
+    bestaan niets. Het zijn passieve effecten ("kan niet meer dan 5 MC
+    verliezen", "beschermt je laagste Project tegen vernietiging"), dus ze horen
+    één keer aan het begin van de match gezet te worden: in de Start-fase.
+    """
     p = phase_name.lower()
     for eff in iter_effects(card):
         # 🔒 hard guard so bad structures never crash
         if not isinstance(eff, dict):
             continue
-        if str(eff.get("phase", "")).lower() == p:
+        fase = str(eff.get("phase", "")).lower()
+        if fase == p or (fase in ("any", "") and p == "start"):
             yield eff
 
 # =========================
@@ -1415,6 +1423,21 @@ def simulate_match():
             if c.get("lost_mc_this_phase"):
                 c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
+            # "Beschermt tegen vernietiging, één keer": vernietigingen gebeuren
+            # verspreid door de engine, dus we draaien het hier terug. Het schild
+            # wordt daarbij opgebruikt.
+            if c.get("destroyed") and int(c.get("_destroy_shield", 0)) > 0:
+                c["_destroy_shield"] = int(c["_destroy_shield"]) - 1
+                c["destroyed"] = False
+                for speler in (player1, player2):
+                    try:
+                        if c in speler.destroyed_cards:
+                            speler.destroyed_cards.remove(c)
+                    except Exception:
+                        pass
+                phase_block.append(
+                    f"🛡️ **{c['card_id']} survives destruction — its shield is used up**")
+
         p1_mc = calculate_total_mc(deck1)
         p2_mc = calculate_total_mc(deck2)
         phase_block.append("")
@@ -1594,6 +1617,21 @@ def simulate_match_with_decks(
                 c["_ever_debuffed"] = True
             if c.get("lost_mc_this_phase"):
                 c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
+
+            # "Beschermt tegen vernietiging, één keer": vernietigingen gebeuren
+            # verspreid door de engine, dus we draaien het hier terug. Het schild
+            # wordt daarbij opgebruikt.
+            if c.get("destroyed") and int(c.get("_destroy_shield", 0)) > 0:
+                c["_destroy_shield"] = int(c["_destroy_shield"]) - 1
+                c["destroyed"] = False
+                for speler in (player1, player2):
+                    try:
+                        if c in speler.destroyed_cards:
+                            speler.destroyed_cards.remove(c)
+                    except Exception:
+                        pass
+                phase_block.append(
+                    f"🛡️ **{c['card_id']} survives destruction — its shield is used up**")
 
         p1_mc = calculate_total_mc(deck1)
         p2_mc = calculate_total_mc(deck2)
