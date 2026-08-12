@@ -358,3 +358,28 @@ staat los van de kaarten en zit in de fasevolgorde.
 De resterende 18 kaarten stranden op ontbrekende acties, niet op voorwaarden of
 doelen: `redirect` (2x), `revive_half_mc`, `destroy_and_gain`, `destroy_and_steal`,
 `reflect`, `disable`. De rest heeft een voorwaarde die klopt maar zeldzaam is.
+
+---
+
+## Vervolg 3: het positievoordeel weggenomen
+
+`apply_phase` werkte binnen elke fase eerst deck 1 af en dan deck 2. Wie als
+tweede handelt rekent op een bord dat de tegenstander al heeft aangepast, en dat
+bleek een meetbaar voordeel. In PvP is de host altijd speler 1, dus de gast had
+structureel de betere plek.
+
+De beurtvolgorde wisselt nu per fase, met een geloot begin. Zo krijgt elke speler
+precies drie van de zes fases als eerste; het muntje hangt aan de match-seed, dus
+alles blijft reproduceerbaar.
+
+Gemeten met `audit_position.py` — 1500 deckparen, elk twee keer gespeeld met
+dezelfde seed, één keer met deck A als speler 1 en één keer als speler 2:
+
+| | voor | na |
+|---|---|---|
+| gemiddeld verschil (positie 2 − positie 1) | **+1,45 MC** | **−0,03 MC** |
+| positie 2 wint van de beslissende paren | 60,2% | 50,9% |
+| afwijking in spiegelmatches (6000 matches) | 7,3 procentpunt | **0,5 procentpunt** |
+
+Beide resteren binnen de ruismarge. Invarianten, determinisme, de engine-testsuite
+en de 44 unit-tests op de voorwaarden blijven schoon.
