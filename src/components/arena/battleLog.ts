@@ -26,9 +26,14 @@ export interface ParsedLine {
   ownerOf: Record<string, string>;
 }
 
-const CARD_RE = /COC_\w+/g;
-const OWNER_RE = /Player\s+([12])['’]s\s+(COC_\w+)/g;
-const DELTA_RE = /(COC_\w+)\s+by\s+([-+]?\d+(?:\.\d+)?)\s*MC/g;
+// Twee kaart-id's bevatten een teken buiten \w: COC_EVT_Pump_&_Dump en
+// COC_EVT_Ding_Ding_Ding!. Zonder die uitzondering knipt de regex de naam af,
+// hoort de kaart bij geen enkel exemplaar op het bord, en blijft "_Dump" in de
+// tekst staan — waardoor de opstellingsregel rood kleurde.
+const CARD_PATTERN = String.raw`COC_\w+(?:&_\w+)*!?`;
+const CARD_RE = new RegExp(CARD_PATTERN, 'g');
+const OWNER_RE = new RegExp(String.raw`Player\s+([12])['’]s\s+(${CARD_PATTERN})`, 'g');
+const DELTA_RE = new RegExp(String.raw`(${CARD_PATTERN})\s+by\s+([-+]?\d+(?:\.\d+)?)\s*MC`, 'g');
 const ARROW_RE = /→\s*(-?\d+(?:\.\d+)?)/g;
 
 // "⛔ … could not act — …" en "skipped": de kaart doet níéts, ook al staan de
@@ -40,8 +45,10 @@ const CONDITION_LINE = /→\s*[✅❌]/;
 
 // Het werkwoord met de vernietigde kaart er direct achter, eventueel met
 // "enemy"/"friendly"/"Player 2's" ertussen.
-const DESTROY_RE = /destroy(?:s|ed)\s+(?:enemy\s+|friendly\s+|the\s+|its\s+|his\s+)?(?:Player\s+[12]['’]s\s+)?[`'"]?(COC_\w+)/i;
-const DESTROY_SUMMARY_RE = /(COC_\w+)[^A-Za-z0-9]*(?:–|-|—)\s*destroyed/i;
+const DESTROY_RE = new RegExp(
+  String.raw`destroy(?:s|ed)\s+(?:enemy\s+|friendly\s+|the\s+|its\s+|his\s+)?(?:Player\s+[12]['’]s\s+)?[\`'"]?(${CARD_PATTERN})`, 'i');
+const DESTROY_SUMMARY_RE = new RegExp(String.raw`(${CARD_PATTERN})[^A-Za-z0-9]*(?:–|-|—)\s*destroyed`, 'i');
+const TRANSFER_RE = new RegExp(String.raw`transfers?\s+to\s+(${CARD_PATTERN})`, 'i');
 
 const DEBUFF_WORDS = /hit|damage|reduc|steal|stole|lost|lose|burn|drain|destro|rug|crash|dump/;
 const BUFF_WORDS = /boost|buff|gain|heal|increase|pump|rise|transfer/;
@@ -53,7 +60,10 @@ export function parseBattleLine(log: string): ParsedLine {
   const ids = log.match(CARD_RE);
   if (!ids || ids.length === 0) return out;
 
-  const lower = log.toLowerCase();
+  // Trefwoorden alleen op het proza toetsen, nooit op kaartnamen. Anders kleurt
+  // COC_EVT_Rug_Pull rood zodra hij genoemd wordt ("rug"), en COC_Bear_Market
+  // net zo — ook als de regel alleen de opstelling toont.
+  const lower = log.replace(CARD_RE, ' ').toLowerCase();
 
   // 1. Eigenaar-hints. Beide spelers mogen dezelfde kaart spelen, dus zonder
   //    deze hint zouden we allebei de exemplaren aanpassen.
@@ -85,7 +95,7 @@ export function parseBattleLine(log: string): ParsedLine {
   //    eerste pijl. De láátste pijl draagt de nieuwe waarde ("→ 17.0 → 14.0").
   const arrowIndex = log.indexOf('→');
   if (arrowIndex !== -1) {
-    const transfer = log.match(/transfers?\s+to\s+(COC_\w+)/i);
+    const transfer = log.match(TRANSFER_RE);
     let owner: string | null = transfer ? transfer[1] : null;
     if (!owner) {
       const before = log.slice(0, arrowIndex).match(CARD_RE);
