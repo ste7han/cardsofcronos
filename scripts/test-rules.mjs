@@ -7,6 +7,17 @@
  *   node scripts/test-rules.mjs
  *
  * Gebruikt de firebase-SDK die al in het project zit, dus geen extra dependency.
+ *
+ * Let op: bij elke geweigerde update/delete logt de SDK iets als
+ *   "evaluation error at L99:24 for 'update' @ L99, false for 'update' @ L99"
+ * Dat is ruis van de emulator, geen kapotte regel. De emulator evalueert de
+ * regel twee keer — merk op dat er twee uitkomsten in die ene melding staan —
+ * en in de tweede evaluatie is `resource` niet beschikbaar, waardoor elke
+ * expressie die resource.data aanraakt daar struikelt. Nagegaan met een
+ * geïsoleerde reproductie: `request.auth.uid == 'literal'` weigert zonder
+ * fout, `request.auth.uid == resource.data.hostUid` weigert mét fout, en
+ * `resource.data.hostUid is string` staat gewoon toe. De uitkomst klopt in
+ * alle gevallen; alleen de diagnostiek is verwarrend.
  */
 import { initializeApp, deleteApp } from 'firebase/app';
 import {
