@@ -76,8 +76,12 @@ function PvPArenaContent() {
     setIsLoading(true); setLoadingText("Scanning Blockchain...");
     try {
         const response = await fetch(`/api/scan?address=${activeAddress}`);
-        if (!response.ok) throw new Error("Server Scan Error");
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            // De server weet precies wat er misging; die melding is bruikbaar,
+            // "Server Scan Error" was dat niet.
+            throw new Error(data?.error || `Scan failed (HTTP ${response.status})`);
+        }
         const ownedTokenIds: number[] = data.ownedIds || [];
 
         const matchedCards: string[] = [];
