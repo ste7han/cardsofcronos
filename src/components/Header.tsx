@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({
   // Empty array for rune symbols (removed as requested)
   const runeSymbols: { symbol: string; top: string; left: string; delay: string }[] = [];
   
-  // Navigation items with icons for mobile
+  // Navigation items with icons for mobile - REWARDS TOEGEVOEGD
   const navItems = [
     {
       name: 'Home',
@@ -84,6 +84,15 @@ const Header: React.FC<HeaderProps> = ({
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      )
+    },
+    {
+      name: 'Rewards', // NIEUW ITEM
+      href: '/rewards',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
         </svg>
       )
     },
@@ -219,7 +228,7 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Desktop Navigation - Hidden on mobile */}
       <nav className="hidden md:flex items-center">
-        <div className="flex space-x-8">
+        <div className="flex space-x-6 lg:space-x-8"> {/* Iets minder ruimte voor de extra knop */}
           {navItems.map((item, index) => (
             <Link 
               key={index}

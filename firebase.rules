@@ -1,58 +1,60 @@
-// Firestore Rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read access to all documents for authenticated users
-    match /{document=**} {
-      allow read: if request.auth != null;
+    
+    // --- FUNCTIES ---
+    function isSignedIn() {
+      return request.auth != null;
     }
     
-    // Allow write access to the requests collection with validation
-    match /requests/{requestId} {
-      allow create: if 
-        // Ensure required fields are present
-        request.resource.data.keys().hasAll(['type', 'rarity', 'name', 'description', 'imageUrl', 'socialLink', 'transactionHash', 'burnAmount', 'email', 'status', 'createdAt']) &&
-        // Validate field types
-        request.resource.data.type is string &&
-        request.resource.data.rarity is string &&
-        request.resource.data.name is string &&
-        request.resource.data.description is string &&
-        request.resource.data.imageUrl is string &&
-        request.resource.data.socialLink is string &&
-        request.resource.data.transactionHash is string &&
-        request.resource.data.burnAmount is number &&
-        request.resource.data.email is string &&
-        request.resource.data.status is string &&
-        request.resource.data.createdAt is timestamp &&
-        // Validate enum values
-        ['Project', 'Roast', 'Influencer', 'Special'].hasAny([request.resource.data.type]) &&
-        ['Epic', 'Rare', 'Mythical'].hasAny([request.resource.data.rarity]) &&
-        ['pending', 'completed', 'rejected'].hasAny([request.resource.data.status]);
+    function incomingData() {
+      return request.resource.data;
     }
     
-    // Allow updates to the stats document
-    match /stats/burnStats {
-      allow read: if true; // Public read access
-      allow write: if 
-        // Only allow incrementing the counters
-        request.resource.data.totalBurned is number &&
-        request.resource.data.totalRequests is number;
-    }
-  }
-}
-
-// Storage Rules
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /card-images/{imageId} {
-      // Allow read access to all images
-      allow read: if true;
+    function isValidRequest() {
+      let data = incomingData();
+      let requiredStrings = ['type', 'rarity', 'name', 'description', 'imageUrl', 'socialLink', 'transactionHash', 'email', 'status'];
       
-      // Allow upload of images with size and content type validation
-      allow create: if 
-        request.auth != null &&
-        request.resource.size < 5 * 1024 * 1024 && // 5MB max
-        request.resource.contentType.matches('image/.*');
+      return 
+        data.keys().hasAll(requiredStrings) &&
+        data.burnAmount is number &&
+        data.createdAt is timestamp &&
+        data.name is string && data.description is string && data.imageUrl is string &&
+        data.type in ['Project', 'Roast', 'Influencer', 'Special'] &&
+        data.rarity in ['Epic', 'Rare', 'Mythical'] &&
+        data.status in ['pending', 'completed', 'rejected'];
+    }
+
+    // --- DE REGELS ---
+
+    // 1. Matches (Replays)
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if false; 
+    }
+
+    // 2. LOBBIES (NIEUW: Dit miste je!)
+    // Hiermee kunnen spelers lobbies aanmaken en joinen
+    match /lobbies/{lobbyId} {
+      allow read: if true;
+      allow create: if true; // In productie: if isSignedIn()
+      allow update: if true; // Nodig om te joinen en decks op te slaan
+    }
+
+    // 3. Stats
+    match /stats/burnStats {
+      allow read: if true;
+      allow write: if incomingData().totalBurned is number && incomingData().totalRequests is number;
+    }
+
+    // 4. Requests (Met jouw validatie)
+    match /requests/{requestId} {
+      allow create: if isValidRequest(); 
+    }
+
+    // 5. Vangnet
+    match /{document=**} {
+      allow read: if isSignedIn();
     }
   }
 }
