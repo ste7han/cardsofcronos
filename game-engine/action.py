@@ -305,6 +305,31 @@ def track_mc_change(target, before, after, player=None, action_type=None, log=No
     # langskomt, dus hier wordt het nageleefd — en de waarde teruggeschreven.
     if after < before:
         verlies = before - after
+
+        # "Kaats de eerste debuff terug naar je tegenstander, met dubbele
+        # schade." De eigenaar van het doel heeft dan een geladen schild; het
+        # verlies gaat niet door en landt versterkt bij de bronkaart.
+        if context and verlies > 0:
+            eigenaar = None
+            for kandidaat in (context.get("player"), context.get("opponent")):
+                if kandidaat is not None and getattr(kandidaat, "name", None) == target.get("owner"):
+                    eigenaar = kandidaat
+                    break
+            factor = getattr(eigenaar, "_reflect_debuff_factor", 0) if eigenaar else 0
+            bron = context.get("source_card")
+            if factor and isinstance(bron, dict) and bron is not target and not bron.get("destroyed"):
+                setattr(eigenaar, "_reflect_debuff_factor", 0)
+                terug = verlies * float(factor)
+                bron_voor = float(bron.get("current_mc", 0))
+                bron["current_mc"] = max(0.0, bron_voor - terug)
+                if log is not None:
+                    log_event(context, log, "reflect",
+                              f"🛡️ {target.get('card_id','???')} reflects the debuff: "
+                              f"{bron.get('card_id','???')} takes -{terug:.1f} MC "
+                              f"→ {bron_voor:.1f} → {bron['current_mc']:.1f}")
+                target["current_mc"] = before
+                return
+
         korting = target.get("_debuff_reduction")
         if korting and not target.get("_debuff_reduction_gebruikt"):
             verlies *= (1.0 - float(korting))
@@ -853,6 +878,35 @@ def apply_action(card, action_type, action_value, player_name, log, context=None
             sub_ctx["effect"] = sub
             apply_action(source_card, sub.get("action_type"), sub.get("action_value"),
                          getattr(player, "name", player_name), log, sub_ctx)
+        return
+
+    if act_type == "redirect":
+        # "Leid effecten die op je hoogste Project mikken om." De bestemming is
+        # het doel van dit effect: bij Wolfswap_R3 de kaart zelf, bij
+        # Wolfswap_Founder_R1 het laagste eigen Project. Het omleiden zelf
+        # gebeurt aan het eind van get_targets, waar élke doelkeuze langskomt.
+        bestemming = (_proj(targets) or ([source_card] if source_card.get("card_type") == "Project" else []))
+        if not bestemming:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} found no redirect destination.")
+            return
+        doel = bestemming[0]
+        doel["_redirect_doel"] = True
+        # "de eerste" versus "alle": Founder_R1 spreekt over de eerste keer.
+        doel["_redirect_eenmalig"] = "first" in str(effect.get("condition_value") or "").lower() \
+            or "Founder" in _bron_id()
+        log_event(context, log, "immune",
+                  f"🛡️ Effects aimed at the highest Project are redirected to {doel['card_id']}")
+        return
+
+    if act_type in ("reflect", "reflect_and_amplify"):
+        if act_type == "reflect_and_amplify":
+            setattr(player, "_reflect_debuff_factor", float(value or 2) or 2.0)
+            log_event(context, log, "immune",
+                      f"🛡️ {_bron_id()} will reflect the first debuff back, amplified")
+        else:
+            setattr(player, "_reflect_destruction", True)
+            log_event(context, log, "immune",
+                      f"🛡️ {_bron_id()} will reflect the first destruction back at the attacker")
         return
 
     if act_type == "prevent_destruction":

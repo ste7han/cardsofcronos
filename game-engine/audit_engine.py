@@ -72,9 +72,11 @@ def check_match(args):
     tekst = "\n".join(logs)
     p1 = [float(m[1]) for m in LOG_SCORE.findall(tekst) if m[0] == "1"]
     p2 = [float(m[1]) for m in LOG_SCORE.findall(tekst) if m[0] == "2"]
-    if p1 and abs(p1[-1] - s1) > 0.05:
+    # Het logboek toont één decimaal, dus vergelijken we op diezelfde precisie;
+    # anders meldt 239.8 vs 239.75 een verschil dat er niet is.
+    if p1 and abs(p1[-1] - round(s1, 1)) > 0.001:
         bevindingen.append(("SCORE_WIJKT_AF", f"P1 logboek {p1[-1]} vs engine {s1}", seed))
-    if p2 and abs(p2[-1] - s2) > 0.05:
+    if p2 and abs(p2[-1] - round(s2, 1)) > 0.001:
         bevindingen.append(("SCORE_WIJKT_AF", f"P2 logboek {p2[-1]} vs engine {s2}", seed))
 
     winner = "P1" if s1 > s2 else "P2" if s2 > s1 else "gelijk"

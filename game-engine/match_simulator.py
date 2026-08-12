@@ -1423,6 +1423,12 @@ def simulate_match():
             if c.get("lost_mc_this_phase"):
                 c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
+            # MC kan nooit onder nul. Dat gold altijd al, maar het omleiden van
+            # effecten kan een klap die op de hoogste kaart berekend was op een
+            # kleinere kaart laten landen. De schade wordt hier afgekapt.
+            if c.get("current_mc", 0) < 0:
+                c["current_mc"] = 0
+
             # "Beschermt tegen vernietiging, één keer": vernietigingen gebeuren
             # verspreid door de engine, dus we draaien het hier terug. Het schild
             # wordt daarbij opgebruikt.
@@ -1437,6 +1443,29 @@ def simulate_match():
                         pass
                 phase_block.append(
                     f"🛡️ **{c['card_id']} survives destruction — its shield is used up**")
+
+        # "Kaats de eerste vernietiging terug naar de aanvaller." Wie de sloop
+        # veroorzaakte wordt nergens vastgelegd, dus we lezen 'de aanvaller' als
+        # de tegenstander en nemen daar het hoogste Project mee.
+        for verdediger, aanvaller, eigen_deck, vijand_deck in (
+            (player1, player2, deck1, deck2),
+            (player2, player1, deck2, deck1),
+        ):
+            if not getattr(verdediger, "_reflect_destruction", False):
+                continue
+            if not any(c.get("destroyed") and _ctype(c) == "Project" for c in eigen_deck):
+                continue
+            doelwit = [c for c in vijand_deck if _ctype(c) == "Project" and not c.get("destroyed")]
+            verdediger._reflect_destruction = False
+            if not doelwit:
+                continue
+            slachtoffer = max(doelwit, key=lambda c: c.get("current_mc", 0))
+            slachtoffer["destroyed"] = True
+            slachtoffer["current_mc"] = 0
+            aanvaller.destroyed_cards.append(slachtoffer)
+            phase_block.append(
+                f"🛡️ **{verdediger.name} reflects the destruction — "
+                f"{slachtoffer['card_id']} is destroyed in return**")
 
         p1_mc = calculate_total_mc(deck1)
         p2_mc = calculate_total_mc(deck2)
@@ -1618,6 +1647,12 @@ def simulate_match_with_decks(
             if c.get("lost_mc_this_phase"):
                 c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
+            # MC kan nooit onder nul. Dat gold altijd al, maar het omleiden van
+            # effecten kan een klap die op de hoogste kaart berekend was op een
+            # kleinere kaart laten landen. De schade wordt hier afgekapt.
+            if c.get("current_mc", 0) < 0:
+                c["current_mc"] = 0
+
             # "Beschermt tegen vernietiging, één keer": vernietigingen gebeuren
             # verspreid door de engine, dus we draaien het hier terug. Het schild
             # wordt daarbij opgebruikt.
@@ -1632,6 +1667,29 @@ def simulate_match_with_decks(
                         pass
                 phase_block.append(
                     f"🛡️ **{c['card_id']} survives destruction — its shield is used up**")
+
+        # "Kaats de eerste vernietiging terug naar de aanvaller." Wie de sloop
+        # veroorzaakte wordt nergens vastgelegd, dus we lezen 'de aanvaller' als
+        # de tegenstander en nemen daar het hoogste Project mee.
+        for verdediger, aanvaller, eigen_deck, vijand_deck in (
+            (player1, player2, deck1, deck2),
+            (player2, player1, deck2, deck1),
+        ):
+            if not getattr(verdediger, "_reflect_destruction", False):
+                continue
+            if not any(c.get("destroyed") and _ctype(c) == "Project" for c in eigen_deck):
+                continue
+            doelwit = [c for c in vijand_deck if _ctype(c) == "Project" and not c.get("destroyed")]
+            verdediger._reflect_destruction = False
+            if not doelwit:
+                continue
+            slachtoffer = max(doelwit, key=lambda c: c.get("current_mc", 0))
+            slachtoffer["destroyed"] = True
+            slachtoffer["current_mc"] = 0
+            aanvaller.destroyed_cards.append(slachtoffer)
+            phase_block.append(
+                f"🛡️ **{verdediger.name} reflects the destruction — "
+                f"{slachtoffer['card_id']} is destroyed in return**")
 
         p1_mc = calculate_total_mc(deck1)
         p2_mc = calculate_total_mc(deck2)

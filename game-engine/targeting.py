@@ -103,7 +103,98 @@ def _coerce_player_like(obj, default_name="Player 1") -> SimpleNamespace:
 
 # ------------------------ targeting ------------------------
 
-def get_targets(
+def get_targets(target_type, player, opponent, source_card,
+                self_deck, opponent_deck, effect=None, context=None, log=None):
+    """Kiest de doelen en past daarna twee onderscheppingen toe.
+
+    get_targets heeft tientallen return-paden, dus het omleiden gebeurt hier in
+    een omhulsel: zo komt élke doelkeuze er langs, ook die uit oudere takken.
+    """
+    gekozen = _get_targets_raw(target_type, player, opponent, source_card,
+                               self_deck, opponent_deck, effect, context, log)
+    return _pas_onderschepping_toe(gekozen, player, opponent, self_deck, opponent_deck,
+                                   source_card, context, log)
+
+
+def _projecten(veld):
+    return [c for c in (veld or [])
+            if isinstance(c, dict) and c.get("card_type") == "Project" and not c.get("destroyed")]
+
+
+def _feitelijk_hoogste(veld):
+    p = _projecten(veld)
+    return max(p, key=lambda c: c.get("current_mc", 0)) if p else None
+
+
+def _meld(context, log, tekst):
+    if log is None:
+        return
+    try:
+        log_event(context, log, "immune", tekst)
+    except Exception:
+        pass
+
+
+def _pas_onderschepping_toe(gekozen, player, opponent, self_deck, opponent_deck,
+                            source_card, context, log):
+    """Twee passieve effecten grijpen in op de doelkeuze.
+
+    override_mc_value — een kaart "telt als de hoogste MC-kaart", dus effecten
+    die op de hoogste mikken komen bij haar terecht.
+    redirect — effecten die op je hoogste Project mikken gaan naar een andere
+    kaart.
+
+    Beide worden hier afgehandeld omdat elke doelkeuze langs deze plek komt.
+    """
+    if not gekozen:
+        return gekozen
+
+    velden = []
+    for speler, veld in ((player, self_deck), (opponent, opponent_deck)):
+        velden.append((getattr(speler, "name", None),
+                       list(getattr(speler, "field", None) or veld or [])))
+
+    uit = []
+    for t in gekozen:
+        if not isinstance(t, dict):
+            uit.append(t)
+            continue
+
+        huidig = t
+        for naam, veld in velden:
+            if naam is not None and t.get("owner") != naam:
+                continue
+            if t is not _feitelijk_hoogste(veld):
+                break
+
+            # 1. Trekt een kaart de aandacht naar zich toe?
+            lokaas = next((c for c in _projecten(veld)
+                           if c.get("_counts_as_highest") and c is not huidig), None)
+            if lokaas is not None:
+                _meld(context, log,
+                      f"🛡️ {lokaas.get('card_id')} counts as the highest Project and is "
+                      f"targeted instead of {huidig.get('card_id')}")
+                huidig = lokaas
+
+            # 2. Wordt het effect omgeleid?
+            omleiding = next((c for c in veld
+                              if isinstance(c, dict) and c.get("_redirect_doel")
+                              and not c.get("destroyed") and c is not huidig
+                              and not c.get("_redirect_verbruikt")), None)
+            if omleiding is not None:
+                if omleiding.get("_redirect_eenmalig"):
+                    omleiding["_redirect_verbruikt"] = True
+                _meld(context, log,
+                      f"🛡️ Effect aimed at {huidig.get('card_id')} is redirected "
+                      f"to {omleiding.get('card_id')}")
+                huidig = omleiding
+            break
+
+        uit.append(huidig)
+    return uit
+
+
+def _get_targets_raw(
     target_type, player, opponent, source_card,
     self_deck, opponent_deck, effect=None,
     context=None, log=None

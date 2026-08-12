@@ -966,7 +966,10 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
 
     elif condition_type == "effect_targeted_highest":
-        return False  # placeholder
+        # Stond hier als `return False  # placeholder`: de omleidingskaarten
+        # waren daarmee hard uitgezet. Het is een passief schild dat zichzelf
+        # wapent; het omleiden gebeurt in get_targets.
+        return not card.get("destroyed", False)
 
     elif condition_type == "has_card_type":
         if field is None:
@@ -1062,7 +1065,10 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return True
 
     elif condition_type == "effect_targeted_highest":
-        return False  # Placeholder
+        # Stond hier als `return False  # placeholder`: de omleidingskaarten
+        # waren daarmee hard uitgezet. Het is een passief schild dat zichzelf
+        # wapent; het omleiden gebeurt in get_targets.
+        return not card.get("destroyed", False)
 
     elif condition_type == "control_card_count":
         expected = condition_value.split(",")
@@ -1779,7 +1785,12 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     # "Kan niet meer dan 5 MC verliezen" en "telt als hoogste kaart voor
     # vernietiging" zijn eigenschappen van de kaart zelf; er is niets te toetsen
     # behalve dat de kaart er ligt.
-    if condition_type in ("limit_loss", "destruction_targeting"):
+    if condition_type in ("limit_loss", "destruction_targeting",
+                          "effect_targeted_highest", "first_destruction_attempt",
+                          "destruction_attempt", "first_debuff"):
+        # Passieve schilden en omleidingen: er is niets te toetsen behalve dat de
+        # kaart er ligt. Ze wapenen zichzelf en worden pas verzilverd op het
+        # moment dat er daadwerkelijk een effect of vernietiging binnenkomt.
         return not card.get("destroyed", False)
 
     # --- de kaart ligt er gewoon ---------------------------------------------

@@ -439,3 +439,53 @@ Vier effecten vragen om onderschepping diep in de engine en zijn niet gebouwd:
 Verder zijn er kaarten met een voorwaarde die klopt maar zelden voorkomt: vier
 eigen kaarten vernietigd, een Project van élke rarity, drie vijandelijke
 Projects vernietigd.
+
+---
+
+## Vervolg 5: de onderscheppende effecten
+
+Vier effecten grijpen in op wat een ánder effect doet, en vroegen dus een haak in
+het damage- en targeting-pad in plaats van een extra tak.
+
+| effect | knooppunt |
+|---|---|
+| `redirect` | eind van `get_targets`, in een omhulsel om de functie |
+| `override_mc_value` | idem — de gemarkeerde kaart trekt "de hoogste" naar zich toe |
+| `reflect_and_amplify` | `track_mc_change`, waar elk MC-verlies langskomt |
+| `reflect` (vernietiging) | de fase-afsluiting, naast het bestaande schild |
+
+`get_targets` heeft tientallen return-paden, dus het omleiden gebeurt in een
+omhulsel om de functie: zo komt élke doelkeuze er langs, ook die uit oudere
+takken.
+
+En opnieuw een hard uitgezette kaart: `effect_targeted_highest` stond twee keer
+in `condition.py` als `return False  # placeholder`. De twee omleidingskaarten
+konden daardoor nooit werken.
+
+Resultaat, 11 onderscheppende kaarten x 30 decks van eigen factie: **9 werken**.
+
+### Een regressie die de audit ving
+
+Na deze wijziging meldde de invariantcontrole 3 gevallen van negatieve MC over
+4000 matches — daarvoor altijd nul. Oorzaak: een omgeleid effect berekent de
+schade op de hoogste kaart en landt daarna op een kleinere. De schade wordt nu
+afgekapt bij de fase-afsluiting. Over 8000 matches opnieuw geen enkele schending.
+
+## Eindstand
+
+| | begin | nu |
+|---|---|---|
+| kaarten die de uitslag beïnvloeden | 107 | **142** |
+| kaarten die aantoonbaar niets doen | 110 | **58** |
+| positievoordeel speler 2 | +1,45 MC | binnen de ruis |
+
+## Wat er overblijft
+
+`COC_Clove_M1` ("kan niet meer dan 5 MC verliezen") werkt aantoonbaar — een
+losse test laat zien dat vier klappen van 4 MC keurig op 5 totaal worden
+afgetopt. Maar het plafond wordt alleen geraadpleegd in `track_mc_change`, en
+van de 56 directe MC-toewijzingen in `action.py` lopen er maar 12 daarlangs. Het
+schild dekt dus ongeveer een vijfde van de schadepaden. Alles daarlangs routeren
+is een refactor met echt regressierisico, geen losse toevoeging.
+
+`COC_Lionel_Founder_E1` wacht op de actie `negate`.
