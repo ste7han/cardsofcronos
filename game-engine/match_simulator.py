@@ -287,55 +287,62 @@ class Kaart(dict):
         super().__setitem__(sleutel, waarde)
 
     def _demp(self, nieuw):
-        # Zonder schild niets aanraken. Zou je hier `huidig - (huidig - nieuw)`
-        # uitrekenen, dan komt er door drijvende komma soms 105.29999999999999
-        # uit waar 105.3 hoort — en zulke minuscule verschillen werken door in
-        # vergelijkingen als "MC eindigt op 7".
-        if (dict.get(self, "_debuff_reduction") is None
-                and dict.get(self, "_max_total_loss") is None
-                and dict.get(self, "_gedeeld_debuffschild") is None):
-            return nieuw
-
-        try:
-            nieuw = float(nieuw)
-        except (TypeError, ValueError):
-            return nieuw
-
         huidig = dict.get(self, "current_mc")
         if huidig is None:
             return nieuw
         try:
-            huidig = float(huidig)
+            nieuw_f = float(nieuw)
+            huidig_f = float(huidig)
         except (TypeError, ValueError):
             return nieuw
-        if nieuw >= huidig:
+        if nieuw_f >= huidig_f:
             return nieuw
 
-        verlies = huidig - nieuw
+        verlies = huidig_f - nieuw_f
+        heeft_schild = (dict.get(self, "_debuff_reduction") is not None
+                        or dict.get(self, "_max_total_loss") is not None
+                        or dict.get(self, "_gedeeld_debuffschild") is not None)
 
-        # "De eerste debuff die je Projects raakt wordt volledig genegeerd."
-        # Het schild geldt voor de hele kant, dus alle eigen Projects delen
-        # hetzelfde telletje: wie als eerste geraakt wordt verbruikt het.
-        gedeeld = dict.get(self, "_gedeeld_debuffschild")
-        if isinstance(gedeeld, dict) and gedeeld.get("over", 0) > 0:
-            gedeeld["over"] = gedeeld["over"] - 1
-            return huidig
+        if heeft_schild:
+            # "De eerste debuff die je Projects raakt wordt volledig genegeerd."
+            # Dat schild geldt voor de hele kant, dus alle eigen Projects delen
+            # hetzelfde telletje: wie als eerste geraakt wordt verbruikt het.
+            gedeeld = dict.get(self, "_gedeeld_debuffschild")
+            if isinstance(gedeeld, dict) and gedeeld.get("over", 0) > 0:
+                gedeeld["over"] = gedeeld["over"] - 1
+                return huidig
 
-        # "De eerste debuff wordt met 50% verminderd."
-        korting = dict.get(self, "_debuff_reduction")
-        if korting and not dict.get(self, "_debuff_reduction_gebruikt"):
-            dict.__setitem__(self, "_debuff_reduction_gebruikt", True)
-            verlies *= (1.0 - float(korting))
+            # "De eerste debuff wordt met 50% verminderd."
+            korting = dict.get(self, "_debuff_reduction")
+            if korting and not dict.get(self, "_debuff_reduction_gebruikt"):
+                dict.__setitem__(self, "_debuff_reduction_gebruikt", True)
+                verlies *= (1.0 - float(korting))
 
-        # "Kan niet meer dan N MC verliezen deze match."
-        plafond = dict.get(self, "_max_total_loss")
-        if plafond is not None:
-            al_verloren = float(dict.get(self, "_verlies_tot_nu", 0.0) or 0.0)
-            ruimte = max(0.0, float(plafond) - al_verloren)
-            verlies = min(verlies, ruimte)
-            dict.__setitem__(self, "_verlies_tot_nu", al_verloren + verlies)
+            # "Kan niet meer dan N MC verliezen deze match."
+            plafond = dict.get(self, "_max_total_loss")
+            if plafond is not None:
+                al_verloren = float(dict.get(self, "_verlies_tot_nu", 0.0) or 0.0)
+                ruimte = max(0.0, float(plafond) - al_verloren)
+                verlies = min(verlies, ruimte)
+                dict.__setitem__(self, "_verlies_tot_nu", al_verloren + verlies)
 
-        return huidig - verlies
+            resultaat = huidig_f - verlies
+        else:
+            # Zonder schild de waarde exact laten. Zou je hier
+            # `huidig - (huidig - nieuw)` uitrekenen, dan komt er door drijvende
+            # komma soms 105.29999999999999 uit waar 105.3 hoort, en zulke
+            # verschillen werken door in vergelijkingen als "MC eindigt op 7".
+            resultaat = nieuw
+
+        # Verlies bijhouden voor voorwaarden als "als een van je Projects MC
+        # verloor". Dat gebeurde eerder alleen in track_mc_change, en daar loopt
+        # maar een vijfde van de schade langs.
+        werkelijk = huidig_f - float(resultaat)
+        if werkelijk > 0:
+            eerder = float(dict.get(self, "_mc_lost_total", 0.0) or 0.0)
+            dict.__setitem__(self, "_mc_lost_total", eerder + werkelijk)
+
+        return resultaat
 
 
 def _validate_5_5_1(deck, side_label: str):
@@ -1465,8 +1472,6 @@ def simulate_match():
             # "als deze kaart deze match MC verloor" hebben de hele match nodig.
             if c.get("targeted_by_debuff"):
                 c["_ever_debuffed"] = True
-            if c.get("lost_mc_this_phase"):
-                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
             c["targeted_by_debuff"] = False
             c["lost_mc_this_phase"] = 0
@@ -1493,8 +1498,6 @@ def simulate_match():
         for c in deck1 + deck2:
             if c.get("targeted_by_debuff"):
                 c["_ever_debuffed"] = True
-            if c.get("lost_mc_this_phase"):
-                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
             # MC kan nooit onder nul. Dat gold altijd al, maar het omleiden van
             # effecten kan een klap die op de hoogste kaart berekend was op een
@@ -1696,8 +1699,6 @@ def simulate_match_with_decks(
             # "als deze kaart deze match MC verloor" hebben de hele match nodig.
             if c.get("targeted_by_debuff"):
                 c["_ever_debuffed"] = True
-            if c.get("lost_mc_this_phase"):
-                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
             c["targeted_by_debuff"] = False
             c["lost_mc_this_phase"] = 0
@@ -1724,8 +1725,6 @@ def simulate_match_with_decks(
         for c in deck1 + deck2:
             if c.get("targeted_by_debuff"):
                 c["_ever_debuffed"] = True
-            if c.get("lost_mc_this_phase"):
-                c["_mc_lost_total"] = c.get("_mc_lost_total", 0) + abs(c["lost_mc_this_phase"])
 
             # MC kan nooit onder nul. Dat gold altijd al, maar het omleiden van
             # effecten kan een klap die op de hoogste kaart berekend was op een

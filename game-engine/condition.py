@@ -5,6 +5,45 @@ from constants import RARITY_ORDER
 from action import check_lost_mc_due_to_effect
 from utils import log_event, pretty_log, CardLogGroup, maybe_reflect_first_debuff
 
+# De kaartteksten gebruiken andere namen dan de tags in de data. "Ape" is hoe de
+# DAK-factie (Defi Ape Kings) in de teksten heet; er bestaat geen tag "Ape".
+TAG_ALIASSEN = {
+    "ape": "DAK",
+    "apes": "DAK",
+    "monster": "Crazzzy Monsters",
+    "monsters": "Crazzzy Monsters",
+    "robot": "Reckless Robots",
+    "robots": "Reckless Robots",
+}
+
+
+def los_tag_op(naam, kaarten):
+    """Vertaalt een tagnaam uit een kaarttekst naar de tag zoals die in de data staat."""
+    if not naam:
+        return naam
+    schoon = str(naam).strip()
+    bestaande = {str(t) for k in (kaarten or []) if isinstance(k, dict) for t in (k.get("tags") or [])}
+    if schoon in bestaande:
+        return schoon
+    for t in bestaande:
+        if t.lower() == schoon.lower():
+            return t
+    return TAG_ALIASSEN.get(schoon.lower(), schoon)
+
+
+def heeft_tag(kaart, naam):
+    if not isinstance(kaart, dict):
+        return False
+    doel = str(naam or "").strip().lower()
+    if not doel:
+        return False
+    tags = [str(t).strip().lower() for t in (kaart.get("tags") or [])]
+    if doel in tags:
+        return True
+    alias = TAG_ALIASSEN.get(doel)
+    return bool(alias) and alias.strip().lower() in tags
+
+
 def log_condition(context, log, card, condition_type, result, details=""):
     """
     Standardized logging for condition checks.
@@ -124,19 +163,18 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return condition_value in card.get("tags", [])
 
     elif condition_type == "tag_on_field":
-        # Expected format: "Nova ≥ 2"
-        parts = condition_value.split()
+        # "Nova ≥ 2", maar ook een kale tagnaam. Let op: de kaarttekst kan een
+        # andere naam gebruiken dan de data — "Ape" is de tag "DAK".
+        parts = str(condition_value or "").split()
         if len(parts) == 3:
             tag, operator, amount = parts
-            count = sum(1 for c in deck if tag in c.get("tags", []))
+            count = sum(1 for c in deck if heeft_tag(c, tag))
             try:
                 return eval(f"{count} {operator} {int(amount)}")
-            except:
+            except Exception:
                 return False
-        else:
-            # Invalid format — maybe just check tag presence
-            tag = parts[0]
-            return any(tag in c.get("tags", []) for c in deck)
+        tag = parts[0] if parts else ""
+        return any(heeft_tag(c, tag) for c in deck)
 
     elif condition_type == "deck_tag":
         return any(condition_value in c.get("tags", []) for c in deck)
@@ -320,6 +358,15 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
             if cid and cid not in seen_ids:
                 valid_targets.append(proj)
                 seen_ids.add(cid)
+
+        # De BTD-bijhouding hierboven wordt alleen gevuld vanuit track_mc_change,
+        # en daar loopt maar een vijfde van de schade langs. De kaart zelf houdt
+        # het verlies wél op elk pad bij, dus die gebruiken we als achtervang.
+        if not valid_targets:
+            veld = list(getattr(player, "field", None) or field or [])
+            valid_targets = [c for c in veld
+                             if isinstance(c, dict) and c.get("card_type") == "Project"
+                             and not c.get("destroyed") and c.get("_mc_lost_total")]
 
         if valid_targets:
             context["lost_mc_due_to_effect_targets"] = valid_targets
@@ -506,7 +553,12 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return result
 
     
-    elif condition_type == "own_project_loses_mc":
+    elif condition_type in ("own_project_loses_mc", "own_project_lost_mc"):
+        # Twee schrijfwijzen, tegenwoordige en verleden tijd. Alleen de eerste
+        # stond hier; COC_FFS_Founder_C1 gebruikt de tweede en viel daardoor door
+        # naar het afsluitende return False — terwijl de reden-functie in
+        # match_simulator.py wél "Condition met" meldde. Vandaar dat de kaart
+        # werd overgeslagen met de melding dat de voorwaarde gehaald was.
         # De kaart zegt "elke keer dat een van je Projects MC verliest", dus over
         # de hele match. Alleen naar deze fase kijken maakte hem onbruikbaar:
         # het effect staat in de Counter-fase terwijl het verlies in Debuff valt.
@@ -974,7 +1026,13 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     elif condition_type == "has_card_type":
         if field is None:
             field = deck
-        return any(c.get("card_type", "").lower() == condition_value.lower() for c in field)
+        gezocht = str(condition_value or "").lower()
+        if any(c.get("card_type", "").lower() == gezocht for c in field):
+            return True
+        # De kaarttypes zijn Project, Support en Founder. "Event" is geen type
+        # maar een tag, dus zoeken we daar ook op — anders kon COC_Clove_Founder_R1
+        # ("als je deck een Event bevat") nooit afvuren.
+        return any(heeft_tag(c, gezocht) for c in field)
 
     
     elif condition_type == "not_has_tag":
@@ -1419,16 +1477,19 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
         
     elif condition_type == "count_tag":
-        # Format: "TagName", or "TagName:>=2", or "TagName:==3"
-        parts = condition_value.split(":")
-        tag = parts[0].strip()
-        comparator = ">0" if len(parts) == 1 else parts[1].strip()
+        # "TagName", "TagName:>=2", maar ook "Lunar>=3" zonder dubbele punt.
+        # Die laatste vorm werd eerder in zijn geheel als tagnaam gelezen, dus
+        # er werd gezocht naar een tag die letterlijk "Lunar>=3" heet.
+        rauw = str(condition_value or "").replace("≥", ">=").replace("≤", "<=")
+        m = re.match(r"\s*([^:><=]+?)\s*[:]?\s*((?:>=|<=|==|>|<)\s*\d+)?\s*$", rauw)
+        tag = (m.group(1).strip() if m and m.group(1) else rauw.strip())
+        comparator = (m.group(2).replace(" ", "") if m and m.group(2) else ">0")
 
         count = 0
         for card in player.field + opponent_field:
             if not isinstance(card, dict):
                 continue
-            if tag in card.get("tags", []):
+            if heeft_tag(card, tag):
                 count += 1
 
         try:

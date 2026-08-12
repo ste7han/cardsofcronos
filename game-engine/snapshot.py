@@ -25,12 +25,20 @@ CARDS = json.load(open("COC_Cards_parsed.json", encoding="utf-8"))
 BY_TYPE = {t: [c["card_id"] for c in CARDS if c["card_type"] == t]
            for t in ("Project", "Support", "Founder")}
 
-# Kaarten waarvan het gedrag juist wél mag veranderen: passieve schilden.
+# Kaarten waarvan het gedrag juist wél mag veranderen door de lopende wijziging:
+# passieve schilden, plus alles wat afhangt van "heeft een kaart MC verloren" —
+# dat wordt nu op elk pad bijgehouden in plaats van alleen in track_mc_change.
+_ACTIES = ("limit_loss", "reduce_debuff_percentage", "reflect", "reflect_and_amplify",
+           "prevent_destruction", "override_mc_value", "redirect", "negate")
+_VOORWAARDEN = ("own_project_lost_mc", "own_project_loses_mc", "lost_mc_due_to_effect",
+                "cards_lost_mc", "own_projects_lost_mc", "any_project_takes_damage",
+                "hit_by_debuff", "loses_mc_from_effect", "causes_mc_loss", "self_debuffed",
+                "own_mc_loss_count", "own_debuffed_count", "tag_on_field", "has_card_type",
+                "count_tag", "first_debuff_hit")
 SCHILDEN = {c["card_id"] for c in CARDS
             for e in (c.get("parsed_power") or [])
-            if str(e.get("action_type") or "") in
-            ("limit_loss", "reduce_debuff_percentage", "reflect", "reflect_and_amplify",
-             "prevent_destruction", "override_mc_value", "redirect", "negate")}
+            if str(e.get("action_type") or "") in _ACTIES
+            or str(e.get("condition_type") or "") in _VOORWAARDEN}
 
 
 def deck(rng):
