@@ -602,5 +602,170 @@ def get_targets(
         pool = [c for c in opponent_field if c.get("card_type") == "Project" and not c.get("destroyed")]
         return random.sample(pool, min(2, len(pool))) if pool else []
 
+    # =========================================================================
+    # Doelsoorten die eerder ontbraken.
+    #
+    # Een onbekend target_type kwam hier terecht en gaf een lege lijst, waarna
+    # de engine "skipped — no valid targets" logde en de kaart niets deed. Een
+    # audit vond 41 van zulke waarden, samen goed voor 42 kaarten.
+    # =========================================================================
+
+    def _levend(cs):
+        return [c for c in cs if isinstance(c, dict) and not c.get("destroyed")]
+
+    def _proj(cs):
+        return [c for c in _levend(cs) if c.get("card_type") == "Project"]
+
+    def _kapot(cs):
+        return [c for c in cs if isinstance(c, dict) and c.get("destroyed")]
+
+    def _met_tag(cs, *namen):
+        """Tags heten in de data anders dan in de kaartteksten: 'Ape' is DAK,
+        'Monster' is Crazzzy Monsters. Daarom op deel-overeenkomst matchen."""
+        uit = []
+        for c in cs:
+            tags = " ".join(str(t) for t in (c.get("tags") or [])).lower()
+            naam = str(c.get("card_id", "")).lower()
+            if any(n.lower() in tags or n.lower() in naam for n in namen):
+                uit.append(c)
+        return uit
+
+    def _hoogste(cs):
+        p = _proj(cs)
+        return [max(p, key=lambda c: c.get("current_mc", 0))] if p else []
+
+    def _laagste(cs):
+        p = _proj(cs)
+        return [min(p, key=lambda c: c.get("current_mc", 0))] if p else []
+
+    def _willekeurig(cs, n=1):
+        p = _proj(cs)
+        return random.sample(p, min(n, len(p))) if p else []
+
+    eigen_proj = _proj(field)
+    vijand_proj = _proj(opponent_field)
+
+    # --- alles van jezelf ---------------------------------------------------
+    if tt in ("all_own", "own_projects", "surviving", "all_survivors",
+              "all_surviving_friendly_projects", "all_remaining"):
+        return eigen_proj
+
+    if tt == "others":
+        return [c for c in eigen_proj if c is not source_card]
+
+    if tt == "all_friendly_projects_below_mc":
+        try:
+            grens = float(effect.get("condition_value") or 10)
+        except Exception:
+            grens = 10.0
+        return [c for c in eigen_proj if c.get("current_mc", 0) <= grens]
+
+    if tt in ("highest", "highest_own"):
+        return _hoogste(field)
+
+    if tt in ("random_surviving_project", "random_survivor"):
+        return _willekeurig(field, 1)
+
+    if tt in ("random_own_2", "random_two_own_projects", "random_2_survivors"):
+        return _willekeurig(field, 2)
+
+    if tt == "highest_lowest":
+        hoog, laag = _hoogste(field), _laagste(field)
+        if hoog and laag and hoog[0] is not laag[0]:
+            return [hoog[0], laag[0]]
+        return []
+
+    if tt == "random_destroyed":
+        kapot = _kapot(field)
+        return [random.choice(kapot)] if kapot else []
+
+    # --- op tag of rarity ---------------------------------------------------
+    if tt == "remaining_machine":
+        return _met_tag(eigen_proj, "machine")
+
+    if tt == "all_machine_except_self":
+        return [c for c in _met_tag(_proj(field) + _proj(opponent_field), "machine") if c is not source_card]
+
+    if tt == "remaining_nova":
+        return _met_tag(eigen_proj, "nova")
+
+    if tt == "all_monster_tagged":
+        return _met_tag(eigen_proj, "monster", "crazzzy")
+
+    if tt == "meme_tagged":
+        return _met_tag(_levend(field), "meme")
+
+    if tt == "all_legendary_projects":
+        return [c for c in eigen_proj if str(c.get("rarity", "")).lower() == "legendary"]
+
+    if tt == "lowest_friendly_ape":
+        apen = _met_tag(eigen_proj, "ape", "dak")
+        return [min(apen, key=lambda c: c.get("current_mc", 0))] if apen else []
+
+    if tt == "double_effect":
+        nova = _met_tag(eigen_proj, "nova")
+        return [random.choice(nova)] if nova else []
+
+    # --- de tegenstander ----------------------------------------------------
+    if tt in ("all_enemy", "each_opponent_project"):
+        return vijand_proj
+
+    if tt == "enemy_lowest":
+        return _laagste(opponent_field)
+
+    if tt == "enemy_highest_mc":
+        return _hoogste(opponent_field)
+
+    if tt == "enemy_founder":
+        founders = [c for c in _levend(opponent_field) if c.get("card_type") == "Founder"]
+        return founders[:1]
+
+    if tt == "random_common_enemy":
+        pool = [c for c in vijand_proj if str(c.get("rarity", "")).lower() == "common"]
+        return [random.choice(pool)] if pool else []
+
+    if tt == "random_enemy_survivor":
+        return _willekeurig(opponent_field, 1)
+
+    if tt == "random_project":
+        beide = eigen_proj + vijand_proj
+        return [random.choice(beide)] if beide else []
+
+    # --- beide kanten / samengesteld ---------------------------------------
+    if tt == "target":
+        beide = eigen_proj + vijand_proj
+        return [max(beide, key=lambda c: c.get("current_mc", 0))] if beide else []
+
+    if tt == "enemy_highest_vs_own_lowest":
+        hoog, laag = _hoogste(opponent_field), _laagste(field)
+        return (hoog + laag) if (hoog and laag) else []
+
+    if tt == "random_enemy + lowest_own":
+        return _willekeurig(opponent_field, 1) + _laagste(field)
+
+    if tt == "random_2_enemy + self":
+        return _willekeurig(opponent_field, 2) + ([source_card] if source_card else [])
+
+    # --- de kaart die de eerste debuff veroorzaakte -------------------------
+    if tt in ("attacker", "original_debuff_source"):
+        data = getattr(player, "first_debuff_data", None) or {}
+        bron = data.get("source_card") if isinstance(data, dict) else None
+        if isinstance(bron, dict):
+            return [bron]
+        return vijand_proj[:1]
+
+    if tt == "one_project":
+        # "de eerste debuff die een van je Projects raakt": bij voorkeur de kaart
+        # die geraakt werd, anders gewoon een eigen Project.
+        data = getattr(player, "first_debuff_data", None) or {}
+        doel = data.get("target") if isinstance(data, dict) else None
+        if isinstance(doel, dict):
+            return [doel]
+        return eigen_proj[:1]
+
+    if tt == "none":
+        # Geen los doel: de actie werkt op de bronkaart zelf.
+        return [source_card] if source_card else []
+
     # ✅ Safety: always return a list
     return [t for t in targets if t is not None]

@@ -316,3 +316,45 @@ De overige 15 stranden niet meer op de voorwaarde maar op de laag erna:
 Dezelfde soort fout zit in `targeting.py`: **42 `target_type`-waarden komen in de
 kaartdata voor maar niet in de engine**, samen goed voor circa 43 kaarten. Een
 onbekend doel geeft "no valid targets" en de kaart doet niets.
+
+---
+
+## Vervolg 2: 41 ontbrekende target_types geïmplementeerd
+
+Dezelfde fout zat in `targeting.py`: een onbekend `target_type` gaf een lege lijst,
+waarna de engine "skipped — no valid targets" logde en de kaart niets deed.
+41 waarden uit de kaartdata ontbraken, samen goed voor 42 kaarten.
+
+Toegevoegd: `all_own`, `own_projects`, `others`, `surviving`, `all_survivors`,
+`all_surviving_friendly_projects`, `all_remaining`, `all_friendly_projects_below_mc`,
+`highest`, `highest_own`, `highest_lowest`, `random_surviving_project`,
+`random_survivor`, `random_own_2`, `random_two_own_projects`, `random_2_survivors`,
+`random_destroyed`, `remaining_machine`, `all_machine_except_self`, `remaining_nova`,
+`all_monster_tagged`, `meme_tagged`, `all_legendary_projects`, `lowest_friendly_ape`,
+`double_effect`, `all_enemy`, `each_opponent_project`, `enemy_lowest`,
+`enemy_highest_mc`, `enemy_founder`, `random_common_enemy`, `random_enemy_survivor`,
+`random_project`, `target`, `enemy_highest_vs_own_lowest`, `random_enemy + lowest_own`,
+`random_2_enemy + self`, `attacker`, `original_debuff_source`, `one_project`, `none`.
+
+De tags in de data heten anders dan in de kaartteksten — "Ape" is de tag `DAK`,
+"Monster" is `Crazzzy Monsters` — dus de selectors matchen op deel-overeenkomst.
+
+## Stand na beide reparatierondes
+
+| | voor | na |
+|---|---|---|
+| kaarten die de uitslag beïnvloeden | 107 | **143** |
+| kaarten die aantoonbaar niets doen | 110 | **66** |
+
+Invarianten, determinisme en de engine-testsuite blijven schoon.
+
+Wel een neveneffect: het positievoordeel van speler 2 is toegenomen van 4,4 naar
+7,3 procentpunt in spiegelmatches. Dat is logisch — nu meer kaarten daadwerkelijk
+iets doen, weegt het voordeel van als tweede handelen zwaarder. Die scheefheid
+staat los van de kaarten en zit in de fasevolgorde.
+
+## Wat er nog ligt: de actielaag
+
+De resterende 18 kaarten stranden op ontbrekende acties, niet op voorwaarden of
+doelen: `redirect` (2x), `revive_half_mc`, `destroy_and_gain`, `destroy_and_steal`,
+`reflect`, `disable`. De rest heeft een voorwaarde die klopt maar zeldzaam is.

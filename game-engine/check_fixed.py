@@ -14,12 +14,19 @@ BY = {c["card_id"]: c for c in CARDS}
 BT = {t: [c["card_id"] for c in CARDS if c["card_type"] == t] for t in ("Project", "Support", "Founder")}
 
 DOEL = """COC_Clove_R2 COC_CF_R1 COC_CF_R3 COC_CF_E2 COC_CF_Founder_E1 COC_Wolfswap_C2
-COC_Wolfswap_Founder_E1 COC_Wolfswap_Founder_L1 COC_Wolfswap_Founder_M1 COC_RR_L1
+COC_Wolfswap_Founder_E1 COC_Wolfswap_Founder_M1 COC_RR_L1
 COC_RR_Founder_C1 COC_RR_Founder_E1 COC_RR_Founder_M1 COC_Howlers_C2 COC_Howlers_Founder_R1
 COC_Howlers_Founder_E1 COC_Howlers_Founder_M1 COC_FFS_R1 COC_FFS_E1 COC_FFS_Founder_R1
 COC_FFS_Founder_E1 COC_CM_Founder_R1 COC_Nova_R2 COC_Cr00ts_R3 COC_Cr00ts_Founder_L1
 COC_CAW777_C3 COC_CAW777_R1 COC_CAW777_E1 COC_CAW777_Founder_L1 COC_CAW777_Founder_M1
-COC_DAK_M1 COC_INF_21Million_M1 COC_Wolfswap_R3 COC_Wolfswap_Founder_R1 COC_DAK_C1""".split()
+COC_DAK_M1 COC_INF_21Million_M1 COC_Wolfswap_R3 COC_Wolfswap_Founder_R1 COC_DAK_C1
+COC_Lionel_E2 COC_DAK_Founder_E1 COC_Clove_Founder_C1 COC_CF_M1 COC_CF_Founder_R1
+COC_CF_Founder_M1 COC_Wolfswap_Founder_C1 COC_RR_R2 COC_RR_Founder_R1 COC_RR_Founder_L1
+COC_Howlers_R3 COC_CM_M1 COC_CM_Founder_E1 COC_CM_Founder_L1 COC_Nova_M1
+COC_Nova_Founder_E1 COC_Nova_Founder_L1 COC_Cr00ts_E2 COC_Cr00ts_M1 COC_Cr00ts_Founder_R1
+COC_Cr00ts_Founder_M1 COC_Lionel_Founder_L1 COC_Lionel_Founder_M1 COC_CAW777_R2
+COC_DAK_Founder_C1 COC_DAK_Founder_L1 COC_EVT_Market_Whisper COC_EVT_FOMO
+COC_INF_Francis_E1 COC_INF_21Million_L1 COC_COM_Vinz_L1 COC_FFS_Founder_M1""".split()
 
 
 def factie(cid):
