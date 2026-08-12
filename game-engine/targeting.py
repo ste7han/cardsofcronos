@@ -149,6 +149,11 @@ def _pas_onderschepping_toe(gekozen, player, opponent, self_deck, opponent_deck,
     if not gekozen:
         return gekozen
 
+    # Alleen vijandelijke effecten worden onderschept. Zonder deze grens landde
+    # het eigen schild van Clove_M1 op de omleidingskaart in plaats van op de
+    # kaart zelf: een speler leidt zijn eigen beschermende effecten niet om.
+    bron_eigenaar = (source_card or {}).get("owner") if isinstance(source_card, dict) else None
+
     velden = []
     for speler, veld in ((player, self_deck), (opponent, opponent_deck)):
         velden.append((getattr(speler, "name", None),
@@ -161,6 +166,10 @@ def _pas_onderschepping_toe(gekozen, player, opponent, self_deck, opponent_deck,
             continue
 
         huidig = t
+        if bron_eigenaar is not None and t.get("owner") == bron_eigenaar:
+            uit.append(huidig)
+            continue
+
         for naam, veld in velden:
             if naam is not None and t.get("owner") != naam:
                 continue

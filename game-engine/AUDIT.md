@@ -489,3 +489,11 @@ schild dekt dus ongeveer een vijfde van de schadepaden. Alles daarlangs routeren
 is een refactor met echt regressierisico, geen losse toevoeging.
 
 `COC_Lionel_Founder_E1` wacht op de actie `negate`.
+
+### Nog een vangst, uit de live-test
+
+De eerste versie van de omleiding pakte élk effect dat op het hoogste Project
+mikte — ook de beschermende effecten van de speler zelf. In productie landde het
+verliesplafond van `COC_Clove_M1` daardoor op `COC_Wolfswap_R3`. De omleiding
+geldt nu alleen voor effecten van de tegenstander. Geverifieerd over 30 matches:
+het schild komt 30 van de 30 keer op de juiste kaart terecht.
