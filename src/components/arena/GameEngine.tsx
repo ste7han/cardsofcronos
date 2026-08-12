@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { parseBattleLine } from './battleLog';
 
 // --- TYPES ---
 export interface Card {
@@ -16,8 +17,6 @@ export type Perspective = 'p1' | 'p2';
 
 // --- HELPERS ---
 const getCardImage = (cardId: string) => `/NFTCARDS/${cardId.trim().replace(/\s+/g, '_')}.png`;
-
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // De Python-engine logt per fase een autoritatieve stand (match_simulator.py:1599
 // en :1574). Die lezen we liever dan dat we kaartwaarden uit proza optellen.
@@ -46,7 +45,9 @@ const RollingNumber = ({ value }: { value: number }) => {
 // --- COMPONENT: BATTLE CARD ---
 export const BattleCard = ({ card, activeType, lastChange }: { card: Card | undefined, activeType: string | null, lastChange: number | null }) => {
   const [imgError, setImgError] = useState(false);
-  const cardStyle = { width: '120px', height: '210px' };
+  // Afmeting via CSS-variabelen, zodat het bord op een telefoon in beeld past
+  // zonder dat je horizontaal moet scrollen. Zie GlobalStyles.
+  const cardStyle = { width: 'var(--coc-card-w)', height: 'var(--coc-card-h)' };
 
   if (!card) return <div style={cardStyle} className="bg-white/5 rounded-xl border border-dashed border-white/10" />;
 
@@ -78,7 +79,7 @@ export const BattleCard = ({ card, activeType, lastChange }: { card: Card | unde
             initial={{ opacity: 0, y: 0, scale: 0.5 }}
             animate={{ opacity: 1, y: -100, scale: 1.5 }}
             exit={{ opacity: 0 }}
-            className={`absolute inset-x-0 -top-10 text-center text-4xl font-black z-[999] pointer-events-none drop-shadow-[0_4px_4px_rgba(0,0,0,1)] ${lastChange > 0 ? 'text-green-400' : 'text-red-500'}`}
+            className={`absolute inset-x-0 -top-6 md:-top-10 text-center text-2xl md:text-4xl font-black z-[999] pointer-events-none drop-shadow-[0_4px_4px_rgba(0,0,0,1)] ${lastChange > 0 ? 'text-green-400' : 'text-red-500'}`}
           >
             {lastChange > 0 ? `+${lastChange.toFixed(0)}` : lastChange.toFixed(0)}
           </motion.div>
@@ -87,7 +88,7 @@ export const BattleCard = ({ card, activeType, lastChange }: { card: Card | unde
       <div className="w-full h-full bg-black rounded-xl border border-white/10 overflow-hidden flex flex-col shadow-2xl relative">
         <div className="relative flex-1 bg-black overflow-hidden">
           {!imgError ? (<img src={getCardImage(card.card_id)} alt={card.card_id} className="w-full h-full object-cover" onError={() => setImgError(true)} />) : (<div className="w-full h-full flex items-center justify-center bg-gray-900 text-[8px] text-gray-600 text-center p-2 uppercase italic">{card.card_id.replace('COC_','')}</div>)}
-          {!card.destroyed && card.card_type === 'Project' && <div className="absolute bottom-1 right-1 bg-blue-600 px-1.5 py-0.5 rounded text-[12px] font-black text-white border border-white/20 shadow-lg"><RollingNumber value={card.current_mc} /></div>}
+          {!card.destroyed && card.card_type === 'Project' && <div className="absolute bottom-0.5 right-0.5 md:bottom-1 md:right-1 bg-blue-600 px-1 md:px-1.5 py-0.5 rounded text-[10px] md:text-[12px] font-black text-white border border-white/20 shadow-lg"><RollingNumber value={card.current_mc} /></div>}
         </div>
         <div className="bg-black py-1 text-center border-t border-white/10"><p className="text-[6px] md:text-[8px] font-black text-gray-500 truncate uppercase px-1">{card.card_id.replace('COC_', '').replace('_', ' ')}</p></div>
       </div>
@@ -137,6 +138,12 @@ export const BattleResult = ({ result, score1, score2, onBack, onLog, onShare, p
 // --- STYLES (buiten de component, anders remount de <style> bij elke render) ---
 const GlobalStyles = () => (
   <style jsx global>{`
+    /* Kaartformaat centraal, zodat het hele bord op een telefoon past.
+       Bij 64px breed is een rij van 5 plus tussenruimtes ~344px — dat past
+       binnen een scherm van 390px, dus geen horizontaal geschuif meer. */
+    :root { --coc-card-w: 64px; --coc-card-h: 112px; }
+    @media (min-width: 768px) { :root { --coc-card-w: 120px; --coc-card-h: 210px; } }
+
     @keyframes shake-hard { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-3px, -2px) rotate(-1deg); } 50% { transform: translate(3px, 2px) rotate(1deg); } 75% { transform: translate(-1px, 1px) rotate(0deg); } 100% { transform: translate(0, 0) rotate(0); } }
     .animate-shake-hard { animation: shake-hard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
   `}</style>
@@ -156,14 +163,16 @@ const Formation = ({ cards, isPlayer, activeActions, lastChanges }: {
   const backRow = isPlayer ? supports : projects;
 
   return (
-    <div className="flex flex-row items-center justify-center gap-12 w-full min-w-[1000px] px-10 relative z-10">
+    // Op een telefoon staat de Founder bóven de rijen in plaats van ernaast:
+    // naast elkaar past het niet en werd je gedwongen horizontaal te scrollen.
+    <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-12 w-full md:min-w-[1000px] px-2 md:px-10 relative z-10">
       <div className="flex flex-col items-center">
         <BattleCard card={founder} activeType={activeActions[founder?.card_id || ""]} lastChange={lastChanges[founder?.card_id || ""] ?? null} />
-        <p className={`text-[10px] font-black mt-3 uppercase tracking-widest ${isPlayer ? 'text-blue-500' : 'text-red-500'}`}>Leader</p>
+        <p className={`text-[9px] md:text-[10px] font-black mt-1 md:mt-3 uppercase tracking-widest ${isPlayer ? 'text-blue-500' : 'text-red-500'}`}>Leader</p>
       </div>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-row gap-4">{frontRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
-        <div className="flex flex-row gap-4">{backRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
+      <div className="flex flex-col gap-2 md:gap-6">
+        <div className="flex flex-row gap-1.5 md:gap-4">{frontRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
+        <div className="flex flex-row gap-1.5 md:gap-4">{backRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
       </div>
     </div>
   );
@@ -200,6 +209,17 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
     finishedRef.current = true;
     setIsFinished(true);
     onFinishRef.current(s1, s2);
+  }, []);
+
+  // De gloed en de zwevende getallen worden gezet door een timer van 50ms, die
+  // gepland wordt in dezelfde tick waarin ook currentStep opschuift. Ruim je die
+  // timer op bij het wisselen van stap, dan wist de effect-cleanup hem voordat
+  // hij ooit afgaat — en verdwijnen alle visuele effecten. Deze timers horen
+  // dus bij de component, niet bij de stap: alleen opruimen bij unmount.
+  const visualTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => {
+    visualTimers.current.forEach(clearTimeout);
+    visualTimers.current = [];
   }, []);
 
   // Een identiek Firestore-snapshot levert een nieuw object op. Zonder stabiele
@@ -242,10 +262,7 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
   useEffect(() => {
     if (isFinished) return;
 
-    // Alle timers van deze stap, zodat ook de geneste opgeruimd worden.
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
-    timers.push(setTimeout(() => {
+    const stepTimer = setTimeout(() => {
       if (currentStep >= eventQueue.length) return;
       const log = eventQueue[currentStep];
 
@@ -253,7 +270,9 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
         setAnnouncerText("Match Concluded.");
         setActiveActions({});
         setLiveScores(serverScores);
-        timers.push(setTimeout(() => finish(serverScores.p1, serverScores.p2), 1000 / speedMultiplier));
+        visualTimers.current.push(
+          setTimeout(() => finish(serverScores.p1, serverScores.p2), 1000 / speedMultiplier)
+        );
         return;
       }
 
@@ -269,53 +288,31 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
         if (Number.isFinite(value)) setLiveScores(prev => ({ ...prev, [side]: value }));
       }
 
-      // 2. Kaartanimaties afleiden uit de regel.
-      const cardMatches = log.match(/COC_\w+/g);
-      if (cardMatches) {
-        const l = log.toLowerCase();
-        const actingId = cardMatches[0];
-        const targetId = cardMatches[cardMatches.length - 1];
-        const isDestroy = /destroy|rejected/.test(l);
-
-        let targetType = "acting";
-        if (isDestroy || /hit|damage|reduc|stole|steal|lost|burn/.test(l)) targetType = "debuff";
-        else if (/buff|boost|gain|heal|increase/.test(l)) targetType = "buff";
-
-        const newActions: Record<string, string> = {};
-        if (actingId !== targetId) newActions[actingId] = "acting";
-        newActions[targetId] = targetType;
-
-        // Pak het bedrag dat bij de DOELKAART hoort; anders het eerste bedrag met
-        // een MC-suffix. Decimalen en negatieve waarden horen er allebei bij.
-        const newChanges: Record<string, number> = {};
-        if (!isDestroy) {
-          const delta =
-            log.match(new RegExp(`${escapeRegExp(targetId)}[^0-9+-]*([-+]\\d+(?:\\.\\d+)?)`)) ||
-            log.match(/([-+]\d+(?:\.\d+)?)\s*MC/);
-          const value = delta ? parseFloat(delta[1]) : NaN;
-          if (Number.isFinite(value) && value !== 0) newChanges[targetId] = value;
-        }
-
-        timers.push(setTimeout(() => { setActiveActions(newActions); setLastChanges(newChanges); }, 50));
+      // 2. Kaartanimaties uit de regel lezen (zie battleLog.ts).
+      const parsed = parseBattleLine(log);
+      if (Object.keys(parsed.glow).length > 0) {
+        // Even resetten en dan pas zetten, zodat AnimatePresence het schadegetal
+        // opnieuw animeert ook als dezelfde kaart twee keer op rij geraakt wordt.
+        visualTimers.current.push(setTimeout(() => {
+          setActiveActions(parsed.glow);
+          setLastChanges(parsed.deltas);
+        }, 50));
 
         // Beide spelers mogen dezelfde kaart spelen. Noemt de regel expliciet een
         // eigenaar ("Player 2's COC_X"), dan raken we alleen die kant aan.
-        const ownerInLine = (id: string) => {
-          const m = log.match(new RegExp(`Player\\s+([12])['’]s\\s+${escapeRegExp(id)}`));
-          return m ? `Player ${m[1]}` : null;
-        };
-
         const applyTo = (prev: Card[], side: string) => prev.map(c => {
-          if (!newActions[c.card_id]) return c;
-          const stated = ownerInLine(c.card_id);
+          if (!parsed.glow[c.card_id]) return c;
+          const stated = parsed.ownerOf[c.card_id];
           if (stated && stated !== side) return c;
 
-          if (isDestroy && c.card_id === targetId) return { ...c, destroyed: true, current_mc: 0 };
+          if (parsed.destroyedId === c.card_id) return { ...c, destroyed: true, current_mc: 0 };
 
-          // "… → 12.5" is de exacte nieuwe waarde die de engine logt.
-          const precise = log.match(new RegExp(`${escapeRegExp(c.card_id)}[^→]*→\\s*(-?\\d+(?:\\.\\d+)?)`));
-          if (precise) return { ...c, current_mc: parseFloat(precise[1]) };
-          if (newChanges[c.card_id]) return { ...c, current_mc: Math.max(0, c.current_mc + newChanges[c.card_id]) };
+          const exact = parsed.values[c.card_id];
+          if (exact !== undefined) return { ...c, current_mc: exact };
+
+          const delta = parsed.deltas[c.card_id];
+          if (delta !== undefined) return { ...c, current_mc: Math.max(0, c.current_mc + delta) };
+
           return c;
         });
 
@@ -324,9 +321,9 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
       }
 
       setCurrentStep(step => step + 1);
-    }, 2500 / speedMultiplier));
+    }, 2500 / speedMultiplier);
 
-    return () => timers.forEach(clearTimeout);
+    return () => clearTimeout(stepTimer);
   }, [currentStep, eventQueue, isFinished, speedMultiplier, serverScores, finish]);
 
   const skipToEnd = () => {
@@ -347,19 +344,19 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
   const theirScore = perspective === 'p2' ? liveScores.p1 : liveScores.p2;
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen py-10 relative overflow-x-auto overflow-y-hidden bg-[#050505]">
+    <div className="flex flex-col items-center w-full min-h-screen py-4 md:py-10 relative overflow-x-hidden bg-[#050505]">
       <GlobalStyles />
       <div className="absolute inset-0 z-0"><div className="absolute inset-0 bg-cover bg-center opacity-40 brightness-[0.2]" style={{ backgroundImage: "url('/table.jpeg')" }}></div><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_20%,_black_95%)]"></div></div>
       <div className="relative z-10 w-full flex flex-col items-center">
         <div className="mb-4 animate-in fade-in duration-500"><Formation cards={theirCards} isPlayer={false} activeActions={activeActions} lastChanges={lastChanges} /></div>
         <div className="w-full max-w-5xl relative z-50 my-6 flex flex-col items-center">
           <div className="w-full bg-black/90 backdrop-blur-2xl py-6 px-4 relative overflow-hidden rounded-[2.5rem] border border-amber-500/20 shadow-[0_0_40px_rgba(251,191,36,0.15)]">
-            <div className="flex justify-between w-full px-12 md:px-24 mb-4 relative z-10">
+            <div className="flex justify-between w-full px-4 md:px-24 mb-4 relative z-10">
               <div className="flex flex-col items-start"><span className="text-[10px] text-blue-500 font-black tracking-[0.3em] mb-1 uppercase">You</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={myScore} /></div></div>
               <div className="flex flex-col items-center justify-center"><div className="px-4 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-[9px] font-black text-blue-400 tracking-[0.2em] mb-2 uppercase animate-pulse">Match Active</div><div className="text-gray-600 font-['Cinzel'] italic text-xl">VS</div></div>
               <div className="flex flex-col items-end"><span className="text-[10px] text-red-500 font-black tracking-[0.3em] mb-1 uppercase">{opponentLabel}</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={theirScore} /></div></div>
             </div>
-            <div className="relative flex items-center justify-center min-h-[3rem] px-8"><AnimatePresence mode="wait"><motion.p key={`${currentStep}-${announcerText}`} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-center text-lg md:text-xl font-['Spectral'] italic text-blue-100 leading-tight">{announcerText}</motion.p></AnimatePresence></div>
+            <div className="relative flex items-center justify-center min-h-[3.5rem] md:min-h-[3rem] px-3 md:px-8"><AnimatePresence mode="wait"><motion.p key={`${currentStep}-${announcerText}`} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-center text-sm md:text-xl font-['Spectral'] italic text-blue-100 leading-snug md:leading-tight">{announcerText}</motion.p></AnimatePresence></div>
             <div className="flex gap-6 mt-4 justify-center">
               <button onClick={() => setSpeedMultiplier(speedMultiplier === 1 ? 5 : 1)} className={`px-5 py-1.5 rounded-full text-[9px] font-black border transition-all ${speedMultiplier > 1 ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-transparent border-white/20 text-gray-400'}`}>{speedMultiplier > 1 ? '⚡ WARP SPEED' : '🐢 NORMAL TIME'}</button>
               <button onClick={skipToEnd} className="px-5 py-1.5 rounded-full text-[9px] font-black border border-white/10 text-gray-500 hover:text-white transition-all">SKIP TO END</button>
