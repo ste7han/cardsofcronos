@@ -45,7 +45,13 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "*.local"
+        "*.local",
+        "__pycache__",
+        "audit_*.py",
+        "test_*.py",
+        "check_fixed.py",
+        "AUDIT.md",
+        "last_match.json"
       ],
       "runtime": "python313"
     }
