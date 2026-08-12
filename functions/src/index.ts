@@ -2,7 +2,6 @@ import * as functions from "firebase-functions/v2";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { ethers } from "ethers";
-import { runMatchSimulation } from './simulator.js';
 
 // Modernere manier van initialiseren voor ESM
 if (getApps().length === 0) {
@@ -12,36 +11,14 @@ const db = getFirestore();
 
 // CONFIGURATIE
 const CROCARD_ADDRESS = "0xECf3361441512c1e9F6A6e8734D86614D8e795BC";
-const TOTAL_SUPPLY_CROCARD = 1000000000; 
+const TOTAL_SUPPLY_CROCARD = 1000000000;
 
-// --- DE NIEUWE BATTLE FUNCTIE ---
-export const startBattle = functions.https.onCall(async (request) => {
-    const { deckA, deckB, stake } = request.data;
-
-    // 1. Validatie
-    if (!deckA || !deckB || deckA.length !== 11 || deckB.length !== 11) {
-        throw new functions.https.HttpsError("invalid-argument", "Invalid decks. Must be 11 cards (5-5-1).");
-    }
-
-    // 2. Run de simulator
-    const result = runMatchSimulation(deckA, deckB);
-
-    // 3. Sla resultaat op in Database
-    const battleRef = await db.collection("matches").add({
-        player1: deckA[0].owner, 
-        player2: deckB[0].owner,
-        stake: stake,
-        winner: result.winner,
-        scores: result.finalScores,
-        timestamp: FieldValue.serverTimestamp() // AANGEPAST: Geen admin. meer nodig
-    });
-
-    return { 
-        battleId: battleRef.id,
-        ...result 
-    };
-});
-
+// Hier stond `startBattle`: een tweede, onvolledige TypeScript-implementatie van
+// het spel (simulator.ts/actions.ts/conditions.ts/targeting.ts). Niets riep hem
+// aan, maar hij werd wel gedeployed, en hij week af van de Python-engine:
+// een gelijkspel telde als winst voor speler 2, onbekende condities vuurden
+// juist wél af, en van de 77 action_types waren er 3 geïmplementeerd.
+// De echte engine is game-engine/ (start_battle_python + on_lobby_ready).
 
 // --- JE BESTAANDE CLAIM FUNCTIE ---
 const REWARDS = [

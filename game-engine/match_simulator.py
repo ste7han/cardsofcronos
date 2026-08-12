@@ -271,6 +271,18 @@ def _validate_5_5_1(deck, side_label: str):
             f"Got Projects={counts['Project']} Supports={counts['Support']} Founder={counts['Founder']}"
         )
 
+    # Alleen de types tellen liet vijf exemplaren van dezelfde topkaart door.
+    seen, duplicates = set(), set()
+    for c in deck:
+        cid = c.get("card_id")
+        if cid in seen:
+            duplicates.add(cid)
+        seen.add(cid)
+    if duplicates:
+        raise ValueError(
+            f"{side_label}: deck invalid — duplicate card(s): {', '.join(sorted(duplicates))}"
+        )
+
 def load_deck_from_ids(card_ids, all_cards, owner_name, *, strict=True):
     """
     Strictly build a deck from IDs. Supports 'COC_EVT_*'/'COC_INF_*'/'COC_COM_*'
@@ -833,27 +845,34 @@ def apply_phase(deck, opponent_deck, log, player_name, phase_name, player, oppon
         print("[DEBUG] Final MC last digits:",
               [(c["card_id"], int(float(c.get("current_mc", 0))) % 10, c.get("current_mc")) for c in pool])
 
-    non_reactions = []
-    reactions = []
     cr00ts_reactions = []
 
     # Step 1: Pre-detect Cr00ts in Debuff
+    # Beide decks scannen. Voorheen werd alleen `deck` bekeken en kreeg alleen
+    # `player` een snapshot, waardoor Player 2's exemplaar van dezelfde kaart
+    # zich anders gedroeg dan dat van Player 1.
     if phase_name == "Debuff":
-        player.original_mc_snapshot = {c["card_id"]: c.get("current_mc", 0) for c in player.field}
-        for card in deck:
-            if card.get("destroyed"):
-                continue
-            for effect in _effects_for_phase(card, "Debuff"):
-                if effect.get("condition_type") == "first_debuff_targeting_project":
-                    log.append(pretty_log("immune", "Cr00ts detected — waiting for first debuff"))
-                    cr00ts_reactions.append((card, effect, {
-                        "source_card": card,
-                        "field": player.field,
-                        "opponent_field": opponent.field,
-                        "player": player,
-                        "opponent": opponent,
-                        "effect": effect,
-                    }))
+        for owner_deck, owner_player, foe_player in (
+            (deck, player, opponent),
+            (opponent_deck, opponent, player),
+        ):
+            owner_player.original_mc_snapshot = {
+                c["card_id"]: c.get("current_mc", 0) for c in owner_player.field
+            }
+            for card in owner_deck:
+                if card.get("destroyed"):
+                    continue
+                for effect in _effects_for_phase(card, "Debuff"):
+                    if effect.get("condition_type") == "first_debuff_targeting_project":
+                        log.append(pretty_log("immune", "Cr00ts detected — waiting for first debuff", card))
+                        cr00ts_reactions.append((card, effect, {
+                            "source_card": card,
+                            "field": owner_player.field,
+                            "opponent_field": foe_player.field,
+                            "player": owner_player,
+                            "opponent": foe_player,
+                            "effect": effect,
+                        }, owner_player))
 
     # Step 2: Process BOTH players’ cards for this phase
     for current_deck, current_player, other_player in [
@@ -1116,117 +1135,23 @@ def apply_phase(deck, opponent_deck, log, player_name, phase_name, player, oppon
                 card["_handled_this_phase"] = True
                 break  # one effect per card per phase
 
-    # Step 2 finished — purge stale reactions
-    non_reactions = [(c, e, ctx) for c, e, ctx in non_reactions
-                     if not (c.get("_handled_this_phase") or c.get("_already_handled"))]
-    reactions = [(c, e, ctx) for c, e, ctx in reactions
-                 if not (c.get("_handled_this_phase") or c.get("_already_handled"))]
-
-    print("[DEBUG] End of Step 2 handled cards:",
-          [c["card_id"] for c in deck + opponent_deck if c.get("_handled_this_phase")])
-
-    # Step 3: (queues are empty in your current flow; keep structure)
-    if not non_reactions:
-        print("[DEBUG] No non-reactions to process this phase")
-    if not reactions:
-        print("[DEBUG] No reactions to process this phase")
-
-    for card, effect, context in non_reactions:
-        if card.get("_phase_triggered") or card.get("_already_handled"):
-            continue
-        action_type = effect.get("action_type")
-        if effect.get("condition_type") == "immediate":
-            if card.get("_immediate_triggered", False):
-                continue
-            card["_immediate_triggered"] = True
-        if card["card_id"] not in triggered_cards:
-            group = CardLogGroup(card, phase_name)
-            context["group"] = group
-            triggered_cards.add(card["card_id"])
-            card["_handled_this_phase"] = True
-            card["_already_handled"] = True
-            card["_phase_triggered"] = True
-            log.append(group.finalize())
-            context.pop("group", None)
-
-        targets = get_targets(
-            effect.get("target_type"),
-            opponent,
-            player,
-            card,
-            self_deck=opponent_deck,
-            opponent_deck=deck,
-            effect=effect,
-        )
-        context["targets"] = targets
-
-        for t in targets:
-            if t.get("card_type") == "Project" and not t.get("destroyed"):
-                if action_type in ["subtract_mc", "steal_mc", "destroy", "destroy_and_gain_mc"]:
-                    t["targeted_by_debuff"] = True
-                    if t.get("owner") == player.name:
-                        player.was_any_project_debuffed = True
-                    elif t.get("owner") == opponent.name:
-                        opponent.was_any_project_debuffed = True
-                    if not opponent.first_debuff_data:
-                        opponent.first_debuff_data = {"source_card": card, "effect": effect, "target": t, "player": opponent}
-                        log.append(pretty_log("immune", f"First debuff detected targeting {t['card_id']}", card))
-                        break
-
-        apply_action(card, action_type, effect.get("action_value"), opponent.name, log, context)
-
-    # Step 4: trigger Cr00ts after first debuff resolves
+    # Step 3: trigger Cr00ts after first debuff resolves
+    # Elke reactie kijkt naar de eerste debuff die de EIGENAAR van de kaart trof.
     if phase_name == "Debuff" and cr00ts_reactions:
-        if opponent.first_debuff_data:
-            for card, effect, context in cr00ts_reactions:
+        for card, effect, context, owner_player in cr00ts_reactions:
+            debuff = getattr(owner_player, "first_debuff_data", None)
+            if debuff:
                 log.append(pretty_log("immune", "triggers after first debuff detected (delayed reaction)", card))
-                context["targets"] = [opponent.first_debuff_data["source_card"]]
-                apply_action(card, effect.get("action_type"), effect.get("action_value"), player_name, log, context)
+                context["targets"] = [debuff["source_card"]]
+                apply_action(card, effect.get("action_type"), effect.get("action_value"), owner_player.name, log, context)
                 card["cr00ts_done"] = True
-        else:
-            for card, _, _ in cr00ts_reactions:
+            else:
                 log.append(pretty_log("skip", "found no debuff effect to reflect", card))
 
-    # Step 5: apply normal reactions
-    for card, effect, context in reactions:
-        if card.get("_phase_triggered") or card.get("_already_handled") or card.get("cr00ts_done"):
-            continue
-        if effect.get("condition_type") in ("self_destroyed", "on_destroyed"):
-            continue
-        if effect.get("condition_type") == "immediate":
-            if card.get("_immediate_triggered", False):
-                continue
-            card["_immediate_triggered"] = True
-        if card["card_id"] not in triggered_cards:
-            group = CardLogGroup(card, phase_name)
-            context["group"] = group
-            triggered_cards.add(card["card_id"])
-            card["_handled_this_phase"] = True
-            card["_already_handled"] = True
-            card["_phase_triggered"] = True
-            log.append(group.finalize())
-            context.pop("group", None)
-
-        targets = get_targets(
-            effect.get("target_type"),
-            opponent,
-            player,
-            card,
-            self_deck=opponent_deck,
-            opponent_deck=deck,
-            effect=effect,
-        )
-        context["targets"] = targets
-        apply_action(card, effect.get("action_type"), effect.get("action_value"), opponent.name, log, context)
-
-    # Reset flags for Debuff phase
-    if phase_name == "Debuff":
-        for c in player.field + opponent.field:
-            c.pop("_immediate_triggered", None)
-        for c in deck + opponent_deck:
-            c.pop("_phase_triggered", None)
-            c.pop("_handled_this_phase", None)
-
+    # De per-fase vlaggen worden aan het BEGIN van elke fase gewist, in
+    # simulate_match_with_decks(). Ze hier alleen na Debuff wissen zorgde ervoor
+    # dat een kaart die in Start afvuurde geblokkeerd bleef in Buff en Debuff,
+    # en dat een Final-effect nooit aan de beurt kwam.
     return deck
 
 
@@ -1441,6 +1366,13 @@ def simulate_match():
             c["targeted_by_debuff"] = False
             c["lost_mc_this_phase"] = 0
             c["phase_triggers"] = {}
+            # Elke fase is een schone lei. Werden deze vlaggen niet gewist, dan
+            # bleef een kaart die in een eerdere fase afvuurde de rest van de
+            # match inert — inclusief kaarten met een Final-effect.
+            c.pop("_phase_triggered", None)
+            c.pop("_handled_this_phase", None)
+            c.pop("_immediate_triggered", None)
+            c.pop("_already_handled", None)
 
         if phase == "Debuff":
             player1.first_debuff_blocked = False
@@ -1487,10 +1419,17 @@ def simulate_match_with_decks(
     deck1_ids=None,
     deck2_ids=None,
     allow_fallback_to_last=False,
-    save_last_match=False
+    save_last_match=False,
+    seed=None
 ):
-    
+
     import os, json as _json
+
+    # De engine gebruikt random.choice/random.sample op tientallen plekken in
+    # targeting.py en action.py. Zonder seed is dezelfde match nooit twee keer
+    # hetzelfde en is een uitslag niet te controleren of te herspelen.
+    if seed is not None:
+        random.seed(seed)
 
     all_cards = ALL_CARDS  # use module-level cards loaded with absolute path
 
@@ -1584,6 +1523,13 @@ def simulate_match_with_decks(
             c["targeted_by_debuff"] = False
             c["lost_mc_this_phase"] = 0
             c["phase_triggers"] = {}
+            # Elke fase is een schone lei. Werden deze vlaggen niet gewist, dan
+            # bleef een kaart die in een eerdere fase afvuurde de rest van de
+            # match inert — inclusief kaarten met een Final-effect.
+            c.pop("_phase_triggered", None)
+            c.pop("_handled_this_phase", None)
+            c.pop("_immediate_triggered", None)
+            c.pop("_already_handled", None)
 
         if phase == "Debuff":
             player1.first_debuff_blocked = False
