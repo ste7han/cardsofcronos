@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -18,5 +19,34 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 
-export { app, db, storage };
+/**
+ * Spelers hebben geen account, maar de Firestore-regels moeten wel kunnen zien
+ * WIE er schrijft — anders is `request.auth` altijd null en kan een regel niets
+ * afdwingen. Anonieme auth geeft elke browser een stabiele uid.
+ *
+ * Await dit vóór elke Firestore-schrijfactie vanuit de arena.
+ * Vereist dat de Anonymous-provider aanstaat in de Firebase-console.
+ */
+export const authReady: Promise<string | null> =
+  typeof window === 'undefined'
+    ? Promise.resolve(null)
+    : new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user) {
+            unsubscribe();
+            resolve(user.uid);
+            return;
+          }
+          // Alleen anoniem inloggen als er nog niemand is. Onvoorwaardelijk
+          // aanroepen zou een ingelogde admin vervangen door een anonieme user.
+          signInAnonymously(auth).catch((error) => {
+            console.error('Anonymous sign-in failed — Firestore writes will be denied.', error);
+            unsubscribe();
+            resolve(null);
+          });
+        });
+      });
+
+export { app, db, storage, auth };

@@ -1,24 +1,42 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- TYPES ---
 export interface Card {
   card_id: string; card_type: string; rarity: string;
   base_mc: number; current_mc: number; destroyed: boolean;
+  owner?: string;
 }
+
+// Welke kant van het serverresultaat de kijker is. De server denkt altijd in
+// "Player 1" (host) en "Player 2" (guest); de UI moet dat naar "jij" vertalen.
+export type Perspective = 'p1' | 'p2';
 
 // --- HELPERS ---
 const getCardImage = (cardId: string) => `/NFTCARDS/${cardId.trim().replace(/\s+/g, '_')}.png`;
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// De Python-engine logt per fase een autoritatieve stand (match_simulator.py:1599
+// en :1574). Die lezen we liever dan dat we kaartwaarden uit proza optellen.
+const SCORE_AFTER_RE = /Player\s+([12])\s+MC after\s+\w+:\s*([-\d.]+)/;
+const SCORE_OPEN_RE = /Player\s+([12])\s+(?:opens with|responds with)\s*([-\d.]+)\s*MC/;
+
+const sumProjects = (cards: any[] | undefined) =>
+  (cards || [])
+    .filter((c: any) => c.card_type === 'Project' && !c.destroyed)
+    .reduce((acc: number, c: any) => acc + (c.current_mc ?? 0), 0);
+
 const RollingNumber = ({ value }: { value: number }) => {
   const [displayValue, setDisplayValue] = useState(value);
   useEffect(() => {
+    if (displayValue === value) return;
     const timeout = setTimeout(() => {
       if (Math.abs(displayValue - value) < 0.1) setDisplayValue(value);
       else if (displayValue < value) setDisplayValue(prev => prev + Math.max(0.1, (value - prev) / 10));
-      else if (displayValue > value) setDisplayValue(prev => prev - Math.max(0.1, (prev - value) / 10));
+      else setDisplayValue(prev => prev - Math.max(0.1, (prev - value) / 10));
     }, 25);
     return () => clearTimeout(timeout);
   }, [value, displayValue]);
@@ -31,35 +49,35 @@ export const BattleCard = ({ card, activeType, lastChange }: { card: Card | unde
   const cardStyle = { width: '120px', height: '210px' };
 
   if (!card) return <div style={cardStyle} className="bg-white/5 rounded-xl border border-dashed border-white/10" />;
-  
+
   let glowStyle: React.CSSProperties = {};
   let animClass = "";
 
   // VISUELE FEEDBACK LOGICA
-  if (activeType === "debuff") { 
+  if (activeType === "debuff") {
       // ROOD: Bij damage, reduction, steal, destroy
-      glowStyle = { boxShadow: '0 0 60px rgba(220, 38, 38, 1)', border: '3px solid #ef4444', zIndex: 100 }; 
-      animClass = "scale-110 z-50 animate-shake-hard"; 
+      glowStyle = { boxShadow: '0 0 60px rgba(220, 38, 38, 1)', border: '3px solid #ef4444', zIndex: 100 };
+      animClass = "scale-110 z-50 animate-shake-hard";
   }
-  else if (activeType === "buff") { 
+  else if (activeType === "buff") {
       // GROEN: Bij boost, heal
-      glowStyle = { boxShadow: '0 0 60px rgba(34, 197, 94, 1)', border: '3px solid #22c55e', zIndex: 100 }; 
-      animClass = "scale-110 z-50"; 
+      glowStyle = { boxShadow: '0 0 60px rgba(34, 197, 94, 1)', border: '3px solid #22c55e', zIndex: 100 };
+      animClass = "scale-110 z-50";
   }
-  else if (activeType === "acting") { 
+  else if (activeType === "acting") {
       // WIT: De kaart die de actie uitvoert
-      glowStyle = { boxShadow: '0 0 40px rgba(255, 255, 255, 0.7)', border: '2px solid #fff', zIndex: 50 }; 
-      animClass = "scale-105"; 
+      glowStyle = { boxShadow: '0 0 40px rgba(255, 255, 255, 0.7)', border: '2px solid #fff', zIndex: 50 };
+      animClass = "scale-105";
   }
 
   return (
     <div style={{ ...cardStyle, ...glowStyle }} className={`relative flex-shrink-0 transition-all duration-300 rounded-xl ${animClass} ${card.destroyed ? 'opacity-20 grayscale blur-[1px]' : 'opacity-100'}`}>
       <AnimatePresence>
         {activeType && lastChange !== null && lastChange !== 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 0, scale: 0.5 }} 
-            animate={{ opacity: 1, y: -100, scale: 1.5 }} 
-            exit={{ opacity: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 0, scale: 0.5 }}
+            animate={{ opacity: 1, y: -100, scale: 1.5 }}
+            exit={{ opacity: 0 }}
             className={`absolute inset-x-0 -top-10 text-center text-4xl font-black z-[999] pointer-events-none drop-shadow-[0_4px_4px_rgba(0,0,0,1)] ${lastChange > 0 ? 'text-green-400' : 'text-red-500'}`}
           >
             {lastChange > 0 ? `+${lastChange.toFixed(0)}` : lastChange.toFixed(0)}
@@ -79,19 +97,33 @@ export const BattleCard = ({ card, activeType, lastChange }: { card: Card | unde
 };
 
 // --- COMPONENT: RESULT SCREEN ---
-export const BattleResult = ({ result, score1, score2, onBack, onLog, onShare }: any) => {
+// score1/score2 zijn ALTIJD de server-scores van Player 1 / Player 2.
+// Het omdraaien naar het perspectief van de kijker gebeurt hier, één keer.
+export const BattleResult = ({ result, score1, score2, onBack, onLog, onShare, perspective = 'p1', opponentLabel = 'Adversary' }: any) => {
+  const me = perspective === 'p2' ? 'Player 2' : 'Player 1';
+  const outcome: 'win' | 'loss' | 'draw' =
+    result.winner === 'Draw' ? 'draw' : result.winner === me ? 'win' : 'loss';
+
+  const myScore = perspective === 'p2' ? score2 : score1;
+  const theirScore = perspective === 'p2' ? score1 : score2;
+
+  const title = outcome === 'win' ? 'VICTORY' : outcome === 'loss' ? 'DEFEAT' : 'DRAW';
+  const titleColor = outcome === 'win' ? 'text-amber-500' : outcome === 'loss' ? 'text-zinc-600' : 'text-blue-300';
+  const myPanelBorder = outcome === 'win' ? 'border-amber-500 shadow-[0_0_40px_rgba(245,158,11,0.2)]' : 'border-blue-900';
+  const theirPanelBorder = outcome === 'loss' ? 'border-red-600 shadow-[0_0_40px_rgba(220,38,38,0.2)]' : 'border-zinc-800';
+
   return (
     <div className="fixed inset-0 z-[99999] w-screen h-screen bg-black flex flex-col items-center justify-center font-sans">
        <div className="absolute inset-0 z-0"><div className="absolute inset-0 bg-[url('/table.jpeg')] bg-cover bg-center opacity-30 blur-sm grayscale"></div><div className="absolute inset-0 bg-black/80"></div></div>
        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-6xl px-4 animate-in fade-in zoom-in duration-500">
         <div className="mb-12 text-center">
           <div className="inline-block px-8 py-2 mb-8 border border-white/20 bg-black/50 rounded-full backdrop-blur-md"><span className="text-white/50 text-xs font-bold uppercase tracking-[0.4em]">Simulation Terminated</span></div>
-          <h1 className={`text-6xl md:text-9xl font-['Cinzel'] font-black uppercase tracking-tight italic drop-shadow-2xl ${result.winner === "Player 1" ? "text-amber-500" : "text-zinc-600"}`}>{result.winner === "Player 1" ? "VICTORY" : "DEFEAT"}</h1>
+          <h1 className={`text-6xl md:text-9xl font-['Cinzel'] font-black uppercase tracking-tight italic drop-shadow-2xl ${titleColor}`}>{title}</h1>
         </div>
         <div className="flex flex-col md:flex-row items-center gap-12 mb-16">
-          <div className={`relative flex-shrink-0 w-[320px] h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${result.winner === "Player 1" ? "border-amber-500 shadow-[0_0_40px_rgba(245,158,11,0.2)]" : "border-blue-900"}`}><span className="text-blue-500 text-xs font-black uppercase tracking-[0.3em] mb-4">Commander</span><span className="text-8xl font-black text-white font-['Cinzel'] leading-none">{Math.floor(score1)}</span></div>
+          <div className={`relative flex-shrink-0 w-[320px] h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${myPanelBorder}`}><span className="text-blue-500 text-xs font-black uppercase tracking-[0.3em] mb-4">You</span><span className="text-8xl font-black text-white font-['Cinzel'] leading-none">{Math.floor(myScore)}</span></div>
           <div className="text-zinc-700 font-['Cinzel'] text-6xl font-black italic select-none">VS</div>
-          <div className={`relative flex-shrink-0 w-[320px] h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${result.winner !== "Player 1" ? "border-red-600 shadow-[0_0_40px_rgba(220,38,38,0.2)]" : "border-zinc-800"}`}><span className="text-red-500 text-xs font-black uppercase tracking-[0.3em] mb-4">Adversary</span><span className="text-8xl font-black text-zinc-500 font-['Cinzel'] leading-none">{Math.floor(score2)}</span></div>
+          <div className={`relative flex-shrink-0 w-[320px] h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${theirPanelBorder}`}><span className="text-red-500 text-xs font-black uppercase tracking-[0.3em] mb-4">{opponentLabel}</span><span className="text-8xl font-black text-zinc-500 font-['Cinzel'] leading-none">{Math.floor(theirScore)}</span></div>
         </div>
         <div className="flex flex-col items-center gap-6 w-full max-w-sm">
           <button onClick={onBack} className="w-full h-16 bg-white text-black rounded-xl font-black text-lg uppercase tracking-[0.2em] hover:bg-amber-400 hover:scale-[1.02] transition-all shadow-xl">Return to Arena</button>
@@ -102,9 +134,49 @@ export const BattleResult = ({ result, score1, score2, onBack, onLog, onShare }:
   );
 };
 
+// --- STYLES (buiten de component, anders remount de <style> bij elke render) ---
+const GlobalStyles = () => (
+  <style jsx global>{`
+    @keyframes shake-hard { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-3px, -2px) rotate(-1deg); } 50% { transform: translate(3px, 2px) rotate(1deg); } 75% { transform: translate(-1px, 1px) rotate(0deg); } 100% { transform: translate(0, 0) rotate(0); } }
+    .animate-shake-hard { animation: shake-hard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+  `}</style>
+);
+
+// Buiten BattleFlow gedefinieerd: een component die in de render-body wordt
+// aangemaakt krijgt elke render een nieuwe identiteit en remount al zijn kaarten.
+const Formation = ({ cards, isPlayer, activeActions, lastChanges }: {
+  cards: Card[]; isPlayer: boolean;
+  activeActions: Record<string, string | null>; lastChanges: Record<string, number | null>;
+}) => {
+  const founder = cards.find(c => c.card_type === 'Founder');
+  const projects = cards.filter(c => c.card_type === 'Project');
+  const supports = cards.filter(c => c.card_type !== 'Project' && c.card_type !== 'Founder');
+  // Eigen kant: projects vooraan. Overkant: gespiegeld, zodat de rijen elkaar aankijken.
+  const frontRow = isPlayer ? projects : supports;
+  const backRow = isPlayer ? supports : projects;
+
+  return (
+    <div className="flex flex-row items-center justify-center gap-12 w-full min-w-[1000px] px-10 relative z-10">
+      <div className="flex flex-col items-center">
+        <BattleCard card={founder} activeType={activeActions[founder?.card_id || ""]} lastChange={lastChanges[founder?.card_id || ""] ?? null} />
+        <p className={`text-[10px] font-black mt-3 uppercase tracking-widest ${isPlayer ? 'text-blue-500' : 'text-red-500'}`}>Leader</p>
+      </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row gap-4">{frontRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
+        <div className="flex flex-row gap-4">{backRow.map(c => <BattleCard key={c.card_id} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] ?? null} />)}</div>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENT: BATTLE FLOW (THE ENGINE) ---
-// --- COMPONENT: BATTLE FLOW (THE ENGINE) ---
-export const BattleFlow = ({ result, onBack, onFinish }: { result: any, onBack: () => void, onFinish: (s1: number, s2: number) => void }) => {
+export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', opponentLabel = 'Opponent' }: {
+  result: any;
+  onBack: () => void;
+  onFinish: (s1: number, s2: number) => void;
+  perspective?: Perspective;
+  opponentLabel?: string;
+}) => {
   const [p1Cards, setP1Cards] = useState<Card[]>([]);
   const [p2Cards, setP2Cards] = useState<Card[]>([]);
   const [activeActions, setActiveActions] = useState<Record<string, string | null>>({});
@@ -113,162 +185,188 @@ export const BattleFlow = ({ result, onBack, onFinish }: { result: any, onBack: 
   const [isFinished, setIsFinished] = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [currentStep, setCurrentStep] = useState(0);
+  const [liveScores, setLiveScores] = useState({ p1: 0, p2: 0 });
 
-  // 1. VERBETERDE LOG PARSER
+  // onFinish is bij alle aanroepers een inline arrow. Stond hij in de dependency
+  // array van de step-timer, dan wiste elke re-render van de parent de lopende
+  // 2500ms-tick en begon die opnieuw — waardoor het log nooit doorliep.
+  const onFinishRef = useRef(onFinish);
+  useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
+
+  // Precies één keer afronden, ook als SKIP TO END en de finalize-timer elkaar kruisen.
+  const finishedRef = useRef(false);
+  const finish = useCallback((s1: number, s2: number) => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    setIsFinished(true);
+    onFinishRef.current(s1, s2);
+  }, []);
+
+  // Een identiek Firestore-snapshot levert een nieuw object op. Zonder stabiele
+  // sleutel herstart de init-effect het bord terwijl currentStep blijft staan.
+  const resultKey = result?.battleId ?? result?.matchId ?? `${result?.finalScores?.p1}-${result?.finalScores?.p2}`;
+
+  const serverScores = useMemo(() => ({
+    p1: result?.finalScores?.p1 ?? sumProjects(result?.finalFields?.p1),
+    p2: result?.finalScores?.p2 ?? sumProjects(result?.finalFields?.p2),
+  }), [resultKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const eventQueue = useMemo(() => {
-    if (!result || !result.logs) return ["--- FINALIZE ---"];
-
-    // Helper om tekst schoon te maken VOORDAT we filteren
+    if (!result?.logs) return ["--- FINALIZE ---"];
     const clean = (t: string) => t.replace(/\*\*/g, '').replace(/[\n\r]+/g, ' ').trim();
-
     const logs = result.logs
-        .flatMap((log: string) => log.split('\n')) // Splits eerst op enters
-        .map(clean)                                // Maak schoon
-        .filter((l: string) => l.length > 5);      // Filter lege regels weg
-        
-    // We laten nu ALLES door dat langer is dan 5 letters. 
-    // Zo zie je tenminste "Start Phase Begins" etc.
+        .flatMap((log: string) => log.split('\n'))
+        .map(clean)
+        .filter((l: string) => l.length > 5);
     return [...logs, "--- FINALIZE ---"];
-  }, [result.logs]);
+  }, [resultKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const init = (cards: any[]) => cards.map(c => ({ ...c, current_mc: c.card_type === 'Project' ? (c.base_mc || 0) : 0, destroyed: false }));
-    setP1Cards(init(result.finalFields.p1));
-    setP2Cards(init(result.finalFields.p2));
-  }, [result]);
+    const init = (cards: any[] | undefined) => (cards || []).map(c => ({
+      ...c,
+      current_mc: c.card_type === 'Project' ? (c.base_mc || 0) : 0,
+      destroyed: false,
+    }));
+    const next1 = init(result?.finalFields?.p1);
+    const next2 = init(result?.finalFields?.p2);
+    setP1Cards(next1);
+    setP2Cards(next2);
+    setLiveScores({ p1: sumProjects(next1), p2: sumProjects(next2) });
+    setCurrentStep(0);
+    setActiveActions({});
+    setLastChanges({});
+    setIsFinished(false);
+    finishedRef.current = false;
+  }, [resultKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isFinished) return;
-    const timer = setTimeout(() => {
-      if (currentStep < eventQueue.length) {
-        const log = eventQueue[currentStep];
-        
-        if (log === "--- FINALIZE ---") { 
-           setAnnouncerText("Match Concluded."); setActiveActions({}); 
-           setTimeout(() => {
-             // Gebruik ALTIJD server scores
-             const s1 = result.finalScores?.p1 ?? p1Cards.filter(c => !c.destroyed).reduce((s, c) => s + c.current_mc, 0);
-             const s2 = result.finalScores?.p2 ?? p2Cards.filter(c => !c.destroyed).reduce((s, c) => s + c.current_mc, 0);
-             onFinish(s1, s2); 
-             setIsFinished(true);
-           }, 1000 / speedMultiplier); 
-           return; 
-        }
-        
-        setAnnouncerText(log); // Toon de schone tekst
-        setActiveActions({}); setLastChanges({});
-        
-        // Check op kaart ID's voor animaties
-        const cardMatches = log.match(/COC_\w+/g);
-        if (cardMatches) {
-          const l = log.toLowerCase();
-          const actingId = cardMatches[0];
-          const targetId = cardMatches[cardMatches.length - 1];
-          
-          let targetType = "acting";
-          if (l.includes('hit') || l.includes('damage') || l.includes('reduc') || l.includes('stole') || l.includes('lost') || l.includes('burn') || l.includes('destroyed')) {
-              targetType = "debuff";
-          } else if (l.includes('buff') || l.includes('boost') || l.includes('gain') || l.includes('heal')) {
-              targetType = "buff";
-          } else if (l.includes('swapped')) {
-              targetType = "swap";
-          }
-          
-          const newActions: Record<string, string> = {};
-          const newChanges: Record<string, number> = {};
-          if (actingId !== targetId) newActions[actingId] = "acting";
-          newActions[targetId] = targetType;
-          
-          cardMatches.forEach((id: string) => {
-             const mcMatch = log.match(/[-+]\d+/); 
-             if (mcMatch && id === targetId) {
-                 newChanges[id] = parseFloat(mcMatch[0]);
-             } else if (l.includes('destroyed') && id === targetId) {
-                 newChanges[id] = -999;
-             }
-          });
 
-          setTimeout(() => { setActiveActions(newActions); setLastChanges(newChanges); }, 50);
-          
-          const updateCards = (prev: Card[]) => prev.map(c => {
-            if (newActions[c.card_id]) {
-              if (log.toLowerCase().includes('destroyed') && c.card_id === targetId) return { ...c, destroyed: true, current_mc: 0 };
-              
-              const regex = new RegExp(`${c.card_id}.*?→\\s*(\\d+)`);
-              const preciseMatch = log.match(regex);
-              
-              if (preciseMatch) {
-                  return { ...c, current_mc: parseInt(preciseMatch[1]) };
-              } else if (newChanges[c.card_id]) {
-                  return { ...c, current_mc: Math.max(0, c.current_mc + (newChanges[c.card_id] || 0)) };
-              }
-            }
-            return c;
-          });
-          setP1Cards(prev => updateCards(prev)); setP2Cards(prev => updateCards(prev));
-        }
-        setCurrentStep(currentStep + 1);
+    // Alle timers van deze stap, zodat ook de geneste opgeruimd worden.
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    timers.push(setTimeout(() => {
+      if (currentStep >= eventQueue.length) return;
+      const log = eventQueue[currentStep];
+
+      if (log === "--- FINALIZE ---") {
+        setAnnouncerText("Match Concluded.");
+        setActiveActions({});
+        setLiveScores(serverScores);
+        timers.push(setTimeout(() => finish(serverScores.p1, serverScores.p2), 1000 / speedMultiplier));
+        return;
       }
-    }, 2500 / speedMultiplier);
-    return () => clearTimeout(timer);
-  }, [currentStep, eventQueue, isFinished, p1Cards, p2Cards, onFinish, speedMultiplier]);
+
+      setAnnouncerText(log);
+      setActiveActions({});
+      setLastChanges({});
+
+      // 1. Autoritatieve stand uit de engine-log heeft altijd voorrang.
+      const scoreLine = log.match(SCORE_AFTER_RE) || log.match(SCORE_OPEN_RE);
+      if (scoreLine) {
+        const side = scoreLine[1] === '1' ? 'p1' : 'p2';
+        const value = parseFloat(scoreLine[2]);
+        if (Number.isFinite(value)) setLiveScores(prev => ({ ...prev, [side]: value }));
+      }
+
+      // 2. Kaartanimaties afleiden uit de regel.
+      const cardMatches = log.match(/COC_\w+/g);
+      if (cardMatches) {
+        const l = log.toLowerCase();
+        const actingId = cardMatches[0];
+        const targetId = cardMatches[cardMatches.length - 1];
+        const isDestroy = /destroy|rejected/.test(l);
+
+        let targetType = "acting";
+        if (isDestroy || /hit|damage|reduc|stole|steal|lost|burn/.test(l)) targetType = "debuff";
+        else if (/buff|boost|gain|heal|increase/.test(l)) targetType = "buff";
+
+        const newActions: Record<string, string> = {};
+        if (actingId !== targetId) newActions[actingId] = "acting";
+        newActions[targetId] = targetType;
+
+        // Pak het bedrag dat bij de DOELKAART hoort; anders het eerste bedrag met
+        // een MC-suffix. Decimalen en negatieve waarden horen er allebei bij.
+        const newChanges: Record<string, number> = {};
+        if (!isDestroy) {
+          const delta =
+            log.match(new RegExp(`${escapeRegExp(targetId)}[^0-9+-]*([-+]\\d+(?:\\.\\d+)?)`)) ||
+            log.match(/([-+]\d+(?:\.\d+)?)\s*MC/);
+          const value = delta ? parseFloat(delta[1]) : NaN;
+          if (Number.isFinite(value) && value !== 0) newChanges[targetId] = value;
+        }
+
+        timers.push(setTimeout(() => { setActiveActions(newActions); setLastChanges(newChanges); }, 50));
+
+        // Beide spelers mogen dezelfde kaart spelen. Noemt de regel expliciet een
+        // eigenaar ("Player 2's COC_X"), dan raken we alleen die kant aan.
+        const ownerInLine = (id: string) => {
+          const m = log.match(new RegExp(`Player\\s+([12])['’]s\\s+${escapeRegExp(id)}`));
+          return m ? `Player ${m[1]}` : null;
+        };
+
+        const applyTo = (prev: Card[], side: string) => prev.map(c => {
+          if (!newActions[c.card_id]) return c;
+          const stated = ownerInLine(c.card_id);
+          if (stated && stated !== side) return c;
+
+          if (isDestroy && c.card_id === targetId) return { ...c, destroyed: true, current_mc: 0 };
+
+          // "… → 12.5" is de exacte nieuwe waarde die de engine logt.
+          const precise = log.match(new RegExp(`${escapeRegExp(c.card_id)}[^→]*→\\s*(-?\\d+(?:\\.\\d+)?)`));
+          if (precise) return { ...c, current_mc: parseFloat(precise[1]) };
+          if (newChanges[c.card_id]) return { ...c, current_mc: Math.max(0, c.current_mc + newChanges[c.card_id]) };
+          return c;
+        });
+
+        setP1Cards(prev => applyTo(prev, 'Player 1'));
+        setP2Cards(prev => applyTo(prev, 'Player 2'));
+      }
+
+      setCurrentStep(step => step + 1);
+    }, 2500 / speedMultiplier));
+
+    return () => timers.forEach(clearTimeout);
+  }, [currentStep, eventQueue, isFinished, speedMultiplier, serverScores, finish]);
 
   const skipToEnd = () => {
-    setIsFinished(true);
-    
-    // Gebruik ALTIJD server scores — nooit client-side herberekenen
-    const s1 = result.finalScores?.p1 ?? result.finalFields.p1
-      .filter((c: any) => c.card_type === 'Project' && !c.destroyed)
-      .reduce((acc: number, c: any) => acc + (c.current_mc ?? 0), 0);
-    const s2 = result.finalScores?.p2 ?? result.finalFields.p2
-      .filter((c: any) => c.card_type === 'Project' && !c.destroyed)
-      .reduce((acc: number, c: any) => acc + (c.current_mc ?? 0), 0);
-    
-    onFinish(s1, s2);
+    // Toon het echte eindbord van de server in plaats van de half afgespeelde staat.
+    setP1Cards(result?.finalFields?.p1 ?? []);
+    setP2Cards(result?.finalFields?.p2 ?? []);
+    setLiveScores(serverScores);
+    setAnnouncerText("Match Concluded.");
+    setActiveActions({});
+    setLastChanges({});
+    finish(serverScores.p1, serverScores.p2);
   };
 
-  const score1 = p1Cards.filter(c => !c.destroyed).reduce((s, c) => s + c.current_mc, 0);
-  const score2 = p2Cards.filter(c => !c.destroyed).reduce((s, c) => s + c.current_mc, 0);
-  
-  const GlobalStyles = () => ( <style jsx global>{` 
-    @keyframes shake-hard { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-3px, -2px) rotate(-1deg); } 50% { transform: translate(3px, 2px) rotate(1deg); } 75% { transform: translate(-1px, 1px) rotate(0deg); } 100% { transform: translate(0, 0) rotate(0); } } 
-    .animate-shake-hard { animation: shake-hard 0.4s cubic-bezier(.36,.07,.19,.97) both; } 
-  `}</style> );
-
-  const Formation = ({ cards, isPlayer }: { cards: Card[], isPlayer: boolean }) => (
-    <div className="flex flex-row items-center justify-center gap-12 w-full min-w-[1000px] px-10 relative z-10">
-      <div className="flex flex-col items-center">
-        <BattleCard card={cards.find(c => c.card_type === 'Founder')} activeType={activeActions[cards.find(c => c.card_type === 'Founder')?.card_id || ""]} lastChange={lastChanges[cards.find(c => c.card_type === 'Founder')?.card_id || ""] || null} />
-        <p className={`text-[10px] font-black mt-3 uppercase tracking-widest ${isPlayer ? 'text-blue-500' : 'text-red-500'}`}>Leader</p>
-      </div>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-row gap-4">{(isPlayer ? cards.filter(c => c.card_type === 'Project') : cards.filter(c => c.card_type !== 'Project' && c.card_type !== 'Founder')).map((c, i) => <BattleCard key={i} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] || null} />)}</div>
-        <div className="flex flex-row gap-4">{(isPlayer ? cards.filter(c => c.card_type !== 'Project' && c.card_type !== 'Founder') : cards.filter(c => c.card_type === 'Project')).map((c, i) => <BattleCard key={i} card={c} activeType={activeActions[c.card_id]} lastChange={lastChanges[c.card_id] || null} />)}</div>
-      </div>
-    </div>
-  );
+  // Server denkt in p1/p2; de kijker ziet zichzelf onderaan.
+  const myCards = perspective === 'p2' ? p2Cards : p1Cards;
+  const theirCards = perspective === 'p2' ? p1Cards : p2Cards;
+  const myScore = perspective === 'p2' ? liveScores.p2 : liveScores.p1;
+  const theirScore = perspective === 'p2' ? liveScores.p1 : liveScores.p2;
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen py-10 relative overflow-x-auto overflow-y-hidden bg-[#050505]">
       <GlobalStyles />
       <div className="absolute inset-0 z-0"><div className="absolute inset-0 bg-cover bg-center opacity-40 brightness-[0.2]" style={{ backgroundImage: "url('/table.jpeg')" }}></div><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_20%,_black_95%)]"></div></div>
       <div className="relative z-10 w-full flex flex-col items-center">
-        <div className="mb-4 animate-in fade-in duration-500"><Formation cards={p2Cards} isPlayer={false} /></div>
+        <div className="mb-4 animate-in fade-in duration-500"><Formation cards={theirCards} isPlayer={false} activeActions={activeActions} lastChanges={lastChanges} /></div>
         <div className="w-full max-w-5xl relative z-50 my-6 flex flex-col items-center">
           <div className="w-full bg-black/90 backdrop-blur-2xl py-6 px-4 relative overflow-hidden rounded-[2.5rem] border border-amber-500/20 shadow-[0_0_40px_rgba(251,191,36,0.15)]">
             <div className="flex justify-between w-full px-12 md:px-24 mb-4 relative z-10">
-              <div className="flex flex-col items-start"><span className="text-[10px] text-blue-500 font-black tracking-[0.3em] mb-1 uppercase">Player</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={score1} /></div></div>
+              <div className="flex flex-col items-start"><span className="text-[10px] text-blue-500 font-black tracking-[0.3em] mb-1 uppercase">You</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={myScore} /></div></div>
               <div className="flex flex-col items-center justify-center"><div className="px-4 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-[9px] font-black text-blue-400 tracking-[0.2em] mb-2 uppercase animate-pulse">Match Active</div><div className="text-gray-600 font-['Cinzel'] italic text-xl">VS</div></div>
-              <div className="flex flex-col items-end"><span className="text-[10px] text-red-500 font-black tracking-[0.3em] mb-1 uppercase">CPU</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={score2} /></div></div>
+              <div className="flex flex-col items-end"><span className="text-[10px] text-red-500 font-black tracking-[0.3em] mb-1 uppercase">{opponentLabel}</span><div className="text-3xl md:text-5xl font-['Cinzel'] font-black text-white"><RollingNumber value={theirScore} /></div></div>
             </div>
-            <div className="relative flex items-center justify-center min-h-[3rem] px-8"><AnimatePresence mode="wait"><motion.p key={announcerText} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-center text-lg md:text-xl font-['Spectral'] italic text-blue-100 leading-tight">{announcerText}</motion.p></AnimatePresence></div>
+            <div className="relative flex items-center justify-center min-h-[3rem] px-8"><AnimatePresence mode="wait"><motion.p key={`${currentStep}-${announcerText}`} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="text-center text-lg md:text-xl font-['Spectral'] italic text-blue-100 leading-tight">{announcerText}</motion.p></AnimatePresence></div>
             <div className="flex gap-6 mt-4 justify-center">
               <button onClick={() => setSpeedMultiplier(speedMultiplier === 1 ? 5 : 1)} className={`px-5 py-1.5 rounded-full text-[9px] font-black border transition-all ${speedMultiplier > 1 ? 'bg-blue-600 border-blue-400 text-white shadow-lg' : 'bg-transparent border-white/20 text-gray-400'}`}>{speedMultiplier > 1 ? '⚡ WARP SPEED' : '🐢 NORMAL TIME'}</button>
               <button onClick={skipToEnd} className="px-5 py-1.5 rounded-full text-[9px] font-black border border-white/10 text-gray-500 hover:text-white transition-all">SKIP TO END</button>
             </div>
           </div>
         </div>
-        <div className="mt-4 animate-in fade-in duration-500 relative z-[60]"><Formation cards={p1Cards} isPlayer={true} /></div>
+        <div className="mt-4 animate-in fade-in duration-500 relative z-[60]"><Formation cards={myCards} isPlayer={true} activeActions={activeActions} lastChanges={lastChanges} /></div>
       </div>
     </div>
   );

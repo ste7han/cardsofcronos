@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 
 // Firebase
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app, db as firestoreDb } from '@/firebase/config';
+import { app, db as firestoreDb, authReady } from '@/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 
 // Data & Hooks
@@ -110,6 +110,8 @@ function TrainingArenaContent() {
     if (!isDeckValid || !activeAddress) return;
     setIsSimulating(true);
     try {
+      // De callable weigert nu ongeauthenticeerde aanroepen.
+      await authReady;
       const functions = getFunctions(app);
       const startBattleFunc = httpsCallable(functions, 'start_battle_python');
       
@@ -119,10 +121,22 @@ function TrainingArenaContent() {
       const sPool = allCards.filter(c => c.card_type === 'Support' || c.card_type === 'Event');
       const fPool = allCards.filter(c => c.card_type === 'Founder');
       
+      // sort(() => 0.5 - Math.random()) is geen eerlijke shuffle: de uitkomst
+      // hangt af van het sorteeralgoritme en bevoordeelt de oorspronkelijke
+      // volgorde. Fisher-Yates trekt wel uniform.
+      const pick = <T,>(pool: T[], n: number): T[] => {
+        const a = [...pool];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a.slice(0, n);
+      };
+
       const deckB_ids = [
-        ...[...pPool].sort(() => 0.5 - Math.random()).slice(0, 5),
-        ...[...sPool].sort(() => 0.5 - Math.random()).slice(0, 5),
-        ...[...fPool].sort(() => 0.5 - Math.random()).slice(0, 1)
+        ...pick(pPool, 5),
+        ...pick(sPool, 5),
+        ...pick(fPool, 1)
       ].map(c => c.card_id);
       
       const result: any = await startBattleFunc({ 
@@ -150,10 +164,12 @@ function TrainingArenaContent() {
   // --- VIEW: RESULTAAT (Volledig Scherm, Geen Header/Footer) ---
   if (view === 'result' && battleResult) {
     return (
-      <BattleResult 
-        result={battleResult} 
-        score1={finalScores.s1} 
+      <BattleResult
+        result={battleResult}
+        score1={finalScores.s1}
         score2={finalScores.s2}
+        perspective="p1"
+        opponentLabel="CPU"
         onBack={() => { setView('deck-builder'); setBattleResult(null); setSelectedCards([]); }}
         onLog={() => setView('log')}
         onShare={() => { navigator.clipboard.writeText(`https://cardsofcronos.com/arena/training?match=${battleResult.battleId}`); alert("Replay link copied!"); }}
@@ -227,10 +243,12 @@ function TrainingArenaContent() {
 
         {/* --- FIGHTING VIEW (Via GameEngine) --- */}
         {view === 'fighting' && battleResult && (
-          <BattleFlow 
-            result={battleResult} 
-            onBack={() => setView('deck-builder')} 
-            onFinish={handleBattleFinish} 
+          <BattleFlow
+            result={battleResult}
+            onBack={() => setView('deck-builder')}
+            onFinish={handleBattleFinish}
+            perspective="p1"
+            opponentLabel="CPU"
           />
         )}
 

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { collection, addDoc, query, where, onSnapshot, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { db, authReady } from '@/firebase/config';
 
 interface Lobby {
   id: string;
@@ -17,6 +17,7 @@ export const LobbySystem = ({ activeAddress, onJoinGame }: { activeAddress: stri
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [newWager, setNewWager] = useState(100);
   const [isCreating, setIsCreating] = useState(false);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   // 1. Luister live naar open lobbies
   useEffect(() => {
@@ -26,8 +27,10 @@ export const LobbySystem = ({ activeAddress, onJoinGame }: { activeAddress: stri
       snapshot.forEach((doc) => {
         lobbyList.push({ id: doc.id, ...doc.data() } as Lobby);
       });
-      // Sorteer op nieuwste eerst
-      setLobbies(lobbyList.sort((a, b) => b.createdAt - a.createdAt));
+      // Sorteer op nieuwste eerst. createdAt is een Firestore Timestamp; vlak na
+      // het aanmaken is hij nog null tot de server hem invult.
+      const ms = (v: any) => (v && typeof v.toMillis === 'function' ? v.toMillis() : Number(v) || 0);
+      setLobbies(lobbyList.sort((a, b) => ms(b.createdAt) - ms(a.createdAt)));
     });
     return () => unsubscribe();
   }, []);
@@ -37,13 +40,23 @@ export const LobbySystem = ({ activeAddress, onJoinGame }: { activeAddress: stri
     if (!activeAddress) return;
     setIsCreating(true);
     try {
+      const uid = await authReady;
+      if (!uid) throw new Error("Could not sign in. Please reload the page.");
+
       const docRef = await addDoc(collection(db, "lobbies"), {
         hostAddress: activeAddress,
+        // De regels binden op uid, niet op adres: een adresveld is maar een
+        // string die iedereen kan invullen.
+        hostUid: uid,
         wager: newWager,
         status: 'waiting',
-        createdAt: Date.now(),
+        // serverTimestamp i.p.v. Date.now(): een clientklok is forgeerbaar en
+        // laat een lobby permanent bovenaan de lijst plakken.
+        createdAt: serverTimestamp(),
         hostDeck: null,
-        guestDeck: null
+        guestDeck: null,
+        guestAddress: null,
+        guestUid: null
       });
       // Direct doorsturen als host
       onJoinGame(docRef.id, true, newWager);
@@ -56,26 +69,31 @@ export const LobbySystem = ({ activeAddress, onJoinGame }: { activeAddress: stri
   };
 
   // 3. Join een bestaande lobby
+  // In één transactie, anders halen twee gasten die tegelijk klikken allebei
+  // de 'waiting'-check en overschrijft de tweede de eerste.
   const handleJoinLobby = async (lobbyId: string, wager: number) => {
     if (!activeAddress) return;
+    setJoiningId(lobbyId);
     try {
+      const uid = await authReady;
+      if (!uid) throw new Error("Could not sign in. Please reload the page.");
       const lobbyRef = doc(db, "lobbies", lobbyId);
-      // Check eerst of hij nog vrij is
-      const snap = await getDoc(lobbyRef);
-      if (snap.data()?.status !== 'waiting') {
-          alert("Lobby is already full or started.");
-          return;
-      }
 
-      // Update de lobby: Gast is binnen!
-      await updateDoc(lobbyRef, {
-        guestAddress: activeAddress,
-        status: 'selecting_decks'
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(lobbyRef);
+        if (!snap.exists()) throw new Error("This lobby no longer exists.");
+        const data = snap.data();
+        if (data.status !== 'waiting') throw new Error("Someone else just took this seat.");
+        if (data.hostUid === uid) throw new Error("You cannot join your own lobby.");
+        tx.update(lobbyRef, { guestAddress: activeAddress, guestUid: uid, status: 'selecting_decks' });
       });
-      
+
       onJoinGame(lobbyId, false, wager);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error joining", e);
+      alert(e?.message || "Could not join this lobby.");
+    } finally {
+      setJoiningId(null);
     }
   };
 
@@ -89,16 +107,19 @@ export const LobbySystem = ({ activeAddress, onJoinGame }: { activeAddress: stri
         <div className="bg-gray-900/80 border border-amber-500/30 p-6 rounded-3xl h-fit">
            <h3 className="text-xl font-bold text-white mb-4 uppercase tracking-widest">Create Lobby</h3>
            <div className="mb-6">
-             <label className="text-[10px] text-gray-500 font-bold uppercase">Wager Amount</label>
+             <label className="text-[10px] text-gray-500 font-bold uppercase">Match Points</label>
              <div className="flex items-center bg-black/50 border border-white/10 rounded-xl px-4 py-3 mt-1">
-                <input 
-                  type="number" 
-                  value={newWager} 
+                <input
+                  type="number"
+                  value={newWager}
                   onChange={(e) => setNewWager(Number(e.target.value))}
                   className="bg-transparent text-white font-black w-full outline-none text-lg"
                 />
-                <span className="text-amber-500 text-xs font-bold">$CROCARD</span>
+                <span className="text-amber-500 text-xs font-bold">PTS</span>
              </div>
+             <p className="text-[10px] text-gray-600 mt-2 leading-snug">
+               Friendly match — no tokens are transferred or at risk.
+             </p>
            </div>
            <button 
              onClick={handleCreateLobby} 
@@ -124,17 +145,18 @@ export const LobbySystem = ({ activeAddress, onJoinGame }: { activeAddress: stri
                      <p className="text-white font-mono text-sm truncate w-32 md:w-auto">{lobby.hostAddress}</p>
                   </div>
                   <div className="text-center">
-                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Stakes</p>
-                     <p className="text-amber-500 font-black text-xl">{lobby.wager} $CRO</p>
+                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Match Points</p>
+                     <p className="text-amber-500 font-black text-xl">{lobby.wager} PTS</p>
                   </div>
                   {lobby.hostAddress === activeAddress ? (
                      <button className="px-6 py-2 rounded-full border border-white/20 text-gray-400 text-xs font-bold uppercase cursor-default opacity-50">Waiting...</button>
                   ) : (
-                     <button 
+                     <button
                        onClick={() => handleJoinLobby(lobby.id, lobby.wager)}
-                       className="px-8 py-3 bg-white text-black font-black uppercase text-xs rounded-full hover:bg-amber-400 hover:scale-105 transition-all shadow-lg"
+                       disabled={joiningId !== null}
+                       className="px-8 py-3 bg-white text-black font-black uppercase text-xs rounded-full hover:bg-amber-400 hover:scale-105 transition-all shadow-lg disabled:opacity-40 disabled:hover:scale-100"
                      >
-                       FIGHT
+                       {joiningId === lobby.id ? 'JOINING…' : 'FIGHT'}
                      </button>
                   )}
                </div>
