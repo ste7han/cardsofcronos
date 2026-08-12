@@ -114,20 +114,25 @@ export const BattleResult = ({ result, score1, score2, onBack, onLog, onShare, p
   const theirPanelBorder = outcome === 'loss' ? 'border-red-600 shadow-[0_0_40px_rgba(220,38,38,0.2)]' : 'border-zinc-800';
 
   return (
-    <div className="fixed inset-0 z-[99999] w-screen h-screen bg-black flex flex-col items-center justify-center font-sans">
-       <div className="absolute inset-0 z-0"><div className="absolute inset-0 bg-[url('/table.jpeg')] bg-cover bg-center opacity-30 blur-sm grayscale"></div><div className="absolute inset-0 bg-black/80"></div></div>
-       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-6xl px-4 animate-in fade-in zoom-in duration-500">
-        <div className="mb-12 text-center">
-          <div className="inline-block px-8 py-2 mb-8 border border-white/20 bg-black/50 rounded-full backdrop-blur-md"><span className="text-white/50 text-xs font-bold uppercase tracking-[0.4em]">Simulation Terminated</span></div>
-          <h1 className={`text-6xl md:text-9xl font-['Cinzel'] font-black uppercase tracking-tight italic drop-shadow-2xl ${titleColor}`}>{title}</h1>
+    // Dit scherm was `h-screen` met `justify-center` en zonder scroll. Op een
+    // telefoon stapelen de twee scorepanelen verticaal (2x220px) bovenop de
+    // titel; samen ruim 900px. Dat past niet, en gecentreerd zonder overflow
+    // schoven de knoppen onderaan buiten beeld — je kwam er niet meer uit.
+    // Nu: de laag scrollt, en de inhoud is op mobiel compacter.
+    <div className="fixed inset-0 z-[99999] bg-black font-sans overflow-y-auto overscroll-contain">
+       <div className="fixed inset-0 z-0"><div className="absolute inset-0 bg-[url('/table.jpeg')] bg-cover bg-center opacity-30 blur-sm grayscale"></div><div className="absolute inset-0 bg-black/80"></div></div>
+       <div className="relative z-10 min-h-full flex flex-col items-center justify-center w-full max-w-6xl mx-auto px-4 py-8 animate-in fade-in zoom-in duration-500">
+        <div className="mb-6 md:mb-12 text-center">
+          <div className="inline-block px-5 md:px-8 py-2 mb-4 md:mb-8 border border-white/20 bg-black/50 rounded-full backdrop-blur-md"><span className="text-white/50 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] md:tracking-[0.4em]">Simulation Terminated</span></div>
+          <h1 className={`text-5xl md:text-9xl font-['Cinzel'] font-black uppercase tracking-tight italic drop-shadow-2xl ${titleColor}`}>{title}</h1>
         </div>
-        <div className="flex flex-col md:flex-row items-center gap-12 mb-16">
-          <div className={`relative flex-shrink-0 w-[320px] h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${myPanelBorder}`}><span className="text-blue-500 text-xs font-black uppercase tracking-[0.3em] mb-4">You</span><span className="text-8xl font-black text-white font-['Cinzel'] leading-none">{Math.floor(myScore)}</span></div>
-          <div className="text-zinc-700 font-['Cinzel'] text-6xl font-black italic select-none">VS</div>
-          <div className={`relative flex-shrink-0 w-[320px] h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${theirPanelBorder}`}><span className="text-red-500 text-xs font-black uppercase tracking-[0.3em] mb-4">{opponentLabel}</span><span className="text-8xl font-black text-zinc-500 font-['Cinzel'] leading-none">{Math.floor(theirScore)}</span></div>
+        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 mb-8 md:mb-16 w-full">
+          <div className={`relative w-full max-w-[320px] h-[130px] md:h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${myPanelBorder}`}><span className="text-blue-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-2 md:mb-4">You</span><span className="text-6xl md:text-8xl font-black text-white font-['Cinzel'] leading-none">{Math.floor(myScore)}</span></div>
+          <div className="text-zinc-700 font-['Cinzel'] text-3xl md:text-6xl font-black italic select-none">VS</div>
+          <div className={`relative w-full max-w-[320px] h-[130px] md:h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${theirPanelBorder}`}><span className="text-red-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-2 md:mb-4">{opponentLabel}</span><span className="text-6xl md:text-8xl font-black text-zinc-500 font-['Cinzel'] leading-none">{Math.floor(theirScore)}</span></div>
         </div>
-        <div className="flex flex-col items-center gap-6 w-full max-w-sm">
-          <button onClick={onBack} className="w-full h-16 bg-white text-black rounded-xl font-black text-lg uppercase tracking-[0.2em] hover:bg-amber-400 hover:scale-[1.02] transition-all shadow-xl">Return to Arena</button>
+        <div className="flex flex-col items-center gap-4 md:gap-6 w-full max-w-sm">
+          <button onClick={onBack} className="w-full h-14 md:h-16 bg-white text-black rounded-xl font-black text-base md:text-lg uppercase tracking-[0.2em] hover:bg-amber-400 hover:scale-[1.02] transition-all shadow-xl">Return to Arena</button>
           <div className="flex w-full gap-4"><button onClick={onLog} className="flex-1 py-4 rounded-xl border border-zinc-700 bg-black text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-white hover:text-white transition-colors">View Log</button><button onClick={onShare} className="flex-1 py-4 rounded-xl border border-zinc-700 bg-black text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-blue-500 hover:text-blue-400 transition-colors">Share</button></div>
         </div>
       </div>
@@ -375,12 +380,14 @@ export const BattleLog = ({ logs, onClose }: { logs: string[], onClose: () => vo
 
   return (
     <div className="fixed inset-0 z-[99999] bg-[#050505] flex flex-col font-mono animate-in fade-in duration-300">
-      <div className="p-6 border-b border-white/10 flex justify-between items-center bg-black/90 backdrop-blur-md relative z-10">
-        <div>
-          <h3 className="text-2xl md:text-3xl font-['Cinzel'] font-black text-blue-400 uppercase tracking-tighter">Combat Log</h3>
-          <p className="text-gray-600 text-[10px] uppercase tracking-[0.4em] mt-1 font-bold">Sequence Data</p>
+      {/* De sluitknop mag nooit wegvallen op een smal scherm: shrink-0 en
+          kleinere marges, en de titel mag inkorten in plaats van te duwen. */}
+      <div className="p-4 md:p-6 border-b border-white/10 flex justify-between items-center gap-3 bg-black/90 backdrop-blur-md relative z-10">
+        <div className="min-w-0">
+          <h3 className="text-xl md:text-3xl font-['Cinzel'] font-black text-blue-400 uppercase tracking-tighter truncate">Combat Log</h3>
+          <p className="text-gray-600 text-[9px] md:text-[10px] uppercase tracking-[0.3em] md:tracking-[0.4em] mt-1 font-bold truncate">Sequence Data</p>
         </div>
-        <button onClick={onClose} className="bg-white text-black px-8 py-3 rounded-full font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all">
+        <button onClick={onClose} className="flex-shrink-0 bg-white text-black px-5 md:px-8 py-3 rounded-full font-black uppercase text-[11px] md:text-xs tracking-widest hover:bg-gray-200 transition-all">
           Close Log
         </button>
       </div>
