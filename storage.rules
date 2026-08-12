@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// firebase.json wees de Storage-regels naar firebase.rules, maar dat is een
+// `service cloud.firestore`-ruleset. Storage vereist `service firebase.storage`,
+// dus die verwijzing kon nooit een geldige ruleset opleveren.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Kaartafbeeldingen bij een card request. Publiek leesbaar (ze worden in de
+    // app getoond), schrijfbaar door een ingelogde gebruiker — sinds de anonieme
+    // auth is dat elke bezoeker, maar wel met een traceerbare uid.
+    match /card-images/{imageId} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Verder niets.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -36,6 +36,12 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/node_modules",
+    "functions",
+    "functions kopie",
+    "game-engine kopie",
+    "web3.ts.patch.ts",
+    "web3.ts.patch.js"
   ]
 }
