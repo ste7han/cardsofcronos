@@ -267,6 +267,67 @@ def _ctype(card) -> str:
         return "Founder"
     return "Project" if t == "project" else str(card.get("card_type", ""))
 
+class Kaart(dict):
+    """Een kaart die haar eigen MC-verlies bewaakt.
+
+    Passieve schilden ("kan niet meer dan 5 MC verliezen", "de eerste debuff
+    wordt met 50% verminderd") werden eerder alleen nageleefd in
+    track_mc_change. Van de 56 plekken die `current_mc` rechtstreeks zetten
+    liepen er maar 12 daarlangs, dus het schild dekte nog geen kwart van de
+    schade.
+
+    Door het op de kaart zelf te doen, geldt het overal — ook op paden die we
+    niet hebben gevonden. Een kaart is en blijft een gewone dict, dus deepcopy,
+    json en Firestore merken er niets van.
+    """
+
+    def __setitem__(self, sleutel, waarde):
+        if sleutel == "current_mc":
+            waarde = self._demp(waarde)
+        super().__setitem__(sleutel, waarde)
+
+    def _demp(self, nieuw):
+        # Zonder schild niets aanraken. Zou je hier `huidig - (huidig - nieuw)`
+        # uitrekenen, dan komt er door drijvende komma soms 105.29999999999999
+        # uit waar 105.3 hoort — en zulke minuscule verschillen werken door in
+        # vergelijkingen als "MC eindigt op 7".
+        if dict.get(self, "_debuff_reduction") is None and dict.get(self, "_max_total_loss") is None:
+            return nieuw
+
+        try:
+            nieuw = float(nieuw)
+        except (TypeError, ValueError):
+            return nieuw
+
+        huidig = dict.get(self, "current_mc")
+        if huidig is None:
+            return nieuw
+        try:
+            huidig = float(huidig)
+        except (TypeError, ValueError):
+            return nieuw
+        if nieuw >= huidig:
+            return nieuw
+
+        verlies = huidig - nieuw
+
+        # "De eerste debuff wordt met 50% verminderd."
+        korting = dict.get(self, "_debuff_reduction")
+        if korting and not dict.get(self, "_debuff_reduction_gebruikt"):
+            dict.__setitem__(self, "_debuff_reduction_gebruikt", True)
+            verlies *= (1.0 - float(korting))
+
+        # "Kan niet meer dan N MC verliezen deze match."
+        plafond = dict.get(self, "_max_total_loss")
+        if plafond is not None:
+            al_verloren = float(dict.get(self, "_verlies_tot_nu", 0.0) or 0.0)
+            ruimte = max(0.0, float(plafond) - al_verloren)
+            verlies = min(verlies, ruimte)
+            dict.__setitem__(self, "_verlies_tot_nu", al_verloren + verlies)
+
+        return huidig - verlies
+
+
 def _validate_5_5_1(deck, side_label: str):
     counts = {"Project": 0, "Support": 0, "Founder": 0}
     for c in deck:
@@ -305,7 +366,9 @@ def load_deck_from_ids(card_ids, all_cards, owner_name, *, strict=True):
         if card is None:
             missing.append(raw)
             continue
-        cpy = copy.deepcopy(card)
+        # Als Kaart, zodat het schild op élk pad geldt en niet alleen daar waar
+        # de code toevallig via track_mc_change loopt.
+        cpy = Kaart(copy.deepcopy(card))
         cpy["owner"] = owner_name
         deck.append(cpy)
 

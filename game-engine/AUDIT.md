@@ -497,3 +497,47 @@ mikte — ook de beschermende effecten van de speler zelf. In productie landde h
 verliesplafond van `COC_Clove_M1` daardoor op `COC_Wolfswap_R3`. De omleiding
 geldt nu alleen voor effecten van de tegenstander. Geverifieerd over 30 matches:
 het schild komt 30 van de 30 keer op de juiste kaart terecht.
+
+---
+
+## Vervolg 6: de schade-afhandeling gecentraliseerd
+
+Het verliesplafond werkte, maar werd alleen geraadpleegd in `track_mc_change` —
+en van de 56 plekken die `current_mc` rechtstreeks zetten liepen er maar 12
+daarlangs. Het schild dekte dus nog geen kwart van de schade.
+
+In plaats van 56 aanroepplekken te herschrijven bewaakt de kaart zichzelf: een
+`Kaart`-klasse die `dict` uitbreidt en `current_mc` afvangt bij toewijzing.
+Daarmee geldt het schild op élk pad, ook op paden die we niet hebben gevonden.
+Een kaart blijft een gewone dict, dus deepcopy, json en Firestore merken er
+niets van.
+
+### Het vangnet
+
+`snapshot.py` legt de uitslag van 3000 matches vast en vergelijkt die na afloop.
+Een refactor die alleen de schild-paden raakt hoort elke match zónder
+schildkaart exact gelijk te laten:
+
+| | |
+|---|---|
+| identiek | 2873 |
+| anders, mét een schildkaart | 127 (bedoeld) |
+| anders, zónder schildkaart | **0** |
+
+Onderweg ving dat vangnet twee echte fouten:
+
+1. Een tussenversie rekende `huidig - (huidig - nieuw)` uit, wat in drijvende
+   komma soms 105.29999999999999 oplevert waar 105.3 hoort. Zulke verschillen
+   werken door in vergelijkingen als "MC eindigt op 7". Nu wordt een kaart
+   zonder schild niet aangeraakt.
+2. Een poging om in `track_mc_change` te melden hoeveel schade er werkelijk
+   aankwam, las `current_mc` uit — maar niet elke aanroeper heeft die op dat
+   moment al toegewezen. Sommige roepen de tracker aan en zetten de waarde
+   daarna pas, waardoor er nul schade werd gemeld.
+
+Zonder die 3000-match vergelijking waren beide onopgemerkt gebleven; ze raken
+maar 3 op de 3000 matches.
+
+`test_schild.py` toont het gedrag los: vier klappen van 4 MC op een kaart met
+plafond 5 komen uit op precies 5 MC verlies, ook als de schade rechtstreeks aan
+`current_mc` wordt toegewezen.

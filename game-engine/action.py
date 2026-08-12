@@ -330,27 +330,10 @@ def track_mc_change(target, before, after, player=None, action_type=None, log=No
                 target["current_mc"] = before
                 return
 
-        korting = target.get("_debuff_reduction")
-        if korting and not target.get("_debuff_reduction_gebruikt"):
-            verlies *= (1.0 - float(korting))
-            target["_debuff_reduction_gebruikt"] = True
-            if log is not None:
-                log_event(context, log, "immune",
-                          f"🛡️ {target.get('card_id','???')} absorbs part of the first debuff")
-
-        plafond = target.get("_max_total_loss")
-        if plafond is not None:
-            al_verloren = float(target.get("_verlies_tot_nu", 0.0))
-            ruimte = max(0.0, float(plafond) - al_verloren)
-            if verlies > ruimte:
-                verlies = ruimte
-                if log is not None:
-                    log_event(context, log, "immune",
-                              f"🛡️ {target.get('card_id','???')} cannot lose more MC this match")
-            target["_verlies_tot_nu"] = al_verloren + verlies
-
-        after = before - verlies
-        target["current_mc"] = after
+        # De demping van verlies (verliesplafond, debuff-korting) zit nu op de
+        # kaart zelf, zie Kaart in match_simulator.py. Hier niets meer doen:
+        # niet elke aanroeper heeft current_mc al toegewezen op dit punt, dus
+        # de kaart uitlezen zou soms nul schade melden.
 
     change = after - before
 
