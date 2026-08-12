@@ -24,4 +24,19 @@ k3 = Kaart({"card_id":"COC_Test3","card_type":"Project","current_mc":20.0})
 k3["current_mc"] = 12.7
 print(f"\nzonder schild blijft een waarde exact: {k3['current_mc']!r}")
 assert k3["current_mc"] == 12.7
+
+# --- spelerbrede schilden (negate) ---------------------------------------
+gedeeld = {"over": 1}
+a = Kaart({"card_id":"COC_A","card_type":"Project","current_mc":30.0,"_gedeeld_debuffschild":gedeeld})
+b = Kaart({"card_id":"COC_B","card_type":"Project","current_mc":20.0,"_gedeeld_debuffschild":gedeeld})
+print("\ngedeeld debuff-schild over twee eigen Projects (één lading):")
+voor = a["current_mc"]; a["current_mc"] = voor - 8
+print(f"   A krijgt -8: {voor:.1f} -> {a['current_mc']:.1f}  (genegeerd)")
+assert a["current_mc"] == 30.0
+voor = b["current_mc"]; b["current_mc"] = voor - 8
+print(f"   B krijgt -8: {voor:.1f} -> {b['current_mc']:.1f}  (schild is op)")
+assert b["current_mc"] == 12.0
+voor = a["current_mc"]; a["current_mc"] = voor - 5
+print(f"   A opnieuw -5: {voor:.1f} -> {a['current_mc']:.1f}  (komt nu wel aan)")
+assert a["current_mc"] == 25.0
 print("\nalle controles geslaagd")

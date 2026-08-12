@@ -1175,16 +1175,18 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         if player.first_debuff_blocked:
             return False
 
-        # ✅ Make sure there's at least one debuff incoming targeting Project
-        pending_debuff = any(
-            effect.get("phase", "").lower() == "debuff"
-            and effect.get("target_type", "").lower() == target_type.lower()
-            for card in opponent.field
-            for effect in card.get("parsed_power", [])
-            if not card.get("destroyed", False)
-        )
-
-        return pending_debuff
+        # Hier stond een check of de tegenstander een effect had met target_type
+        # letterlijk "Project". In de kaartdata heten doelen echter
+        # enemy_lowest, all_projects, random_enemy enzovoort — nooit kaal
+        # "Project" — dus deze voorwaarde was vrijwel altijd onwaar en de kaart
+        # deed nooit iets.
+        #
+        # Het is een passief schild: het wapent zichzelf zodra je Projects hebt.
+        # Het negeren zelf gebeurt op de kaart (zie Kaart in match_simulator.py),
+        # die het schild verbruikt zodra de eerste debuff werkelijk aankomt.
+        veld = list(getattr(player, "field", None) or field or [])
+        return any(c.get("card_type") == "Project" and not c.get("destroyed")
+                   for c in veld if isinstance(c, dict))
     
     elif condition_type == "self_mc_eq":
         try:

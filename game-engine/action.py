@@ -983,16 +983,30 @@ def apply_action(card, action_type, action_value, player_name, log, context=None
 
     # ---- NEGATE ----
     if act_type == "negate":
-        target_name = (
-            targets[0].get("card_id", "unknown")
-            if targets and isinstance(targets[0], dict)
-            else "unknown"
-        )
-        log_event(
-            context, log, "immune",
-            f"{source_card.get('card_id','?')} negated the effect on {target_name}",
-            source_card
-        )
+        # Deze tak logde alleen dat er iets genegeerd werd, zonder iets te doen.
+        # Beide kaarten die hem gebruiken zijn spelerbrede schilden:
+        #   Lionel_Founder_E1 — "negeer de eerste vernietigingspoging op je Projects"
+        #   Clove_Founder_E1  — "de eerste debuff die je Projects raakt wordt genegeerd"
+        # Eén schild voor de hele kant, dus alle eigen Projects delen hetzelfde
+        # telletje: wie als eerste geraakt wordt verbruikt het voor iedereen.
+        soort = str((effect or {}).get("condition_type") or "").lower()
+        eigen = _proj(field)
+        if not eigen:
+            log_event(context, log, "skip", f"⛔ {_bron_id()} has no Projects to shield.")
+            return
+        schild = {"over": max(1, int(value or 1))}
+        if "destr" in soort:
+            for c in eigen:
+                c["_gedeeld_sloopschild"] = schild
+            log_event(context, log, "immune",
+                      f"🛡️ {_bron_id()} negates the first destruction attempt on your Projects",
+                      source_card)
+        else:
+            for c in eigen:
+                c["_gedeeld_debuffschild"] = schild
+            log_event(context, log, "immune",
+                      f"🛡️ {_bron_id()} negates the first debuff that hits your Projects",
+                      source_card)
         return
 
     # ---- NO POWER ----

@@ -30,7 +30,7 @@ SCHILDEN = {c["card_id"] for c in CARDS
             for e in (c.get("parsed_power") or [])
             if str(e.get("action_type") or "") in
             ("limit_loss", "reduce_debuff_percentage", "reflect", "reflect_and_amplify",
-             "prevent_destruction", "override_mc_value", "redirect")}
+             "prevent_destruction", "override_mc_value", "redirect", "negate")}
 
 
 def deck(rng):

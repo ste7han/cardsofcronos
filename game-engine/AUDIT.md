@@ -541,3 +541,42 @@ maar 3 op de 3000 matches.
 `test_schild.py` toont het gedrag los: vier klappen van 4 MC op een kaart met
 plafond 5 komen uit op precies 5 MC verlies, ook als de schade rechtstreeks aan
 `current_mc` wordt toegewezen.
+
+---
+
+## Vervolg 7: negate
+
+De laatste ontbrekende actie. `negate` bestond wel, maar logde alleen dát er iets
+genegeerd werd zonder iets te doen. Twee kaarten gebruiken hem, en het zijn
+allebei spelerbrede schilden:
+
+- `COC_Lionel_Founder_E1` — "negeer de eerste vernietigingspoging op je Projects"
+- `COC_Clove_Founder_E1` — "de eerste debuff die je Projects raakt wordt genegeerd"
+
+Eén schild voor de hele kant, dus alle eigen Projects delen hetzelfde telletje:
+wie als eerste geraakt wordt verbruikt het voor iedereen. Het debuff-schild wordt
+nageleefd in `Kaart`, het sloopschild in de fase-afsluiting.
+
+`COC_Clove_Founder_E1` had daarnaast een voorwaarde die eiste dat de tegenstander
+een effect had met `target_type` letterlijk `"Project"`. In de kaartdata heten
+doelen `enemy_lowest`, `all_projects`, `random_enemy` — nooit kaal `"Project"` —
+dus die voorwaarde was vrijwel altijd onwaar.
+
+Alle zeven schildkaarten werken nu. Het vangnet over 3000 matches: 2877 identiek,
+123 anders mét schildkaart, **0 anders zonder**.
+
+De refactor van de vorige ronde betaalt zich hier uit: `COC_Clove_M1` ging van
+0 naar 11 van de 30 matches, `COC_CF_Founder_R1` van 1 naar 17.
+
+## Eindstand van de audit
+
+| | begin | nu |
+|---|---|---|
+| kaarten die de uitslag beïnvloeden | 107 | **145** |
+| kaarten die aantoonbaar niets doen | 110 | **56** |
+| positievoordeel speler 2 | +1,45 MC | binnen de ruis |
+
+Alle 25 ontbrekende acties, 41 target_types en 30 voorwaarden zijn geïmplementeerd.
+Wat overblijft zijn kaarten met een voorwaarde die klopt maar zelden voorkomt —
+vier eigen kaarten vernietigd, een Project van élke rarity, drie vijandelijke
+Projects vernietigd. Of die zeldzaamheid de bedoeling is, is een ontwerpvraag.

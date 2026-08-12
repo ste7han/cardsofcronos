@@ -291,7 +291,9 @@ class Kaart(dict):
         # uitrekenen, dan komt er door drijvende komma soms 105.29999999999999
         # uit waar 105.3 hoort — en zulke minuscule verschillen werken door in
         # vergelijkingen als "MC eindigt op 7".
-        if dict.get(self, "_debuff_reduction") is None and dict.get(self, "_max_total_loss") is None:
+        if (dict.get(self, "_debuff_reduction") is None
+                and dict.get(self, "_max_total_loss") is None
+                and dict.get(self, "_gedeeld_debuffschild") is None):
             return nieuw
 
         try:
@@ -310,6 +312,14 @@ class Kaart(dict):
             return nieuw
 
         verlies = huidig - nieuw
+
+        # "De eerste debuff die je Projects raakt wordt volledig genegeerd."
+        # Het schild geldt voor de hele kant, dus alle eigen Projects delen
+        # hetzelfde telletje: wie als eerste geraakt wordt verbruikt het.
+        gedeeld = dict.get(self, "_gedeeld_debuffschild")
+        if isinstance(gedeeld, dict) and gedeeld.get("over", 0) > 0:
+            gedeeld["over"] = gedeeld["over"] - 1
+            return huidig
 
         # "De eerste debuff wordt met 50% verminderd."
         korting = dict.get(self, "_debuff_reduction")
@@ -1495,8 +1505,15 @@ def simulate_match():
             # "Beschermt tegen vernietiging, één keer": vernietigingen gebeuren
             # verspreid door de engine, dus we draaien het hier terug. Het schild
             # wordt daarbij opgebruikt.
-            if c.get("destroyed") and int(c.get("_destroy_shield", 0)) > 0:
-                c["_destroy_shield"] = int(c["_destroy_shield"]) - 1
+            gedeeld = c.get("_gedeeld_sloopschild")
+            heeft_gedeeld = (c.get("destroyed") and isinstance(gedeeld, dict)
+                             and gedeeld.get("over", 0) > 0)
+            if heeft_gedeeld:
+                gedeeld["over"] = gedeeld["over"] - 1
+
+            if c.get("destroyed") and (heeft_gedeeld or int(c.get("_destroy_shield", 0)) > 0):
+                if not heeft_gedeeld:
+                    c["_destroy_shield"] = int(c["_destroy_shield"]) - 1
                 c["destroyed"] = False
                 for speler in (player1, player2):
                     try:
@@ -1719,8 +1736,15 @@ def simulate_match_with_decks(
             # "Beschermt tegen vernietiging, één keer": vernietigingen gebeuren
             # verspreid door de engine, dus we draaien het hier terug. Het schild
             # wordt daarbij opgebruikt.
-            if c.get("destroyed") and int(c.get("_destroy_shield", 0)) > 0:
-                c["_destroy_shield"] = int(c["_destroy_shield"]) - 1
+            gedeeld = c.get("_gedeeld_sloopschild")
+            heeft_gedeeld = (c.get("destroyed") and isinstance(gedeeld, dict)
+                             and gedeeld.get("over", 0) > 0)
+            if heeft_gedeeld:
+                gedeeld["over"] = gedeeld["over"] - 1
+
+            if c.get("destroyed") and (heeft_gedeeld or int(c.get("_destroy_shield", 0)) > 0):
+                if not heeft_gedeeld:
+                    c["_destroy_shield"] = int(c["_destroy_shield"]) - 1
                 c["destroyed"] = False
                 for speler in (player1, player2):
                     try:
