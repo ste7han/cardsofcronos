@@ -6,13 +6,12 @@ van dezelfde factie. Gesorteerd op het laagste percentage.
 Totaal 18800 matches.
 
 
-## Nooit (17 kaarten)
+## Nooit (16 kaarten)
 
 De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen factie.
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
-| `COC_CAW777_Founder_E1` | 0% | 0% | `first_debuff_targeting_side` = mc_ends_in_7 | First debuff target does not end with mc_ends_in_7 |
 | `COC_CM_C1` | 0% | 0% | `on_destroyed` | COC_CM_C1 was not destroyed — effect requires destru |
 | `COC_Clove_C3` | 0% | 0% | `is_only_rarity` = Common | Player 1 does not have only 'Common' rarity |
 | `COC_Cr00ts_C2` | 0% | 0% | `on_destroyed` | COC_Cr00ts_C2 was not destroyed — effect requires de |
@@ -24,13 +23,13 @@ De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen facti
 | `COC_RR_R3` | 0% | 0% | `on_destroyed` | COC_RR_R3 was not destroyed — effect requires destru |
 | `COC_Wolfswap_C1` | 0% | 0% | `self_destroyed` |  |
 | `COC_Wolfswap_R1` | 0% | 0% | `mc_lower_than_self` | COC_Wolfswap_R1 held back — Opponent’s MC was not lo |
+| `COC_CAW777_Founder_E1` | 0% | 2% | `first_debuff_targeting_side` = mc_ends_in_7 | First debuff target does not end with mc_ends_in_7 |
 | `COC_Clove_R3` | 0% | 2% | `not_has_tags` = Event | Tag 'Event' found, should not be present |
 | `COC_RR_Founder_M1` | 0% | 2% | `COC_RR_M1_exploded` | COC_RR_M1_exploded (True) |
-| `COC_CAW777_M1` | 0% | 5% | `projects_with_7_mc` = >=3 | Fewer than >=3 Projects with MC ending in 7 |
 | `COC_Howlers_R2` | 0% | 5% | `count_tag_exact` = Lunar=3 | Not exactly 3 Projects with tag 'Lunar' |
 | `COC_CAW777_C2` | 0% | 8% | `self_mc_eq` = 7 | COC_CAW777_C2 MC is not exactly 7 |
 
-## Zelden — onder de 20% (18 kaarten)
+## Zelden — onder de 20% (19 kaarten)
 
 Werkt, maar vraagt een situatie die zelden ontstaat.
 
@@ -38,6 +37,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 |---|---|---|---|---|
 | `COC_Cr00ts_M1` | 2% | 5% | `enemy_destroyed_count` = >=3 | Fewer than >=3 enemy Projects destroyed |
 | `COC_Lionel_C2` | 5% | 5% | `project_targeted_by_debuff` | COC_Lionel_C2 skipped: No friendly Project was targe |
+| `COC_CAW777_M1` | 5% | 10% | `projects_with_7_mc` = >=2 | Fewer than >=2 Projects with MC ending in 7 |
 | `COC_Cr00ts_R2` | 5% | 12% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
 | `COC_CAW777_Founder_R1` | 5% | 22% | `mc_multiple` = 7 | Total MC = 101.0, not divisible by 7 |
 | `COC_CAW777_E1` | 8% | 10% | `total_mc_mod` = 7 | total_mc_mod (7) |

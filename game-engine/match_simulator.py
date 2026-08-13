@@ -951,15 +951,27 @@ def apply_phase(deck, opponent_deck, log, player_name, phase_name, player, oppon
                 if card.get("destroyed"):
                     continue
                 for effect in _effects_for_phase(card, "Debuff"):
-                    if effect.get("condition_type") == "first_debuff_targeting_project":
+                    # first_debuff_targeting_side hoort hier net zo goed thuis:
+                    # het is dezelfde reactie ("kaats de eerste debuff terug"),
+                    # maar was nooit op deze machinerie aangesloten. In de gewone
+                    # beurtvolgorde wordt zo'n kaart beoordeeld vóór er een debuff
+                    # geland is, dus first_debuff_data was altijd nog leeg en
+                    # COC_CAW777_Founder_E1 faalde in 120 van de 120 matches.
+                    if effect.get("condition_type") in ("first_debuff_targeting_project",
+                                                        "first_debuff_targeting_side"):
                         # De reflectie werd hier ongetoetst gewapend. Bij
                         # COC_Howlers_FounderL1 hangt zij aan een extra voorwaarde
                         # ("→ ... and reflect ..."), die net als bij
                         # COC_CAW777_Founder_E1 in condition_value staat. Zonder
                         # deze poort zou het schild altijd staan en zou de kaart
                         # sterker zijn dan zijn eigen tekst.
+                        # Alleen bij _project is condition_value een poort met de
+                        # naam van een andere voorwaarde (COC_Howlers_FounderL1).
+                        # Bij _side staat er een kwalificatie in ("mc_ends_in_7")
+                        # die de voorwaarde zelf verderop beoordeelt.
                         poort = str(effect.get("condition_value") or "True").strip()
-                        if poort.lower() not in ("true", "1", "yes", ""):
+                        if (effect.get("condition_type") == "first_debuff_targeting_project"
+                                and poort.lower() not in ("true", "1", "yes", "")):
                             if not check_condition(card,
                                                    {"condition_type": poort, "condition_value": True},
                                                    owner_player, foe_player,
@@ -1252,13 +1264,23 @@ def apply_phase(deck, opponent_deck, log, player_name, phase_name, player, oppon
     if phase_name == "Debuff" and cr00ts_reactions:
         for card, effect, context, owner_player in cr00ts_reactions:
             debuff = getattr(owner_player, "first_debuff_data", None)
-            if debuff:
-                log.append(pretty_log("immune", "triggers after first debuff detected (delayed reaction)", card))
-                context["targets"] = [debuff["source_card"]]
-                apply_action(card, effect.get("action_type"), effect.get("action_value"), owner_player.name, log, context)
-                card["cr00ts_done"] = True
-            else:
+            if not debuff:
                 log.append(pretty_log("skip", "found no debuff effect to reflect", card))
+                continue
+
+            # Een kwalificatie als "mc_ends_in_7" gaat over de stand op het moment
+            # dat de debuff landt; bij het wapenen viel er nog niets te toetsen.
+            if not check_condition(card, effect, owner_player,
+                                   context.get("opponent"), owner_player.field,
+                                   owner_player.field, context=context, log=log):
+                log.append(pretty_log("skip", "reflection lapses — condition not met when the debuff landed", card))
+                card["cr00ts_done"] = True
+                continue
+
+            log.append(pretty_log("immune", "triggers after first debuff detected (delayed reaction)", card))
+            context["targets"] = [debuff["source_card"]]
+            apply_action(card, effect.get("action_type"), effect.get("action_value"), owner_player.name, log, context)
+            card["cr00ts_done"] = True
 
     # De per-fase vlaggen worden aan het BEGIN van elke fase gewist, in
     # simulate_match_with_decks(). Ze hier alleen na Debuff wissen zorgde ervoor

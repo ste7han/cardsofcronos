@@ -14,7 +14,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | 1 | 35% | 56% |
 | 2 | 13% | 21% |
 | 3 | 5% | 8% |
-| 4 | 1% | 2% |
+| 4 | 2% | 2% |
 | 5 | 1% | 1% |
 | 6 | 0% | 0% |
 
@@ -22,8 +22,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
-| 0 | 47% | 100% |
-| 1 | 33% | 53% |
+| 0 | 46% | 100% |
+| 1 | 33% | 54% |
 | 2 | 13% | 21% |
 | 3 | 5% | 8% |
 | 4 | 2% | 3% |
@@ -49,9 +49,9 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 1% | 100% |
-| 1 | 4% | 99% |
+| 1 | 5% | 99% |
 | 2 | 29% | 94% |
-| 3 | 46% | 66% |
+| 3 | 46% | 65% |
 | 4 | 19% | 20% |
 | 5 | 1% | 1% |
 

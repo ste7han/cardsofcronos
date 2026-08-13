@@ -23,6 +23,21 @@ OPERATOREN = {
 }
 
 
+def zichtbare_mc(waarde):
+    """De MC zoals de speler hem op het bord ziet: afgerond op een heel getal.
+
+    Het zeventhema van CAW777 toetst op cijfers ("eindigt op 7", "een veelvoud
+    van 7", "precies 7"). Die voorwaarden lazen de ruwe float en kapten af met
+    int(), waardoor 46.999999 als 46 telde en een exacte vergelijking met 7.0
+    nooit opging. Voor de speler staat er gewoon 47 op het bord; de voorwaarde
+    hoort hetzelfde getal te lezen.
+    """
+    try:
+        return int(round(float(waarde or 0)))
+    except (TypeError, ValueError):
+        return 0
+
+
 def normaliseer_teken(tekst):
     return (str(tekst or "")
             .replace("≥", ">=").replace("≤", "<=")
@@ -406,7 +421,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     elif condition_type == "mc_multiple":
         try:
             divisor = int(condition_value)
-            total_mc = player.total_mc()
+            total_mc = zichtbare_mc(player.total_mc())
             if divisor > 0 and total_mc % divisor == 0:
                 log_event(
                     context, log, "info",
@@ -662,7 +677,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
             if not c.get("destroyed") and c.get("card_type") == "Project"
         )
         print(f"[DEBUG] Checking total_mc_ends_in → {player.name} recalculated total MC = {total_mc}")
-        return str(int(total_mc))[-1] == ending_digit
+        return str(zichtbare_mc(total_mc))[-1] == ending_digit
     
     elif condition_type == "any_mc_ends_in":
         want = int(str(condition_value).strip()) % 10
@@ -678,7 +693,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
         for c in player.field + opponent.field:
             if c.get("card_type") == "Project" and not c.get("destroyed", False):
-                if int(float(c.get("current_mc", 0))) % 10 == want:
+                if zichtbare_mc(c.get("current_mc", 0)) % 10 == want:
                     return True
         return False
 
@@ -710,14 +725,25 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
             return False
 
     elif condition_type == "first_debuff_targeting_side":
+        # condition_value is hier geen cijfer maar een kwalificatie: de data zegt
+        # "mc_ends_in_7". De vergelijking hieronder zette een enkel cijfer naast
+        # die hele tekst en was dus altijd onwaar -- COC_CAW777_Founder_E1 kon
+        # daardoor nooit afvuren.
+        #
+        # "if your MC ends in 7" leest als je eigen totaal, net als bij
+        # COC_CAW777_C1 ("If your total MC ends in 7"), niet als de MC van de
+        # kaart die toevallig geraakt werd.
         if not player.first_debuff_data:
             return False
-        first_target = player.first_debuff_data.get("target")
-        if not first_target:
+        if not player.first_debuff_data.get("target"):
             return False
-        mc = first_target.get("current_mc", 0)
-        print(f"[DEBUG] {card['card_id']} checks first debuff target MC ending: {mc}")
-        return str(int(mc))[-1] == condition_value
+
+        m = re.search(r"(\d)\s*$", str(condition_value or ""))
+        if not m:
+            return True          # geen cijfer genoemd: alleen "eerste debuff" telt
+        cijfer = m.group(1)
+        totaal = zichtbare_mc(player.total_mc())
+        return str(totaal)[-1] == cijfer
 
     elif condition_type == "control_tag":
         tag = condition_value
@@ -1292,7 +1318,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     elif condition_type == "self_mc_eq":
         try:
             target_value = float(condition_value)
-            return card.get("current_mc", 0) == target_value
+            return zichtbare_mc(card.get("current_mc", 0)) == zichtbare_mc(target_value)
         except:
             return False
         
@@ -1710,7 +1736,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return any("Nova" in c.get("tags", []) for c in deck)
     
     elif condition_type == "projects_with_7_mc":
-        count = sum(1 for c in player.field if c.get("card_type") == "Project" and not c.get("destroyed") and "7" in str(int(c.get("current_mc", 0))))
+        count = sum(1 for c in player.field if c.get("card_type") == "Project" and not c.get("destroyed") and "7" in str(zichtbare_mc(c.get("current_mc", 0))))
         try:
             threshold = int(condition_value.replace(">=", "").strip())
         except:
@@ -2079,7 +2105,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
     elif condition_type == "own_projects_mc_end_7":
         op, n = _drempel(condition_value, ">=", 3)
-        aantal = len([c for c in _projects(_eigen) if int(abs(c.get("current_mc", 0))) % 10 == 7])
+        aantal = len([c for c in _projects(_eigen) if abs(zichtbare_mc(c.get("current_mc", 0))) % 10 == 7])
         return _vergelijk(aantal, op, n)
 
 

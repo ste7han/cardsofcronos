@@ -3583,13 +3583,13 @@
     "card_id": "COC_CAW777_M1",
     "card_type": "Project",
     "base_mc": 49.0,
-    "description": "If 3 or more of your Projects have a 7 in their MC at Final Calculation, destroy 2 random enemy Projects.",
+    "description": "If 2 or more of your Projects have a 7 in their MC at Final Calculation, destroy 2 random enemy Projects.",
     "parsed_power": [
       {
         "phase": "Final",
         "trigger_type": "conditional",
         "condition_type": "projects_with_7_mc",
-        "condition_value": ">=3",
+        "condition_value": ">=2",
         "target_type": "random_2_enemy",
         "action_type": "destroy",
         "action_value": 2
