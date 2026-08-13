@@ -6,7 +6,7 @@ van dezelfde factie. Gesorteerd op het laagste percentage.
 Totaal 18800 matches.
 
 
-## Nooit (19 kaarten)
+## Nooit (16 kaarten)
 
 De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen factie.
 
@@ -14,15 +14,12 @@ De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen facti
 |---|---|---|---|---|
 | `COC_CAW777_Founder_E1` | 0% | 0% | `first_debuff_targeting_side` = mc_ends_in_7 | First debuff target does not end with mc_ends_in_7 |
 | `COC_CM_C1` | 0% | 0% | `on_destroyed` | COC_CM_C1 was not destroyed — effect requires destru |
-| `COC_Clove_C1` | 0% | 0% | `has_tag` = Community | COC_Clove_C1 lacks tag 'Community' |
 | `COC_Clove_C3` | 0% | 0% | `is_only_rarity` = Common | Player 1 does not have only 'Common' rarity |
 | `COC_Cr00ts_C2` | 0% | 0% | `on_destroyed` | COC_Cr00ts_C2 was not destroyed — effect requires de |
 | `COC_Cr00ts_Founder_E1` | 0% | 0% | `first_enemy_debuff` | Armed — waiting for the first debuff |
 | `COC_EVT_Sideways_Chop` | 0% | 0% | `None` |  |
 | `COC_Howlers_L1` | 0% | 0% | `exact_rarity_mix` = Common:1,Rare:1,Epic:1,Legendary:1,Mythical:1 | Player 1 does not have exact rarity mix: Common:1,Ra |
 | `COC_INF_21Million_M1` | 0% | 0% | `control_all_rarities` | control_all_rarities (missing: Epic, Mythical) |
-| `COC_Lionel_R1` | 0% | 0% | `control_card_count` = Common >= 2 | Condition met |
-| `COC_Nova_C1` | 0% | 0% | `tag_on_field` = Nova ≥ 2 | No tag 'Nova ≥ 2' found on field |
 | `COC_RR_C3` | 0% | 0% | `on_destroyed` |  |
 | `COC_RR_R3` | 0% | 0% | `on_destroyed` | COC_RR_R3 was not destroyed — effect requires destru |
 | `COC_Wolfswap_C1` | 0% | 0% | `self_destroyed` |  |
@@ -44,7 +41,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_CAW777_E1` | 5% | 10% | `total_mc_mod` = 7 | total_mc_mod (7) |
 | `COC_CAW777_R1` | 5% | 10% | `survivor_count_eq` = 3 | survivor_count_eq (3) |
 | `COC_Cr00ts_R2` | 5% | 12% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
-| `COC_CAW777_Founder_R1` | 5% | 20% | `mc_multiple` = 7 | Total MC = 101.0, not divisible by 7 |
+| `COC_CAW777_Founder_R1` | 5% | 22% | `mc_multiple` = 7 | Total MC = 101.0, not divisible by 7 |
 | `COC_CAW777_C1` | 8% | 0% | `total_mc_ends_in` = 7 | Total MC ends on 2, needed 7 |
 | `COC_CF_C1` | 8% | 12% | `not_has_tags` = Influencer | Tag 'Influencer' found, should not be present |
 | `COC_CF_C2` | 8% | 12% | `targeted_by_debuff` | COC_CF_C2 skipped (Not targeted by debuff) |
@@ -58,15 +55,15 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_CAW777_Founder_L1` | 18% | 22% | `survivor_count_eq` = 3 | survivor_count_eq (3) |
 | `COC_FFS_C3` | 18% | 40% | `is_lowest_mc_in_deck` | COC_FFS_C3 is not the lowest MC Project in deck |
 
-## Soms — 20 tot 60% (35 kaarten)
+## Soms — 20 tot 60% (36 kaarten)
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
 | `COC_CM_M1` | 20% | 15% | `projects_destroyed_count` = >=3 | Player 2’s COC_CM_M1 — not enough destroyed cards |
 | `COC_EVT_Chain_Reaction` | 20% | 28% | `cards_destroyed >= 2` | cards_destroyed >= 2 (True) |
 | `COC_RR_L1` | 22% | 8% | `own_destroyed_count` = >=2 | own_destroyed_count (>=2) |
-| `COC_Nova_R3` | 25% | 12% | `nova_destroyed` | No Nova Projects were destroyed |
-| `COC_Lionel_R2` | 25% | 42% | `enemy_project_destroyed_once` | No enemy Project has been destroyed yet |
+| `COC_Nova_R3` | 22% | 12% | `nova_destroyed` | No Nova Projects were destroyed |
+| `COC_Lionel_R2` | 22% | 42% | `enemy_project_destroyed_once` | No enemy Project has been destroyed yet |
 | `COC_CF_M1` | 28% | 18% | `more_projects_than_opponent` | COC_CF_M1 skipped (Not more Projects than opponent) |
 | `COC_DAK_M1` | 30% | 8% | `projects_destroyed` = >=3 | projects_destroyed (>=3) |
 | `COC_DAK_Founder_L1` | 30% | 10% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
@@ -77,7 +74,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_FFS_M1` | 32% | 10% | `total_team_mc_lt_opponent` | Your total MC is not lower than opponent |
 | `COC_Nova_C3` | 32% | 38% | `is_lowest` | ⬇ Not your lowest MC Project |
 | `COC_Wolfswap_Founder_C1` | 35% | 38% | `first_friendly_destroyed` | No friendly Project was the first to be destroyed |
-| `COC_Cr00ts_C1` | 35% | 55% | `survives_debuff` | survives_debuff (True) |
+| `COC_Cr00ts_C1` | 35% | 57% | `survives_debuff` | survives_debuff (True) |
 | `COC_CAW777_E2` | 38% | 35% | `event_card_count` = 3 | Player 2 does not have exactly 3 Event cards |
 | `COC_CM_Founder_E1` | 38% | 57% | `own_mc_loss_count` = >=2 | Fewer than >=2 own Projects lost MC |
 | `COC_Wolfswap_C2` | 40% | 2% | `destroyed_friendly_wolfswap` | destroyed_friendly_wolfswap (True) |
@@ -89,16 +86,17 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_RR_Founder_L1` | 50% | 40% | `enemy_destroyed_count` = >=1 | Fewer than >=1 enemy Projects destroyed |
 | `COC_COM_Vinz_L1` | 50% | 42% | `rarity` = Legendary | No Project with rarity 'Legendary' on your field |
 | `COC_Cr00ts_Founder_L1` | 52% | 10% | `cr00ts_destroyed_count` = >=1 | cr00ts_destroyed_count (>=1) |
-| `COC_Lionel_C1` | 52% | 48% | `mc_less_than_equal` = 15 | COC_Lionel_C1 MC 18.0 is not ≤ 15 |
+| `COC_Lionel_C1` | 52% | 45% | `mc_less_than_equal` = 15 | COC_Lionel_C1 MC 18.0 is not ≤ 15 |
 | `COC_EVT_Market_Whisper` | 52% | 65% | `total_mc < opponent` | Player 2 MC is not lower than opponent |
 | `COC_Nova_R2` | 52% | 85% | `count_rarity` = Rare ≥ 2 | count_rarity (Rare ≥ 2) |
-| `COC_COM_Vinz_R1` | 55% | 38% | `own_projects_under_mc_gte` = 20 | Need at least 3 Projects under 20 MC |
+| `COC_COM_Vinz_R1` | 55% | 35% | `own_projects_under_mc_gte` = 20 | Need at least 3 Projects under 20 MC |
 | `COC_INF_Francis_E1` | 55% | 60% | `mc_lt_opponent` | Player 2 MC is not lower than opponent |
 | `COC_DAK_R2` | 57% | 38% | `enemy_destroyed` | enemy_destroyed (True) |
 | `COC_RR_Founder_R1` | 57% | 50% | `on_project_destroyed` | No Project destroyed on your side |
+| `COC_Clove_C1` | 57% | 60% | `has_tag` = Community | COC_Clove_C1 lacks tag 'Community' |
 | `COC_Howlers_C2` | 57% | 65% | `total_mc_lt_opponent` | total_mc_lt_opponent (True) |
 
-## Vaak — 60% of meer (162 kaarten)
+## Vaak — 60% of meer (164 kaarten)
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
@@ -136,6 +134,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_EVT_FUD` | 85% | 92% | `mc_gte` = 20 | Player 2’s COC_EVT_FUD — is disabled and cannot trig |
 | `COC_Lionel_M1` | 85% | 95% | `final_calc_survivors` = >=4 |  |
 | `COC_Howlers_FounderL1` | 88% | 80% | `has_all_rarities` | Not all rarities present |
+| `COC_Lionel_R1` | 88% | 90% | `control_card_count` = Common >= 2 | Need common >= 2 on field; have 1 |
 | `COC_Cr00ts_Founder_R1` | 88% | 92% | `project_debuffed` | COC_Cr00ts_Founder_R1 skipped: No friendly Projects  |
 | `COC_Cr00ts_E1` | 90% | 78% | `survived` |  |
 | `COC_CF_R2` | 90% | 88% | `own_card_debuffed` |  |
@@ -152,6 +151,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_CF_R3` | 95% | 98% | `in_play` |  |
 | `COC_EVT_Ding_Ding_Ding!` | 95% | 98% | `random_project` | Player 2’s COC_EVT_Ding_Ding_Ding! — is disabled and |
 | `COC_Lionel_E2` | 95% | 98% | `first_debuff` |  |
+| `COC_Nova_C1` | 98% | 18% | `tag_on_field` = Nova ≥ 2 |  |
 | `COC_RR_R1` | 98% | 45% | `deck_tag_count` = Machine >= 2 |  |
 | `COC_CF_Founder_E1` | 98% | 82% | `hit_by_debuff` | ↳   Skipping add_mc: COC_CF_Founder_E1 is not a Proj |
 | `COC_Howlers_E1` | 98% | 92% | `enemy_has_two` |  |

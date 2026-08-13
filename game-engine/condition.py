@@ -1,3 +1,4 @@
+import operator
 import re
 
 from targeting import get_targets
@@ -7,6 +8,32 @@ from utils import log_event, pretty_log, CardLogGroup, maybe_reflect_first_debuf
 
 # De kaartteksten gebruiken andere namen dan de tags in de data. "Ape" is hoe de
 # DAK-factie (Defi Ape Kings) in de teksten heet; er bestaat geen tag "Ape".
+# De kaartdata schrijft drempels nu eens als ">=2" en dan weer als "≥2". Dat
+# tweede teken is geen Python-operator: eval("3 ≥ 2") gooit een SyntaxError, die
+# werd afgevangen en werd stilzwijgend False. Elke voorwaarde die een operator
+# uit de data leest hoort daarom via normaliseer_teken() en vergelijk() te gaan
+# in plaats van via eval().
+OPERATOREN = {
+    ">=": operator.ge,
+    "<=": operator.le,
+    ">": operator.gt,
+    "<": operator.lt,
+    "==": operator.eq,
+    "=": operator.eq,
+}
+
+
+def normaliseer_teken(tekst):
+    return (str(tekst or "")
+            .replace("≥", ">=").replace("≤", "<=")
+            .replace("=>", ">=").replace("=<", "<="))
+
+
+def vergelijk(aantal, teken, grens):
+    fn = OPERATOREN.get(str(teken or "").strip())
+    return bool(fn and fn(aantal, grens))
+
+
 TAG_ALIASSEN = {
     "ape": "DAK",
     "apes": "DAK",
@@ -160,20 +187,22 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
 
     if condition_type == "has_tag":
-        return condition_value in card.get("tags", [])
+        # De kaartteksten zeggen "if you have a <tag> card on the field"; deze
+        # test keek naar de bronkaart zelf, die de tag per definitie zelden heeft.
+        # Raakt COC_Clove_C1 (Community) en COC_Nova_E1 (Nova).
+        return any(heeft_tag(c, condition_value)
+                   for c in (field or []) if isinstance(c, dict) and not c.get("destroyed"))
 
     elif condition_type == "tag_on_field":
         # "Nova ≥ 2", maar ook een kale tagnaam. Let op: de kaarttekst kan een
         # andere naam gebruiken dan de data — "Ape" is de tag "DAK".
-        parts = str(condition_value or "").split()
-        if len(parts) == 3:
-            tag, operator, amount = parts
+        rauw = normaliseer_teken(condition_value).strip()
+        m = re.match(r"(.+?)\s*(>=|<=|==|>|<|=)\s*(\d+)\s*$", rauw)
+        if m:
+            tag, teken, grens = m.group(1).strip(), m.group(2), int(m.group(3))
             count = sum(1 for c in deck if heeft_tag(c, tag))
-            try:
-                return eval(f"{count} {operator} {int(amount)}")
-            except Exception:
-                return False
-        tag = parts[0] if parts else ""
+            return vergelijk(count, teken, grens)
+        tag = rauw.split()[0] if rauw.split() else ""
         return any(heeft_tag(c, tag) for c in deck)
 
     elif condition_type == "deck_tag":
@@ -658,11 +687,11 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     elif condition_type == "deck_tag_count":
         # Format: "TagName >= Number"
         try:
-            tag, operator, threshold = condition_value.split()
+            tag, teken, threshold = normaliseer_teken(condition_value).split()
             threshold = int(threshold)
-            count = sum(1 for c in deck if tag in c.get("tags", []))
-            result = eval(f"{count} {operator} {threshold}")
-            print(f"[DEBUG] {card['card_id']} deck_tag_count {tag}: {count} vs {operator} {threshold} → {result}")
+            count = sum(1 for c in deck if heeft_tag(c, tag))
+            result = vergelijk(count, teken, threshold)
+            print(f"[DEBUG] {card['card_id']} deck_tag_count {tag}: {count} vs {teken} {threshold} → {result}")
             return result
         except Exception as e:
             print(f"[ERROR] deck_tag_count parsing failed → {e}")
@@ -1129,22 +1158,36 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return not card.get("destroyed", False)
 
     elif condition_type == "control_card_count":
-        expected = condition_value.split(",")
-        if len(expected) != 2:
-            print(f"[CONDITION ERROR] Invalid format for control_card_count: {condition_value}")
-            return False
-        try:
-            required_count = int(expected[0])
-            required_type = expected[1].strip().lower()
-        except Exception as e:
-            print(f"[CONDITION ERROR] Failed parsing control_card_count: {e}")
-            return False
+        # Twee formaten in de data:
+        #   "1,Project"   aantal, card_type   (COC_Lionel_Founder_C1)
+        #   "Common >= 2" rarity, operator, aantal (COC_Lionel_R1)
+        # Alleen het eerste werd gelezen; het tweede viel stil op de
+        # kommasplitsing. En "Common" is een rarity, geen card_type, dus de
+        # vergelijking hieronder moet naar allebei kijken.
+        rauw = normaliseer_teken(condition_value).strip()
+        if "," in rauw:
+            deel = [d.strip() for d in rauw.split(",")]
+            if len(deel) != 2:
+                return False
+            try:
+                grens, wat, teken = int(deel[0]), deel[1], ">="
+            except ValueError:
+                return False
+        else:
+            m = re.match(r"([A-Za-z_ ]+?)\s*(>=|<=|==|>|<|=)\s*(\d+)\s*$", rauw)
+            if not m:
+                return False
+            wat, teken, grens = m.group(1).strip(), m.group(2), int(m.group(3))
 
+        gezocht = wat.strip().lower()
+        veld = getattr(player, "field", None) or field or []
         count = sum(
-            1 for c in player.field
-            if c.get("card_type", "").lower() == required_type and not c.get("destroyed")
+            1 for c in veld
+            if isinstance(c, dict) and not c.get("destroyed")
+            and gezocht in (str(c.get("card_type", "")).lower(),
+                            str(c.get("rarity", "")).lower())
         )
-        return count >= required_count
+        return vergelijk(count, teken, grens)
 
 
 
@@ -1486,7 +1529,7 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         # "TagName", "TagName:>=2", maar ook "Lunar>=3" zonder dubbele punt.
         # Die laatste vorm werd eerder in zijn geheel als tagnaam gelezen, dus
         # er werd gezocht naar een tag die letterlijk "Lunar>=3" heet.
-        rauw = str(condition_value or "").replace("≥", ">=").replace("≤", "<=")
+        rauw = normaliseer_teken(condition_value)
         m = re.match(r"\s*([^:><=]+?)\s*[:]?\s*((?:>=|<=|==|>|<)\s*\d+)?\s*$", rauw)
         tag = (m.group(1).strip() if m and m.group(1) else rauw.strip())
         comparator = (m.group(2).replace(" ", "") if m and m.group(2) else ">0")
@@ -1498,12 +1541,11 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
             if heeft_tag(card, tag):
                 count += 1
 
-        try:
-            # Use eval safely to compare count
-            return eval(f"{count}{comparator}")
-        except Exception as e:
-            print(f"[ERROR] Invalid count_tag condition: {condition_value} → {e}")
+        deel = re.match(r"(>=|<=|==|>|<|=)(\d+)$", comparator)
+        if not deel:
+            print(f"[ERROR] Invalid count_tag condition: {condition_value}")
             return False
+        return vergelijk(count, deel.group(1), int(deel.group(2)))
 
 
     

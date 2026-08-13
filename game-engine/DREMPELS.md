@@ -36,7 +36,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 20% | 100% |
 | 1 | 31% | 80% |
-| 2 | 24% | 49% |
+| 2 | 24% | 48% |
 | 3 | 13% | 24% |
 | 4 | 6% | 12% |
 | 5 | 3% | 5% |
@@ -59,8 +59,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
-| 0 | 59% | 100% |
-| 1 | 24% | 41% |
+| 0 | 60% | 100% |
+| 1 | 25% | 40% |
 | 2 | 11% | 16% |
 | 3 | 4% | 5% |
 | 4 | 1% | 1% |
@@ -150,7 +150,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `>=1` | 35% |
+| `>=1` | 32% |
 | `>=2` | 8%  ← huidig |
 | `>=3` | 2% |
 
