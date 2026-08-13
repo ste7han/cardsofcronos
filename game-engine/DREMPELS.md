@@ -12,7 +12,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 44% | 100% |
 | 1 | 36% | 56% |
-| 2 | 14% | 20% |
+| 2 | 13% | 21% |
 | 3 | 5% | 7% |
 | 4 | 1% | 2% |
 | 5 | 1% | 1% |
@@ -24,9 +24,9 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 46% | 100% |
 | 1 | 34% | 54% |
-| 2 | 14% | 20% |
-| 3 | 5% | 6% |
-| 4 | 1% | 2% |
+| 2 | 13% | 20% |
+| 3 | 5% | 7% |
+| 4 | 2% | 2% |
 | 5 | 1% | 1% |
 | 6 | 0% | 0% |
 
@@ -37,20 +37,20 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | 0 | 20% | 100% |
 | 1 | 32% | 80% |
 | 2 | 24% | 48% |
-| 3 | 14% | 24% |
-| 4 | 6% | 10% |
-| 5 | 3% | 4% |
+| 3 | 13% | 24% |
+| 4 | 6% | 11% |
+| 5 | 3% | 5% |
 | 6 | 1% | 2% |
-| 7 | 0% | 1% |
-| 8 | 0% | 0% |
+| 7 | 1% | 1% |
+| 8 | 0% | 1% |
 
 **Hoeveel verschillende rarities je aan het eind bestuurt**
 
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 1% | 100% |
-| 1 | 4% | 99% |
-| 2 | 30% | 95% |
+| 1 | 5% | 99% |
+| 2 | 30% | 94% |
 | 3 | 46% | 65% |
 | 4 | 18% | 19% |
 | 5 | 1% | 1% |
@@ -61,7 +61,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 59% | 100% |
 | 1 | 25% | 41% |
-| 2 | 11% | 16% |
+| 2 | 12% | 16% |
 | 3 | 4% | 5% |
 | 4 | 1% | 1% |
 | 5 | 0% | 0% |
@@ -73,7 +73,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 61% | 100% |
 | 1 | 31% | 39% |
-| 2 | 7% | 8% |
+| 2 | 6% | 8% |
 | 3 | 1% | 1% |
 | 4 | 0% | 0% |
 | 5 | 0% | 0% |
@@ -87,14 +87,14 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 ### `COC_Wolfswap_Founder_M1`
 
-> If 4 of your cards are destroyed during the match,
+> If 2 of your cards are destroyed during the match,
 
 | drempel | slaagt in |
 |---|---|
 | `≥1` | 32% |
-| `≥2` | 8% |
+| `≥2` | 8%  ← huidig |
 | `≥3` | 5% |
-| `≥4` | 0%  ← huidig |
+| `≥4` | 0% |
 
 ### `COC_Wolfswap_Founder_E1`
 
@@ -102,57 +102,57 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `≥1` | 35% |
-| `≥2` | 8%  ← huidig |
+| `≥1` | 38% |
+| `≥2` | 10%  ← huidig |
 
 ### `COC_Cr00ts_Founder_M1`
 
-> If 3 or more enemy Projects are destroyed during the match, immediately destroy one random surviving
+> If 2 or more enemy Projects are destroyed during the match, immediately destroy one random surviving
 
 | drempel | slaagt in |
 |---|---|
 | `>=1` | 42% |
-| `>=2` | 8% |
-| `>=3` | 0%  ← huidig |
+| `>=2` | 8%  ← huidig |
+| `>=3` | 0% |
 
 ### `COC_DAK_Founder_M1`
 
-> If 3 or more enemy Projects are destroyed, destroy another one and gain +20 MC.
+> If 2 or more enemy Projects are destroyed, destroy another one and gain +20 MC.
 
 | drempel | slaagt in |
 |---|---|
 | `>=1` | 65% |
-| `>=2` | 25% |
-| `>=3` | 5%  ← huidig |
+| `>=2` | 25%  ← huidig |
+| `>=3` | 5% |
 
 ### `COC_Cr00ts_Founder_L1`
 
-> If two or more Cr00ts Projects are destroyed during the match, all surviving Projects gain +6 MC.
+> If a Cr00ts Project is destroyed during the match, all surviving Projects gain +6 MC.
 
 | drempel | slaagt in |
 |---|---|
-| `>=1` | 40% |
-| `>=2` | 5%  ← huidig |
+| `>=1` | 40%  ← huidig |
+| `>=2` | 5% |
 
 ### `COC_EVT_Chain_Reaction`
 
-> 	If 3 or more cards are destroyed this match, deal -3 MC to all cards
+> If 2 or more cards are destroyed this match, deal -3 MC to all cards
 
 | drempel | slaagt in |
 |---|---|
 | `cards_destroyed >= 1` | 45% |
-| `cards_destroyed >= 2` | 10% |
-| `cards_destroyed >= 3` | 0%  ← huidig |
+| `cards_destroyed >= 2` | 10%  ← huidig |
+| `cards_destroyed >= 3` | 0% |
 
 ### `COC_CAW777_Founder_M1`
 
-> If 3 or more of your Projects' MC values end in 7, triple their MC.
+> If 2 or more of your Projects' MC values end in 7, triple their MC.
 
 | drempel | slaagt in |
 |---|---|
-| `>=1` | 38% |
-| `>=2` | 8% |
-| `>=3` | 2%  ← huidig |
+| `>=1` | 35% |
+| `>=2` | 8%  ← huidig |
+| `>=3` | 2% |
 
 ### `COC_Nova_Founder_R1`
 

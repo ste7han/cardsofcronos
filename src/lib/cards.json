@@ -94,15 +94,15 @@
     "description": "plus 2mc for each other Rare card on the field",
     "parsed_power": [
       {
-      "phase": "Buff",
-      "trigger_type": "automatic",
-      "condition_type": "count_rarity",
-      "condition_value": "Rare",
-      "exclude_self": true,
-      "target_type": "self",
-      "action_type": "add_mc_per_card",
-      "action_value": 2
-    }
+        "phase": "Buff",
+        "trigger_type": "automatic",
+        "condition_type": "count_rarity",
+        "condition_value": "Rare",
+        "exclude_self": true,
+        "target_type": "self",
+        "action_type": "add_mc_per_card",
+        "action_value": 2
+      }
     ],
     "tags": [
       "Clove",
@@ -532,7 +532,7 @@
     "card_id": "COC_CF_M1",
     "card_type": "Project",
     "base_mc": 50.0,
-    "description": "If you have more Project cards than your opponent:\n\u2192 Steal 5 MC from each of their Projects\n\nElse:\n\u2192 Double the MC of your lowest Project",
+    "description": "If you have more Project cards than your opponent:\n→ Steal 5 MC from each of their Projects\n\nElse:\n→ Double the MC of your lowest Project",
     "parsed_power": [
       {
         "phase": "Final",
@@ -767,7 +767,7 @@
     "rarity": "Rare"
   },
   {
-    "card_id": "COC_Wolfswap_R2", 
+    "card_id": "COC_Wolfswap_R2",
     "card_type": "Project",
     "base_mc": 17.0,
     "description": "Swap the MC of your lowest project with your enemies lowest Project at the end of the game",
@@ -865,7 +865,7 @@
         "phase": "Counter",
         "trigger_type": "conditional",
         "condition_type": "enemy_destroyed_count",
-        "condition_value": "\u22652",
+        "condition_value": "≥2",
         "target_type": "random_enemy_project",
         "action_type": "destroy",
         "action_value": 1
@@ -953,7 +953,7 @@
         "phase": "Counter",
         "trigger_type": "conditional",
         "condition_type": "destroyed_friendly_count",
-        "condition_value": "\u22652",
+        "condition_value": "≥2",
         "target_type": "all_surviving_friendly_projects",
         "action_type": "add_mc",
         "action_value": 4
@@ -991,13 +991,13 @@
     "card_id": "COC_Wolfswap_Founder_M1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 4 of your cards are destroyed during the match,\n\u2192 destroy all enemy Projects",
+    "description": "If 2 of your cards are destroyed during the match,\n→ destroy all enemy Projects",
     "parsed_power": [
       {
         "phase": "Counter",
         "trigger_type": "conditional",
         "condition_type": "destroyed_friendly_count",
-        "condition_value": "\u22654",
+        "condition_value": "≥2",
         "target_type": "all_enemy_projects",
         "action_type": "destroy",
         "action_value": "all"
@@ -1366,7 +1366,7 @@
     "card_id": "COC_Howlers_C2",
     "card_type": "Project",
     "base_mc": 7.0,
-    "description": "If your total MC is lower than your opponent\u2019s, gain +4 MC",
+    "description": "If your total MC is lower than your opponent’s, gain +4 MC",
     "parsed_power": [
       {
         "phase": "Buff",
@@ -1412,7 +1412,7 @@
     "card_id": "COC_Howlers_R1",
     "card_type": "Project",
     "base_mc": 15.0,
-    "description": "Copy the effect of one random card on your opponent\u2019s field",
+    "description": "Copy the effect of one random card on your opponent’s field",
     "parsed_power": [
       {
         "phase": "Start",
@@ -1596,7 +1596,7 @@
     "card_id": "COC_Howlers_Founder_R1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If your Projects include both a card below 10 MC and a card above 30 MC,\n\u2192 gain +3 MC on each",
+    "description": "If your Projects include both a card below 10 MC and a card above 30 MC,\n→ gain +3 MC on each",
     "parsed_power": [
       {
         "phase": "Buff",
@@ -1642,7 +1642,7 @@
     "card_id": "COC_Howlers_FounderL1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If your deck contains exactly one of each rarity,\n\u2192 gain +10 Mc on a random project you control  and reflect the first debuff targeting your Projects",
+    "description": "If your deck contains exactly one of each rarity,\n→ gain +10 Mc on a random project you control  and reflect the first debuff targeting your Projects",
     "parsed_power": [
       {
         "phase": "Buff",
@@ -1707,36 +1707,36 @@
     "rarity": "Common"
   },
   {
-  "card_id": "COC_FFS_C2",
-  "card_type": "Project",
-  "base_mc": 6.0,
-  "description": "This card loses -3 MC. Another random Project gains +5 MC",
-  "parsed_power": [
-    {
-      "phase": "Buff",
-      "trigger_type": "automatic",
-      "condition_type": "always",
-      "condition_value": "",
-      "target_type": "self",
-      "action_type": "self_damage",
-      "action_value": -3
-    },
-    {
-      "phase": "Buff",
-      "trigger_type": "automatic",
-      "condition_type": "always",
-      "condition_value": "",
-      "target_type": "random_friendly_project_except_self",
-      "action_type": "add_mc",
-      "action_value": 5
-    }
-  ],
-  "tags": [
-    "FFS",
-    "Meme"
-  ],
-  "rarity": "Common"
-},
+    "card_id": "COC_FFS_C2",
+    "card_type": "Project",
+    "base_mc": 6.0,
+    "description": "This card loses -3 MC. Another random Project gains +5 MC",
+    "parsed_power": [
+      {
+        "phase": "Buff",
+        "trigger_type": "automatic",
+        "condition_type": "always",
+        "condition_value": "",
+        "target_type": "self",
+        "action_type": "self_damage",
+        "action_value": -3
+      },
+      {
+        "phase": "Buff",
+        "trigger_type": "automatic",
+        "condition_type": "always",
+        "condition_value": "",
+        "target_type": "random_friendly_project_except_self",
+        "action_type": "add_mc",
+        "action_value": 5
+      }
+    ],
+    "tags": [
+      "FFS",
+      "Meme"
+    ],
+    "rarity": "Common"
+  },
   {
     "card_id": "COC_FFS_C3",
     "card_type": "Project",
@@ -1782,35 +1782,35 @@
     "rarity": "Rare"
   },
   {
-  "card_id": "COC_FFS_R2",
-  "card_type": "Project",
-  "base_mc": 16.0,
-  "description": "This card takes -5 MC. Give +2 MC to each other Meme-tagged Project",
-  "parsed_power": [
-    {
-      "phase": "Buff",
-      "trigger_type": "automatic",
-      "condition_type": "always",
-      "condition_value": "",
-      "target_type": "self",
-      "action_type": "self_damage",
-      "action_value": -5
-    },
-    {
-      "phase": "Buff",
-      "trigger_type": "automatic",
-      "condition_type": "always",
-      "condition_value": "",
-      "target_type": "all_friendly_meme_except_self",
-      "action_type": "add_mc",
-      "action_value": 2
-    }
-  ],
-  "tags": [
-    "FFS",
-    "Meme"
-  ],
-  "rarity": "Rare"
+    "card_id": "COC_FFS_R2",
+    "card_type": "Project",
+    "base_mc": 16.0,
+    "description": "This card takes -5 MC. Give +2 MC to each other Meme-tagged Project",
+    "parsed_power": [
+      {
+        "phase": "Buff",
+        "trigger_type": "automatic",
+        "condition_type": "always",
+        "condition_value": "",
+        "target_type": "self",
+        "action_type": "self_damage",
+        "action_value": -5
+      },
+      {
+        "phase": "Buff",
+        "trigger_type": "automatic",
+        "condition_type": "always",
+        "condition_value": "",
+        "target_type": "all_friendly_meme_except_self",
+        "action_type": "add_mc",
+        "action_value": 2
+      }
+    ],
+    "tags": [
+      "FFS",
+      "Meme"
+    ],
+    "rarity": "Rare"
   },
   {
     "card_id": "COC_FFS_R3",
@@ -1904,7 +1904,7 @@
     "card_id": "COC_FFS_M1",
     "card_type": "Project",
     "base_mc": 49.0,
-    "description": "If your total team MC is lower than your opponent\u2019s,\nrandomly select 3 of your Projects and give them +6 MC",
+    "description": "If your total team MC is lower than your opponent’s,\nrandomly select 3 of your Projects and give them +6 MC",
     "parsed_power": [
       {
         "phase": "Buff",
@@ -1970,7 +1970,7 @@
     "card_id": "COC_FFS_Founder_E1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 2 or more of your cards lose MC from effects, gain +4 MC on each card that didn\u2019t",
+    "description": "If 2 or more of your cards lose MC from effects, gain +4 MC on each card that didn’t",
     "parsed_power": [
       {
         "phase": "Counter",
@@ -2014,7 +2014,7 @@
     "card_id": "COC_FFS_Founder_M1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 3 or more of your Projects lose MC during the match,\n\u2192 give +5 MC to every card on your side.\n\u2192 Then reflect the lowest MC enemy Project\u2019s debuff back at them",
+    "description": "If 3 or more of your Projects lose MC during the match,\n→ give +5 MC to every card on your side.\n→ Then reflect the lowest MC enemy Project’s debuff back at them",
     "parsed_power": [
       {
         "phase": "Counter",
@@ -2214,24 +2214,24 @@
     "base_mc": 38.0,
     "description": "Destroy one of your own Commons. Then gain +15 MC",
     "parsed_power": [
-    {
-      "phase": "Buff",
-      "trigger_type": "conditional",
-      "condition_type": "random_common_own_exists",
-      "condition_value": "True",
-      "target_type": "random_common_own",
-      "action_type": "destroy",
-      "action_value": null
-    },
-    {
-      "phase": "Buff",
-      "trigger_type": "conditional",
-      "condition_type": "random_common_own_destroyed",
-      "condition_value": "True",
-      "target_type": "self",
-      "action_type": "add_mc",
-      "action_value": 15
-    }
+      {
+        "phase": "Buff",
+        "trigger_type": "conditional",
+        "condition_type": "random_common_own_exists",
+        "condition_value": "True",
+        "target_type": "random_common_own",
+        "action_type": "destroy",
+        "action_value": null
+      },
+      {
+        "phase": "Buff",
+        "trigger_type": "conditional",
+        "condition_type": "random_common_own_destroyed",
+        "condition_value": "True",
+        "target_type": "self",
+        "action_type": "add_mc",
+        "action_value": 15
+      }
     ],
     "tags": [
       "Crazzzy Monsters",
@@ -2309,7 +2309,7 @@
     "card_id": "COC_CM_Founder_E1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If two or more of your Projects lose MC this match,\n\u2192 randomly give +5 MC to two of your surviving Projects",
+    "description": "If two or more of your Projects lose MC this match,\n→ randomly give +5 MC to two of your surviving Projects",
     "parsed_power": [
       {
         "phase": "Counter",
@@ -2353,7 +2353,7 @@
     "card_id": "COC_CM_Founder_M1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 3 or more cards were destroyed this match (any side),\n\u2192 destroy all projects on the field, except your lowest project (33% chance)",
+    "description": "If 3 or more cards were destroyed this match (any side),\n→ destroy all projects on the field, except your lowest project (33% chance)",
     "parsed_power": [
       {
         "phase": "Counter",
@@ -2381,7 +2381,7 @@
         "phase": "Buff",
         "trigger_type": "conditional",
         "condition_type": "tag_on_field",
-        "condition_value": "Nova \u2265 2",
+        "condition_value": "Nova ≥ 2",
         "target_type": "self",
         "action_type": "add_mc",
         "action_value": 2
@@ -2469,7 +2469,7 @@
         "phase": "Buff",
         "trigger_type": "conditional",
         "condition_type": "count_rarity",
-        "condition_value": "Rare \u2265 2",
+        "condition_value": "Rare ≥ 2",
         "target_type": "self",
         "action_type": "add_mc",
         "action_value": 3
@@ -2529,7 +2529,7 @@
     "card_id": "COC_Nova_E2",
     "card_type": "Project",
     "base_mc": 28.0,
-    "description": "Steal +3 MC from the enemy\u2019s highest Project if it\u2019s 35+ MC.",
+    "description": "Steal +3 MC from the enemy’s highest Project if it’s 35+ MC.",
     "parsed_power": [
       {
         "phase": "Debuff",
@@ -2680,29 +2680,36 @@
     "rarity": "Legendary"
   },
   {
-  "card_id": "COC_Nova_Founder_M1",
-  "card_type": "Founder",
-  "base_mc": 0,
-  "description": "If you control Projects of 4 different rarities, destroy the lowest enemy Project and gain +8 MC on your highest Nova card.",
-  "parsed_power": [
-    {
-      "phase": "Buff",
-      "trigger_type": "conditional",
-      "condition_type": "unique_rarity_count_gte",
-      "condition_value": "4",
-      "target_type": "self",
-      "action_type": "multi_action",
-      "action_value": [
-        {"target_type": "enemy_lowest", "action_type": "destroy"},
-        {"target_type": "own_highest_nova", "action_type": "add_mc", "action_value": 8}
-      ]
-    }
-  ],
-  "tags": [
-    "Nova",
-    "Memetility"
-  ],
-  "rarity": "Mythical"
+    "card_id": "COC_Nova_Founder_M1",
+    "card_type": "Founder",
+    "base_mc": 0,
+    "description": "If you control Projects of 4 different rarities, destroy the lowest enemy Project and gain +8 MC on your highest Nova card.",
+    "parsed_power": [
+      {
+        "phase": "Buff",
+        "trigger_type": "conditional",
+        "condition_type": "unique_rarity_count_gte",
+        "condition_value": "4",
+        "target_type": "self",
+        "action_type": "multi_action",
+        "action_value": [
+          {
+            "target_type": "enemy_lowest",
+            "action_type": "destroy"
+          },
+          {
+            "target_type": "own_highest_nova",
+            "action_type": "add_mc",
+            "action_value": 8
+          }
+        ]
+      }
+    ],
+    "tags": [
+      "Nova",
+      "Memetility"
+    ],
+    "rarity": "Mythical"
   },
   {
     "card_id": "COC_Cr00ts_C1",
@@ -2838,27 +2845,27 @@
     "rarity": "Rare"
   },
   {
-  "card_id": "COC_Cr00ts_E1",
-  "card_type": "Project",
-  "base_mc": 26.0,
-  "description": "If this Project survives, it gains +10 MC permanently.",
-  "parsed_power": [
-    {
-      "phase": "Final",
-      "trigger_type": "conditional",
-      "condition_type": "survived",
-      "condition_value": "True",
-      "target_type": "self",
-      "action_type": "add_mc_permanent",
-      "action_value": 10
-    }
-  ],
-  "tags": [
-    "Cr00ts",
-    "Memetility"
-  ],
-  "rarity": "Epic"
-  }, 
+    "card_id": "COC_Cr00ts_E1",
+    "card_type": "Project",
+    "base_mc": 26.0,
+    "description": "If this Project survives, it gains +10 MC permanently.",
+    "parsed_power": [
+      {
+        "phase": "Final",
+        "trigger_type": "conditional",
+        "condition_type": "survived",
+        "condition_value": "True",
+        "target_type": "self",
+        "action_type": "add_mc_permanent",
+        "action_value": 10
+      }
+    ],
+    "tags": [
+      "Cr00ts",
+      "Memetility"
+    ],
+    "rarity": "Epic"
+  },
   {
     "card_id": "COC_Cr00ts_E2",
     "card_type": "Project",
@@ -2995,13 +3002,13 @@
     "card_id": "COC_Cr00ts_Founder_L1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If two or more Cr00ts Projects are destroyed during the match, all surviving Projects gain +6 MC.",
+    "description": "If a Cr00ts Project is destroyed during the match, all surviving Projects gain +6 MC.",
     "parsed_power": [
       {
         "phase": "Counter",
         "trigger_type": "conditional",
         "condition_type": "cr00ts_destroyed_count",
-        "condition_value": ">=2",
+        "condition_value": ">=1",
         "target_type": "surviving",
         "action_type": "add_mc",
         "action_value": 6
@@ -3017,13 +3024,13 @@
     "card_id": "COC_Cr00ts_Founder_M1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 3 or more enemy Projects are destroyed during the match, immediately destroy one random surviving enemy Project and steal +10 MC.",
+    "description": "If 2 or more enemy Projects are destroyed during the match, immediately destroy one random surviving enemy Project and steal +10 MC.",
     "parsed_power": [
       {
         "phase": "Counter",
         "trigger_type": "conditional",
         "condition_type": "enemy_destroyed_count",
-        "condition_value": ">=3",
+        "condition_value": ">=2",
         "target_type": "random_enemy_survivor",
         "action_type": "destroy_and_steal",
         "action_value": 10
@@ -3391,7 +3398,7 @@
     "card_id": "COC_CAW777_C2",
     "card_type": "Project",
     "base_mc": 5.0,
-    "description": "If this Project\u2019s MC is exactly 7 after buffs, double it.",
+    "description": "If this Project’s MC is exactly 7 after buffs, double it.",
     "parsed_power": [
       {
         "phase": "Debuff",
@@ -3460,14 +3467,14 @@
     "description": "Randomly buff two enemy Projects by +7 MC, then buff self by +14 MC.",
     "parsed_power": [
       {
-      "phase": "Buff",
-      "trigger_type": "automatic",
-      "condition_type": "immediate",
-      "condition_value": "True",
-      "target_type": "random_2_enemy + self",
-      "action_type": "caw_r2_effect",
-      "action_value": 7
-    }
+        "phase": "Buff",
+        "trigger_type": "automatic",
+        "condition_type": "immediate",
+        "condition_value": "True",
+        "target_type": "random_2_enemy + self",
+        "action_type": "caw_r2_effect",
+        "action_value": 7
+      }
     ],
     "tags": [
       "CAW777",
@@ -3479,7 +3486,7 @@
     "card_id": "COC_CAW777_R3",
     "card_type": "Project",
     "base_mc": 17.0,
-    "description": "If any Project\u2019s MC ends in 7 at Final Calculation, gain +5 MC.",
+    "description": "If any Project’s MC ends in 7 at Final Calculation, gain +5 MC.",
     "parsed_power": [
       {
         "phase": "Final",
@@ -3677,13 +3684,13 @@
     "card_id": "COC_CAW777_Founder_M1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 3 or more of your Projects' MC values end in 7, triple their MC.",
+    "description": "If 2 or more of your Projects' MC values end in 7, triple their MC.",
     "parsed_power": [
       {
         "phase": "Final",
         "trigger_type": "conditional",
         "condition_type": "own_projects_mc_end_7",
-        "condition_value": ">=3",
+        "condition_value": ">=2",
         "target_type": "each",
         "action_type": "triple_mc",
         "action_value": 1
@@ -4007,13 +4014,13 @@
     "card_id": "COC_DAK_Founder_M1",
     "card_type": "Founder",
     "base_mc": 0,
-    "description": "If 3 or more enemy Projects are destroyed, destroy another one and gain +20 MC.",
+    "description": "If 2 or more enemy Projects are destroyed, destroy another one and gain +20 MC.",
     "parsed_power": [
       {
         "phase": "Counter",
         "trigger_type": "conditional",
         "condition_type": "enemy_destroyed_count",
-        "condition_value": ">=3",
+        "condition_value": ">=2",
         "target_type": "random_enemy",
         "action_type": "destroy_and_add_mc",
         "action_value": 20
@@ -4029,12 +4036,12 @@
     "card_id": "COC_EVT_Chain_Reaction",
     "card_type": "Support",
     "base_mc": 0,
-    "description": "\tIf 3 or more cards are destroyed this match, deal -3 MC to all cards",
+    "description": "If 2 or more cards are destroyed this match, deal -3 MC to all cards",
     "parsed_power": [
       {
         "phase": "Support",
         "trigger_type": "conditional",
-        "condition_type": "cards_destroyed >= 3",
+        "condition_type": "cards_destroyed >= 2",
         "condition_value": "True",
         "target_type": "all_projects",
         "action_type": "subtract_mc",
@@ -4278,24 +4285,26 @@
     "rarity": "Legendary"
   },
   {
-  "card_id": "COC_EVT_Rug_Pull",
-  "card_type": "Support",
-  "base_mc": 0,
-  "description": "At the end of the match, destroy one random Project on the opponent’s field. If that Project is a Mythical, destroy two extra random Projects. Then steal 50% of the destroyed Project’s MC and give it to your lowest MC Project.",
-  "parsed_power": [
-    {
-      "phase": "Final",
-      "trigger_type": "automatic",
-      "condition_type": null,
-      "condition_value": null,
-      "target_type": null,
-      "action_type": "rug_pull",
-      "action_value": 1
-    }
-  ],
-  "tags": ["Event"],
-  "rarity": "Mythical"
-},
+    "card_id": "COC_EVT_Rug_Pull",
+    "card_type": "Support",
+    "base_mc": 0,
+    "description": "At the end of the match, destroy one random Project on the opponent’s field. If that Project is a Mythical, destroy two extra random Projects. Then steal 50% of the destroyed Project’s MC and give it to your lowest MC Project.",
+    "parsed_power": [
+      {
+        "phase": "Final",
+        "trigger_type": "automatic",
+        "condition_type": null,
+        "condition_value": null,
+        "target_type": null,
+        "action_type": "rug_pull",
+        "action_value": 1
+      }
+    ],
+    "tags": [
+      "Event"
+    ],
+    "rarity": "Mythical"
+  },
   {
     "card_id": "COC_EVT_DeFi_Summer",
     "card_type": "Support",
@@ -4473,7 +4482,7 @@
     "card_id": "COC_EVT_All_Time_High",
     "card_type": "Support",
     "base_mc": 0,
-    "description": "Double the MC of your highest Project. If your total MC is still lower than your opponent\u2019s after that, double your second-highest Project too.",
+    "description": "Double the MC of your highest Project. If your total MC is still lower than your opponent’s after that, double your second-highest Project too.",
     "parsed_power": [
       {
         "phase": "Support",
@@ -4533,7 +4542,7 @@
     "card_id": "COC_EVT_FUD",
     "card_type": "Support",
     "base_mc": 0,
-    "description": "All Projects with 20 MC or more lose -4 MC.\nThen, disable one random Support card on the opponent\u2019s side",
+    "description": "All Projects with 20 MC or more lose -4 MC.\nThen, disable one random Support card on the opponent’s side",
     "parsed_power": [
       {
         "phase": "Support",
@@ -4627,7 +4636,7 @@
     "card_id": "COC_EVT_Ding_Ding_Ding!",
     "card_type": "Support",
     "base_mc": 0,
-    "description": "Randomly select one Project on your field. It gains +3 MC \u2014 no questions asked.",
+    "description": "Randomly select one Project on your field. It gains +3 MC — no questions asked.",
     "parsed_power": [
       {
         "phase": "Support",
@@ -4693,13 +4702,13 @@
     "description": "75% you destroy a random enemy project, 25% you destroy 2 own projects",
     "parsed_power": [
       {
-      "phase": "Support",
-      "trigger_type": "automatic",
-      "condition_type": "none",
-      "condition_value": "",
-      "target_type": "random",
-      "action_type": "destroy_enemy_or_self",
-      "action_value": null
+        "phase": "Support",
+        "trigger_type": "automatic",
+        "condition_type": "none",
+        "condition_value": "",
+        "target_type": "random",
+        "action_type": "destroy_enemy_or_self",
+        "action_value": null
       }
     ],
     "tags": [
@@ -4750,26 +4759,26 @@
     "rarity": "Common"
   },
   {
-  "card_id": "COC_INF_Francis_C1",
-  "card_type": "Support",
-  "base_mc": 0,
-  "description": "Apply -1 MC to a random enemy Project.",
-  "parsed_power": [
-    {
-      "phase": "Support",
-      "trigger_type": "automatic",
-      "condition_type": "enemy_has_projects",
-      "condition_value": "True",
-      "target_type": "enemy_random",
-      "action_type": "subtract_mc",
-      "action_value": 1
-    }
-  ],
-  "tags": [
-    "Influencer"
-  ],
-  "rarity": "Common"
-},
+    "card_id": "COC_INF_Francis_C1",
+    "card_type": "Support",
+    "base_mc": 0,
+    "description": "Apply -1 MC to a random enemy Project.",
+    "parsed_power": [
+      {
+        "phase": "Support",
+        "trigger_type": "automatic",
+        "condition_type": "enemy_has_projects",
+        "condition_value": "True",
+        "target_type": "enemy_random",
+        "action_type": "subtract_mc",
+        "action_value": 1
+      }
+    ],
+    "tags": [
+      "Influencer"
+    ],
+    "rarity": "Common"
+  },
   {
     "card_id": "COC_INF_Pampa_R1",
     "card_type": "Support",
@@ -4816,7 +4825,7 @@
     "card_id": "COC_INF_Francis_R1",
     "card_type": "Support",
     "base_mc": 0,
-    "description": "Steal +2 MC from the opponent\u2019s highest MC Project.",
+    "description": "Steal +2 MC from the opponent’s highest MC Project.",
     "parsed_power": [
       {
         "phase": "Support",

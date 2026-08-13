@@ -35,14 +35,14 @@ NEEDED = (("Project", 5), ("Support", 5), ("Founder", 1))
 
 # Welke waarden zijn het proberen waard, per kaart.
 KANDIDATEN = {
-    "COC_Wolfswap_Founder_M1": ("≥4", ["≥1", "≥2", "≥3", "≥4"]),
+    "COC_Wolfswap_Founder_M1": ("≥2", ["≥1", "≥2", "≥3", "≥4"]),
     "COC_Wolfswap_Founder_E1": ("≥2", ["≥1", "≥2"]),
-    "COC_Cr00ts_Founder_M1":   (">=3", [">=1", ">=2", ">=3"]),
-    "COC_DAK_Founder_M1":      (">=3", [">=1", ">=2", ">=3"]),
-    "COC_Cr00ts_Founder_L1":   (">=2", [">=1", ">=2"]),
-    "COC_EVT_Chain_Reaction":  ("cards_destroyed >= 3",
+    "COC_Cr00ts_Founder_M1":   (">=2", [">=1", ">=2", ">=3"]),
+    "COC_DAK_Founder_M1":      (">=2", [">=1", ">=2", ">=3"]),
+    "COC_Cr00ts_Founder_L1":   (">=1", [">=1", ">=2"]),
+    "COC_EVT_Chain_Reaction":  ("cards_destroyed >= 2",
                                 ["cards_destroyed >= 1", "cards_destroyed >= 2", "cards_destroyed >= 3"]),
-    "COC_CAW777_Founder_M1":   (">=3", [">=1", ">=2", ">=3"]),
+    "COC_CAW777_Founder_M1":   (">=2", [">=1", ">=2", ">=3"]),
     "COC_Nova_Founder_R1":     ("10", ["10", "15", "20"]),
     "COC_Nova_Founder_C1":     ("common_nova_>=2", ["common_nova_>=1", "common_nova_>=2"]),
 }
