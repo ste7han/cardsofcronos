@@ -6,26 +6,7 @@ van dezelfde factie. Gesorteerd op het laagste percentage.
 Totaal 14100 matches.
 
 
-## Alle naamconflicten zijn opgelost
-
-Condition.py kent nu élke voorwaarde die in de kaartdata voorkomt — eerder
-vielen er 39 door naar `return False`, waardoor die kaarten nooit iets deden.
-
-De zeven kaarten hieronder blijven op nul. Dat zijn geen naamconflicten meer.
-Hun voorwaarde vraagt een situatie die in een match van zes fases zelden of
-nooit ontstaat, en dat is een ontwerpvraag:
-
-- **`COC_EVT_Sideways_Chop`** heeft een lege `parsed_power` — de kaart heeft
-  simpelweg geen effect in de data.
-- **`COC_CAW777_Founder_E1`** en **`_M1`** draaien om een MC die op 7 eindigt.
-  De hele CAW777-factie heeft dat thema, en geen van die voorwaarden slaagt ooit.
-- **`COC_INF_21Million_M1`** vraagt een Project van élke rarity tegelijk.
-- **`COC_Wolfswap_Founder_M1`** vraagt vier eigen vernietigde kaarten.
-- **`COC_Nova_Founder_C1`** vraagt twee Common Nova-kaarten in hetzelfde deck.
-- **`COC_Nova_Founder_R1`** vraagt een Project onder de 10 MC op het moment dat
-  de kaart afvuurt.
-
-## Nooit (7 kaarten)
+## Nooit (5 kaarten)
 
 De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen factie.
 
@@ -35,8 +16,6 @@ De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen facti
 | `COC_CAW777_Founder_M1` | 0% | 0% | `own_projects_mc_end_7` = >=3 | own_projects_mc_end_7 (>=3) |
 | `COC_EVT_Sideways_Chop` | 0% | 0% | `None` |  |
 | `COC_INF_21Million_M1` | 0% | 0% | `control_all_rarities` | control_all_rarities (missing: Epic, Mythical) |
-| `COC_Nova_Founder_C1` | 0% | 0% | `count_card_rarity` = common_nova_>=2 | Not enough Common Nova cards in deck (need 2) |
-| `COC_Nova_Founder_R1` | 0% | 0% | `project_mc_lt` = 10 | No Project with MC < 10 |
 | `COC_Wolfswap_Founder_M1` | 0% | 0% | `destroyed_friendly_count` = ≥4 | destroyed_friendly_count (≥4) |
 
 ## Zelden — onder de 20% (5 kaarten)
@@ -68,7 +47,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_EVT_Market_Whisper` | 53% | 60% | `total_mc < opponent` | Player 2 MC is not lower than opponent |
 | `COC_COM_Vinz_R1` | 57% | 50% | `own_projects_under_mc_gte` = 20 | Need at least 3 Projects under 20 MC |
 
-## Vaak — 60% of meer (211 kaarten)
+## Vaak — 60% of meer (213 kaarten)
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
@@ -86,11 +65,13 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Howlers_Founder_R1` | 83% | 63% | `mc_range` = <10_and_>30 | mc_range (<10_and_>30) |
 | `COC_CAW777_Founder_R1` | 83% | 77% | `mc_multiple` = 7 | Total MC = 88.0, not divisible by 7 |
 | `COC_CAW777_M1` | 83% | 97% | `projects_with_7_mc` = >=3 | Fewer than >=3 Projects with MC ending in 7 |
+| `COC_Nova_Founder_C1` | 87% | 10% | `count_card_rarity` = common_nova_>=2 | ↳   Skipping add_mc: COC_Nova_Founder_C1 is not a Pr |
 | `COC_Wolfswap_Founder_L1` | 87% | 40% | `destroyed_enemy_by_friendly` | destroyed_enemy_by_friendly (True) |
 | `COC_CAW777_E1` | 87% | 93% | `total_mc_mod` = 7 | total_mc_mod (7) |
 | `COC_Cr00ts_R2` | 87% | 97% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
 | `COC_RR_Founder_C1` | 90% | 87% | `lowest_project_mc_lt` = 10 | lowest_project_mc_lt (10) |
 | `COC_COM_Vinz_M1` | 90% | 90% | `support_same_rarity` | support_same_rarity (True) |
+| `COC_Nova_Founder_R1` | 90% | 90% | `project_mc_lt` = 10 | ↳   Skipping add_mc: COC_Nova_Founder_R1 is not a Pr |
 | `COC_DAK_R3` | 90% | 93% | `project_count` = 3 | Does not have exactly 3 Projects after Counter Phase |
 | `COC_Howlers_R2` | 90% | 93% | `count_tag_exact` = Lunar=3 | Not exactly 3 Projects with tag 'Lunar' |
 | `COC_DAK_L1` | 90% | 97% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |

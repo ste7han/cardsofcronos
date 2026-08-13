@@ -1412,11 +1412,17 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return len(types) >= 2
     
     elif condition_type == "project_mc_lt":
+        # Toetste of de BRONKAART zelf een Project onder de drempel was. De
+        # kaart die dit gebruikt is een Founder, dus dat kon nooit kloppen — en
+        # de tekst gaat over "je Projects", niet over de kaart zelf.
         try:
             threshold = float(condition_value)
-            return card.get("card_type") == "Project" and card.get("current_mc", 0) < threshold
-        except:
+        except (TypeError, ValueError):
             return False
+        veld = list(getattr(player, "field", None) or field or [])
+        return any(c.get("card_type") == "Project" and not c.get("destroyed")
+                   and c.get("current_mc", 0) < threshold
+                   for c in veld if isinstance(c, dict))
     
         
     elif condition_type == "has_card_on_field":
@@ -1587,18 +1593,22 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
     elif condition_type == "count_card_rarity":
     # Example: "common_nova_>=2"
         try:
+            # "common_nova_>=2". Twee fouten zaten hier: ">=2".split(">=") geeft
+            # ['', '2'], dus de operator werd leeg en de vergelijking hieronder
+            # sloeg over. En de tag werd met een hoofdletter vergeleken tegen
+            # kleingeschreven tags, dus die matchte ook nooit.
             parts = condition_value.split("_")
-            rarity = parts[0].capitalize()   # "common" -> "Common"
-            tag = parts[1].capitalize()      # "nova" -> "Nova"
-            operator, threshold = parts[2].split(">=") if ">=" in parts[2] else (None, None)
+            rarity = parts[0].capitalize()
+            tag = parts[1]
+            m = re.search(r"(>=|<=|==|>|<)\s*(\d+)", parts[2] if len(parts) > 2 else "")
+            operator = m.group(1) if m else ">="
+            threshold = int(m.group(2)) if m else 0
 
-            threshold = int(threshold) if threshold else 0
-
-            count = sum(1 for c in deck 
-                        if c["card_type"] in ["Project", "Founder"] 
-                        and not c.get("destroyed") 
-                        and c.get("rarity", "").lower() == rarity.lower() 
-                        and tag in [t.lower() for t in c.get("tags", [])])
+            count = sum(1 for c in deck
+                        if c["card_type"] in ["Project", "Founder"]
+                        and not c.get("destroyed")
+                        and c.get("rarity", "").lower() == rarity.lower()
+                        and heeft_tag(c, tag))
 
             if operator == ">=":
                 return count >= threshold
@@ -1843,6 +1853,31 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         if op == ">":  return waarde > grens
         if op == "<":  return waarde < grens
         return waarde == grens
+
+    # Bij twee kaarten staat de hele expressie in het type-veld in plaats van
+    # netjes verdeeld over type en waarde: "cards_destroyed >= 3" en
+    # "total_mc < opponent". Die worden hier alsnog gelezen.
+    if re.search(r"[<>=]", str(condition_type or "")):
+        m = re.match(r"\s*([a-z_]+)\s*(>=|<=|==|>|<)\s*(\S+)\s*$", str(condition_type))
+        if m:
+            naam, operator, rechts = m.group(1), m.group(2), m.group(3)
+            if naam == "cards_destroyed":
+                aantal = len([c for c in (_eigen + _vijand)
+                              if isinstance(c, dict) and c.get("destroyed")])
+            elif naam == "total_mc":
+                aantal = sum(c.get("current_mc", 0) for c in _projects(_eigen))
+            else:
+                aantal = None
+
+            if aantal is not None:
+                if rechts.lower() == "opponent":
+                    grens = sum(c.get("current_mc", 0) for c in _projects(_vijand))
+                else:
+                    try:
+                        grens = float(rechts)
+                    except ValueError:
+                        return False
+                return _vergelijk(aantal, operator, grens)
 
     # --- passieve effecten wapenen zichzelf ----------------------------------
     # "Kan niet meer dan 5 MC verliezen" en "telt als hoogste kaart voor
