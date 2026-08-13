@@ -13,8 +13,9 @@ CARDS = json.load(open("COC_Cards_parsed.json", encoding="utf-8"))
 BY = {c["card_id"]: c for c in CARDS}
 BT = {t: [c["card_id"] for c in CARDS if c["card_type"] == t] for t in ("Project", "Support", "Founder")}
 
-DOEL = """COC_DAK_Founder_C1 COC_Clove_Founder_R1 COC_Howlers_Founder_C1
-COC_FFS_Founder_C1 COC_EVT_Buy_the_Dip""".split()
+DOEL = """COC_FFS_Founder_L1 COC_Lionel_R2 COC_Cr00ts_L1 COC_Lionel_L1 COC_CF_M1
+COC_RR_Founder_R1 COC_FFS_L1 COC_FFS_Founder_M1 COC_DAK_R3 COC_Lionel_E1
+COC_CF_C2 COC_Cr00ts_E2""".split()
 
 
 def factie(cid):

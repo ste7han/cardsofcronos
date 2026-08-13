@@ -1951,6 +1951,55 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         totaal = sum(c.get("current_mc", 0) for c in _projects(_eigen))
         return n > 0 and round(totaal) % int(n) == 0
 
+    # --- voorwaarden die alleen de uitleg-functie kende ----------------------
+    # match_simulator.get_skip_reason had voor deze negen wél een tekst, maar
+    # check_condition_core niet. Ze vielen dus door naar `return False`: de kaart
+    # deed nooit iets, terwijl het logboek soms meldde dat de voorwaarde gehaald
+    # was. Samen raakte dat dertien kaarten.
+
+    elif condition_type == "any_card_mc_lt":
+        _op, n = _drempel(condition_value, "<", 5)
+        return any(c.get("current_mc", 0) < n for c in _levend(_eigen))
+
+    elif condition_type == "enemy_project_destroyed_once":
+        return len(_kapot(_vijand)) > 0
+
+    elif condition_type == "on_project_destroyed":
+        return len(_kapot(_eigen)) > 0
+
+    elif condition_type == "own_projects_lost_mc":
+        op, n = _drempel(condition_value, ">=", 2)
+        aantal = len([c for c in _projects(_eigen)
+                      if c.get("_mc_lost_total") or c.get("lost_mc_this_phase")])
+        return _vergelijk(aantal, op, n)
+
+    elif condition_type == "project_count":
+        op, n = _drempel(condition_value, "==", 3)
+        return _vergelijk(len(_projects(_eigen)), "==" if op == ">=" else op, n)
+
+    elif condition_type == "survived_destruction_count":
+        op, n = _drempel(condition_value, ">=", 2)
+        return _vergelijk(len(_projects(_eigen)), op, n)
+
+    elif condition_type == "more_projects_than_opponent":
+        meer = len(_projects(_eigen)) > len(_projects(_vijand))
+        # COC_CF_M1 heeft twee effecten: één voor "wel meer", één voor "niet meer".
+        wil_meer = str(condition_value).strip().lower() not in ("false", "0", "no")
+        return meer if wil_meer else (not meer)
+
+    elif condition_type == "targeted_by_debuff":
+        return bool(card.get("targeted_by_debuff") or card.get("_ever_debuffed")
+                    or card.get("_mc_lost_total") or card.get("lost_mc_this_phase"))
+
+    elif condition_type == "final_calc":
+        waarde = str(condition_value or "").strip().lower()
+        if waarde == "enemy_lt_20":
+            return any(c.get("current_mc", 0) < 20 for c in _projects(_vijand))
+        if waarde == "lowest_survivor":
+            return len(_projects(_eigen)) > 0
+        # Onbekende variant: alleen doorlaten als er iets te raken valt.
+        return len(_projects(_eigen)) > 0
+
     elif condition_type == "own_projects_mc_end_7":
         op, n = _drempel(condition_value, ">=", 3)
         aantal = len([c for c in _projects(_eigen) if int(abs(c.get("current_mc", 0))) % 10 == 7])

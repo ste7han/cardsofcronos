@@ -34,7 +34,10 @@ _VOORWAARDEN = ("own_project_lost_mc", "own_project_loses_mc", "lost_mc_due_to_e
                 "cards_lost_mc", "own_projects_lost_mc", "any_project_takes_damage",
                 "hit_by_debuff", "loses_mc_from_effect", "causes_mc_loss", "self_debuffed",
                 "own_mc_loss_count", "own_debuffed_count", "tag_on_field", "has_card_type",
-                "count_tag", "first_debuff_hit")
+                "count_tag", "first_debuff_hit",
+                "any_card_mc_lt", "enemy_project_destroyed_once", "final_calc",
+                "more_projects_than_opponent", "on_project_destroyed", "project_count",
+                "survived_destruction_count", "targeted_by_debuff")
 SCHILDEN = {c["card_id"] for c in CARDS
             for e in (c.get("parsed_power") or [])
             if str(e.get("action_type") or "") in _ACTIES
