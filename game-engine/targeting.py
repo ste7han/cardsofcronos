@@ -274,7 +274,13 @@ def _get_targets_raw(
     if tt == "random_ally":
         return [random.choice(field)] if field else []
     if tt == "random_enemy":
-        return [random.choice(opponent_field)] if opponent_field else []
+        # Trok eerder uit het hele vijandelijke veld, dus ook Support-kaarten, de
+        # Founder en al vernietigde kaarten. Alle drie de kaarten die dit type
+        # gebruiken (COC_FFS_Founder_L1, COC_DAK_M1, COC_DAK_Founder_M1) zeggen
+        # "a random enemy Project", dus filteren is wat de kaarttekst bedoelt.
+        pool = [c for c in opponent_field
+                if c.get("card_type") == "Project" and not c.get("destroyed", False)]
+        return [random.choice(pool)] if pool else []
 
     # ---------------------- special cases ----------------------
     if tt == "lowest_project":

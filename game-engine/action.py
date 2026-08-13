@@ -2422,13 +2422,58 @@ def apply_action(card, action_type, action_value, player_name, log, context=None
         return
 
     elif act_type == "destroy_and_add_mc":
+        # Twee verschillende kaartteksten delen deze actienaam:
+        #
+        #   COC_DAK_R1           offer je eigen laagste Project op om je hoogste
+        #                        te versterken — levert twee doelwitten aan
+        #   COC_DAK_M1           vernietig een vijandelijk Project en pak zelf de
+        #   COC_DAK_Founder_M1   MC — leveren er via random_enemy maar een aan
+        #
+        # De tweede vorm viel stil op de lengtecontrole hieronder, waardoor beide
+        # kaarten wel "triggered" logden maar niets deden. Daarom eerst uitsplitsen
+        # op het doelwittype in plaats van op het aantal doelwitten.
         group = context.get("group")
-        targets2 = context.get("targets") or []
+
+        if str(target_type or "").strip().lower() != "own_lowest_and_highest":
+            slachtoffers = [t for t in targets
+                            if t.get("card_type") == "Project" and not t.get("destroyed")]
+            if not slachtoffers:
+                group and group.add("skip", "no living enemy Project to destroy")
+                return
+
+            victim = slachtoffers[0]
+            destroy_card(victim, log, player=player, opponent=opponent,
+                         source=source_card, context=context)
+
+            # "gain +X MC" gaat naar de bron als dat een Project is (COC_DAK_M1).
+            # Founders hebben base_mc 0 en tellen niet mee voor de eindstand, dus
+            # daar zou de MC verdampen; die gaat naar je sterkste Project.
+            if source_card.get("card_type") == "Project" and not source_card.get("destroyed"):
+                ontvanger = source_card
+            else:
+                eigen = _proj(field)
+                ontvanger = max(eigen, key=lambda c: c.get("current_mc", 0.0)) if eigen else None
+
+            if ontvanger is None:
+                group and group.add("skip", "no surviving Project to receive the MC")
+                return
+
+            voor, na = _zet_mc(ontvanger, ontvanger.get("current_mc", 0.0) + (value or 0.0), "add_mc")
+            if (value or 0) > 0:
+                ontvanger["was_buffed"] = True
+                ontvanger["last_buff_amount"] = value
+            group and group.add(
+                "buff",
+                f"{ontvanger['card_id']} gains +{value:.1f} MC → {voor:.1f} → {na:.1f}"
+            )
+            return
+
+        targets2 = list(targets)
         if len(targets2) < 2:
             group and group.add("skip", "needs lowest and highest targets")
             return
 
-        lowest, highest = targets2
+        lowest, highest = targets2[0], targets2[1]
 
         # 1) Destroy your own lowest project
         destroy_card(

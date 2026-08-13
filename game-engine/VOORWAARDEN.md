@@ -25,7 +25,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Cr00ts_Founder_M1` | 10% | 12% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_Wolfswap_Founder_M1` | 10% | 15% | `destroyed_friendly_count` = ≥2 | destroyed_friendly_count (≥2) |
 | `COC_CAW777_Founder_M1` | 12% | 15% | `own_projects_mc_end_7` = >=2 | own_projects_mc_end_7 (>=2) |
-| `COC_Wolfswap_Founder_E1` | 15% | 20% | `destroyed_friendly_count` = ≥2 | destroyed_friendly_count (≥2) |
+| `COC_Wolfswap_Founder_E1` | 18% | 20% | `destroyed_friendly_count` = ≥2 | destroyed_friendly_count (≥2) |
 | `COC_CAW777_Founder_L1` | 18% | 22% | `survivor_count_eq` = 3 | survivor_count_eq (3) |
 
 ## Soms — 20 tot 60% (14 kaarten)
@@ -33,13 +33,13 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
 | `COC_EVT_Chain_Reaction` | 20% | 28% | `cards_destroyed >= 2` | cards_destroyed >= 2 (True) |
-| `COC_CM_Founder_M1` | 28% | 12% | `projects_destroyed_count` = >=3 | Less than required Projects destroyed (>=3) |
 | `COC_DAK_Founder_L1` | 30% | 10% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_DAK_Founder_M1` | 30% | 10% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
+| `COC_CM_Founder_M1` | 30% | 12% | `projects_destroyed_count` = >=3 | Less than required Projects destroyed (>=3) |
 | `COC_INF_21Million_E1` | 30% | 25% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
 | `COC_Wolfswap_Founder_C1` | 35% | 40% | `first_friendly_destroyed` | No friendly Project was the first to be destroyed |
+| `COC_CM_Founder_E1` | 38% | 57% | `own_mc_loss_count` = >=2 | Fewer than >=2 own Projects lost MC |
 | `COC_Nova_Founder_E1` | 40% | 5% | `nova_destroyed` | No Nova Projects were destroyed |
-| `COC_CM_Founder_E1` | 40% | 57% | `own_mc_loss_count` = >=2 | Fewer than >=2 own Projects lost MC |
 | `COC_RR_Founder_M1` | 45% | 5% | `COC_RR_M1_exploded` | COC_RR_M1_exploded (True) |
 | `COC_COM_Curry_E1` | 45% | 35% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
 | `COC_COM_Vinz_L1` | 50% | 42% | `rarity` = Legendary | No Project with rarity 'Legendary' on your field |
@@ -54,9 +54,9 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_INF_21Million_R1` | 68% | 85% | `own_rarity` = Rare | No Projects of rarity 'rare' found on your field |
 | `COC_RR_Founder_E1` | 70% | 28% | `own_destroyed_count` = >=2 | own_destroyed_count (>=2) |
 | `COC_Nova_Founder_M1` | 70% | 30% | `unique_rarity_count_gte` = 4 | ↳   Skipping add_mc: COC_Nova_Founder_M1 is not a Pr |
+| `COC_FFS_Founder_M1` | 72% | 60% | `own_projects_lost_mc` = >=3 | Not enough of your Projects lost MC due to effects ( |
 | `COC_EVT_Buy_the_Dip` | 72% | 70% | `lost_mc_due_to_effect` = 0 | MC loss condition not met (0 required) |
 | `COC_Cr00ts_Founder_E1` | 72% | 78% | `first_enemy_debuff` | Armed — waiting for the first debuff |
-| `COC_FFS_Founder_M1` | 75% | 60% | `own_projects_lost_mc` = >=3 | Not enough of your Projects lost MC due to effects ( |
 | `COC_CAW777_Founder_R1` | 78% | 80% | `mc_multiple` = 7 | Total MC = 101.0, not divisible by 7 |
 | `COC_INF_Francis_E1` | 78% | 80% | `mc_lt_opponent` | Player 2 MC is not lower than opponent |
 | `COC_RR_Founder_L1` | 80% | 42% | `enemy_destroyed_count` = >=1 | Fewer than >=1 enemy Projects destroyed |
@@ -76,11 +76,11 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Cr00ts_R2` | 90% | 95% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
 | `COC_DAK_L1` | 90% | 98% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_Howlers_R2` | 92% | 92% | `count_tag_exact` = Lunar=3 | Not exactly 3 Projects with tag 'Lunar' |
-| `COC_DAK_E2` | 92% | 95% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_DAK_R3` | 92% | 95% | `project_count` = 3 | Does not have exactly 3 Projects after Counter Phase |
 | `COC_EVT_Flash_Crash` | 92% | 98% | `mc_gte` = 20 | No Projects with MC ≥ 20 found |
 | `COC_Cr00ts_E2` | 95% | 90% | `targeted_by_debuff` | COC_Cr00ts_E2 skipped (Not targeted by debuff) |
 | `COC_Cr00ts_M1` | 95% | 92% | `enemy_destroyed_count` = >=3 | Fewer than >=3 enemy Projects destroyed |
+| `COC_DAK_E2` | 95% | 95% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_EVT_Ding_Ding_Ding!` | 95% | 98% | `random_project` | Player 2’s COC_EVT_Ding_Ding_Ding! — is disabled and |
 | `COC_CF_M1` | 95% | 100% | `more_projects_than_opponent` | COC_CF_M1 skipped (Not more Projects than opponent) |
 | `COC_Lionel_R2` | 95% | 100% | `enemy_project_destroyed_once` | No enemy Project has been destroyed yet |
@@ -124,7 +124,6 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Lionel_R1` | 100% | 90% | `control_card_count` = Common >= 2 | Condition met |
 | `COC_Clove_L1` | 100% | 92% | `has_card_on_field` = Clove_Founder |  |
 | `COC_RR_R3` | 100% | 92% | `on_destroyed` | COC_RR_R3 was not destroyed — effect requires destru |
-| `COC_CAW777_L1` | 100% | 95% | `lowest_mc_lte` = 7 | lowest_mc_lte (7) |
 | `COC_CAW777_R1` | 100% | 95% | `survivor_count_eq` = 3 | survivor_count_eq (3) |
 | `COC_CF_C2` | 100% | 95% | `targeted_by_debuff` | COC_CF_C2 skipped (Not targeted by debuff) |
 | `COC_COM_Vinz_E1` | 100% | 95% | `tag` = Meme |  |
@@ -133,6 +132,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_EVT_Market_Correction` | 100% | 95% | `none` | Player 2’s COC_EVT_Market_Correction — is disabled a |
 | `COC_FFS_M1` | 100% | 95% | `total_team_mc_lt_opponent` | Your total MC is not lower than opponent |
 | `COC_INF_Pampa_M1` | 100% | 95% | `each_enemy_project` |  |
+| `COC_CAW777_L1` | 100% | 98% | `lowest_mc_lte` = 7 | lowest_mc_lte (7) |
 | `COC_CF_R1` | 100% | 98% | `count_tag_on_field` = Crooks >= 3 |  |
 | `COC_CM_C2` | 100% | 98% | `is_lowest_mc_card` | COC_CM_C2 is not the lowest MC Project |
 | `COC_CM_Founder_R1` | 100% | 98% | `causes_mc_loss` |  |
@@ -149,7 +149,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_INF_Pampa_C1` | 100% | 98% | `None` |  |
 | `COC_Nova_C2` | 100% | 98% | `tag_on_field` = Community | No tag 'Community' found on field |
 | `COC_Wolfswap_C2` | 100% | 98% | `destroyed_friendly_wolfswap` | destroyed_friendly_wolfswap (True) |
-| `COC_CAW777_C1` | 100% | 100% | `total_mc_ends_in` = 7 | Total MC ends on 3, needed 7 |
+| `COC_CAW777_C1` | 100% | 100% | `total_mc_ends_in` = 7 | Total MC ends on 2, needed 7 |
 | `COC_CAW777_C2` | 100% | 100% | `self_mc_eq` = 7 | COC_CAW777_C2 MC is not exactly 7 |
 | `COC_CAW777_C3` | 100% | 100% | `survives_destruction` |  |
 | `COC_CAW777_Founder_C1` | 100% | 100% | `none` | ↳   COC_CAW777_Founder_C1 skipped — no valid targets |
@@ -179,7 +179,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Clove_Founder_C1` | 100% | 100% | `has_mc_below` = 10 | ↳   COC_Clove_Founder_C1 skipped — no valid targets. |
 | `COC_Clove_Founder_E1` | 100% | 100% | `first_debuff_hit` = Project |  |
 | `COC_Clove_Founder_M1` | 100% | 100% | `none` | ↳   COC_Clove_Founder_M1 skipped — no valid targets. |
-| `COC_Clove_Founder_R1` | 100% | 100% | `has_card_type` = Event | ↳   Skipping destroy: COC_Clove_Founder_R1 is not a  |
+| `COC_Clove_Founder_R1` | 100% | 100% | `has_card_type` = Event |  |
 | `COC_Clove_M1` | 100% | 100% | `limit_loss` |  |
 | `COC_Cr00ts_C1` | 100% | 100% | `survives_debuff` | survives_debuff (True) |
 | `COC_Cr00ts_C3` | 100% | 100% | `None` | ↳   COC_Cr00ts_C3 rallied the Cr00ts, but no Common  |
@@ -234,7 +234,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Lionel_Founder_C1` | 100% | 100% | `control_card_count` = 1,Project | ↳   COC_Lionel_Founder_C1 skipped — no valid targets |
 | `COC_Lionel_Founder_E1` | 100% | 100% | `destruction_attempt` = first |  |
 | `COC_Lionel_Founder_L1` | 100% | 100% | `final_calc_survivors` = >=2 |  |
-| `COC_Lionel_Founder_M1` | 100% | 100% | `projects_destroyed_count` = 0 |  |
+| `COC_Lionel_Founder_M1` | 100% | 100% | `projects_destroyed_count` = 0 | ↳   COC_Lionel_Founder_M1 skipped — no valid targets |
 | `COC_Lionel_Founder_R1` | 100% | 100% | `project_debuffed` | COC_Lionel_Founder_R1 skipped: No friendly Projects  |
 | `COC_Lionel_L1` | 100% | 100% | `final_calc` = lowest_survivor |  |
 | `COC_Lionel_M1` | 100% | 100% | `final_calc_survivors` = >=4 |  |

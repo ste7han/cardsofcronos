@@ -10,11 +10,11 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
-| 0 | 44% | 100% |
-| 1 | 36% | 56% |
+| 0 | 43% | 100% |
+| 1 | 36% | 57% |
 | 2 | 13% | 21% |
-| 3 | 5% | 7% |
-| 4 | 1% | 2% |
+| 3 | 5% | 8% |
+| 4 | 2% | 3% |
 | 5 | 1% | 1% |
 | 6 | 0% | 0% |
 
@@ -23,8 +23,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 46% | 100% |
-| 1 | 34% | 54% |
-| 2 | 13% | 20% |
+| 1 | 33% | 54% |
+| 2 | 13% | 21% |
 | 3 | 5% | 7% |
 | 4 | 2% | 2% |
 | 5 | 1% | 1% |
@@ -35,10 +35,10 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 20% | 100% |
-| 1 | 32% | 80% |
-| 2 | 24% | 48% |
+| 1 | 31% | 80% |
+| 2 | 24% | 49% |
 | 3 | 13% | 24% |
-| 4 | 6% | 11% |
+| 4 | 6% | 12% |
 | 5 | 3% | 5% |
 | 6 | 1% | 2% |
 | 7 | 1% | 1% |
@@ -51,7 +51,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | 0 | 1% | 100% |
 | 1 | 5% | 99% |
 | 2 | 30% | 94% |
-| 3 | 46% | 65% |
+| 3 | 46% | 64% |
 | 4 | 18% | 19% |
 | 5 | 1% | 1% |
 
@@ -60,8 +60,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 59% | 100% |
-| 1 | 25% | 41% |
-| 2 | 12% | 16% |
+| 1 | 24% | 41% |
+| 2 | 11% | 16% |
 | 3 | 4% | 5% |
 | 4 | 1% | 1% |
 | 5 | 0% | 0% |
@@ -91,7 +91,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `≥1` | 32% |
+| `≥1` | 35% |
 | `≥2` | 8%  ← huidig |
 | `≥3` | 5% |
 | `≥4` | 0% |
