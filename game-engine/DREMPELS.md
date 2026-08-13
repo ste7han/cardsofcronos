@@ -14,7 +14,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | 1 | 36% | 57% |
 | 2 | 13% | 21% |
 | 3 | 5% | 8% |
-| 4 | 2% | 3% |
+| 4 | 2% | 2% |
 | 5 | 1% | 1% |
 | 6 | 0% | 0% |
 
@@ -25,8 +25,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | 0 | 46% | 100% |
 | 1 | 33% | 54% |
 | 2 | 13% | 21% |
-| 3 | 5% | 7% |
-| 4 | 2% | 2% |
+| 3 | 5% | 8% |
+| 4 | 2% | 3% |
 | 5 | 1% | 1% |
 | 6 | 0% | 0% |
 
@@ -36,13 +36,13 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 20% | 100% |
 | 1 | 31% | 80% |
-| 2 | 24% | 48% |
-| 3 | 13% | 24% |
+| 2 | 24% | 49% |
+| 3 | 13% | 25% |
 | 4 | 6% | 12% |
 | 5 | 3% | 5% |
 | 6 | 1% | 2% |
 | 7 | 1% | 1% |
-| 8 | 0% | 1% |
+| 8 | 0% | 0% |
 
 **Hoeveel verschillende rarities je aan het eind bestuurt**
 
@@ -50,9 +50,9 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 |---|---|---|
 | 0 | 1% | 100% |
 | 1 | 5% | 99% |
-| 2 | 30% | 94% |
-| 3 | 46% | 64% |
-| 4 | 18% | 19% |
+| 2 | 29% | 94% |
+| 3 | 46% | 65% |
+| 4 | 19% | 19% |
 | 5 | 1% | 1% |
 
 **Hoeveel van je Projects onder de 10 MC eindigen**
@@ -60,9 +60,9 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 60% | 100% |
-| 1 | 25% | 40% |
+| 1 | 24% | 40% |
 | 2 | 11% | 16% |
-| 3 | 4% | 5% |
+| 3 | 4% | 4% |
 | 4 | 1% | 1% |
 | 5 | 0% | 0% |
 | 6 | 0% | 0% |
@@ -91,7 +91,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `≥1` | 35% |
+| `≥1` | 40% |
 | `≥2` | 8%  ← huidig |
 | `≥3` | 5% |
 | `≥4` | 0% |
@@ -102,7 +102,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `≥1` | 38% |
+| `≥1` | 35% |
 | `≥2` | 10%  ← huidig |
 
 ### `COC_Cr00ts_Founder_M1`
@@ -112,8 +112,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | drempel | slaagt in |
 |---|---|
 | `>=1` | 42% |
-| `>=2` | 8%  ← huidig |
-| `>=3` | 0% |
+| `>=2` | 10%  ← huidig |
+| `>=3` | 2% |
 
 ### `COC_DAK_Founder_M1`
 
@@ -122,8 +122,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | drempel | slaagt in |
 |---|---|
 | `>=1` | 65% |
-| `>=2` | 25%  ← huidig |
-| `>=3` | 5% |
+| `>=2` | 28%  ← huidig |
+| `>=3` | 10% |
 
 ### `COC_Cr00ts_Founder_L1`
 
@@ -132,7 +132,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | drempel | slaagt in |
 |---|---|
 | `>=1` | 40%  ← huidig |
-| `>=2` | 5% |
+| `>=2` | 12% |
 
 ### `COC_EVT_Chain_Reaction`
 
@@ -150,7 +150,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `>=1` | 32% |
+| `>=1` | 30% |
 | `>=2` | 8%  ← huidig |
 | `>=3` | 2% |
 

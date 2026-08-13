@@ -472,16 +472,25 @@ def _get_targets_raw(
         return [own, ene] if own and ene else []
 
     if tt == "all_projects_lost_mc":
+        # Las mc_loss_total, maar die sleutel wordt alleen gevuld op de paden die
+        # door ensure_btd_tracking lopen. De Kaart-klasse houdt _mc_lost_total bij
+        # op elk pad; dat is de betrouwbare bron, net als bij add_mc_btd.
         return [
             p for p in getattr(player, "field", [])
             if p.get("card_type") == "Project"
             and not p.get("destroyed", False)
-            and p.get("mc_loss_total", 0) > 0
+            and (p.get("_mc_lost_total") or p.get("lost_mc_this_phase")
+                 or p.get("mc_loss_total", 0) > 0)
         ]
 
     if tt == "random":
-        # placeholder — action handler will decide
-        return [{}]
+        # Gaf een lege placeholder terug ("de actie beslist zelf"). Alleen
+        # destroy_enemy_or_self doet dat ook echt; add_mc kreeg zo een leeg dict
+        # en boekte de MC nergens. Beide kaartteksten die dit type gebruiken
+        # bedoelen een eigen Project, dus dat is wat het nu teruggeeft.
+        pool = [c for c in field
+                if c.get("card_type") == "Project" and not c.get("destroyed", False)]
+        return [random.choice(pool)] if pool else []
 
     if tt == "second_highest_friendly_project":
         projects = [c for c in field if c.get("card_type") == "Project" and not c.get("destroyed")]

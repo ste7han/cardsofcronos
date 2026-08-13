@@ -614,7 +614,7 @@
         "trigger_type": "reaction",
         "condition_type": "hit_by_debuff",
         "condition_value": "True",
-        "target_type": "self",
+        "target_type": "all_projects_lost_mc",
         "action_type": "add_mc",
         "action_value": 5
       }
@@ -3625,7 +3625,7 @@
         "trigger_type": "conditional",
         "condition_type": "mc_multiple",
         "condition_value": "7",
-        "target_type": "self",
+        "target_type": "highest_own",
         "action_type": "add_mc",
         "action_value": 5
       }
