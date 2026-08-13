@@ -1315,6 +1315,14 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return any(c.get("card_type") == "Project" and not c.get("destroyed")
                    for c in veld if isinstance(c, dict))
     
+    elif condition_type == "self_mc_lte":
+        # Zelfde vorm als lowest_mc_lte, dat de factie al gebruikt, maar dan over
+        # de bronkaart zelf.
+        try:
+            return zichtbare_mc(card.get("current_mc", 0)) <= float(condition_value)
+        except (TypeError, ValueError):
+            return False
+
     elif condition_type == "self_mc_eq":
         try:
             target_value = float(condition_value)

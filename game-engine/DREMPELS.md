@@ -62,7 +62,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | 0 | 60% | 100% |
 | 1 | 24% | 40% |
 | 2 | 11% | 16% |
-| 3 | 4% | 4% |
+| 3 | 3% | 4% |
 | 4 | 1% | 1% |
 | 5 | 0% | 0% |
 | 6 | 0% | 0% |
@@ -72,8 +72,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 61% | 100% |
-| 1 | 32% | 39% |
-| 2 | 6% | 8% |
+| 1 | 31% | 39% |
+| 2 | 7% | 8% |
 | 3 | 1% | 1% |
 | 4 | 0% | 0% |
 | 5 | 0% | 0% |
@@ -151,7 +151,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | drempel | slaagt in |
 |---|---|
 | `>=1` | 30% |
-| `>=2` | 8%  ← huidig |
+| `>=2` | 10%  ← huidig |
 | `>=3` | 2% |
 
 ### `COC_Nova_Founder_R1`

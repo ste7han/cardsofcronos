@@ -6,7 +6,7 @@ van dezelfde factie. Gesorteerd op het laagste percentage.
 Totaal 18800 matches.
 
 
-## Nooit (16 kaarten)
+## Nooit (15 kaarten)
 
 De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen factie.
 
@@ -27,7 +27,6 @@ De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen facti
 | `COC_Clove_R3` | 0% | 2% | `not_has_tags` = Event | Tag 'Event' found, should not be present |
 | `COC_RR_Founder_M1` | 0% | 2% | `COC_RR_M1_exploded` | COC_RR_M1_exploded (True) |
 | `COC_Howlers_R2` | 0% | 5% | `count_tag_exact` = Lunar=3 | Not exactly 3 Projects with tag 'Lunar' |
-| `COC_CAW777_C2` | 0% | 8% | `self_mc_eq` = 7 | COC_CAW777_C2 MC is not exactly 7 |
 
 ## Zelden — onder de 20% (19 kaarten)
 
@@ -36,26 +35,26 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
 | `COC_Cr00ts_M1` | 2% | 5% | `enemy_destroyed_count` = >=3 | Fewer than >=3 enemy Projects destroyed |
+| `COC_CAW777_M1` | 2% | 10% | `projects_with_7_mc` = >=2 | Fewer than >=2 Projects with MC ending in 7 |
 | `COC_Lionel_C2` | 5% | 5% | `project_targeted_by_debuff` | COC_Lionel_C2 skipped: No friendly Project was targe |
-| `COC_CAW777_M1` | 5% | 10% | `projects_with_7_mc` = >=2 | Fewer than >=2 Projects with MC ending in 7 |
 | `COC_Cr00ts_R2` | 5% | 12% | `first_debuff_targeting_project` | Armed — waiting for the first debuff |
 | `COC_CAW777_Founder_R1` | 5% | 22% | `mc_multiple` = 7 | Total MC = 101.0, not divisible by 7 |
-| `COC_CAW777_E1` | 8% | 10% | `total_mc_mod` = 7 | total_mc_mod (7) |
+| `COC_CAW777_C1` | 8% | 5% | `total_mc_ends_in` = 7 | Total MC ends on 8, needed 7 |
 | `COC_DAK_R3` | 8% | 10% | `project_count` = 3 | Does not have exactly 3 Projects after Counter Phase |
 | `COC_CAW777_R1` | 8% | 12% | `survivor_count_eq` = 3 | survivor_count_eq (3) |
 | `COC_CF_C1` | 8% | 12% | `not_has_tags` = Influencer | Tag 'Influencer' found, should not be present |
 | `COC_CF_C2` | 8% | 12% | `targeted_by_debuff` | COC_CF_C2 skipped (Not targeted by debuff) |
 | `COC_Cr00ts_Founder_M1` | 8% | 15% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
-| `COC_CAW777_C1` | 10% | 5% | `total_mc_ends_in` = 7 | Total MC ends on 8, needed 7 |
+| `COC_CAW777_E1` | 10% | 10% | `total_mc_mod` = 7 | total_mc_mod (7) |
 | `COC_Wolfswap_Founder_M1` | 10% | 12% | `destroyed_friendly_count` = ≥2 | destroyed_friendly_count (≥2) |
+| `COC_CAW777_Founder_M1` | 10% | 15% | `own_projects_mc_end_7` = >=2 | own_projects_mc_end_7 (>=2) |
 | `COC_CAW777_Founder_L1` | 12% | 15% | `survivor_count_eq` = 3 | survivor_count_eq (3) |
-| `COC_CAW777_Founder_M1` | 12% | 15% | `own_projects_mc_end_7` = >=2 | own_projects_mc_end_7 (>=2) |
 | `COC_DAK_E2` | 12% | 18% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_CM_M1` | 15% | 15% | `projects_destroyed_count` = >=3 | Player 2’s COC_CM_M1 — not enough destroyed cards |
 | `COC_Nova_R3` | 18% | 10% | `nova_destroyed` | No Nova Projects were destroyed |
 | `COC_FFS_C3` | 18% | 40% | `is_lowest_mc_in_deck` | COC_FFS_C3 is not the lowest MC Project in deck |
 
-## Soms — 20 tot 60% (35 kaarten)
+## Soms — 20 tot 60% (36 kaarten)
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
@@ -87,10 +86,11 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Nova_Founder_E1` | 50% | 5% | `nova_destroyed` | ↳   Skipping add_mc: COC_Nova_Founder_E1 is not a Pr |
 | `COC_COM_Vinz_L1` | 50% | 40% | `rarity` = Legendary | No Project with rarity 'Legendary' on your field |
 | `COC_Lionel_C1` | 52% | 42% | `mc_less_than_equal` = 15 | COC_Lionel_C1 MC 18.0 is not ≤ 15 |
-| `COC_EVT_Market_Whisper` | 52% | 65% | `total_mc < opponent` | Player 2 MC is not lower than opponent |
+| `COC_EVT_Market_Whisper` | 52% | 62% | `total_mc < opponent` | Player 2 MC is not lower than opponent |
 | `COC_Nova_R2` | 52% | 85% | `count_rarity` = Rare ≥ 2 | count_rarity (Rare ≥ 2) |
 | `COC_COM_Vinz_R1` | 55% | 32% | `own_projects_under_mc_gte` = 20 | Need at least 3 Projects under 20 MC |
 | `COC_INF_Francis_E1` | 55% | 57% | `mc_lt_opponent` | Player 2 MC is not lower than opponent |
+| `COC_CAW777_C2` | 55% | 72% | `self_mc_lte` = 7 | self_mc_lte (7) |
 | `COC_Wolfswap_L1` | 57% | 20% | `enemy_destroyed_count` = ≥2 | Fewer than ≥2 enemy Projects destroyed |
 | `COC_Clove_C1` | 57% | 60% | `has_tag` = Community | COC_Clove_C1 lacks tag 'Community' |
 | `COC_Howlers_C2` | 57% | 65% | `total_mc_lt_opponent` | total_mc_lt_opponent (True) |
@@ -242,7 +242,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_FFS_Founder_R1` | 100% | 100% | `meme_tagged` | ↳   Skipping add_mc: COC_FFS_Founder_R1 is not a Pro |
 | `COC_FFS_R3` | 100% | 100% | `none` |  |
 | `COC_Howlers_Founder_M1` | 100% | 100% | `after_all_resolve` |  |
-| `COC_Howlers_R1` | 100% | 100% | `none` | COC_Howlers_R1 MC is not exactly 7 |
+| `COC_Howlers_R1` | 100% | 100% | `none` | self_mc_lte (7) |
 | `COC_Howlers_R3` | 100% | 100% | `highest_mc_project` = any | ↳   Player 1’s COC_Howlers_R3 effects are disabled. |
 | `COC_INF_Francis_C1` | 100% | 100% | `enemy_has_projects` | Player 1’s COC_INF_Francis_C1 — is disabled and cann |
 | `COC_INF_Francis_L1` | 100% | 100% | `None` | ↳   COC_INF_Francis_L1 disables Player 1’s Support C |

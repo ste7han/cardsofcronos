@@ -3407,12 +3407,12 @@
     "card_id": "COC_CAW777_C2",
     "card_type": "Project",
     "base_mc": 5.0,
-    "description": "If this Project’s MC is exactly 7 after buffs, double it.",
+    "description": "If this Project’s MC is 7 or less after buffs, double it.",
     "parsed_power": [
       {
         "phase": "Debuff",
         "trigger_type": "conditional",
-        "condition_type": "self_mc_eq",
+        "condition_type": "self_mc_lte",
         "condition_value": "7",
         "target_type": "self",
         "action_type": "double_mc",
