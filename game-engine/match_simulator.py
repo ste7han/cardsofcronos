@@ -952,6 +952,20 @@ def apply_phase(deck, opponent_deck, log, player_name, phase_name, player, oppon
                     continue
                 for effect in _effects_for_phase(card, "Debuff"):
                     if effect.get("condition_type") == "first_debuff_targeting_project":
+                        # De reflectie werd hier ongetoetst gewapend. Bij
+                        # COC_Howlers_FounderL1 hangt zij aan een extra voorwaarde
+                        # ("→ ... and reflect ..."), die net als bij
+                        # COC_CAW777_Founder_E1 in condition_value staat. Zonder
+                        # deze poort zou het schild altijd staan en zou de kaart
+                        # sterker zijn dan zijn eigen tekst.
+                        poort = str(effect.get("condition_value") or "True").strip()
+                        if poort.lower() not in ("true", "1", "yes", ""):
+                            if not check_condition(card,
+                                                   {"condition_type": poort, "condition_value": True},
+                                                   owner_player, foe_player,
+                                                   owner_deck, owner_player.field):
+                                log.append(pretty_log("skip", f"reflection stays unarmed — {poort} not met", card))
+                                continue
                         log.append(pretty_log("immune", "Cr00ts detected — waiting for first debuff", card))
                         cr00ts_reactions.append((card, effect, {
                             "source_card": card,

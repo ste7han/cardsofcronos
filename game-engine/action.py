@@ -881,7 +881,19 @@ def apply_action(card, action_type, action_value, player_name, log, context=None
                   f"🛡️ Effects aimed at the highest Project are redirected to {doel['card_id']}")
         return
 
-    if act_type in ("reflect", "reflect_and_amplify"):
+    # "reflect" dekt twee verschillende kaartteksten:
+    #
+    #   COC_DAK_Founder_E1      "reflect the first destruction attempt"
+    #   COC_CAW777_Founder_E1   "reflect the first debuff targeting your side"
+    #   COC_INF_21Million_E1    "reflect the first debuff targeting your Projects"
+    #
+    # De debuff-variant heeft verderop een eigen tak die first_debuff_data
+    # uitleest, maar dit blok ving alles op en keerde terug -- die tak was dus
+    # onbereikbaar en beide debuff-kaarten zetten in plaats daarvan een
+    # vernietigingsschild. Het condition_type scheidt de twee betekenissen.
+    _reflect_cond = str((effect or {}).get("condition_type") or "").lower()
+    if act_type in ("reflect", "reflect_and_amplify") and not (
+            act_type == "reflect" and "debuff" in _reflect_cond):
         if act_type == "reflect_and_amplify":
             setattr(player, "_reflect_debuff_factor", float(value or 2) or 2.0)
             log_event(context, log, "immune",

@@ -10,11 +10,11 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
-| 0 | 43% | 100% |
-| 1 | 36% | 57% |
+| 0 | 44% | 100% |
+| 1 | 35% | 56% |
 | 2 | 13% | 21% |
 | 3 | 5% | 8% |
-| 4 | 2% | 2% |
+| 4 | 1% | 2% |
 | 5 | 1% | 1% |
 | 6 | 0% | 0% |
 
@@ -22,8 +22,8 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
-| 0 | 46% | 100% |
-| 1 | 33% | 54% |
+| 0 | 47% | 100% |
+| 1 | 33% | 53% |
 | 2 | 13% | 21% |
 | 3 | 5% | 8% |
 | 4 | 2% | 3% |
@@ -35,10 +35,10 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 20% | 100% |
-| 1 | 31% | 80% |
-| 2 | 24% | 49% |
-| 3 | 13% | 25% |
-| 4 | 6% | 12% |
+| 1 | 32% | 80% |
+| 2 | 24% | 48% |
+| 3 | 13% | 24% |
+| 4 | 6% | 11% |
 | 5 | 3% | 5% |
 | 6 | 1% | 2% |
 | 7 | 1% | 1% |
@@ -49,10 +49,10 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 1% | 100% |
-| 1 | 5% | 99% |
+| 1 | 4% | 99% |
 | 2 | 29% | 94% |
-| 3 | 46% | 65% |
-| 4 | 19% | 19% |
+| 3 | 46% | 66% |
+| 4 | 19% | 20% |
 | 5 | 1% | 1% |
 
 **Hoeveel van je Projects onder de 10 MC eindigen**
@@ -72,14 +72,14 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 | waarde | aandeel van de matches | minstens zoveel |
 |---|---|---|
 | 0 | 61% | 100% |
-| 1 | 31% | 39% |
+| 1 | 32% | 39% |
 | 2 | 6% | 8% |
 | 3 | 1% | 1% |
 | 4 | 0% | 0% |
 | 5 | 0% | 0% |
 | 6 | 0% | 0% |
 
-**Je totale MC eindigt op 7** in 11% van de matches (toeval zou 10% zijn).
+**Je totale MC eindigt op 7** in 10% van de matches (toeval zou 10% zijn).
 
 
 ## Per kaart: wat elke drempel oplevert
@@ -131,7 +131,7 @@ Gebaseerd op 2000 willekeurige matches voor de verdelingen en
 
 | drempel | slaagt in |
 |---|---|
-| `>=1` | 40%  ← huidig |
+| `>=1` | 38%  ← huidig |
 | `>=2` | 12% |
 
 ### `COC_EVT_Chain_Reaction`

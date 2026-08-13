@@ -1652,6 +1652,15 @@
         "target_type": "random",
         "action_type": "add_mc",
         "action_value": 10
+      },
+      {
+        "phase": "Debuff",
+        "trigger_type": "conditional",
+        "condition_type": "first_debuff_targeting_project",
+        "condition_value": "has_all_rarities",
+        "target_type": "self",
+        "action_type": "reflect",
+        "action_value": 1
       }
     ],
     "tags": [
