@@ -76,6 +76,13 @@ def onderzoek(args):
     cid, runs = args
     from match_simulator import simulate_match_with_decks
 
+    # De engine logt per kaart precies een poortregel: "— triggered" als de
+    # voorwaarde slaagt, "— could not act" als hij faalt. Daarop tellen, niet op
+    # losse effectregels: die noemen de kaart ook als ze hem alleen ráken
+    # ("COC_Nova_Founder_R1 boosts ... COC_Nova_C1"), waardoor een kaart die zelf
+    # nooit afvuurt tot 100% werd gerekend zodra bondgenoten hem opbuffden.
+    poort = re.compile(re.escape(cid) + r"\s*[—–-]\s*triggered", re.I)
+
     uit = {}
     for naam, bouwer in (("willekeurig", deck_willekeurig), ("op_maat", deck_op_maat)):
         rng = random.Random(zlib.crc32((cid + naam).encode()))
@@ -96,12 +103,12 @@ def onderzoek(args):
             for regel in "\n".join(logs).split("\n"):
                 if cid not in regel or OPSTELLING.search(regel):
                     continue
-                if OVERGESLAGEN.search(regel):
+                if poort.search(regel):
+                    raak = True
+                elif OVERGESLAGEN.search(regel):
                     reden = re.sub(r".*could not act\s*—\s*", "", regel.replace("**", "")).strip()
                     reden = re.sub(r"[\U0001F000-\U0001FAFF☀-➿️]", "", reden).strip()
                     redenen[reden[:58] or "overgeslagen"] += 1
-                elif GESLAAGD.search(regel):
-                    raak = True
             geslaagd += 1 if raak else 0
         uit[naam] = (geslaagd, redenen.most_common(1)[0][0] if redenen else "")
     return cid, uit
