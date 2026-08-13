@@ -192,7 +192,7 @@ factie; slechts 6 kwamen daarmee alsnog tot leven.
   - "If this card loses MC from an effect, destroy a random Common enemy"
 - `COC_Howlers_C2` (Project/Common) — cond `total_mc_lt_opponent`, act `add_mc`
   - "If your total MC is lower than your opponent’s, gain +4 MC"
-- `COC_Howlers_FounderL1` (Founder/Legendary) — cond `has_all_rarities`, act `add_mc`
+- `COC_Howlers_Founder_L1` (Founder/Legendary) — cond `has_all_rarities`, act `add_mc`
   - "If your deck contains exactly one of each rarity,"
 - `COC_Howlers_Founder_C1` (Founder/Common) — cond `count_tag`, act `add_mc`
   - "If you have at least 3 cards with the Lunar tag, gain +2 MC on your lowest MC Project"

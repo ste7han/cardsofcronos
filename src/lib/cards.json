@@ -1639,7 +1639,7 @@
     "rarity": "Epic"
   },
   {
-    "card_id": "COC_Howlers_FounderL1",
+    "card_id": "COC_Howlers_Founder_L1",
     "card_type": "Founder",
     "base_mc": 0,
     "description": "If your deck contains exactly one of each rarity,\n→ gain +10 Mc on a random project you control  and reflect the first debuff targeting your Projects",

@@ -960,13 +960,13 @@ def apply_phase(deck, opponent_deck, log, player_name, phase_name, player, oppon
                     if effect.get("condition_type") in ("first_debuff_targeting_project",
                                                         "first_debuff_targeting_side"):
                         # De reflectie werd hier ongetoetst gewapend. Bij
-                        # COC_Howlers_FounderL1 hangt zij aan een extra voorwaarde
+                        # COC_Howlers_Founder_L1 hangt zij aan een extra voorwaarde
                         # ("→ ... and reflect ..."), die net als bij
                         # COC_CAW777_Founder_E1 in condition_value staat. Zonder
                         # deze poort zou het schild altijd staan en zou de kaart
                         # sterker zijn dan zijn eigen tekst.
                         # Alleen bij _project is condition_value een poort met de
-                        # naam van een andere voorwaarde (COC_Howlers_FounderL1).
+                        # naam van een andere voorwaarde (COC_Howlers_Founder_L1).
                         # Bij _side staat er een kwalificatie in ("mc_ends_in_7")
                         # die de voorwaarde zelf verderop beoordeelt.
                         poort = str(effect.get("condition_value") or "True").strip()

@@ -136,6 +136,7 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Lionel_R1` | 88% | 90% | `control_card_count` = Common >= 2 | Need common >= 2 on field; have 1 |
 | `COC_EVT_FUD` | 88% | 92% | `mc_gte` = 20 | Player 2’s COC_EVT_FUD — is disabled and cannot trig |
 | `COC_Cr00ts_Founder_R1` | 88% | 95% | `project_debuffed` | COC_Cr00ts_Founder_R1 skipped: No friendly Projects  |
+| `COC_Howlers_Founder_L1` | 90% | 82% | `has_all_rarities` | Armed — waiting for the first debuff |
 | `COC_COM_Vinz_M1` | 90% | 90% | `support_same_rarity` | support_same_rarity (True) |
 | `COC_Cr00ts_E1` | 92% | 85% | `survived` |  |
 | `COC_Lionel_L1` | 92% | 88% | `final_calc` = lowest_survivor |  |
@@ -146,7 +147,6 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Wolfswap_E1` | 92% | 92% | `enemy_has_rarity` = Epic | ↳   COC_Wolfswap_E1 skipped — no valid targets. |
 | `COC_EVT_Flash_Crash` | 92% | 98% | `mc_gte` = 20 | No Projects with MC ≥ 20 found |
 | `COC_CF_E1` | 92% | 100% | `none` |  |
-| `COC_Howlers_FounderL1` | 95% | 82% | `has_all_rarities` | Armed — waiting for the first debuff |
 | `COC_CF_R3` | 95% | 98% | `in_play` |  |
 | `COC_Lionel_E2` | 95% | 98% | `first_debuff` |  |
 | `COC_Nova_C1` | 98% | 18% | `tag_on_field` = Nova ≥ 2 |  |
