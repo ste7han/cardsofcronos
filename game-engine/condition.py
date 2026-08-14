@@ -782,13 +782,27 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
     
     elif condition_type == "exact_rarity_mix":
-        # Example: Common:1,Rare:1,Epic:1,Legendary:1,Mythical:1
-        required = {
-            part.split(":")[0].strip(): int(part.split(":")[1])
-            for part in condition_value.split(",")
-        }
+        # "exactly 1 Common, 1 Rare, 1 Epic, 1 Legendary, 1 Mythical"
+        #
+        # Telde over het hele veld: 5 Projects, 5 Supports en een Founder. Precies
+        # een van elke rarity betekent vijf kaarten, dus de overige zes zouden een
+        # rarity buiten die vijf moeten hebben -- en die bestaat niet. De
+        # voorwaarde was daarmee wiskundig onvervulbaar: 0 van de 12 zelfs met een
+        # deck dat precies een Project van elke rarity speelt. Je bouwt je vijf
+        # Projects, dus daarover hoort geteld te worden.
+        try:
+            required = {
+                part.split(":")[0].strip(): int(part.split(":")[1])
+                for part in str(condition_value or "").split(",") if ":" in part
+            }
+        except ValueError:
+            return False
+        if not required:
+            return False
         rarity_counts = {}
         for c in player.field:
+            if c.get("card_type") != "Project" or c.get("destroyed"):
+                continue
             r = c.get("rarity")
             if r:
                 rarity_counts[r] = rarity_counts.get(r, 0) + 1
@@ -1644,7 +1658,20 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
         return False
     
     elif condition_type == "is_only_rarity":
-        return all(c.get("rarity") == condition_value for c in deck if c["card_type"] == "Project")
+        # "plus 3mc if this is your only common card on the field"
+        #
+        # Werd gelezen als "al je Projects zijn Common", het tegenovergestelde
+        # uiterste: de kaart vuurde alleen af in een deck dat volledig uit Commons
+        # bestond, en juist nooit in het deck dat de tekst beschrijft. De tekst
+        # zegt "card", dus het hele veld telt mee, en "only" betekent er precies
+        # een -- deze.
+        if card.get("rarity") != condition_value:
+            return False
+        veld = getattr(player, "field", None) or field or []
+        gelijk = [c for c in veld
+                  if isinstance(c, dict) and not c.get("destroyed")
+                  and c.get("rarity") == condition_value]
+        return len(gelijk) == 1
     
     elif condition_type == "has_mc_below":
         try:

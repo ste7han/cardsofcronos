@@ -6,18 +6,16 @@ van dezelfde factie. Gesorteerd op het laagste percentage.
 Totaal 18800 matches.
 
 
-## Nooit (15 kaarten)
+## Nooit (13 kaarten)
 
 De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen factie.
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
 | `COC_CM_C1` | 0% | 0% | `on_destroyed` | COC_CM_C1 was not destroyed — effect requires destru |
-| `COC_Clove_C3` | 0% | 0% | `is_only_rarity` = Common | Player 1 does not have only 'Common' rarity |
 | `COC_Cr00ts_C2` | 0% | 0% | `on_destroyed` | COC_Cr00ts_C2 was not destroyed — effect requires de |
 | `COC_Cr00ts_Founder_E1` | 0% | 0% | `first_enemy_debuff` | Armed — waiting for the first debuff |
 | `COC_EVT_Sideways_Chop` | 0% | 0% | `None` |  |
-| `COC_Howlers_L1` | 0% | 0% | `exact_rarity_mix` = Common:1,Rare:1,Epic:1,Legendary:1,Mythical:1 | Player 1 does not have exact rarity mix: Common:1,Ra |
 | `COC_INF_21Million_M1` | 0% | 0% | `control_all_rarities` | control_all_rarities (missing: Epic, Mythical) |
 | `COC_RR_C3` | 0% | 0% | `on_destroyed` |  |
 | `COC_RR_R3` | 0% | 0% | `on_destroyed` | COC_RR_R3 was not destroyed — effect requires destru |
@@ -28,12 +26,13 @@ De voorwaarde slaagt in geen enkele match, ook niet met steun van de eigen facti
 | `COC_RR_Founder_M1` | 0% | 2% | `COC_RR_M1_exploded` | COC_RR_M1_exploded (True) |
 | `COC_Howlers_R2` | 0% | 5% | `count_tag_exact` = Lunar=3 | Not exactly 3 Projects with tag 'Lunar' |
 
-## Zelden — onder de 20% (19 kaarten)
+## Zelden — onder de 20% (20 kaarten)
 
 Werkt, maar vraagt een situatie die zelden ontstaat.
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
+| `COC_Clove_C3` | 2% | 5% | `is_only_rarity` = Common | Player 1 does not have only 'Common' rarity |
 | `COC_Cr00ts_M1` | 2% | 5% | `enemy_destroyed_count` = >=3 | Fewer than >=3 enemy Projects destroyed |
 | `COC_CAW777_M1` | 2% | 10% | `projects_with_7_mc` = >=2 | Fewer than >=2 Projects with MC ending in 7 |
 | `COC_Lionel_C2` | 5% | 5% | `project_targeted_by_debuff` | COC_Lionel_C2 skipped: No friendly Project was targe |
@@ -54,10 +53,11 @@ Werkt, maar vraagt een situatie die zelden ontstaat.
 | `COC_Nova_R3` | 18% | 10% | `nova_destroyed` | No Nova Projects were destroyed |
 | `COC_FFS_C3` | 18% | 40% | `is_lowest_mc_in_deck` | COC_FFS_C3 is not the lowest MC Project in deck |
 
-## Soms — 20 tot 60% (36 kaarten)
+## Soms — 20 tot 60% (37 kaarten)
 
 | kaart | op maat | willekeurig | voorwaarde | reden dat het niet lukt |
 |---|---|---|---|---|
+| `COC_Howlers_L1` | 20% | 5% | `exact_rarity_mix` = Common:1,Rare:1,Epic:1,Legendary:1,Mythical:1 | Player 2 does not have exact rarity mix: Common:1,Ra |
 | `COC_DAK_Founder_M1` | 20% | 12% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_DAK_L1` | 20% | 12% | `enemy_destroyed_count` = >=2 | Fewer than >=2 enemy Projects destroyed |
 | `COC_EVT_Chain_Reaction` | 20% | 28% | `cards_destroyed >= 2` | cards_destroyed >= 2 (True) |
