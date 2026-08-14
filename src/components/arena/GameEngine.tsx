@@ -125,7 +125,12 @@ export const BattleResult = ({ result, score1, score2, onBack, onLog, onShare, p
           <div className="inline-block px-5 md:px-8 py-2 mb-4 md:mb-8 border border-white/20 bg-black/50 rounded-full backdrop-blur-md"><span className="text-white/50 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] md:tracking-[0.4em]">Simulation Terminated</span></div>
           <h1 className={`text-5xl md:text-9xl font-['Cinzel'] font-black uppercase tracking-tight italic drop-shadow-2xl ${titleColor}`}>{title}</h1>
         </div>
-        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 mb-8 md:mb-16 w-full">
+        {/* justify-center hoort erbij: vanaf md wordt dit een rij, en dan is de
+            hoofdas horizontaal. Zonder deze klasse viel hij terug op flex-start
+            en stond het scoreblok links, terwijl de titel en de knoppen wél
+            gecentreerd waren. Op mobiel is dit een kolom met automatische hoogte,
+            dus daar verandert er niets. */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 mb-8 md:mb-16 w-full">
           <div className={`relative w-full max-w-[320px] h-[130px] md:h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${myPanelBorder}`}><span className="text-blue-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-2 md:mb-4">You</span><span className="text-6xl md:text-8xl font-black text-white font-['Cinzel'] leading-none">{Math.floor(myScore)}</span></div>
           <div className="text-zinc-700 font-['Cinzel'] text-3xl md:text-6xl font-black italic select-none">VS</div>
           <div className={`relative w-full max-w-[320px] h-[130px] md:h-[220px] bg-black border-2 rounded-3xl flex flex-col items-center justify-center ${theirPanelBorder}`}><span className="text-red-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mb-2 md:mb-4">{opponentLabel}</span><span className="text-6xl md:text-8xl font-black text-zinc-500 font-['Cinzel'] leading-none">{Math.floor(theirScore)}</span></div>
