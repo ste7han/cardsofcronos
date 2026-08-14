@@ -180,7 +180,7 @@ function TrainingArenaContent() {
   // --- NIEUW: LOG VIEW ---
   // Dit stukje ontbrak nog
   if (view === 'log' && battleResult) {
-    return <BattleLog logs={battleResult.logs} onClose={() => setView('result')} />;
+    return <BattleLog logs={battleResult.logs} onClose={() => setView('result')} perspective="p1" />;
   }
 
   // --- VIEW: NORMALE PAGINA (Deck Builder & Fighting) ---

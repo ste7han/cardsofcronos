@@ -224,7 +224,7 @@ function PvPArenaContent() {
       }}
     />
   );
-  if (view === 'log' && battleResult) return <BattleLog logs={battleResult.logs} onClose={() => setView('result')} />;
+  if (view === 'log' && battleResult) return <BattleLog logs={battleResult.logs} onClose={() => setView('result')} perspective={perspective} />;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-['Spectral']">

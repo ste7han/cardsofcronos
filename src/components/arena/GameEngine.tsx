@@ -405,44 +405,7 @@ export const BattleFlow = ({ result, onBack, onFinish, perspective = 'p1', oppon
   );
 };
 
-// --- NIEUW: COMPONENT VOOR LOG WEERGAVE ---
-export const BattleLog = ({ logs, onClose }: { logs: string[], onClose: () => void }) => {
-  const cleanLine = (text: string) => text.replace(/\*.*?\*/g, '').replace(/\*\*/g, '').replace(/🧪|💥|✨|💀|🛡️|📊|👑|🔷|🔶|🧱|🛠️|📈|⚖️|🔄|↳/g, '').trim();
-
-  return (
-    <div className="fixed inset-0 z-[99999] bg-[#050505] flex flex-col font-mono animate-in fade-in duration-300">
-      {/* De sluitknop mag nooit wegvallen op een smal scherm: shrink-0 en
-          kleinere marges, en de titel mag inkorten in plaats van te duwen. */}
-      <div className="p-4 md:p-6 border-b border-white/10 flex justify-between items-center gap-3 bg-black/90 backdrop-blur-md relative z-10">
-        <div className="min-w-0">
-          <h3 className="text-xl md:text-3xl font-['Cinzel'] font-black text-blue-400 uppercase tracking-tighter truncate">Combat Log</h3>
-          <p className="text-gray-600 text-[9px] md:text-[10px] uppercase tracking-[0.3em] md:tracking-[0.4em] mt-1 font-bold truncate">Sequence Data</p>
-        </div>
-        <button onClick={onClose} className="flex-shrink-0 bg-white text-black px-5 md:px-8 py-3 rounded-full font-black uppercase text-[11px] md:text-xs tracking-widest hover:bg-gray-200 transition-all">
-          Close Log
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-[url('/table.jpeg')] bg-fixed bg-cover relative">
-        <div className="absolute inset-0 bg-black/90 z-0"></div>
-        <div className="relative z-10 max-w-4xl mx-auto space-y-3">
-          {logs.map((rawLog, i) => {
-             const log = cleanLine(rawLog);
-             if (log.length < 5) return null;
-             let colorClass = "text-gray-400";
-             if (rawLog.includes('hits') || rawLog.includes('damage') || rawLog.includes('reduced')) colorClass = "text-red-400";
-             else if (rawLog.includes('buff') || rawLog.includes('boost') || rawLog.includes('gain')) colorClass = "text-green-400";
-             else if (rawLog.includes('destroyed')) colorClass = "text-red-600 font-bold";
-
-             return (
-               <div key={i} className="flex gap-4 items-start border-l-2 border-white/5 pl-4 py-2 hover:bg-white/5 transition-colors rounded-r-lg">
-                 <span className="text-gray-700 text-[10px] pt-1 font-bold tabular-nums w-8">{String(i + 1).padStart(3, '0')}</span>
-                 <p className={`text-sm md:text-base leading-relaxed ${colorClass}`}>{log}</p>
-               </div>
-             );
-          })}
-          <div className="pt-10 text-center"><p className="text-gray-600 text-xs uppercase tracking-widest">--- END OF TRANSMISSION ---</p></div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// De logweergave is verhuisd naar BattleLogView.tsx. Die dumpte hier elke
+// regel als genummerde monospace-tekst; het ordenen zit nu in logModel.ts.
+// De naam BattleLog blijft bestaan zodat bestaande imports blijven werken.
+export { BattleLogView as BattleLog } from './BattleLogView';
