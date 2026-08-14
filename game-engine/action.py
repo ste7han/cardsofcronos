@@ -2553,10 +2553,15 @@ def apply_action(card, action_type, action_value, player_name, log, context=None
                 )
 
     elif act_type == "destroy_and_gain_mc":
+        # Twee kaarten delen deze actie. COC_COM_Vinz_M1 richt op een Project,
+        # COC_RR_Founder_M1 op een Founder ("destroy 1 enemy Founder"). De
+        # typecontrole liet alleen Projects door, dus die tweede kaart sloeg zijn
+        # doelwit over: geen vernietiging en geen MC. De MC gaat hoe dan ook naar
+        # je sterkste eigen Project, dus dat deel klopte al.
         for target in targets:
             if not target or not isinstance(target, dict):
                 continue
-            if target.get("card_type") == "Project" and not target.get("destroyed", False):
+            if target.get("card_type") in ("Project", "Founder") and not target.get("destroyed", False):
                 try:
                     destroy_card(target, log, player=player, opponent=opponent, source=source_card, context=context)
 

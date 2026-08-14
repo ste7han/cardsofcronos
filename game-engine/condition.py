@@ -539,11 +539,19 @@ def check_condition_core(card, condition_type, condition_value, deck, opponent_d
 
 
     elif condition_type == "mc_lower_than_self":
+        # "Destroy an enemy Project with MC lower than this one" -- de vraag is
+        # of er zo'n Project bestaat. Er werd vergeleken met het TOTAAL van de
+        # tegenstander, dus een enkel Project moest meer MC hebben dan het hele
+        # vijandelijke bord samen. Dat gebeurt vrijwel nooit; de kaart vuurde in
+        # geen enkele match af.
         try:
-            # Compare the MC of this card vs opponent's total MC
-            self_mc = card.get("current_mc", 0)
-            opponent_total_mc = opponent.total_mc()
-            return self_mc > opponent_total_mc
+            eigen_mc = float(card.get("current_mc", 0) or 0)
+            vijand = getattr(opponent, "field", None) or opponent_field or []
+            return any(
+                c.get("card_type") == "Project" and not c.get("destroyed")
+                and float(c.get("current_mc", 0) or 0) < eigen_mc
+                for c in vijand if isinstance(c, dict)
+            )
         except Exception as e:
             print(f"[ERROR] mc_lower_than_self failed for {card['card_id']}: {e}")
             return False
