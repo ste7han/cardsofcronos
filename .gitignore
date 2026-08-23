@@ -48,6 +48,10 @@ assets/raw/
 contracts/out/
 contracts/cache/
 
+# The orders exported out of the first version's Firestore. 67 people's e-mail
+# addresses and 54 MB of artwork; neither belongs in a repository.
+orders/
+
 # Debug
 npm-debug.log*
 yarn-debug.log*
