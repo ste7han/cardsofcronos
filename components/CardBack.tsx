@@ -18,6 +18,7 @@
 // cards. Small and unreadable still reads as a card back. Absent does not.
 
 import { cx } from "@/lib/cx";
+import { CronosMark, MARK_HEIGHT, MARK_PATH, MARK_WIDTH } from "@/components/CronosMark";
 
 /**
  * Which face the card wears, and what it is struck in.
@@ -43,6 +44,16 @@ type Design = "coin" | "wordmark" | "guilloche" | "foil";
  * hand you the answer through the wrapper.
  */
 const GROUND = "#080a0d";
+
+/**
+ * How tall the mark is drawn, in the back's own 100x140 units.
+ *
+ * It replaced three letters set at 15px, and it is taller than they were on
+ * purpose: a shape reads at a size at which letters have already turned to
+ * mush, and the whole reason for the mark over the initials is the card in the
+ * opponent's hand at 39px.
+ */
+const MARK_SIZE = 34;
 
 const DESIGN: Design = "guilloche";
 const FACE: keyof typeof PALETTES = "cronos";
@@ -159,19 +170,11 @@ export function CardBack({
             behind showing through, which is how a stamped back works. */}
         <mask id="coc-back-mark">
           <rect x="0" y="0" width="100" height="140" fill="white" />
-          <text
-            x="50"
-            y={design === "wordmark" ? 66 : 70}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontFamily="var(--font-display), system-ui, sans-serif"
-            fontSize={design === "wordmark" ? 34 : 15}
-            fontWeight="800"
-            letterSpacing={design === "wordmark" ? -1.6 : -0.3}
-            fill="black"
+          <g
+            transform={`translate(${50 - (MARK_WIDTH * (MARK_SIZE / MARK_HEIGHT)) / 2} ${70 - MARK_SIZE / 2}) scale(${MARK_SIZE / MARK_HEIGHT})`}
           >
-            COC
-          </text>
+            <path d={MARK_PATH} fill="black" fillRule="evenodd" />
+          </g>
         </mask>
 
         <pattern id="coc-back-weave" width="9" height="9" patternUnits="userSpaceOnUse">
@@ -268,37 +271,13 @@ export function CardBack({
       )}
 
       {design === "wordmark" && (
-        <text
-          x="50"
-          y="66"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontFamily="var(--font-display), system-ui, sans-serif"
-          fontSize="34"
-          fontWeight="800"
-          letterSpacing="-1.6"
-          fill="url(#coc-back-face)"
-        >
-          COC
-        </text>
+        <CronosMark x={50} y={66} height={MARK_SIZE * 2.1} fill="url(#coc-back-face)" />
       )}
 
       {design === "guilloche" && (
         <>
           <circle cx="50" cy="70" r={tiny ? 26 : 21} fill={GROUND} fillOpacity="0.92" />
-          <text
-            x="50"
-            y="70"
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontFamily="var(--font-display), system-ui, sans-serif"
-            fontSize="15"
-            fontWeight="800"
-            letterSpacing="-0.3"
-            fill="url(#coc-back-face)"
-          >
-            COC
-          </text>
+          <CronosMark x={50} y={70} height={MARK_SIZE} fill="url(#coc-back-face)" />
         </>
       )}
 
@@ -310,21 +289,7 @@ export function CardBack({
           <rect x="0" y="0" width="100" height="140" fill="url(#coc-back-face)" />
         </g>
       )}
-      {foil && (
-        <text
-          x="50"
-          y="70"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontFamily="var(--font-display), system-ui, sans-serif"
-          fontSize="15"
-          fontWeight="800"
-          letterSpacing="-0.3"
-          fill={P.mark}
-        >
-          COC
-        </text>
-      )}
+      {foil && <CronosMark x={50} y={70} height={MARK_SIZE} fill={P.mark} />}
 
       <text
         x="50"

@@ -28,7 +28,8 @@
     "allowlist": "tsx scripts/allowlist.ts",
     "db:local": "wrangler d1 execute cards-of-cronos --local --file=db/schema.sql",
     "contract": "forge test",
-    "site-logo": "tsx scripts/site-logo.tsx"
+    "site-logo": "tsx scripts/site-logo.tsx",
+    "trace-mark": "tsx scripts/trace-mark.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
