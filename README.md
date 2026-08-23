@@ -116,8 +116,21 @@ which is why `/cards` says so instead of promising illustrations.
 | `docs/` | What was measured, and what is known about the first collection. |
 | `legacy/` | Artwork from the first version. Built by nothing, served by nothing. |
 
-Deployed to Cloudflare Workers with OpenNext (`npm run deploy`). It does not
-deploy yet: `wrangler.jsonc` still needs a domain and a D1 database id.
+Deployed to Cloudflare Workers with OpenNext:
+
+```
+npm run deploy
+```
+
+Live at **https://cards-of-cronos.steph-danser.workers.dev** — a workers.dev
+subdomain, because there is no custom domain yet. Add one to `wrangler.jsonc`
+when there is, so a fresh clone deploys to the same place instead of to wherever
+somebody's dashboard happened to point.
+
+The database is D1, `cards-of-cronos`. Its schema is applied with
+`wrangler d1 execute cards-of-cronos --remote --file=db/schema.sql`; the account
+also has one called `trenches`, which belongs to another game and must stay
+untouched.
 
 ---
 
@@ -193,3 +206,7 @@ holds the old Firebase and EmailJS keys and which nothing reads any more, and
   empty rather than guessed — see `lib/admin.ts` and `lib/revenue.ts`, and the
   tests that fail the moment somebody fills one in.
 - No domain, no X account, no Telegram. `lib/links.ts` says what that blocks.
+- The first version of the site is still deployed on Firebase, separately, at the
+  `my-project-1472564361903` project. Its weekly `$CROCARD` airdrop is switched
+  off; the site itself and the two Python functions behind its arena are still
+  running.
