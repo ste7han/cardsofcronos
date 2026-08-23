@@ -32,14 +32,14 @@ beforeEach(() => vi.unstubAllGlobals());
 
 describe("a code on a link", () => {
   it("is kept", () => {
-    const { store } = browser(`https://trenches.cards/profile?${PENDING_REF}=ABCD1234`);
+    const { store } = browser(`https://cardsofcronos.test/profile?${PENDING_REF}=ABCD1234`);
     noticeRefInUrl();
     expect(peekPendingRef()).toBe("ABCD1234");
     expect(store.size).toBe(1);
   });
 
   it("is upper-cased and trimmed to a code's length", () => {
-    browser(`https://trenches.cards/?${PENDING_REF}=abcd1234extra`);
+    browser(`https://cardsofcronos.test/?${PENDING_REF}=abcd1234extra`);
     noticeRefInUrl();
     expect(peekPendingRef()).toBe("ABCD1234");
   });
@@ -47,7 +47,7 @@ describe("a code on a link", () => {
   it("comes off the URL", () => {
     // Otherwise the visitor shares the page they are on and carries somebody
     // else's code into it — which is how one person gets credited for a group.
-    const { replaced } = browser(`https://trenches.cards/profile?${PENDING_REF}=ABCD1234`);
+    const { replaced } = browser(`https://cardsofcronos.test/profile?${PENDING_REF}=ABCD1234`);
     noticeRefInUrl();
     expect(replaced).toHaveLength(1);
     expect(replaced[0]).not.toContain(PENDING_REF);
@@ -56,9 +56,9 @@ describe("a code on a link", () => {
   it("does not overwrite one already held", () => {
     // The first link somebody follows is who brought them. A second link later
     // is somebody else trying to take the credit.
-    const { store } = browser(`https://trenches.cards/?${PENDING_REF}=FIRST111`);
+    const { store } = browser(`https://cardsofcronos.test/?${PENDING_REF}=FIRST111`);
     noticeRefInUrl();
-    browser(`https://trenches.cards/?${PENDING_REF}=SECOND22`);
+    browser(`https://cardsofcronos.test/?${PENDING_REF}=SECOND22`);
     // Same store contents as a real browser would have.
     window.localStorage.setItem("tcg.ref.v1", store.get("tcg.ref.v1")!);
     noticeRefInUrl();
@@ -66,7 +66,7 @@ describe("a code on a link", () => {
   });
 
   it("does nothing when there is no code", () => {
-    const { store, replaced } = browser("https://trenches.cards/profile");
+    const { store, replaced } = browser("https://cardsofcronos.test/profile");
     noticeRefInUrl();
     expect(store.size).toBe(0);
     // And leaves the URL alone rather than rewriting every page it runs on.
@@ -74,7 +74,7 @@ describe("a code on a link", () => {
   });
 
   it("is handed over once", () => {
-    browser(`https://trenches.cards/?${PENDING_REF}=ABCD1234`);
+    browser(`https://cardsofcronos.test/?${PENDING_REF}=ABCD1234`);
     noticeRefInUrl();
     // Peeking leaves it; taking spends it. The greeting reads it without using
     // it up, and the claim is what uses it.

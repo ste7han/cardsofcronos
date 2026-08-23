@@ -35,12 +35,15 @@ export function Footer() {
             width={26}
             height={34}
           />
-          <span className="ml-2 align-middle">TRENCHES CARD GAME</span>
+          <span className="ml-2 align-middle">CARDS OF CRONOS</span>
         </p>
         <div className="flex flex-col gap-3 sm:items-end">
           {/* rel on an outbound link, always. noopener is the one that matters —
               without it the page it opens gets a handle on this one. */}
           <span className="flex items-center gap-5">
+          {/* Hidden rather than dead. An account that does not exist yet is a gap
+              somebody can see; a link to the wrong one is not. See lib/links.ts. */}
+          {X_ACCOUNT !== null && (
           <a
             href={X_ACCOUNT}
             target="_blank"
@@ -53,6 +56,8 @@ export function Footer() {
             </svg>
             X
           </a>
+          )}
+          {TELEGRAM_CHANNEL !== null && (
           <a
             href={TELEGRAM_CHANNEL}
             target="_blank"
@@ -68,6 +73,7 @@ export function Footer() {
             </svg>
             TELEGRAM
           </a>
+          )}
           </span>
           <p className="max-w-md sm:text-right">
             Not financial advice. Cards reference existing projects and people; this game is not

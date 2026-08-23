@@ -192,14 +192,19 @@ export function Points({ wallet }: { wallet: string | null }) {
                   <span className="text-[9px] tracking-[0.16em] text-pump">DONE</span>
                 ) : task.id === "join_telegram" || task.id === "follow_x" ? (
                   <span className="flex flex-col items-end gap-1">
-                    <a
-                      href={task.id === "follow_x" ? X_ACCOUNT : TELEGRAM_CHANNEL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[9px] tracking-[0.16em] text-muted transition-colors hover:text-fg"
-                    >
-                      OPEN ↗
-                    </a>
+                    {/* No account, no link. Both are null until they are
+                        registered — see lib/links.ts — and "OPEN ↗" going
+                        nowhere is worse than not offering it. */}
+                    {(task.id === "follow_x" ? X_ACCOUNT : TELEGRAM_CHANNEL) !== null && (
+                      <a
+                        href={(task.id === "follow_x" ? X_ACCOUNT : TELEGRAM_CHANNEL)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] tracking-[0.16em] text-muted transition-colors hover:text-fg"
+                      >
+                        OPEN ↗
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={() => void press(task)}

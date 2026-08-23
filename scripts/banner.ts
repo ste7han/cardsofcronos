@@ -78,9 +78,9 @@ async function main() {
         max-width:${Math.round(W * 0.44)}px`;
       words.innerHTML = `
         <div class="display gold-gradient" style="font-size:${Math.round(H * 0.16)}px;
-          line-height:0.95;letter-spacing:-0.025em">TRENCHES<br>CARD GAME</div>
+          line-height:0.95;letter-spacing:-0.025em">CARDS<br>OF CRONOS</div>
         <div style="font-family:var(--font-mono),monospace;font-size:${Math.round(H * 0.046)}px;
-          letter-spacing:0.22em;color:#00e08a;margin-top:${Math.round(H * 0.055)}px">TRENCHES.CARDS</div>`;
+          letter-spacing:0.22em;color:#ffd700;margin-top:${Math.round(H * 0.055)}px">CARDS OF CRONOS</div>`;
       stage.append(words);
 
       const fan = document.createElement("div");

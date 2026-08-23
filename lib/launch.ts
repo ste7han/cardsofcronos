@@ -30,14 +30,13 @@ export const LAUNCHED = TOKEN.length > 0;
  * the Telegram address, which is one edit away from a banner naming a channel
  * that no longer exists while telling people it is the safe one.
  *
- * TODO: `site` is still the other project's domain, and so are the accounts in
- * lib/links.ts. Nothing renders them today — LAUNCHED is true, so the copycat
- * banner draws nothing — but the moment anything does, this sentence would be
- * pointing people at somebody else's Telegram while calling it the safe one.
- * They go together with the rest of the naming.
+ * TODO: none of these is known yet. `site` needs a domain and the three
+ * accounts need registering — see lib/links.ts. Nothing renders them today: the
+ * copycat banner returns null both because the token has launched and because
+ * it refuses to name accounts that do not exist.
  */
 export const OFFICIAL = {
-  site: "trenches.cards",
+  site: null as string | null,
   telegram: TELEGRAM_CHANNEL,
   x: X_ACCOUNT,
   xHandle: X_HANDLE,

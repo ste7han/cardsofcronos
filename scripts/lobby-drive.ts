@@ -1,6 +1,6 @@
 // Two wallets, one match, end to end against a running site.
 //
-//   npx tsx scripts/lobby-drive.ts                 against trenches.cards
+//   npx tsx scripts/lobby-drive.ts                 against a local dev server
 //   npx tsx scripts/lobby-drive.ts http://…:3000   against anything else
 //
 // Not a unit test and not trying to be. Everything here needs a real request, a
@@ -14,7 +14,7 @@ import { wallet } from "@/scripts/lib/signer";
 import { buildDeckPreferring } from "@/engine/deck";
 import { SET } from "@/lib/set";
 
-const BASE = `${process.argv[2] ?? "https://trenches.cards"}/api/pvp`;
+const BASE = `${process.argv[2] ?? "http://localhost:3000"}/api/pvp`;
 
 async function ask(path: string, proof: unknown, body: Record<string, unknown> = {}) {
   const r = await fetch(`${BASE}/${path}`, {

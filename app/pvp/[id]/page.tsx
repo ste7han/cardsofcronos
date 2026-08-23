@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { MatchBoard } from "@/components/pvp/MatchBoard";
 
 export const metadata: Metadata = {
-  title: "Match — Trenches Card Game",
+  title: "Match — Cards of Cronos",
 };
 
 export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {

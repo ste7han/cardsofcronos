@@ -54,7 +54,10 @@ export function TelegramLink() {
 
   useEffect(() => {
     const host = slot.current;
-    if (!ready || !host) return;
+    // No bot registered, no widget. TELEGRAM_BOT is null until somebody makes
+    // one with BotFather; rendering the widget without a name gets a button that
+    // fails on click rather than one that is honestly absent.
+    if (!ready || !host || TELEGRAM_BOT === null) return;
 
     // React runs effects twice in development. Without this the button appears
     // twice, which looks like a bug and is one.

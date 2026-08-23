@@ -152,7 +152,7 @@ export function CardBack({
             letterSpacing={design === "wordmark" ? -1.6 : -0.3}
             fill="black"
           >
-            TCG
+            COC
           </text>
         </mask>
 
@@ -261,7 +261,7 @@ export function CardBack({
           letterSpacing="-1.6"
           fill="url(#tcg-back-face)"
         >
-          TCG
+          COC
         </text>
       )}
 
@@ -279,7 +279,7 @@ export function CardBack({
             letterSpacing="-0.3"
             fill="url(#tcg-back-face)"
           >
-            TCG
+            COC
           </text>
         </>
       )}
@@ -304,7 +304,7 @@ export function CardBack({
           letterSpacing="-0.3"
           fill={GROUND}
         >
-          TCG
+          COC
         </text>
       )}
 
@@ -318,7 +318,7 @@ export function CardBack({
         fill={foil ? GROUND : P.ink}
         fillOpacity={foil ? 0.85 : 0.7}
       >
-        TRENCHES.CARDS
+        CARDS OF CRONOS
       </text>
 
       {/* The only edge on the card. The element around it draws nothing — it

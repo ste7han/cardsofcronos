@@ -1,6 +1,6 @@
 // The points ladder, end to end against a running site.
 //
-//   npm run points                      against trenches.cards
+//   npm run points                      against a local dev server
 //   npm run points -- http://…:3000     against anything else
 //
 // Only what needs a real database and a real request: that a task pays once,
@@ -15,7 +15,7 @@ import { newMatch, applyMove } from "@/engine/match";
 import { chooseMove } from "@/engine/bot";
 import { demoDecks } from "@/lib/demo";
 
-const BASE = process.argv[2] ?? "https://trenches.cards";
+const BASE = process.argv[2] ?? "http://localhost:3000";
 
 async function ask(path: string, proof: unknown, body: Record<string, unknown> = {}) {
   const r = await fetch(`${BASE}${path}`, {

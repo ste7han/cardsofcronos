@@ -114,7 +114,7 @@ export function CardView({ card, compact = false, className }: Props) {
           className={cx("display tracking-tight", compact ? "text-[9px]" : "text-[10px]")}
           style={{ color: style.colour }}
         >
-          {compact ? "TCG" : "TRENCHES CARD GAME"}
+          {compact ? "COC" : "CARDS OF CRONOS"}
         </span>
         <span
           className={cx("flex items-center gap-1 tracking-[0.16em]", compact ? "text-[6.5px]" : "text-[7.5px]")}

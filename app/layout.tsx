@@ -31,10 +31,13 @@ export const metadata: Metadata = {
   // the card renders blank everywhere the link is actually pasted. The domain
   // is public, not a secret; the override exists so a preview deploy can point
   // at itself.
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://trenches.cards"),
-  title: "Trenches Card Game",
+  // No domain yet, so the fallback is the dev server rather than a guess.
+  // Set NEXT_PUBLIC_SITE_URL once there is one, or every link card pasted
+  // anywhere renders against localhost and comes back blank.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: "Cards of Cronos",
   description:
-    "A card game about the Solana trenches. The projects you know, the tactics you use. Highest market cap wins.",
+    "A card game about Cronos. The projects you know, the tactics you use. Highest market cap wins.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

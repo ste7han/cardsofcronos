@@ -52,7 +52,7 @@ export function Nav() {
             height={34}
           />
           <span className="hidden text-[9px] tracking-[0.22em] text-faint transition-colors group-hover:text-muted lg:inline">
-            TRENCHES CARD GAME
+            CARDS OF CRONOS
           </span>
         </Link>
 

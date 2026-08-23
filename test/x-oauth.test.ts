@@ -48,7 +48,7 @@ describe("the authorize URL", () => {
     new URL(
       authorizeUrl({
         clientId: "client",
-        redirectUri: "https://trenches.cards/api/link/x/callback",
+        redirectUri: "https://cardsofcronos.test/api/link/x/callback",
         state: "state",
         challenge: "challenge",
       }),
@@ -58,7 +58,7 @@ describe("the authorize URL", () => {
     const params = url().searchParams;
     expect(params.get("response_type")).toBe("code");
     expect(params.get("client_id")).toBe("client");
-    expect(params.get("redirect_uri")).toBe("https://trenches.cards/api/link/x/callback");
+    expect(params.get("redirect_uri")).toBe("https://cardsofcronos.test/api/link/x/callback");
     expect(params.get("state")).toBe("state");
     expect(params.get("code_challenge")).toBe("challenge");
     // S256 and not "plain". Plain is legal and pointless.
@@ -78,8 +78,8 @@ describe("the redirect URI", () => {
   it("is the origin the request arrived on", () => {
     // Both of these are registered with X, and it has to be whichever one is
     // actually in use — X compares it character for character at the exchange.
-    expect(redirectUriFor("https://trenches.cards/api/link/x/start")).toBe(
-      "https://trenches.cards/api/link/x/callback",
+    expect(redirectUriFor("https://cardsofcronos.test/api/link/x/start")).toBe(
+      "https://cardsofcronos.test/api/link/x/callback",
     );
     expect(redirectUriFor("http://127.0.0.1:3000/api/link/x/start")).toBe(
       "http://127.0.0.1:3000/api/link/x/callback",
@@ -87,8 +87,8 @@ describe("the redirect URI", () => {
   });
 
   it("does not care what the path was", () => {
-    expect(redirectUriFor("https://trenches.cards/anything?x=1")).toBe(
-      "https://trenches.cards/api/link/x/callback",
+    expect(redirectUriFor("https://cardsofcronos.test/anything?x=1")).toBe(
+      "https://cardsofcronos.test/api/link/x/callback",
     );
   });
 });

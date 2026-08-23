@@ -1,35 +1,52 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Trenches terminal — with depth.
+   Cards of Cronos — the cosmic palette on the terminal's bones.
 
-   The first version was one flat colour with a grid line on top. What gives a
-   screen production value is layering: a coloured glow underneath, a noise
-   texture over it so the surface isn't dead, panels with a light edge along the
-   top and shadow beneath so they sit somewhere. Plus typographic contrast: a
-   heavy display next to the mono, instead of the same face everywhere.
+   The layout, the layering and the type are the other project's: a coloured
+   glow underneath, a noise texture over it so the surface isn't dead, panels
+   with a light edge along the top and shadow beneath so they sit somewhere.
+   What changed is every colour, and those come from the first version of this
+   game — src/app/globals.css, which is still on disk.
+
+   Deliberately NOT changed: the typeface. The brief was that the colours stay
+   Cards of Cronos, and Cinzel over a mono grid would pull the whole screen back
+   towards the old site. If the serif is wanted after all it is two lines in
+   app/layout.tsx and this comment is the place to say so.
    --------------------------------------------------------------------------- */
 
 @theme {
-  /* Ground, from deep to less deep */
-  --color-ground: #060709;
-  --color-ground-raised: #0a0c10;
-  --color-panel: #0e1116;
-  --color-panel-raised: #141922;
+  /* Ground, from deep to less deep. #050314 is the old site's --cosmic-black. */
+  --color-ground: #050314;
+  --color-ground-raised: #080521;
+  --color-panel: #0d0a24;
+  --color-panel-raised: #14103a;
 
-  --color-line: #1a1f27;
-  --color-line-strong: #2a323d;
+  /* Purple-tinted rather than neutral. The old site drew every edge in
+     rgba(157,78,221,0.3), and a grey line on this ground reads as a mistake. */
+  --color-line: #241a44;
+  --color-line-strong: #3f2d73;
 
-  --color-fg: #e8eaed;
-  --color-muted: #7d8792;
-  --color-faint: #545e69;
+  --color-fg: #ffffff;
+  --color-muted: #9d93b8;
+  --color-faint: #6b6291;
 
+  /* Up and down, and not brand colours. Green and red mean the same thing on
+     every chart anybody here has ever looked at, and the old arena already drew
+     buffs green and debuffs red — so these two stay. */
   --color-pump: #00e08a;
   --color-dump: #ff4d4d;
-  /* Warm accent, used sparingly: headings and anything that should feel premium.
-     Without a colour like this every highlight on the page is green and it all
-     starts to look like a chart. */
-  --color-gold: #f5c451;
+
+  /* The two that carry the brand. Purple is the primary and gold is what the
+     old site put every heading in. */
+  --color-primary: #9d4edd;
+  --color-primary-glow: #b14eff;
+  --color-gold: #ffd700;
+  --color-gold-glow: #ffea80;
+
+  /* The loudest colour in the old palette, kept for the one tier that has to
+     out-shout everything else. See lib/rarity.ts. */
+  --color-nebula: #f72585;
 
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -47,12 +64,13 @@ body {
   min-height: 100vh;
   position: relative;
 
-  /* Two wide glows under everything: green at the top, red at the bottom. Barely
-     readable as colour, but the screen stops being flat. */
+  /* Wide glows under everything: purple at the top, deep violet at the bottom,
+     a little gold off to one side. Barely readable as colour, but the screen
+     stops being flat — and it is the nebula the old site was painted on. */
   background:
-    radial-gradient(90rem 50rem at 50% -10%, rgba(0, 224, 138, 0.07), transparent 60%),
-    radial-gradient(70rem 45rem at 15% 110%, rgba(255, 77, 77, 0.05), transparent 60%),
-    radial-gradient(60rem 40rem at 95% 60%, rgba(245, 196, 81, 0.035), transparent 60%),
+    radial-gradient(90rem 50rem at 50% -10%, rgba(157, 78, 221, 0.12), transparent 60%),
+    radial-gradient(70rem 45rem at 15% 110%, rgba(58, 12, 163, 0.14), transparent 60%),
+    radial-gradient(60rem 40rem at 95% 60%, rgba(255, 215, 0, 0.045), transparent 60%),
     var(--color-ground);
   background-attachment: fixed;
 }
@@ -141,7 +159,7 @@ body > *:not(.fixed) {
 
 /* Heading with gold running through it. Use sparingly. */
 .gold-gradient {
-  background-image: linear-gradient(100deg, #ffe9a8, var(--color-gold) 45%, #c9922a);
+  background-image: linear-gradient(100deg, var(--color-gold-glow), var(--color-gold) 45%, #b8860b);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -163,7 +181,10 @@ body > *:not(.fixed) {
   box-shadow: 0 0 32px -10px rgba(255, 77, 77, 0.55);
 }
 .glow-gold {
-  box-shadow: 0 0 32px -10px rgba(245, 196, 81, 0.5);
+  box-shadow: 0 0 32px -10px rgba(255, 215, 0, 0.5);
+}
+.glow-primary {
+  box-shadow: 0 0 32px -10px rgba(177, 78, 255, 0.6);
 }
 
 /* --- Motion in a match --------------------------------------------------- */
@@ -233,7 +254,9 @@ button:disabled {
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3c4653;
+  /* Actually different from the resting state. Both were one grey and the
+     replacement made them one purple, which is a hover that does nothing. */
+  background: var(--color-primary);
   background-clip: content-box;
 }
 

@@ -805,11 +805,11 @@ function StakeBar({ deck, demo }: { deck: LoadedDeck | null; demo: boolean }) {
       )}
       <div className="flex items-baseline justify-between gap-2">
         <span>STAKE</span>
-        <span className="text-fg">0 TCG</span>
+        <span className="text-fg">0 $CROCARD</span>
       </div>
       <div className="flex items-baseline justify-between gap-2">
         <span>BURN</span>
-        <span className="text-fg">0 TCG</span>
+        <span className="text-fg">0 $CROCARD</span>
       </div>
       <p className="pt-1 leading-relaxed text-dump">
         NOT ON-CHAIN YET — THIS MATCH RUNS IN YOUR BROWSER

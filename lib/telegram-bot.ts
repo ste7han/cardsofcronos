@@ -10,7 +10,8 @@
 const API = "https://api.telegram.org/bot";
 
 /** The group, by its public name. The bot must be a member or an admin of it. */
-export const TELEGRAM_GROUP = "@trenchescards";
+// Null until the group exists. See lib/links.ts.
+export const TELEGRAM_GROUP: string | null = null;
 
 /** Telegram's own words for somebody who is in a chat. */
 const IN = new Set(["creator", "administrator", "member", "restricted"]);
@@ -21,6 +22,13 @@ export type Membership =
   | { in: false; because: "cannot-ask"; detail: string };
 
 export async function isInGroup(botToken: string, userId: string): Promise<Membership> {
+  // No group, nothing to be a member of. Said out loud rather than answered
+  // with a false: "you are not in the group" and "there is no group" are
+  // different facts and the caller shows them differently.
+  if (TELEGRAM_GROUP === null) {
+    return { in: false, because: "cannot-ask", detail: "No Telegram group is configured yet." };
+  }
+
   const url = new URL(`${API}${botToken}/getChatMember`);
   url.searchParams.set("chat_id", TELEGRAM_GROUP);
   url.searchParams.set("user_id", userId);

@@ -29,13 +29,19 @@ import { LAUNCHED, OFFICIAL } from "@/lib/launch";
 export function CopycatWarning() {
   if (LAUNCHED) return null;
 
+  // And nothing at all until the accounts exist. The whole sentence below is
+  // "here is where the real thing is announced" — pointing it at a Telegram
+  // nobody has registered would be the copycat warning doing the copycat's job.
+  const { telegram, x, xHandle } = OFFICIAL;
+  if (telegram === null || x === null || xHandle === null) return null;
+
   return (
     <div
       role="alert"
       className="border-b border-dump/50 bg-dump/10 px-4 py-2.5 text-center text-[10px] leading-relaxed"
     >
       <p className="mx-auto max-w-4xl text-dump">
-        <span className="font-bold tracking-[0.16em]">$TCG HAS NOT LAUNCHED.</span>{" "}
+        <span className="font-bold tracking-[0.16em]">$CROCARD HAS NOT LAUNCHED.</span>{" "}
         <span className="text-muted">
           There is no contract address and no token. Anything on pump.fun using this name or this
           site is not us.{" "}
@@ -44,7 +50,7 @@ export function CopycatWarning() {
           </Link>{" "}
           appears on {OFFICIAL.site}, in{" "}
           <a
-            href={OFFICIAL.telegram}
+            href={telegram}
             target="_blank"
             rel="noopener noreferrer"
             className="text-dump underline underline-offset-2 hover:text-fg"
@@ -53,12 +59,12 @@ export function CopycatWarning() {
           </a>{" "}
           and from{" "}
           <a
-            href={OFFICIAL.x}
+            href={x}
             target="_blank"
             rel="noopener noreferrer"
             className="text-dump underline underline-offset-2 hover:text-fg"
           >
-            @{OFFICIAL.xHandle}
+            @{xHandle}
           </a>{" "}
           first. Nowhere else.
         </span>

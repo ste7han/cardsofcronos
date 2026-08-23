@@ -73,7 +73,7 @@ export const TASK_LIST: readonly TaskSpec[] = [
   {
     id: "join_telegram",
     title: "Join the Telegram group",
-    what: "Join t.me/trenchescards, then come back and press the button.",
+    what: "Join the Telegram group, then come back and press the button.",
     how: "The bot asks Telegram whether you are in the group.",
     proof: "verified",
     live: true,
@@ -82,7 +82,7 @@ export const TASK_LIST: readonly TaskSpec[] = [
   {
     id: "follow_x",
     title: "Follow us on X",
-    what: "Follow @trenchescards, then say so here.",
+    what: "Follow the project on X, then say so here.",
     // Said on the page rather than hidden, because a player who knows this is
     // checked by hand behaves differently from one who thinks nothing is.
     how: "Taken on your word for now and checked by hand afterwards — X charges per follower read, and a botted claim is removed along with the points it earned.",
@@ -127,8 +127,8 @@ export const REWARDS: readonly Reward[] = [
   { id: "card", cost: 5, name: "One card", what: "A single card, minted to you.", ready: false },
   { id: "booster", cost: 25, name: "A booster pack", what: "Ten cards, one rare or better.", ready: false },
   { id: "starter", cost: 100, name: "A starter pack", what: "Sixty cards — enough to build from.", ready: false },
-  { id: "tcg100k", cost: 500, name: "100K $TCG", what: "Paid out once the token exists.", ready: false },
-  { id: "tcg250k", cost: 1000, name: "250K $TCG", what: "Paid out once the token exists.", ready: false },
+  { id: "coc100k", cost: 500, name: "100K $CROCARD", what: "Not paid out yet.", ready: false },
+  { id: "coc250k", cost: 1000, name: "250K $CROCARD", what: "Not paid out yet.", ready: false },
 ];
 
 export const REWARD_BY_ID = new Map<string, Reward>(REWARDS.map((reward) => [reward.id, reward]));

@@ -50,14 +50,16 @@ export default function Landing() {
         <div>
           <p className="flex items-center gap-2.5 text-[10px] tracking-[0.28em] text-faint">
             <span className="breathe h-1.5 w-1.5 bg-pump" />
-            SOLANA · SET 01 · $TCG
+            CRONOS · SET 01 · $CROCARD
           </p>
 
           {/* Sized so "AS A CARD GAME." stays on one line next to the card fan;
               at text-7xl it wraps and the heading falls apart into three lines. */}
           <h1 className="display mt-5 text-5xl sm:text-6xl 2xl:text-7xl">
-            <span className="block">THE TRENCHES,</span>
-            <span className="green-gradient block">AS A CARD GAME.</span>
+            <span className="block">CRONOS,</span>
+            {/* Gold rather than green. Green is the up-arrow on this site and
+                gold is what the first version put every heading in. */}
+            <span className="gold-gradient block">AS A CARD GAME.</span>
           </h1>
 
           <p className="mt-7 max-w-xl text-[12px] leading-relaxed text-muted">
@@ -145,7 +147,7 @@ export default function Landing() {
 
       <section className="mx-auto max-w-6xl px-4 pb-24">
         <div className="panel border border-line p-8">
-          <Heading above="$TCG" title="TOKEN AND BURN" />
+          <Heading above="$CROCARD" title="TOKEN AND BURN" />
           {/* This paragraph said the split was still open. It is not any more —
               only the size of the cut on a staked match is, and saying "still
               open" about a thing that has been decided is how a page stops being
@@ -165,7 +167,7 @@ export default function Landing() {
           <BurnStrip />
 
           <dl className="mt-3 grid border border-line sm:grid-cols-3">
-            <Figure label="TICKER" value="$TCG" />
+            <Figure label="TICKER" value="$CROCARD" />
             <Figure label="LAUNCH" value="pump.fun" />
             <Figure label="BURN" value="every match" last />
           </dl>

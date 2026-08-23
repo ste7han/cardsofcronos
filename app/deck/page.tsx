@@ -6,7 +6,7 @@ import { DECK_FROM_COLLECTION } from "@/lib/collection";
 import { SET } from "@/lib/set";
 
 export const metadata: Metadata = {
-  title: "Deck — Trenches Card Game",
+  title: "Deck — Cards of Cronos",
   description: "Build a deck of 40 cards to a marketing curve.",
 };
 

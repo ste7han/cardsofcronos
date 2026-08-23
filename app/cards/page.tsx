@@ -4,7 +4,7 @@ import { Gallery } from "@/components/Gallery";
 import { SET } from "@/lib/set";
 
 export const metadata: Metadata = {
-  title: "The set — Trenches Card Game",
+  title: "The set — Cards of Cronos",
   description: "Every card in the first set: projects, tactics and influencers.",
 };
 

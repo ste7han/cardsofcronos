@@ -1,6 +1,6 @@
 // The referral chain, end to end against a running site.
 //
-//   npx tsx scripts/ref-drive.ts                 against trenches.cards
+//   npx tsx scripts/ref-drive.ts                 against a local dev server
 //   npx tsx scripts/ref-drive.ts http://…:3000   against anything else
 //
 // Only what needs a real database: that a code is stable, that a referral can be
@@ -11,7 +11,7 @@
 // It writes rows. Clean up after yourself.
 import { wallet } from "@/scripts/lib/signer";
 
-const BASE = process.argv[2] ?? "https://trenches.cards";
+const BASE = process.argv[2] ?? "http://localhost:3000";
 
 async function ask(path: string, proof: unknown, body: Record<string, unknown> = {}) {
   const r = await fetch(`${BASE}${path}`, {

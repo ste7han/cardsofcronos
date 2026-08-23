@@ -156,9 +156,9 @@ async function main() {
         <div style="font-family:var(--font-mono),monospace;font-size:${Math.round(H * 0.032)}px;
                     letter-spacing:0.3em;color:#5f6a66">SET 01 · SOLANA</div>
         <div class="display gold-gradient" style="font-size:${Math.round(H * 0.155)}px;line-height:0.95;
-                    margin-top:${Math.round(H * 0.03)}px;letter-spacing:-0.02em">TRENCHES<br>CARD GAME</div>
+                    margin-top:${Math.round(H * 0.03)}px;letter-spacing:-0.02em">CARDS<br>OF CRONOS</div>
         <div style="font-family:var(--font-mono),monospace;font-size:${Math.round(H * 0.042)}px;
-                    letter-spacing:0.22em;color:#00e08a;margin-top:${Math.round(H * 0.05)}px">TRENCHES.CARDS</div>`;
+                    letter-spacing:0.22em;color:#ffd700;margin-top:${Math.round(H * 0.05)}px">CARDS OF CRONOS</div>`;
       stage.append(words);
 
       const fan = document.createElement("div");

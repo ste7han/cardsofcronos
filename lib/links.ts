@@ -19,6 +19,20 @@
 // Until those exist the profile says so rather than offering a button that
 // cannot work.
 
+// ── NULL UNTIL SOMEBODY REGISTERS THEM ──────────────────────────────────────
+// All three of these carried the other project's accounts: a bot called
+// TrenchesCards_bot, t.me/trenchescards, @trenchescards. They are not this
+// game's accounts and they are named on screen as the ones that are safe — a
+// copycat warning pointing at somebody else's Telegram is worse than no warning.
+//
+// Null rather than a guess, for the same reason the wallets in lib/revenue.ts
+// are null: every place that shows one hides it instead, which is a gap a person
+// can see. A wrong handle is a gap nobody can see.
+//
+// TODO: register a bot with BotFather, a channel and an X account for Cards of
+// Cronos, then fill in all three. Telegram linking additionally needs
+// `/setdomain` pointed at the live site or the widget silently declines to work.
+
 export type Network = "x" | "telegram";
 
 /**
@@ -33,7 +47,7 @@ export type Network = "x" | "telegram";
  * silently declines to work. One domain per bot, so this is the live site and
  * local development cannot link Telegram.
  */
-export const TELEGRAM_BOT = "TrenchesCards_bot";
+export const TELEGRAM_BOT: string | null = null;
 
 /**
  * Where the project actually talks.
@@ -44,7 +58,7 @@ export const TELEGRAM_BOT = "TrenchesCards_bot";
  * noticing the other is exactly how a dead link ends up in a footer nobody
  * clicks on their own site.
  */
-export const TELEGRAM_CHANNEL = "https://t.me/trenchescards";
+export const TELEGRAM_CHANNEL: string | null = null;
 
 /**
  * The project's X account. Not the bot, not the maker's own.
@@ -54,8 +68,8 @@ export const TELEGRAM_CHANNEL = "https://t.me/trenchescards";
  * and a wrong handle in that sentence points people at somebody else's account
  * while telling them it is safe.
  */
-export const X_HANDLE = "trenchescards";
-export const X_ACCOUNT = `https://x.com/${X_HANDLE}`;
+export const X_HANDLE: string | null = null;
+export const X_ACCOUNT: string | null = X_HANDLE === null ? null : `https://x.com/${X_HANDLE}`;
 
 export interface Linkable {
   name: string;

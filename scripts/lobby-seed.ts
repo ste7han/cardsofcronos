@@ -4,7 +4,7 @@ import { wallet } from "@/scripts/lib/signer";
 import { buildDeckPreferring } from "@/engine/deck";
 import { SET } from "@/lib/set";
 
-const BASE = `${process.argv[2] ?? "https://trenches.cards"}/api/pvp`;
+const BASE = `${process.argv[2] ?? "http://localhost:3000"}/api/pvp`;
 
 async function ask(path: string, proof: unknown, body: Record<string, unknown> = {}) {
   const r = await fetch(`${BASE}/${path}`, {

@@ -2,7 +2,7 @@
 
 // A referral code carried in from a link.
 //
-// Somebody arriving on trenches.cards/?ref=ABC has no wallet yet — they have not
+// Somebody arriving on the site/?ref=ABC has no wallet yet — they have not
 // signed in, and may not for another ten minutes while they read the cards page.
 // The code has to survive that, so it is kept in this browser until there is a
 // wallet to attach it to, and then used once and thrown away.

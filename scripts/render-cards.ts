@@ -35,7 +35,7 @@ import { MARKETING_COST, auraOf } from "../engine/types";
 
 const OUT = process.argv[2] ?? "out/cards";
 const SCALE = Number(process.argv[3] ?? 4);
-const BASE = process.env.TCG_BASE_URL ?? "http://localhost:3000";
+const BASE = process.env.SITE_BASE_URL ?? "http://localhost:3000";
 /** Re-shoot pictures that already exist. Metadata is always rewritten. */
 const FORCE = process.argv.includes("--force");
 /** Re-shoot only the cards whose art the manifest has learned about since. */
@@ -210,7 +210,7 @@ async function main() {
       `${JSON.stringify(
         {
           name: label,
-          symbol: "TCG",
+          symbol: "COC",
           description: card.flavour,
           image: `${card.id}.png`,
           attributes: attributesOf(card),

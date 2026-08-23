@@ -70,7 +70,7 @@ export function RefWelcome({ signedIn }: { signedIn: boolean }) {
           person arriving on the link is the one who has to decide whether to
           bother. */}
       <p className="mt-3 text-[11px] leading-relaxed text-muted">
-        Trenches Card Game is a card game about the Solana trenches — the projects, the tools and
+        Cards of Cronos is a card game about Cronos — the projects, the tools and
         the tactics.
       </p>
       <p className="mt-3 text-[11px] leading-relaxed text-muted">

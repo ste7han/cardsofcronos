@@ -1,4 +1,4 @@
-// What holding TCG gets you.
+// What holding $CROCARD gets you.
 //
 // One rule sits above all of these: holding never changes what you may put in a
 // deck. Everyone builds inside the same budget, so a match for money is decided

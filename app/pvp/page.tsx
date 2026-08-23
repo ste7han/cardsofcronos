@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Lobby } from "@/components/Lobby";
 
 export const metadata: Metadata = {
-  title: "PvP — Trenches Card Game",
+  title: "PvP — Cards of Cronos",
   description: "Play a real opponent. A day a turn, friendly for now.",
 };
 

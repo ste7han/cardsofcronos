@@ -14,7 +14,7 @@ const PENDING_REF = "ref";
 /**
  * A referral link with no punctuation in it.
  *
- * trenches.cards/r/ABCD1234 rather than trenches.cards/profile?ref=ABCD1234.
+ * the site/r/ABCD1234 rather than the site/profile?ref=ABCD1234.
  * The second one is correct and fragile: chat clients and in-app browsers
  * linkify a bare URL by guessing where it ends, and a `?` is one of the places
  * they guess wrong — the link arrives cut short, or as a search term, and what

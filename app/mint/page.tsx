@@ -10,7 +10,7 @@ import { RARITY } from "@/lib/rarity";
 import { SET } from "@/lib/set";
 
 export const metadata: Metadata = {
-  title: "Mint — Trenches Card Game",
+  title: "Mint — Cards of Cronos",
   description: "The cards become NFTs on Solana. The mint is not open yet.",
 };
 
@@ -42,7 +42,7 @@ export default function MintPage() {
       </div>
 
       <section className="mt-16">
-        <h2 className="display text-xl">HOLDING TCG</h2>
+        <h2 className="display text-xl">HOLDING $CROCARD</h2>
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
           One rule sits above the rest:{" "}
           <span className="text-fg">holding never changes what you may put in a deck.</span> No

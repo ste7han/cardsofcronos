@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Profile } from "@/components/Profile";
 
 export const metadata: Metadata = {
-  title: "Profile — Trenches Card Game",
+  title: "Profile — Cards of Cronos",
   description: "Your rank, your decks and what they have done.",
 };
 

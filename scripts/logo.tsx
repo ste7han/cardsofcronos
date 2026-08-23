@@ -135,7 +135,7 @@ const VARIANTS: Variant[] = [
         <div style="width:100%;height:100%;border-radius:50%;background:#08090a;
           box-shadow:inset 0 0 0 1px rgba(245,196,81,0.4);display:flex;align-items:center;
           justify-content:center">
-          <div class="display gold-gradient" style="font-size:${s * 0.24}px;letter-spacing:-0.03em">TCG</div>
+          <div class="display gold-gradient" style="font-size:${s * 0.24}px;letter-spacing:-0.03em">COC</div>
         </div>
       </div>`,
   },
@@ -143,7 +143,7 @@ const VARIANTS: Variant[] = [
     id: "wordmark",
     title: "The letters, nothing else",
     html: (s) => `
-      <div class="display gold-gradient" style="font-size:${s * 0.33}px;letter-spacing:-0.04em">TCG</div>`,
+      <div class="display gold-gradient" style="font-size:${s * 0.33}px;letter-spacing:-0.04em">COC</div>`,
   },
 ];
 
