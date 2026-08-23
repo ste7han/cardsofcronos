@@ -10,6 +10,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { SOLO_A, SOLO_B } from "./one-per-project";
+
 import { DECK_FROM_COLLECTION, MINT_OPEN, buyDeckMint, buyPack, collection, ownedForRules } from "@/lib/collection";
 import { loadDeck, saveDeck } from "@/lib/deck-storage";
 
@@ -48,7 +50,7 @@ describe("a deck belongs to a wallet", () => {
     // visitor, but "the button was not there" has never been a rule here — in
     // Cards of Cronos the card check was a UI filter and a direct call could
     // play anything.
-    const problems = saveDeck(["bonk-dog", "wif-hat"], "nice try");
+    const problems = saveDeck([SOLO_A, SOLO_B], "nice try");
     expect(problems.length).toBeGreaterThan(0);
     expect(problems.join(" ")).toMatch(/sign in/i);
   });

@@ -93,20 +93,12 @@ export function sectorName(sector: Sector): string {
   switch (sector) {
     case "meme":
       return "meme";
-    case "infra":
-      return "infra";
-    case "ai":
-      return "AI";
-    case "politics":
-      return "politics";
-    case "nft":
-      return "NFT";
-    case "defi":
-      return "DeFi";
-    case "depin":
-      return "DePIN";
-    case "gaming":
-      return "gaming";
+    case "memetility":
+      return "memetility";
+    case "lunar":
+      return "lunar";
+    case "machine":
+      return "machine";
     default:
       throw new Error(`sectorName: unknown sector ${JSON.stringify(sector)}.`);
   }

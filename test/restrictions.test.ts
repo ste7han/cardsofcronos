@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
+import { SOLO_A, SOLO_B, THICK_PROJECT } from "./one-per-project";
 import { applyMove, buildIndex, canTakeProfit, newMatch, pumpOf, whyNot } from "@/engine/match";
 import { applyEffect } from "@/engine/effects";
 import { describeRestriction, rulesText } from "@/engine/rules-text";
@@ -20,6 +21,15 @@ import type { Card, ProjectCard, State } from "@/engine/types";
 // register cards that do not exist in the set, because the point is to prove the
 // mechanic works before any real card is written against it.
 const index: Map<string, Card> = new Map(buildIndex(CARDS));
+
+/** The name the log will use for a card, so a test can look for it. */
+function label(of: string): string {
+  const card = CARDS.find((c) => c.id === of);
+  if (!card) throw new Error(`No card "${of}".`);
+  // The name and not the ticker: the log says "Clove is on the opponent's
+  // table", which is what a person reading it would call the card.
+  return card.name;
+}
 
 /** A project card, cloned with something bolted on, registered under a new id. */
 function variant(of: string, patch: Partial<ProjectCard>, id: string): ProjectCard {
@@ -55,11 +65,11 @@ function place(state: State, player: "you" | "opponent", card: ProjectCard): voi
 
 describe("a standing rule on the table", () => {
   it("stops the opponent taking profit, and says which card is doing it", () => {
-    const lock = variant("bonk-dog", { restriction: { kind: "banTakeProfit" } }, "test-lock");
+    const lock = variant(SOLO_A, { restriction: { kind: "banTakeProfit" } }, "test-lock");
     const state = rigged();
 
     // Something of yours to bank, so the only thing in the way is the rule.
-    place(state, "you", CARDS.find((c) => c.id === "bonk-airdrop") as ProjectCard);
+    place(state, "you", CARDS.find((c) => c.id === SOLO_B) as ProjectCard);
     expect(canTakeProfit(state, "you", index)).toBe(true);
 
     place(state, "opponent", lock);
@@ -68,11 +78,13 @@ describe("a standing rule on the table", () => {
     // And the move itself is refused, not merely dimmed. The UI dims; the
     // reducer decides, and a caller that skips the UI has to hit the same wall.
     expect(() => applyMove(state, { kind: "takeProfit", slot: 0 }, index)).toThrow(IllegalMove);
-    expect(() => applyMove(state, { kind: "takeProfit", slot: 0 }, index)).toThrow(/BONK/);
+    expect(() => applyMove(state, { kind: "takeProfit", slot: 0 }, index)).toThrow(
+      new RegExp(label(SOLO_A)),
+    );
   });
 
   it("stops a whole card type, and names the card in the way", () => {
-    const lock = variant("bonk-dog", { restriction: { kind: "banType", cardType: "tactic" } }, "test-ban");
+    const lock = variant(SOLO_A, { restriction: { kind: "banType", cardType: "tactic" } }, "test-ban");
     const state = rigged();
     const tactic = CARDS.find((c) => c.type === "tactic" && !c.effect.kind.includes("rug"))!;
 
@@ -80,18 +92,18 @@ describe("a standing rule on the table", () => {
 
     place(state, "opponent", lock);
     const blocked = whyNot(state, tactic, "you", index);
-    expect(blocked).toContain("BONK");
+    expect(blocked).toContain(label(SOLO_A));
     expect(blocked).toContain("tactic");
 
     // A card of another type is untouched: the rule bans one thing, not playing.
-    const project = CARDS.find((c) => c.id === "wif-dog")!;
+    const project = CARDS.find((c) => c.id === SOLO_B)!;
     expect(whyNot(state, project, "you", index)).toBeNull();
   });
 
   it("lifts the moment the position takes damage, and comes back when healed", () => {
-    const lock = variant("bonk-dog", { restriction: { kind: "banTakeProfit" } }, "test-damage");
+    const lock = variant(SOLO_A, { restriction: { kind: "banTakeProfit" } }, "test-damage");
     const state = rigged();
-    place(state, "you", CARDS.find((c) => c.id === "bonk-airdrop") as ProjectCard);
+    place(state, "you", CARDS.find((c) => c.id === SOLO_B) as ProjectCard);
     place(state, "opponent", lock);
 
     expect(canTakeProfit(state, "you", index)).toBe(false);
@@ -110,7 +122,7 @@ describe("a standing rule on the table", () => {
   });
 
   it("binds the opponent and never its owner", () => {
-    const lock = variant("bonk-dog", { restriction: { kind: "banTakeProfit" } }, "test-own");
+    const lock = variant(SOLO_A, { restriction: { kind: "banTakeProfit" } }, "test-own");
     const state = rigged();
     place(state, "you", lock);
     // The card is on your board and you can still bank. A drawback nobody can
@@ -119,7 +131,7 @@ describe("a standing rule on the table", () => {
   });
 
   it("puts the rule on the card face", () => {
-    const lock = variant("bonk-dog", { restriction: { kind: "banTakeProfit" } }, "test-face");
+    const lock = variant(SOLO_A, { restriction: { kind: "banTakeProfit" } }, "test-face");
     const printed = rulesText(lock).map((line) => line.text);
     expect(printed.join(" ")).toContain("cannot take profit");
     // The way out has to be on the face. A card that says only "while this
@@ -132,7 +144,7 @@ describe("a standing rule on the table", () => {
 describe("budget handed to the other side", () => {
   it("waits for their turn, arrives once, and is gone after", () => {
     const state = rigged();
-    const source = CARDS.find((c) => c.id === "bonk-dog")!;
+    const source = CARDS.find((c) => c.id === SOLO_A)!;
 
     applyEffect(state, { kind: "extraBudget", target: "opponent", mc: 500_000 }, "you", source, undefined, index);
 
@@ -151,7 +163,7 @@ describe("budget handed to the other side", () => {
 
   it("still lands on your own turn when it is aimed at you", () => {
     const state = rigged();
-    const source = CARDS.find((c) => c.id === "bonk-dog")!;
+    const source = CARDS.find((c) => c.id === SOLO_A)!;
     const before = state.budgetThisTurn;
 
     applyEffect(state, { kind: "extraBudget", target: "self", mc: 250_000 }, "you", source, undefined, index);
@@ -164,7 +176,7 @@ describe("budget handed to the other side", () => {
 describe("a pump that goes down", () => {
   it("lowers what a position pays, and never past zero", () => {
     const state = rigged();
-    const card = CARDS.find((c) => c.id === "bonk-chain") as ProjectCard;
+    const card = THICK_PROJECT;
     place(state, "opponent", card);
 
     const full = pumpOf(state, "opponent", 0, index);
@@ -196,7 +208,7 @@ describe("a pump that goes down", () => {
 
 describe("the log", () => {
   it("says out loud when a standing rule lands", () => {
-    const lock = variant("bonk-dog", { restriction: { kind: "banTakeProfit" } }, "test-log");
+    const lock = variant(SOLO_A, { restriction: { kind: "banTakeProfit" } }, "test-log");
     const state = rigged();
     state.players.you.hand = [lock.id];
     state.budgetThisTurn = 10_000_000;
@@ -214,7 +226,7 @@ describe("the log", () => {
 
 describe("a damaged position", () => {
   it("pays in proportion to the holders it has left, and healing gives it back", () => {
-    const card = CARDS.find((c) => c.id === "bonk-chain") as ProjectCard;
+    const card = THICK_PROJECT;
     const state = rigged();
     place(state, "opponent", card);
 

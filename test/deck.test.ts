@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { SOLO_A } from "./solo-projects";
+import { FAMILY, FAMILY_CARDS, SOLO_A } from "./one-per-project";
 import { PRESET_DECKS } from "@/data/preset-decks";
 import {
   buildDeck,
@@ -194,7 +194,7 @@ describe("decking cards you own", () => {
  * check the shape the cards have to keep for that to stay true.
  */
 describe("a project across several cards", () => {
-  const bonks = CARDS.filter((c) => c.type === "project" && c.project === "bonk");
+  const bonks = [...FAMILY_CARDS];
 
   it("has more than one card, or none of this means anything", () => {
     expect(bonks.length).toBeGreaterThan(1);
@@ -217,7 +217,7 @@ describe("a project across several cards", () => {
     // a mistake a player is welcome to make.
     const deck = bonks.map((c) => c.id);
     const rest = CARDS.filter(
-      (c) => !deck.includes(c.id) && (c.type !== "project" || c.project !== "bonk"),
+      (c) => !deck.includes(c.id) && (c.type !== "project" || c.project !== FAMILY),
     );
     deck.push(...rest.filter((c) => c.type === "project").slice(0, 8).map((c) => c.id));
     deck.push(

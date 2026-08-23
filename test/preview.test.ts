@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { SOLO, SOLO_A, SOLO_B, SOLO_C } from "./solo-projects";
+import { AURA_BIGGEST, FAMILY_CARDS, SOLO, SOLO_A, SOLO_B, SOLO_C } from "./one-per-project";
 import { cardById } from "@/engine/helpers";
 import { applyMove, buildIndex, needsPortfolioSlot, newMatch, playable } from "@/engine/match";
 import { mcDeltaOf, previewOf } from "@/engine/preview";
@@ -123,12 +123,12 @@ describe("the hover preview", () => {
 
   it("lights up the projects an aura would pump, and only those", () => {
     const { state, sectorOf } = sectorBoard();
-    const murad = CARDS.find((c) => c.id === "murad");
-    expect(murad, "murad is in the set").toBeDefined();
-    const aura = auraOf(murad!);
-    expect(aura, "murad carries an aura").toBeDefined();
+    const biggest = CARDS.find((c) => c.id === AURA_BIGGEST);
+    expect(biggest, "the biggest aura is in the set").toBeDefined();
+    const aura = auraOf(biggest!);
+    expect(aura, "it carries an aura").toBeDefined();
 
-    const { slots } = previewOf(state, murad!, "you", index);
+    const { slots } = previewOf(state, biggest!, "you", index);
     const lit = slots.filter((s) => s.owner === "you").map((s) => s.slot);
     const expected = sectorOf.flatMap((sector, i) => (sector === aura!.sector ? [i] : []));
 
@@ -138,7 +138,11 @@ describe("the hover preview", () => {
 
   it("previews every aura card, not only the ones that also carry an effect", () => {
     const withAura = CARDS.filter((c) => auraOf(c));
-    expect(withAura.length).toBeGreaterThan(30);
+    // A floor rather than a count. It exists so the loop below cannot pass by
+    // iterating over nothing; the number itself is not the claim. It read 30
+    // against a set of seven hundred and twenty-five cards and this set is a
+    // quarter of that.
+    expect(withAura.length).toBeGreaterThan(10);
 
     // A board entirely of the aura's own sector, so there is always something to
     // point at. A card whose preview is empty here is invisible to the player.
@@ -232,9 +236,7 @@ describe("the hover preview", () => {
     return state;
   }
 
-  const wifCards = CARDS.filter(
-    (c): c is ProjectCard => c.type === "project" && c.project === "wif",
-  );
+  const wifCards = [...FAMILY_CARDS];
 
   it("does not ask for a sacrifice when the card upgrades a position it already holds", () => {
     const rare = wifCards.find((c) => c.rarity === "rare")!;

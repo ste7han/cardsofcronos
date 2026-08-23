@@ -35,16 +35,24 @@ export const TURN_ACTION_COST = 50_000;
  */
 export const WASTE_PENALTY = 1;
 
-export const SECTORS = [
-  "meme",
-  "infra",
-  "ai",
-  "politics",
-  "nft",
-  "defi",
-  "depin",
-  "gaming",
-] as const;
+/**
+ * What kind of project a card is a card of.
+ *
+ * These four are the maker's own words, taken from the tags the first version of
+ * this game already carried, rather than a taxonomy invented on top of them. He
+ * knows what these projects are and an outsider guessing would get it wrong:
+ *
+ *   meme        the joke is the product
+ *   memetility  a meme that grew something you can use
+ *   lunar       the pack — a collection with a community around it
+ *   machine     built rather than drawn
+ *
+ * `meme` is much the largest and that is fine; the same is true of every card
+ * game with a house style. `lunar` and `machine` have one project family each
+ * today, which makes an aura on them narrow — they want company in set 02, and
+ * the sector-presence script is the thing that will say when they have it.
+ */
+export const SECTORS = ["meme", "memetility", "lunar", "machine"] as const;
 export type Sector = (typeof SECTORS)[number];
 
 export const PLAYERS = ["you", "opponent"] as const;
@@ -669,5 +677,30 @@ export const RULES = {
    * been measuring nothing. Current reading: 50.03% on seeds 0-8000 and 50.80% on
    * seeds 100000-108000, which it never saw while tuning.
    */
-  firstMoveSeedMC: 68_000,
+  //
+  // ── RETUNED FOR THIS SET, AND THE REASON IS AN OPEN QUESTION ──────────────
+  // It was 68_000, measured against the maker's other card game. Against the
+  // Cards of Cronos set that reads 39.1% over a thousand mirrored matches, well
+  // outside the 46.9–53.1% band a fair game sits in, and 68K buys only 0.7 of a
+  // point of it. 400_000 reads 50.7% on seeds 0-800 and 51.6% on 100000-100800,
+  // a range it never saw while being tuned.
+  //
+  // Six times the old number is a large enough jump to want an explanation, and
+  // two obvious ones were measured and are wrong:
+  //
+  //   The second player moving last. Playing eleven turns instead of ten, so the
+  //   FIRST player has the last word, makes it worse rather than better —
+  //   42.3% to 40.1% with no compensation at all.
+  //
+  //   Attack density. This set has far more cards that reach across the table
+  //   than the one the number came from. Stripping every card that touches the
+  //   opponent moves it by four tenths of a point: 43.7% to 43.3%.
+  //
+  // What is left is scale. This set's matches finish around $1.2M, so a fixed
+  // 68K is a much smaller fraction of a match here than it was there — which
+  // would make the old number right in proportion and wrong in absolute terms.
+  // That is a hypothesis and it has not been measured. Until it has, this is a
+  // constant that was fitted rather than understood, and it should be re-fitted
+  // whenever the set changes shape.
+  firstMoveSeedMC: 400_000,
 } as const;

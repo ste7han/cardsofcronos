@@ -39,11 +39,7 @@ export const TYPE_LABEL: Record<CardType, string> = {
 
 export const SECTOR_LABEL: Record<Sector, string> = {
   meme: "MEME",
-  infra: "INFRA",
-  ai: "AI",
-  politics: "POLITICS",
-  nft: "NFT",
-  defi: "DEFI",
-  depin: "DEPIN",
-  gaming: "GAMING",
+  memetility: "MEMETILITY",
+  lunar: "LUNAR",
+  machine: "MACHINE",
 };

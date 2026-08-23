@@ -12,6 +12,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
+import { SOLO_A } from "./one-per-project";
 import { applyMove, buildIndex, newMatch } from "@/engine/match";
 import { chooseMove } from "@/engine/bot";
 import { holds } from "@/engine/effects";
@@ -82,7 +83,7 @@ describe("when the table agrees", () => {
     // Two of the sector plus one of another: the other must not count.
     place(state, "you", meme);
     place(state, "you", CARDS.find((c) => c.type === "project" && c.sector === "meme" && c.id !== meme.id) as ProjectCard);
-    place(state, "you", projectOfSector("defi"));
+    place(state, "you", projectOfSector("memetility"));
     expect(holds(condition, state, "you", index)).toBe(false);
 
     place(state, "you", CARDS.filter((c) => c.type === "project" && c.sector === "meme")[2] as ProjectCard);
@@ -90,7 +91,7 @@ describe("when the table agrees", () => {
   });
 
   it("fires the payoff on top of the base effect, not instead of it", () => {
-    const base = CARDS.find((c) => c.id === "bonk-dog") as ProjectCard;
+    const base = CARDS.find((c) => c.id === SOLO_A) as ProjectCard;
     const card: ProjectCard = {
       ...base,
       id: "test-payoff",
@@ -115,7 +116,7 @@ describe("when the table agrees", () => {
   });
 
   it("puts the condition on the card face", () => {
-    const base = CARDS.find((c) => c.id === "bonk-dog") as ProjectCard;
+    const base = CARDS.find((c) => c.id === SOLO_A) as ProjectCard;
     const card: ProjectCard = {
       ...base,
       id: "test-face-condition",
@@ -145,7 +146,7 @@ describe("when the table agrees", () => {
   });
 
   it("makes the bot prefer the card whose payoff is live", () => {
-    const base = CARDS.find((c) => c.id === "bonk-dog") as ProjectCard;
+    const base = CARDS.find((c) => c.id === SOLO_A) as ProjectCard;
     const plain: ProjectCard = { ...base, id: "test-plain", project: "test-plain" };
     const withPayoff: ProjectCard = {
       ...base,

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { SHOWCASE } from "@/app/page";
 import { ART_FILES } from "@/lib/art-manifest";
 import { CARDS, EXPECTED_DISTRIBUTION } from "@/data/cards";
-import { SOLO_A, SOLO_B, SOLO_C } from "./solo-projects";
+import { SOLO_A, SOLO_B, SOLO_C } from "./one-per-project";
 import { applyMove, buildIndex, budgetForTurn, newMatch } from "@/engine/match";
 import { searchText } from "@/engine/format";
 import { rulesText } from "@/engine/rules-text";
@@ -22,9 +22,13 @@ describe("the card set", () => {
     expect(() => validateDistribution(CARDS, EXPECTED_DISTRIBUTION)).not.toThrow();
   });
 
-  it("has 725 cards with unique ids", () => {
-    expect(CARDS).toHaveLength(725);
-    expect(new Set(CARDS.map((c) => c.id)).size).toBe(725);
+  it("has as many cards as the spread says, all with unique ids", () => {
+    // Counted from EXPECTED_DISTRIBUTION rather than written out again. The
+    // number was a literal 725 and it had to be edited in two places every time
+    // the set grew, which is one place too many.
+    const expected = Object.values(EXPECTED_DISTRIBUTION).reduce((a, b) => a + b, 0);
+    expect(CARDS).toHaveLength(expected);
+    expect(new Set(CARDS.map((c) => c.id)).size).toBe(expected);
   });
 
   it("keeps every sector populated enough for an aura to land", () => {

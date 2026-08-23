@@ -30,11 +30,11 @@ import { SET } from "@/lib/set";
  * list rather than two.
  */
 export const SHOWCASE = [
-  "wif-vegas",
+  "dak-again",
+  "howlers-moon",
+  "crooks-cover",
   "rug-pull",
-  "moodeng-korea",
-  "pumpfun-everything",
-  "bull-nine",
+  "founder-dak",
 ];
 
 export default function Landing() {

@@ -6,10 +6,13 @@ import { applyMove, buildIndex, budgetForTurn, newMatch } from "@/engine/match";
 import type { Card, Effect, State } from "@/engine/types";
 import { IllegalMove, RULES } from "@/engine/types";
 import { SetError, validateSet } from "@/engine/validation";
-import { SOLO, SOLO_A, SOLO_B, SOLO_C, soloOfSector } from "./solo-projects";
+import { SOLO, SOLO_A, SOLO_B, SOLO_C, soloOfSector, solosOfSector } from "./one-per-project";
 
-const AI_PROJECT = soloOfSector("ai");
-const DEFI_PROJECT = soloOfSector("defi");
+const MACHINE_PROJECT = soloOfSector("machine");
+const MEMETILITY_PROJECT = soloOfSector("memetility");
+// Two of them, and different projects: the cross-board test needs a meme on each
+// side, and the first two cards of the set are not both memes.
+const [MEME_A, MEME_B] = solosOfSector("meme", 2) as [string, string];
 const index = buildIndex(CARDS);
 const source = CARDS.find((c) => c.id === "fud")!;
 
@@ -63,15 +66,15 @@ describe("unknown values fail loudly", () => {
       name: "Pointless Influencer",
       ticker: "NOTHING",
       rarity: "common",
-      aura: { kind: "pumpSector", sector: "politics", bonus: 5_000 },
+      aura: { kind: "pumpSector", sector: "lunar", bonus: 5_000 },
       flavour: "Pumps a sector with nothing in it.",
     };
 
-    // Politics does exist in the real set, so we test against a set with every
-    // politics project stripped out — otherwise the test would prove nothing.
-    const withoutPolitics = CARDS.filter((c) => c.type !== "project" || c.sector !== "politics");
-    expect(withoutPolitics.length).toBeLessThan(CARDS.length);
-    expect(() => validateSet([...withoutPolitics, pointless])).toThrowError(/This card does nothing/);
+    // Lunar does exist in the real set, so we test against a set with every
+    // lunar project stripped out — otherwise the test would prove nothing.
+    const withoutLunar = CARDS.filter((c) => c.type !== "project" || c.sector !== "lunar");
+    expect(withoutLunar.length).toBeLessThan(CARDS.length);
+    expect(() => validateSet([...withoutLunar, pointless])).toThrowError(/This card does nothing/);
   });
 });
 
@@ -253,7 +256,7 @@ describe("a pump that reads the sector", () => {
     effect: {
       kind: "pumpBySector",
       target: "allProjects",
-      bonuses: { meme: 11_000, ai: 3_000 },
+      bonuses: { meme: 11_000, machine: 3_000 },
     },
     flavour: "",
   };
@@ -265,23 +268,23 @@ describe("a pump that reads the sector", () => {
     state.budgetThisTurn = budgetForTurn(RULES.turns);
     state.players.you.hand = [handCard];
     state.players.you.projects = [
-      { cardId: SOLO_A, holders: 4, extraPump: 0, earned: 0, playedOnTurn: 1 },
-      { cardId: AI_PROJECT, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
-      { cardId: DEFI_PROJECT, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: MEME_A, holders: 4, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: MACHINE_PROJECT, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: MEMETILITY_PROJECT, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
     state.players.opponent.projects = [
-      { cardId: SOLO_B, holders: 2, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: MEME_B, holders: 2, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
     return state;
   }
 
   it("pays each sector its own amount and leaves the rest alone", () => {
     const after = applyMove(mixedTable("test-two-sectors"), { kind: "playCard", handIndex: 0 }, withTest);
-    const [wif, goat, jupiter] = after.players.you.projects;
+    const [meme, machine, memetility] = after.players.you.projects;
 
-    expect(wif!.extraPump).toBe(11_000); // meme
-    expect(goat!.extraPump).toBe(3_000); // ai
-    expect(jupiter!.extraPump).toBe(0); // defi is not listed
+    expect(meme!.extraPump).toBe(11_000);
+    expect(machine!.extraPump).toBe(3_000);
+    expect(memetility!.extraPump).toBe(0); // memetility is not listed
   });
 
   it("reaches both boards, which is what makes it an event", () => {
@@ -305,7 +308,7 @@ describe("a pump that reads the sector", () => {
     state.budgetThisTurn = budgetForTurn(RULES.turns);
     state.players.you.hand = ["elon-posts"];
     state.players.you.projects = [
-      { cardId: DEFI_PROJECT, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: MEMETILITY_PROJECT, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
     state.players.opponent.projects = [];
 

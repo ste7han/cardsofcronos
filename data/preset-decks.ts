@@ -51,6 +51,24 @@
 // board with almost nothing to pump, and six positions is the cap regardless. A
 // preset that loses nine matches in ten is a trap however good the name is —
 // which is the same reason Blue Chips and Toolbox went.
+//
+// ── THREE, AND NOT FIVE ─────────────────────────────────────────────────────
+// This set has four sectors and two of them hold one project family each. A
+// preset built on `lunar` or `machine` would be eight cards on theme and
+// thirty-two of filler, which is precisely the failure the paragraph above
+// describes: it does not lean anywhere, it just picks worse cards than a random
+// forty would. They come back when those sectors have company, and the honest
+// signal for that is `npx tsx scripts/sector-presence.ts`.
+//
+// ── THE SEEDS ARE INHERITED AND UNMEASURED ──────────────────────────────────
+// Every number in this file was measured against a different set of cards. They
+// are kept only because a fixed seed makes a preset the same deck twice, which
+// is the other half of what they are for. What they are NOT, today, is chosen —
+// so the paragraph above about a seed being worth 8 to 34 points of win rate is
+// a warning about this file rather than a description of it.
+//
+// `npx tsx scripts/preset-seeds.ts` is the thing that fixes that, and it has to
+// run before anybody is handed one of these as "the deck to start with".
 
 import { auraOf } from "@/engine/types";
 import type { Card } from "@/engine/types";
@@ -68,24 +86,19 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
   {
     id: "memes",
     name: "MEME LORD",
-    blurb: "Dogs, cats and frogs, with the people who post them.",
+    blurb: "The jokes that outlived their own cycle, and the people who posted them.",
     seed: 7_274,
     prefer: (c) =>
       (c.type === "project" && c.sector === "meme") || auraOf(c)?.sector === "meme",
   },
   {
-    id: "builders",
-    name: "BUILDERS",
-    blurb: "Infra and DeFi. Less spectacle, more compounding.",
-    // Was 7_548 at 29.1%. This one is different from the others: no seed of the
-    // twelve measured lifts it past 40.7%, so the ceiling belongs to the theme
-    // and not to the deck it was built with. Infra and DeFi projects pump slowly
-    // and the theme has almost no way to touch the other board. Open question in
-    // docs/night-2026-08-20.md — widen it, or drop it the way Blue Chips was.
+    id: "memetility",
+    name: "MEMETILITY",
+    blurb: "Jokes that grew something you can use. Slower, and it compounds.",
     seed: 8_507,
     prefer: (c) =>
-      (c.type === "project" && (c.sector === "infra" || c.sector === "defi")) ||
-      ["infra", "defi"].includes(auraOf(c)?.sector ?? ""),
+      (c.type === "project" && c.sector === "memetility") ||
+      auraOf(c)?.sector === "memetility",
   },
   {
     id: "full-contact",
@@ -97,50 +110,5 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
       c.type === "event" ||
       (c.type === "project" && c.sector === "meme") ||
       auraOf(c)?.sector === "meme",
-  },
-  {
-    id: "jpegs",
-    name: "JPEG SUMMER",
-    blurb: "Pictures, marketplaces and floors. Slower, and it holds.",
-    // Was 7_000 at 39.4%; 7_137 measures 57.3% against the same field.
-    seed: 7_137,
-    prefer: (c) => (c.type === "project" && c.sector === "nft") || auraOf(c)?.sector === "nft",
-  },
-  {
-    id: "agents",
-    name: "AGENT SEASON",
-    blurb: "Bots that post, trade and argue. Draws cards and spends.",
-    seed: 7_548,
-    prefer: (c) => (c.type === "project" && c.sector === "ai") || auraOf(c)?.sector === "ai",
-  },
-  {
-    id: "hardware",
-    name: "THE MACHINE",
-    blurb: "Boxes on roofs and idle GPUs. Nothing here is fragile.",
-    // Was 7_959, which built the worst deck of twelve seeds measured: 25.2%
-    // against the rest of the field, and 10% against AGENT SEASON. Nothing about
-    // the theme changed — the set grew and the seed went stale, exactly as the
-    // note at the top of this file warns. `npx tsx scripts/preset-repair.ts`.
-    seed: 7_548,
-    prefer: (c) => (c.type === "project" && c.sector === "depin") || auraOf(c)?.sector === "depin",
-  },
-  {
-    id: "arcade",
-    name: "THE ARCADE",
-    blurb: "Games people actually log into, and one that never shipped.",
-    // Was 7_822 at 30.6%. Same story as THE MACHINE above, and the same seed
-    // repairs it — which is the interesting part: 7_548 is the best of twelve
-    // for three different themes, so it is landing on a deck shape rather than
-    // on lucky cards for any one sector.
-    seed: 7_548,
-    prefer: (c) => (c.type === "project" && c.sector === "gaming") || auraOf(c)?.sector === "gaming",
-  },
-  {
-    id: "election",
-    name: "ELECTION SEASON",
-    blurb: "Coins with faces on them. Drains the other side of the table.",
-    seed: 8_781,
-    prefer: (c) =>
-      (c.type === "project" && c.sector === "politics") || auraOf(c)?.sector === "politics",
   },
 ];

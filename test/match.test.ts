@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { SOLO, SOLO_A, SOLO_B, SOLO_C } from "./solo-projects";
+import {
+  AURA_BIGGEST,
+  AURA_SMALLEST,
+  AURA_TOOL,
+  DRAW_TOOL,
+  FAMILY,
+  FAMILY_CARDS,
+  SOLO,
+  SOLO_A,
+  SOLO_B,
+  SOLO_C,
+  soloOfSector,
+  UPGRADE_HIGH,
+  UPGRADE_LOW,
+} from "./one-per-project";
 import { chooseMove } from "@/engine/bot";
 import { formatMC, formatMCExact, formatMCPair } from "@/engine/format";
 import { cardById } from "@/engine/helpers";
@@ -338,30 +352,32 @@ describe("tools", () => {
     const state = structuredClone(newMatch(CARDS, 12)) as State;
     state.turn = 8;
     state.budgetThisTurn = budgetForTurn(state.turn);
-    state.players.you.hand = ["birdeye"];
+    state.players.you.hand = [DRAW_TOOL];
     const before = state.players.you.mc;
 
     const after = applyMove(state, { kind: "playCard", handIndex: 0 }, index);
 
     expect(after.players.you.projects).toHaveLength(0);
-    expect(after.players.you.support.map((s) => s.cardId)).toEqual(["birdeye"]);
-    // Birdeye draws a card, so MC must not have moved by anything but that.
+    expect(after.players.you.support.map((s) => s.cardId)).toEqual([DRAW_TOOL]);
+    // The tool draws a card, so MC must not have moved by anything but that.
     expect(after.players.you.mc).toBe(before);
   });
 
   it("stays on the board and keeps its aura working", () => {
-    // BonkBot carries a dog aura, so a dog project must pump more while it is up.
+    // The tool carries a sector aura, so a project of that sector must pump more
+    // while it is up. Both the tool and the project are picked by shape: naming
+    // either of them is the bet the fixtures exist to stop.
+    const tool = CARDS.find((c) => c.id === AURA_TOOL)!;
+    const aura = auraOf(tool);
+    if (!aura) throw new Error("The fixture tool is supposed to carry an aura.");
+
     const state = structuredClone(newMatch(CARDS, 12)) as State;
     state.turn = 8;
     state.budgetThisTurn = budgetForTurn(state.turn);
-    state.players.you.hand = ["bonkbot"];
+    state.players.you.hand = [AURA_TOOL];
     state.players.you.projects = [
-      { cardId: SOLO_A, holders: 4, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: soloOfSector(aura.sector), holders: 4, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
-
-    const bonkbot = CARDS.find((c) => c.id === "bonkbot")!;
-    const aura = auraOf(bonkbot);
-    if (!aura) throw new Error("BonkBot is supposed to carry an aura.");
 
     const bare = pumpOf(state, "you", 0, index);
     const after = applyMove(state, { kind: "playCard", handIndex: 0 }, index);
@@ -389,11 +405,11 @@ describe("tools", () => {
 });
 
 describe("cancelling an influencer", () => {
-  /** Murad carries the biggest aura in the set; Gake one of the smallest. */
+  /** The biggest aura in the set against one of the smallest, both picked by size. */
   function withNames(): State {
     const state = structuredClone(newMatch(CARDS, 44)) as State;
     state.budgetThisTurn = RULES.budgetPerTurn * RULES.turns;
-    state.players.opponent.support = [{ cardId: "gake" }, { cardId: "murad" }];
+    state.players.opponent.support = [{ cardId: AURA_SMALLEST }, { cardId: AURA_BIGGEST }];
     state.players.opponent.projects = [
       { cardId: SOLO_A, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
@@ -403,24 +419,24 @@ describe("cancelling an influencer", () => {
 
   it("takes the biggest name first, not the first one played", () => {
     const before = withNames();
-    const murad = auraOf(CARDS.find((c) => c.id === "murad")!)!;
-    const gake = auraOf(CARDS.find((c) => c.id === "gake")!)!;
-    expect(murad.bonus).toBeGreaterThan(gake.bonus);
+    const biggest = auraOf(CARDS.find((c) => c.id === AURA_BIGGEST)!)!;
+    const smallest = auraOf(CARDS.find((c) => c.id === AURA_SMALLEST)!)!;
+    expect(biggest.bonus).toBeGreaterThan(smallest.bonus);
 
     const after = applyMove(before, { kind: "playCard", handIndex: 0 }, index);
-    expect(after.players.opponent.support.map((s) => s.cardId)).toEqual(["gake"]);
+    expect(after.players.opponent.support.map((s) => s.cardId)).toEqual([AURA_SMALLEST]);
   });
 
   it("stops the aura it was paying out", () => {
     const before = withNames();
-    const withMurad = pumpOf(before, "opponent", 0, index);
+    const withBiggest = pumpOf(before, "opponent", 0, index);
     const after = applyMove(before, { kind: "playCard", handIndex: 0 }, index);
-    expect(pumpOf(after, "opponent", 0, index)).toBeLessThan(withMurad);
+    expect(pumpOf(after, "opponent", 0, index)).toBeLessThan(withBiggest);
   });
 
   it("puts the cancelled card on its owner's discard pile", () => {
     const after = applyMove(withNames(), { kind: "playCard", handIndex: 0 }, index);
-    expect(after.players.opponent.discard).toContain("murad");
+    expect(after.players.opponent.discard).toContain(AURA_BIGGEST);
   });
 
   it("says so rather than reporting a hit when there is nobody to cancel", () => {
@@ -504,14 +520,12 @@ describe("turn order is fair", () => {
  * one. This is evolution, and it is what the extra cards of a project are for.
  */
 describe("upgrading a position", () => {
-  const bonks = CARDS.filter(
-    (c): c is Extract<typeof c, { type: "project" }> =>
-      c.type === "project" && c.project === "bonk",
-  );
-  const cheapest = bonks.find((c) => c.id === "bonk-airdrop")!;
-  // Not the mythic: its own effect pumps every meme project it owns, itself
-  // included, so it would be measuring two things at once.
-  const biggest = bonks.find((c) => c.id === "bonk-1b")!;
+  const bonks = [...FAMILY_CARDS];
+  // Both picked by shape rather than by name — see test/one-per-project.ts. The
+  // dearest card below the mythic, deliberately: a mythic whose own effect pumps
+  // the board it lands on would be measuring two things at once.
+  const cheapest = UPGRADE_LOW;
+  const biggest = UPGRADE_HIGH;
 
   function boardWith(...hand: string[]): State {
     const state = structuredClone(newMatch(CARDS, 7)) as State;
@@ -614,7 +628,7 @@ describe("upgrading a position", () => {
   });
 
   it("does not touch another project's position", () => {
-    const other = CARDS.find((c) => c.type === "project" && c.project !== "bonk")!;
+    const other = CARDS.find((c) => c.type === "project" && c.project !== FAMILY)!;
     let state = boardWith(other.id, biggest.id);
     state = applyMove(state, { kind: "playCard", handIndex: 0 }, index);
     state = applyMove(state, { kind: "playCard", handIndex: 0 }, index);

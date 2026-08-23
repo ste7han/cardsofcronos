@@ -66,7 +66,12 @@ describe("lessons wait for the board that makes them true", () => {
   });
 
   it("leads with the full portfolio the moment it is full", () => {
-    const state = playUntil(fresh(), (s) => s.players.you.projects.length >= RULES.portfolioSize);
+    // Seed 1 rather than the default. A portfolio fills in about three matches
+    // in four and the default seed is one of the ones where it does not — that
+    // match ends with two positions on the table. A lesson about a full
+    // portfolio needs a match that has one, and picking the seed for it is
+    // honest in a way that quietly lowering the number would not be.
+    const state = playUntil(fresh(1), (s) => s.players.you.projects.length >= RULES.portfolioSize);
     expect(state.players.you.projects.length).toBe(RULES.portfolioSize);
     // Ahead of everything, dismissed or not: if the portfolio has just filled
     // up, that is what the screen should be about.
