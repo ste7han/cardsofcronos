@@ -27,10 +27,10 @@ export function MintClosedNotice() {
 
   return (
     <p className="mt-4 max-w-xl border border-gold/40 bg-gold/5 px-4 py-3 text-[11px] leading-relaxed text-gold">
-      The mint is not open. Not sold out, not queued, not early access — there is no token and no
-      chain behind it yet, so there is nothing here that could be minted. This page is what it will
-      be and what it will cost you to know beforehand. Everything below is real; only the button is
-      missing.
+      The mint is not open. Not sold out, not queued, not early access — the contract is written and
+      compiled and it has not been deployed, so there is nothing here that could be minted yet. This
+      page is what it will be and what it will cost you to know beforehand. Everything below is
+      real; only the button is missing.
     </p>
   );
 }

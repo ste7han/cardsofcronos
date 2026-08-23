@@ -16,6 +16,8 @@ import { PENDING_REF, peekPendingRef, takePendingRef } from "@/lib/ref";
 interface Brought {
   wallet: string;
   claimedAt: number;
+  /** False until they have linked an X account and finished a match. */
+  qualified: boolean;
 }
 
 interface Answer {
@@ -149,18 +151,31 @@ export function Referrals({ wallet }: { wallet: string | null }) {
 
         <div className="panel border border-line p-5">
           <p className="text-[9px] tracking-[0.18em] text-faint">YOU HAVE BROUGHT</p>
-          <p className="display mt-2 text-2xl tabular-nums">{answer.brought.length}</p>
+          {/* Two numbers and not one. Claiming a code is free, so the count of
+              people who used it is not the count of people who are worth
+              anything — and showing only the first would be the page making the
+              same promise the anti-farming rule exists to refuse. */}
+          <p className="display mt-2 text-2xl tabular-nums">
+            {answer.brought.filter((one) => one.qualified).length}
+            <span className="text-muted"> / {answer.brought.length}</span>
+          </p>
           <p className="mt-1 text-[10px] leading-relaxed text-muted">
-            People who used your code. What each of them is worth is above: a point for every one
-            of the five they do, so a referral is worth up to five and somebody who does three
-            earns you three.
+            Counting against claimed. Using your code costs nothing, so it earns nothing on its
+            own — one counts once they have linked an X account and played a match through. After
+            that it is a point for every one of the five they do, up to five.
           </p>
 
           {answer.brought.length > 0 && (
             <ul className="mt-3 space-y-1 border-t border-line pt-3">
               {answer.brought.slice(0, 6).map((one) => (
-                <li key={one.wallet} className="font-mono text-[10px] text-muted">
-                  {short(one.wallet)}
+                <li
+                  key={one.wallet}
+                  className="flex items-baseline justify-between gap-2 font-mono text-[10px] text-muted"
+                >
+                  <span>{short(one.wallet)}</span>
+                  <span className={one.qualified ? "text-pump" : "text-faint"}>
+                    {one.qualified ? "COUNTS" : "NOT YET"}
+                  </span>
                 </li>
               ))}
             </ul>

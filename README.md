@@ -14,14 +14,38 @@ the plan behind it is at `~/.claude/plans/cozy-greeting-dolphin.md`.
 
 ```
 npm install
+npm run db:local     # once — creates the local D1 and its tables
 npm run dev          # http://localhost:3000
-npm test             # vitest, ~500 tests
+npm test             # vitest, ~570 tests
 npm run typecheck
 ```
+
+`npm run db:local` is not optional and is easy to miss. Everything server-side —
+the burn totals, PvP, referrals, points — reads a Cloudflare D1 database, and
+without the tables those routes return 500 while every page still renders
+perfectly. A site that degrades gracefully hides its own broken half.
+
+It runs against a local database in `.wrangler/`, so nothing touches the real
+one. Delete that directory to start over.
 
 No environment variables are needed for the game. `.env.example` lists the one
 that is optional (`CRONOS_RPC`, a paid RPC endpoint — the free ones are used
 otherwise).
+
+### Checking the half that needs a wallet
+
+Most of the site is behind a signature, which a browser cannot be talked into
+from a script. These drive it instead: each generates throwaway keypairs, signs
+for them and writes real rows.
+
+```
+npm run lobby      20 checks over PvP: offers, claiming, turn order, what a view hides
+npm run ref        referral codes, and that claiming one on its own counts for nothing
+npm run points     the five tasks, the ledger, and what is taken on trust
+```
+
+They need `npm run dev` running in another terminal. Point them somewhere else
+with an argument: `npm run lobby -- https://the-site`.
 
 ### Measuring it
 

@@ -30,6 +30,13 @@ export async function POST(request: Request) {
     brought: brought.map((referral) => ({
       wallet: referral.referee,
       claimedAt: referral.claimedAt,
+      // Whether this one counts yet. It was left out, which meant the single
+      // most important fact about a referral reached nobody: not the page, which
+      // tells people a referral is worth up to five points, and not the
+      // end-to-end check whose whole job is proving that a claim on its own is
+      // worth nothing. A wallet is free, so "claimed" and "counts" are different
+      // words and both have to be sayable.
+      qualified: referral.qualifiedAt !== null,
     })),
     broughtBy: broughtBy ? { code: broughtBy.code } : null,
   });

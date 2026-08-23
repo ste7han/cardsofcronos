@@ -11,7 +11,7 @@ import { SET } from "@/lib/set";
 
 export const metadata: Metadata = {
   title: "Mint — Cards of Cronos",
-  description: "The cards become NFTs on Solana. The mint is not open yet.",
+  description: "The cards become NFTs on Cronos. The mint is not open yet.",
 };
 
 export default function MintPage() {
@@ -23,7 +23,7 @@ export default function MintPage() {
       <p className="text-[10px] tracking-[0.28em] text-faint">SET 01</p>
       <h1 className="display mt-2 text-4xl sm:text-5xl">MINT</h1>
       <p className="mt-3 max-w-xl text-[11px] leading-relaxed text-muted">
-        The cards become NFTs on Solana. What you mint you play, and what you play you own.
+        The cards become NFTs on Cronos. What you mint you play, and what you play you own.
       </p>
       <MintClosedNotice />
 
@@ -130,9 +130,9 @@ export default function MintPage() {
       <section className="mt-16 border border-line bg-panel px-5 py-5">
         <h2 className="display text-xl">WHAT WE CAN CHANGE AFTER YOU MINT</h2>
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
-          These cards become NFTs on Solana, and we keep the key that can edit
-          them. That is a choice and you should know it before you mint rather
-          than after.
+          These cards become NFTs on Cronos, and the contract keeps an owner who
+          can change some of it. That is a choice and you should know it before
+          you mint rather than after.
         </p>
 
         <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-2">

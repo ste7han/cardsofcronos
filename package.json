@@ -26,7 +26,8 @@
     "points": "tsx scripts/points-drive.ts",
     "holders": "tsx scripts/holders.ts",
     "allowlist": "tsx scripts/allowlist.ts",
-    "compile": "tsx scripts/compile.ts"
+    "compile": "tsx scripts/compile.ts",
+    "db:local": "wrangler d1 execute cards-of-cronos --local --file=db/schema.sql"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",

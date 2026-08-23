@@ -72,9 +72,21 @@ CREATE INDEX IF NOT EXISTS matches_opponent ON matches (seat_opponent, finished_
 -- DESIGN.md settles that rank comes from staked PvP.
 CREATE TABLE IF NOT EXISTS players (
   wallet        TEXT PRIMARY KEY CHECK (wallet = lower(wallet) AND length(wallet) = 42 AND substr(wallet, 1, 2) = '0x'),
-  -- The code other people type to say this player brought them. Added by
-  -- migration on a live table, hence the separate ALTER further down: a column
-  -- inside this CREATE would only ever exist on a database made from scratch.
+  -- The code other people type to say this player brought them, and when this
+  -- player finished their demo match.
+  --
+  -- Both of these were ALTER TABLE statements at the end of this file, because
+  -- over in the other project they were added to a table that already existed.
+  -- They were also commented out, while the index that needs ref_code was not —
+  -- so this file could only ever be run against the one database it had already
+  -- been run against. On anything fresh it stopped at
+  -- `no such column: ref_code`, which is what it did the first time anybody
+  -- tried it here.
+  --
+  -- This game has no database yet, so there is no migration to respect. The
+  -- columns go where columns go.
+  ref_code      TEXT,
+  demo_done_at  INTEGER,
   -- 1000 at first login, settled in DESIGN.md.
   rank          INTEGER NOT NULL DEFAULT 1000,
   -- Cosmetic, from every PvP match including friendly ones.
@@ -141,12 +153,9 @@ CREATE TABLE IF NOT EXISTS referrals (
 
 CREATE INDEX IF NOT EXISTS referrals_by_referrer ON referrals (referrer, qualified_at);
 
--- Added after players already existed, so it is an ALTER and not a column above.
--- SQLite has no ADD COLUMN IF NOT EXISTS, so this is expected to fail on a
--- database that already has it — which is why it is at the end of the file and
--- why the error is a duplicate-column complaint rather than anything to fix.
--- ALTER TABLE players ADD COLUMN ref_code TEXT;
--- ALTER TABLE players ADD COLUMN demo_done_at INTEGER;
+-- One code per player, and no two players sharing one. NULL is allowed as often
+-- as it likes, which is what makes this work: a code is handed out lazily, on
+-- the first time somebody asks for one.
 CREATE UNIQUE INDEX IF NOT EXISTS players_ref_code ON players (ref_code);
 
 -- The five things a player can do, one row each.

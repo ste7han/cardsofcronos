@@ -75,8 +75,20 @@ async function main() {
   say("following X is taken on trust", follow.json?.proof === "declared");
 
   const group = await ask("/api/tasks/do", B.proof, { task: "join_telegram" });
-  // B has no Telegram linked, so this is refused rather than believed.
-  say("joining the group is not", group.status === 400, group.json?.error?.slice(0, 44));
+  const afterGroup = await ask("/api/tasks/list", B.proof);
+  const groupDone = afterGroup.json?.tasks?.find((t: any) => t.id === "join_telegram")?.done;
+  // Refused, and — the half that actually matters — nothing recorded.
+  //
+  // This asked for status 400 and got 503, because no bot token is configured
+  // locally and the route says so with "the server cannot do this" rather than
+  // "you did something wrong". Both are refusals; the check was pinned to one of
+  // them. What has to be true is that this task is never taken on a player's
+  // word, so that is what is checked: not accepted, and not on the ledger.
+  say(
+    "joining the group is not taken on trust",
+    group.status >= 400 && groupDone !== true,
+    `${group.status} ${group.json?.error?.slice(0, 40) ?? ""}`,
+  );
 
   const nonsense = await ask("/api/tasks/do", B.proof, { task: "be_cool" });
   say("an unknown task fails loudly", nonsense.status === 400, nonsense.json?.error);
