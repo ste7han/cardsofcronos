@@ -20,6 +20,13 @@
 // work for a dark purple one: screen makes dark pixels nearly invisible, so the
 // mark came out as a smudge on the bar. Transparent PNG, no blend, and the card
 // is the colour it was drawn in.
+//
+// Nothing behind the card, either — no bloom, no cast shadow, no coloured glow.
+// Those were here first and they looked right against the black they were shot
+// on. Baked into a transparent PNG they are a soft purple haze in a rectangle
+// around the mark, which is visible on any ground that is not exactly the one
+// they were composed against. A logo is the card and its own thickness; the
+// room it sits in belongs to the page.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -52,12 +59,6 @@ const html = `
 <div style="position:relative;width:${W}px;height:${H}px;display:flex;
      align-items:center;justify-content:center;perspective:${W * 2.6}px">
 
-  <!-- The bloom behind it. Without this the card is a bright shape on flat
-       black and reads as a sticker; a little spill sets it in a room. -->
-  <div style="position:absolute;width:${W * 0.95}px;height:${H * 0.8}px;
-    background:radial-gradient(50% 50% at 50% 50%, rgba(157,78,221,0.30), transparent 70%);
-    filter:blur(${W * 0.06}px)"></div>
-
   <div style="position:relative;transform:rotateY(-15deg) rotateX(3deg) rotateZ(-1.5deg);
        transform-style:preserve-3d">
 
@@ -69,10 +70,8 @@ const html = `
     <div style="position:absolute;inset:0;border-radius:${W * 0.062}px;
       background:#2a1250;transform:translateZ(-7px) translateX(4px)"></div>
 
-    <div style="position:relative;width:${W * 0.88}px;height:${H * 0.88}px;
-      border-radius:${W * 0.062}px;overflow:hidden;
-      box-shadow:0 ${H * 0.05}px ${H * 0.09}px -${H * 0.03}px rgba(0,0,0,0.95),
-                 0 0 ${W * 0.09}px rgba(157,78,221,0.35)">
+    <div style="position:relative;width:${W * 0.80}px;height:${H * 0.80}px;
+      border-radius:${W * 0.062}px;overflow:hidden">
       ${card}
 
       <!-- The sheen. A single soft diagonal band, low opacity: what sells a
@@ -108,13 +107,41 @@ async function main() {
 
   await page.evaluate(
     ({ html, W, H }) => {
+      // Clear the page before composing on it.
+      //
+      // The stage used to be a transparent box laid over the running site, and
+      // with an opaque backdrop that was fine. Take the backdrop away for a
+      // transparent PNG and the site behind it is photographed too: the first
+      // version of this shot had the nav, a heading and a wallet button baked
+      // into the logo's background. omitBackground only drops the browser's own
+      // white; it does not drop a page.
+      //
+      // A stylesheet rather than a loop over the children, because the loop was
+      // not enough: Next's dev overlay mounts itself into a portal after the
+      // script has run, and it turned up as a black bar in the corner of the
+      // file. A rule applies to whatever arrives later too.
+      //
+      // The stylesheets stay — the fonts and the colour tokens are the whole
+      // reason for composing inside the site rather than in a blank page.
+      const hide = document.createElement("style");
+      hide.textContent = `
+        html, body { background: transparent !important; }
+        body > *:not(#site-logo) { display: none !important; }
+        nextjs-portal { display: none !important; }
+        /* The faint grid the site draws over everything is .grid-lines::after
+           on the body itself. A rule about the body's children does not touch
+           it, and it is fixed and full-screen, so it covered the whole render
+           in a wash that reads as texture rather than as a mistake. */
+        body::before, body::after, html::before, html::after { display: none !important; }`;
+      document.head.append(hide);
+
       const stage = document.createElement("div");
       stage.id = "site-logo";
       stage.style.cssText = `position:fixed;left:0;top:0;z-index:2147483647;
         width:${W}px;height:${H}px;overflow:hidden;
         display:flex;align-items:center;justify-content:center`;
       stage.innerHTML = html;
-      document.documentElement.append(stage);
+      document.body.append(stage);
     },
     { html, W, H },
   );
@@ -122,6 +149,45 @@ async function main() {
   const stage = page.locator("#site-logo");
   await page.waitForTimeout(400);
   const shot = await stage.screenshot({ type: "png", omitBackground: true });
+
+  // What surrounds the card has to be nothing at all. This is checked rather
+  // than eyeballed because the version with a whole web page behind it looked
+  // entirely fine at the size the nav shows it, and was obviously wrong the
+  // moment anybody opened the file. The border of the image is sampled: every
+  // pixel around the edge must have an alpha of zero.
+  const opaque = await page.evaluate(async (bytes) => {
+    const blob = new Blob([new Uint8Array(bytes)], { type: "image/png" });
+    const bitmap = await createImageBitmap(blob);
+    const c = document.createElement("canvas");
+    c.width = bitmap.width;
+    c.height = bitmap.height;
+    const ctx = c.getContext("2d");
+    if (!ctx) return -1;
+    ctx.drawImage(bitmap, 0, 0);
+    const { data } = ctx.getImageData(0, 0, c.width, c.height);
+    // Inline rather than a helper: this body is serialised into the browser,
+    // and the bundler rewrites named functions with a helper of its own that
+    // does not exist on the other side. It fails with `__name is not defined`,
+    // which says nothing about the actual cause.
+    let found = 0;
+    for (let x = 0; x < c.width; x++) {
+      if (data[x * 4 + 3]! > 0) found++;
+      if (data[((c.height - 1) * c.width + x) * 4 + 3]! > 0) found++;
+    }
+    for (let y = 0; y < c.height; y++) {
+      if (data[y * c.width * 4 + 3]! > 0) found++;
+      if (data[(y * c.width + c.width - 1) * 4 + 3]! > 0) found++;
+    }
+    return found;
+  }, Array.from(shot));
+
+  if (opaque < 0) throw new Error("could not read the render back to check it");
+  if (opaque > 0) {
+    throw new Error(
+      `${opaque} pixels along the border of the render are not transparent. Something is ` +
+        `behind the card — a page that did not get hidden, or a glow that spills to the edge.`,
+    );
+  }
 
   mkdirSync(path.dirname(OUT), { recursive: true });
   writeFileSync(OUT, shot);
