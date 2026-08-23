@@ -11,10 +11,20 @@
   // The domain, attached by the deploy rather than by hand in a dashboard, so
   // it is in version control and a fresh clone deploys to the same place.
   //
-  // No custom domain yet, so this deploys to its workers.dev subdomain. Put the
-  // real one here when there is one; a route in version control means a fresh
-  // clone deploys to the same place instead of to wherever somebody's dashboard
-  // happened to point.
+  // No custom domain yet, so this deploys to its workers.dev subdomain.
+  //
+  // cardsofcronos.com exists but its nameservers are at Hostnet and it serves
+  // the old Firebase site. A Worker can only take a domain whose zone lives on
+  // this account, so the block below stays commented until that move is done —
+  // uncommented early, every deploy fails on a zone Cloudflare cannot find.
+  //
+  // The steps, and the DNS records that have to survive them, are in
+  // docs/domein-overzetten.md. Step 4 there is uncommenting this.
+  //
+  // "routes": [
+  //   { "pattern": "cardsofcronos.com", "custom_domain": true },
+  //   { "pattern": "www.cardsofcronos.com", "custom_domain": true }
+  // ],
   "workers_dev": true,
   // Cloudflare's SQLite, on this account, free at this size. A match is a seed
   // and a list of moves — a few hundred bytes — so the storage this game needs
