@@ -13,18 +13,17 @@
   //
   // No custom domain yet, so this deploys to its workers.dev subdomain.
   //
-  // cardsofcronos.com exists but its nameservers are at Hostnet and it serves
-  // the old Firebase site. A Worker can only take a domain whose zone lives on
-  // this account, so the block below stays commented until that move is done —
-  // uncommented early, every deploy fails on a zone Cloudflare cannot find.
+  // The domain moved to this account on 2026-08-23: its nameservers went from
+  // Hostnet to Cloudflare, and these two routes took the apex and www off the
+  // old Firebase site. Wrangler owns those DNS records now — it writes them on
+  // deploy, which is why they are here and not in a dashboard.
   //
-  // The steps, and the DNS records that have to survive them, are in
-  // docs/domein-overzetten.md. Step 4 there is uncommenting this.
-  //
-  // "routes": [
-  //   { "pattern": "cardsofcronos.com", "custom_domain": true },
-  //   { "pattern": "www.cardsofcronos.com", "custom_domain": true }
-  // ],
+  // What that move had to preserve, and in what order, is in
+  // docs/domein-overzetten.md.
+  "routes": [
+    { "pattern": "cardsofcronos.com", "custom_domain": true },
+    { "pattern": "www.cardsofcronos.com", "custom_domain": true }
+  ],
   "workers_dev": true,
   // Cloudflare's SQLite, on this account, free at this size. A match is a seed
   // and a list of moves — a few hundred bytes — so the storage this game needs
