@@ -31,10 +31,12 @@ export const metadata: Metadata = {
   // the card renders blank everywhere the link is actually pasted. The domain
   // is public, not a secret; the override exists so a preview deploy can point
   // at itself.
-  // No domain yet, so the fallback is the dev server rather than a guess.
-  // Set NEXT_PUBLIC_SITE_URL once there is one, or every link card pasted
-  // anywhere renders against localhost and comes back blank.
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  // The default is the real domain, not the dev server. It used to be
+  // localhost, from before there was a domain, and that shipped: the first
+  // deploy on cardsofcronos.com served an og:image pointing at localhost:3000,
+  // so every link pasted anywhere would have come back blank. A fallback that
+  // is only ever right on the machine that wrote it is not a fallback.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://cardsofcronos.com"),
   title: "Cards of Cronos",
   description:
     "A card game about Cronos. The projects you know, the tactics you use. Highest market cap wins.",
