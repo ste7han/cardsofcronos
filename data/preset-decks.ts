@@ -21,57 +21,70 @@
 // sample it honestly: these exist so a player picks on feel, not on power.
 //
 // Measured against what the bot actually builds, which is one of these themes —
-// not a shuffle of forty cards. That distinction is worth 20 points: against a
-// random forty these read 69% to 80%, and against a real deck they read 52% to
-// 68%. Benchmarking a deck against an opponent the game no longer fields is how
-// you convince yourself everything is fine.
+// not a shuffle of forty cards. That distinction is worth about twenty points:
+// against a generated forty these read 71% to 75%, and against each other they
+// read 52% to 62%. Benchmarking a deck against an opponent the game no longer
+// fields is how you convince yourself everything is fine.
 //
-// Themes are dropped rather than shipped when they cannot reach that. A deck
-// spread across every sector managed 21%: an aura is worth its bonus times the
-// number of that sector you hold, so spreading divides exactly what focusing
-// multiplies. NFT-only and AI-only both came in around 55% and were left out.
+// Where they stand today, 1200 matches per pairing with sides swapped
+// (`npx tsx scripts/preset-duel.ts`):
 //
-// Blue Chips and Toolbox were dropped when the marketing budget arrived. Blue
-// Chips is the top-heavy shape by definition, which is the shape this system
-// exists to punish: its median seed won 33% and even its best only 56%, against
-// 62% to 72% for the three that remain. Toolbox was the same story at 40%. A
-// preset that loses two matches in three is a trap however good the name is.
+//   MEME LORD      62.4%
+//   FLOOR SWEEP    58.5%
+//   THE VAULT      52.3%
+//   a generated deck  26.8%
 //
-// Five themes that were impossible at 177 cards are shipping now. Politics once
-// held six projects and one aura card, so a politics deck came out seven cards on
-// theme and thirty-three of filler; it holds thirty-three projects and two auras
-// today. NFT and AI were both dropped at around 55% and are now 73% and 61%. The
-// set growing is what changed, not the idea.
+// Ten points between the best and the worst choice. It was nineteen before the
+// seeds were measured, which is a difference a player cannot see and cannot
+// undo — they pick before they know anything about the game.
 //
-// THE TERMINAL was written and cut in the same hour: every tool and influencer in
-// the set, and it won 9% on its median seed and 18% on its best. The reason is
-// structural rather than a matter of tuning. A deck is forty cards with a floor of
-// twelve projects, so a theme built on support cards takes exactly twelve projects
-// as filler and twenty-eight cards that do nothing on their own. Auras stack on a
-// board with almost nothing to pump, and six positions is the cap regardless. A
-// preset that loses nine matches in ten is a trap however good the name is —
-// which is the same reason Blue Chips and Toolbox went.
+// Themes are dropped rather than shipped when they cannot reach the field. A
+// deck spread across every sector managed 21% in the other project: an aura is
+// worth its bonus times the number of that sector you hold, so spreading divides
+// exactly what focusing multiplies.
 //
-// ── FOUR ────────────────────────────────────────────────────────────────────
-// One per sector that can carry a deck, plus the tactics-and-events one. THE
-// VAULT takes defi and dex together: they are four families between them and
-// each on its own would be thin, which is the failure the paragraph above
-// describes — a theme that does not lean anywhere and just picks worse cards
-// than a random forty would.
+// ── THREE, AND ALL THREE ARE SECTOR DECKS ───────────────────────────────────
+// THE VAULT takes defi and dex together: four families between them, and each on
+// its own would be thin. `infra` has no preset — three families is enough to
+// build one by hand and not enough to beat the field.
 //
-// `infra` has no preset. Three families is twenty-four projects and that is
-// enough to build one by hand; it is not enough to build one that beats the
-// field, and `npx tsx scripts/preset-seeds.ts` is what would say when it is.
+// FULL CONTACT was the fourth and it is gone. It preferred every tactic and
+// every event, and the deck it built held exactly twelve projects — the floor —
+// against twenty to twenty-three for the other three. It won 36.7% against them.
+// Narrowing it to only the cards that reach across the table, which is what the
+// theme was actually about, cut the preferred pool from a hundred cards to
+// seventy-five and moved it to 38.7%. Still twelve projects. No seed of twelve
+// candidates lifted either version.
 //
-// ── THE SEEDS ARE INHERITED AND UNMEASURED ──────────────────────────────────
-// Every number in this file was measured against a different set of cards. They
-// are kept only because a fixed seed makes a preset the same deck twice, which
-// is the other half of what they are for. What they are NOT, today, is chosen —
-// so the paragraph above about a seed being worth 8 to 34 points of win rate is
-// a warning about this file rather than a description of it.
+// That is the third theme to die this way. THE TERMINAL managed 9%, Toolbox 40%,
+// FULL CONTACT 37%. Three data points and one cause, so it is worth stating as a
+// rule rather than as three separate disappointments:
 //
-// `npx tsx scripts/preset-seeds.ts` is the thing that fixes that, and it has to
-// run before anybody is handed one of these as "the deck to start with".
+//   A deck is forty cards with a floor of twelve projects, and only a project
+//   pumps. Any theme whose preferred pool is mostly not projects builds twelve
+//   projects and twenty-eight cards that do nothing on their own — and it does
+//   not matter how good those twenty-eight are.
+//
+// Support-leaning presets do not work in this game. Not badly: at all. A player
+// can still build one by hand, and the cards are there for it; what cannot be
+// done is handing somebody that deck and calling it a starting point.
+//
+// ── THE SEEDS, MEASURED ─────────────────────────────────────────────────────
+// All three are 8233, and that is a finding rather than laziness. Twelve
+// candidate seeds were scored for each theme against the other presets, sides
+// swapped, with `npx tsx scripts/preset-repair.ts`. 8233 came top for all three
+// by twenty-five points — it is landing on a deck shape rather than on lucky
+// cards for any one sector, which is the same thing that happened to 7548 in the
+// other project.
+//
+// The same seed does not mean the same deck: `buildDeckPreferring` takes the
+// theme's cards first, so three preferences over one shuffle give three
+// different forties.
+//
+// They shipped on 7274, 7137 and 8507, inherited from a set that no longer
+// exists. Against the field those read 47.7%, 45.0% and 44.1% while the fourth
+// preset read 62.9% — a nineteen-point gap decided before a player knows
+// anything about the game.
 
 import { auraOf } from "@/engine/types";
 import type { Card } from "@/engine/types";
@@ -90,7 +103,7 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
     id: "memes",
     name: "MEME LORD",
     blurb: "The jokes that outlived their own cycle, and the people who posted them.",
-    seed: 7_274,
+    seed: 8_233,
     prefer: (c) =>
       (c.type === "project" && c.sector === "meme") || auraOf(c)?.sector === "meme",
   },
@@ -98,27 +111,16 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
     id: "jpegs",
     name: "FLOOR SWEEP",
     blurb: "Pictures with a floor under them. Slower, and it holds.",
-    seed: 7_137,
+    seed: 8_233,
     prefer: (c) => (c.type === "project" && c.sector === "nft") || auraOf(c)?.sector === "nft",
   },
   {
     id: "yield",
     name: "THE VAULT",
     blurb: "Money in, something out. Less spectacle, more compounding.",
-    seed: 8_507,
+    seed: 8_233,
     prefer: (c) =>
       (c.type === "project" && (c.sector === "defi" || c.sector === "dex")) ||
       ["defi", "dex"].includes(auraOf(c)?.sector ?? ""),
-  },
-  {
-    id: "full-contact",
-    name: "FULL CONTACT",
-    blurb: "Tactics and events over a meme engine. Take their board apart.",
-    seed: 8_781,
-    prefer: (c) =>
-      c.type === "tactic" ||
-      c.type === "event" ||
-      (c.type === "project" && c.sector === "meme") ||
-      auraOf(c)?.sector === "meme",
   },
 ];
