@@ -340,19 +340,24 @@ export interface ProjectCard extends CardBase {
    */
   project: string;
   /**
-   * Which moment of the project this card is: "The Pink Hat", "Korea Woke Up".
+   * Which of the project's cards this is: "I" through "VIII".
    *
-   * The project's own name stays in `name` and is the same on all eight cards, so
-   * WIF is the headline and the moment is the subtitle — the way a card game
-   * names a set of cards about one thing. Without this the family was only
-   * visible if you happened to know that "The Pink Hat" and "Top Dog" were both
-   * WIF, which is a naming convention rather than a fact about the card, and
-   * naming conventions drift.
+   * This was `moment`, and it held a piece of the project's history — "The Pink
+   * Hat", "Korea Woke Up". That works when somebody knows the history well
+   * enough to write eight true things about every project, and inventing them
+   * instead puts words in a real project's mouth.
    *
-   * Absent on a project that is a single card, where there is no moment to
-   * distinguish.
+   * So the cards are numbered and the tier does the talking. What it must still
+   * do is what the history did: make every card of a family nameable on its own.
+   * A family is two commons, two rares, two epics, a legendary and a mythic, so
+   * the rarity alone is not enough — two commons would be one name for two
+   * different cards, and engine/validation.ts refuses that on the grounds that a
+   * log line could then mean either.
+   *
+   * Absent on a project that is a single card, where there is nothing to tell
+   * apart.
    */
-  moment?: string;
+  edition?: string;
   sector: Sector;
   /** One-off, the moment it is played. */
   launchMC: number;

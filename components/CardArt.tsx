@@ -22,12 +22,12 @@ const HEIGHT = 116;
  *
  * Three steps, and the middle one is what makes 535 cards finishable:
  *
- *   /art/<card id>       this exact moment — "bonk-airdrop.png"
+ *   /art/<card id>       this exact card — "obsidian-final.png"
  *   /art/<project>       the whole family — "bonk.png" covers all eight
  *   procedural           until there is anything else
  *
- * A project's eight cards are eight moments of one subject, so one good image
- * per project covers 419 project cards and a per-moment file replaces it
+ * A project's eight cards are eight cards of one subject, so one good image
+ * per project covers every card of it, and a per-card file replaces it
  * whenever one turns up. Resolution is by filename, so adding art is dropping a
  * file in and running `npm run art` — no card data to edit, nothing to forget.
  */

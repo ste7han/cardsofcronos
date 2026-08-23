@@ -31,6 +31,7 @@ import { chromium } from "playwright";
 import { CARDS } from "../data/cards";
 import { setFingerprint } from "../engine/fingerprint";
 import { ART_FILES } from "../lib/art-manifest";
+import { cardLabel } from "@/engine/format";
 import { MARKETING_COST, auraOf } from "../engine/types";
 
 const OUT = process.argv[2] ?? "out/cards";
@@ -102,7 +103,7 @@ function attributesOf(card: (typeof CARDS)[number]) {
   if (card.type === "project") {
     traits.push({ trait_type: "Project", value: card.name });
     traits.push({ trait_type: "Sector", value: card.sector });
-    if (card.moment) traits.push({ trait_type: "Moment", value: card.moment });
+    if (card.edition) traits.push({ trait_type: "Edition", value: card.edition });
     traits.push({ trait_type: "Launch MC", value: card.launchMC });
     traits.push({ trait_type: "Pump MC", value: card.pumpMC });
     traits.push({ trait_type: "Holders", value: card.holders });
@@ -211,7 +212,7 @@ async function main() {
     // The image field is a filename rather than a URL. It gets rewritten to the
     // permanent one at upload time, and guessing that here would bake in an
     // address nobody has registered yet.
-    const label = card.type === "project" && card.moment ? `${card.name} · ${card.moment}` : card.name;
+    const label = cardLabel(card);
     await writeFile(
       path.join(OUT, "metadata", `${card.id}.json`),
       `${JSON.stringify(

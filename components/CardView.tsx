@@ -174,20 +174,20 @@ export function CardView({ card, compact = false, className }: Props) {
         <h3 className={cx("display leading-none", compact ? "text-[10px]" : "text-[13px]")}>
           {card.name}
         </h3>
-        {/* The moment, under the project it belongs to. Eight cards called WIF
-            with a different line beneath is what makes them read as one family
-            at a glance, which a set of unrelated titles never did. */}
-        {card.type === "project" && card.moment && (
+        {/* The edition, under the project it belongs to. Eight cards called
+            Obsidian Finance with a numeral beneath is what makes them read as
+            one family at a glance and still be nameable one at a time. */}
+        {card.type === "project" && card.edition && (
           <p
             className={cx(
               "mt-0.5 leading-none text-fg/70",
-              // One line in hand. A long moment — "The Apology Stream" — wrapped
-              // to two at 128px wide and pushed the effect off the bottom, which
-              // is a name costing a rule its place on the card.
+              // One line in hand. A long subtitle wrapped to two at 128px wide
+              // and pushed the effect off the bottom, which is a name costing a
+              // rule its place on the card. A numeral cannot do that.
               compact ? "truncate text-[7.5px]" : "text-[9px]",
             )}
           >
-            {card.moment}
+            {card.edition}
           </p>
         )}
         <p

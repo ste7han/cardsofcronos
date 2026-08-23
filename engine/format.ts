@@ -111,17 +111,16 @@ export function sectorName(sector: Sector): string {
  * alone cannot say which one was played. Everything the player reads goes through
  * here so the answer is the same everywhere.
  */
-export function cardLabel(card: { name: string; moment?: string }): string {
-  return card.moment ? `${card.name} · ${card.moment}` : card.name;
+export function cardLabel(card: { name: string; edition?: string }): string {
+  return card.edition ? `${card.name} ${card.edition}` : card.name;
 }
 
 /**
- * Everything a card can be found by: its project, its moment and its ticker.
+ * Everything a card can be found by: its project, its edition and its ticker.
  *
- * The moment matters most and was the one left out. Searching "pink hat" found
- * nothing, which is exactly backwards — within a family the moment is the only
+ * The edition is in here because within a family it is the only
  * thing telling eight cards apart, so it is the thing somebody types.
  */
-export function searchText(card: { name: string; ticker: string; moment?: string }): string {
-  return `${card.name} ${card.ticker} ${card.moment ?? ""}`.toLowerCase();
+export function searchText(card: { name: string; ticker: string; edition?: string }): string {
+  return `${card.name} ${card.ticker} ${card.edition ?? ""}`.toLowerCase();
 }

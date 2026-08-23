@@ -84,14 +84,14 @@ function projectProblems(cards: readonly Card[]): string[] {
   const problems: string[] = [];
 
   // Every card of a project carries the project's name, so WIF is the headline on
-  // all eight and the moment is what tells them apart. If one of them drifts to
+  // all eight and the edition is what tells them apart. If one of them drifts to
   // its own name, the family stops reading as a family and nothing else notices.
   const names = new Map<string, Set<string>>();
   const labels = new Set<string>();
   for (const card of cards) {
     if (card.type !== "project") continue;
     names.set(card.project, (names.get(card.project) ?? new Set()).add(card.name));
-    const label = card.moment ? `${card.name} · ${card.moment}` : card.name;
+    const label = card.edition ? `${card.name} ${card.edition}` : card.name;
     if (labels.has(label)) {
       problems.push(`Two cards are both called "${label}"; a log line could mean either.`);
     }
@@ -102,20 +102,20 @@ function projectProblems(cards: readonly Card[]): string[] {
       problems.push(`Project "${project}" goes by ${set.size} names: ${[...set].join(", ")}.`);
     }
   }
-  const withMoments = new Map<string, number>();
+  const withEditions = new Map<string, number>();
   for (const card of cards) {
     if (card.type !== "project") continue;
-    withMoments.set(card.project, (withMoments.get(card.project) ?? 0) + (card.moment ? 1 : 0));
+    withEditions.set(card.project, (withEditions.get(card.project) ?? 0) + (card.edition ? 1 : 0));
   }
-  for (const [project, n] of withMoments) {
+  for (const [project, n] of withEditions) {
     const total = cards.filter((c) => c.type === "project" && c.project === project).length;
-    // All of them or none. A project where three cards name a moment and one does
-    // not reads as a bug on the card that does not.
+    // All of them or none. A project where seven cards carry an edition and one
+    // does not reads as a bug on the card that does not.
     if (n !== 0 && n !== total) {
-      problems.push(`Project "${project}" has ${n} of ${total} cards naming a moment; make it all or none.`);
+      problems.push(`Project "${project}" has ${n} of ${total} cards numbered; make it all or none.`);
     }
     if (total > 1 && n === 0) {
-      problems.push(`Project "${project}" has ${total} cards and no moment on any of them.`);
+      problems.push(`Project "${project}" has ${total} cards and none of them is numbered.`);
     }
   }
 

@@ -5,7 +5,7 @@ import { ART_FILES } from "@/lib/art-manifest";
 import { CARDS, EXPECTED_DISTRIBUTION } from "@/data/cards";
 import { SOLO_A, SOLO_B, SOLO_C } from "./one-per-project";
 import { applyMove, buildIndex, budgetForTurn, newMatch } from "@/engine/match";
-import { searchText } from "@/engine/format";
+import { cardLabel, searchText } from "@/engine/format";
 import { rulesText } from "@/engine/rules-text";
 import type { Card, Sector, State } from "@/engine/types";
 import { RULES } from "@/engine/types";
@@ -259,18 +259,28 @@ describe("cards named outside the set file", () => {
 });
 
 describe("finding a card", () => {
-  it("finds a card by its moment, which is what tells a family apart", () => {
-    // "pink hat" found nothing while eight cards were called WIF, so the only
-    // word that distinguishes them was the one word you could not search for.
+  it("finds a card by its edition, which is what tells a family apart", () => {
+    // Eight cards are called Obsidian Finance and the numeral is the only thing
+    // that separates them, so it has to be searchable. It was left out of
+    // searchText once already, when it held the project's history instead.
     const family = CARDS.filter(
-      (c): c is Extract<Card, { type: "project" }> => c.type === "project" && Boolean(c.moment),
+      (c): c is Extract<Card, { type: "project" }> => c.type === "project" && Boolean(c.edition),
     );
     expect(family.length).toBeGreaterThan(0);
 
     for (const card of family) {
-      const hits = CARDS.filter((c) => searchText(c).includes(card.moment!.toLowerCase()));
-      expect(hits, `nothing matches the moment "${card.moment}"`).toContainEqual(card);
+      const hits = CARDS.filter((c) => searchText(c).includes(card.edition!.toLowerCase()));
+      expect(hits, `nothing matches the edition "${card.edition}"`).toContainEqual(card);
     }
+  });
+
+  it("gives every card of a family its own name", () => {
+    // The rule engine/validation.ts enforces, written down where it can be read:
+    // a family is two commons, two rares and two epics, so the tier cannot tell
+    // them apart on its own and a log line saying "Obsidian Finance" would mean
+    // either of two cards.
+    const labels = CARDS.map((c) => cardLabel(c));
+    expect(new Set(labels).size).toBe(labels.length);
   });
 
   it("finds every card by its project name and its ticker", () => {
