@@ -1,37 +1,51 @@
 {
-  "name": "out",
+  "name": "cards-of-cronos",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "firebase:init": "node scripts/firebase-init.js",
-    "emailjs:guide": "node scripts/emailjs-template.js",
-    "add:admin": "node scripts/add-admin.js"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "match": "tsx scripts/play-match.ts",
+    "balance": "tsx scripts/balance.ts",
+    "duel": "tsx scripts/duel.ts",
+    "archetypes": "tsx scripts/archetypes.ts",
+    "render-cards": "tsx scripts/render-cards.ts",
+    "art": "tsx scripts/art.ts",
+    "art:optimise": "tsx scripts/optimise-art.ts",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "promo": "tsx scripts/promo-gif.ts",
+    "logo": "tsx scripts/logo.tsx",
+    "banner": "tsx scripts/banner.ts",
+    "baseline": "tsx scripts/baseline.ts",
+    "lobby": "tsx scripts/lobby-drive.ts",
+    "ref": "tsx scripts/ref-drive.ts",
+    "points": "tsx scripts/points-drive.ts"
   },
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
-    "@reown/appkit": "^1.7.2",
-    "@reown/appkit-adapter-ethers5": "^1.7.2",
-    "dotenv": "^16.4.5",
-    "ethers": "^5.7.2",
-    "firebase": "^11.10.0",
+    "@noble/curves": "^1.9.7",
     "framer-motion": "^12.25.0",
     "next": "^16.1.2",
+    "playwright": "^1.62.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-hook-form": "^7.55.0",
-    "tailwind-merge": "^3.2.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "firebase-admin": "^13.2.0",
+    "gifenc": "^1.0.3",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.19.2",
+    "typescript": "^5",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.86.0"
   }
 }

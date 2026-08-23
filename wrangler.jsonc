@@ -1,0 +1,42 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "cards-of-cronos",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // The domain, attached by the deploy rather than by hand in a dashboard, so
+  // it is in version control and a fresh clone deploys to the same place.
+  //
+  // TODO: fill in the real domain. The old site runs on Firebase Hosting at
+  // my-project-1472564361903 — decide whether that name moves here or a new
+  // one is registered, then put it below and remove this note.
+  "routes": [],
+  // Cloudflare's SQLite, on this account, free at this size. A match is a seed
+  // and a list of moves — a few hundred bytes — so the storage this game needs
+  // is small enough that a separate database vendor would be a bill for nothing.
+  //
+  // TODO: `wrangler d1 create cards-of-cronos` and paste the id it prints.
+  // This must NOT be the Trenches database — two games writing to one set of
+  // player and match tables would be a mess nobody can unpick afterwards.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cards-of-cronos",
+      "database_id": "TODO-run-wrangler-d1-create"
+    }
+  ]
+  // No vars yet. X_CLIENT_ID lived here in Trenches — it is that project's X
+  // app, and reusing it would sign Cards of Cronos players into the wrong one.
+  // Register a separate app when linking arrives; the client id is public and
+  // belongs here, its secret is a Worker secret set with `wrangler secret put`
+  // and never appears in a file.
+  //
+  // Deliberately no R2 incremental cache and no images binding, which the
+  // adapter's template ships with. R2 is not in this account's token scopes,
+  // and nothing here uses next/image — card art is a plain img with a content
+  // hash in the URL.
+}

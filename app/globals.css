@@ -1,0 +1,338 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Trenches terminal — with depth.
+
+   The first version was one flat colour with a grid line on top. What gives a
+   screen production value is layering: a coloured glow underneath, a noise
+   texture over it so the surface isn't dead, panels with a light edge along the
+   top and shadow beneath so they sit somewhere. Plus typographic contrast: a
+   heavy display next to the mono, instead of the same face everywhere.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* Ground, from deep to less deep */
+  --color-ground: #060709;
+  --color-ground-raised: #0a0c10;
+  --color-panel: #0e1116;
+  --color-panel-raised: #141922;
+
+  --color-line: #1a1f27;
+  --color-line-strong: #2a323d;
+
+  --color-fg: #e8eaed;
+  --color-muted: #7d8792;
+  --color-faint: #545e69;
+
+  --color-pump: #00e08a;
+  --color-dump: #ff4d4d;
+  /* Warm accent, used sparingly: headings and anything that should feel premium.
+     Without a colour like this every highlight on the page is green and it all
+     starts to look like a chart. */
+  --color-gold: #f5c451;
+
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  background: var(--color-ground);
+  color-scheme: dark;
+}
+
+body {
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  position: relative;
+
+  /* Two wide glows under everything: green at the top, red at the bottom. Barely
+     readable as colour, but the screen stops being flat. */
+  background:
+    radial-gradient(90rem 50rem at 50% -10%, rgba(0, 224, 138, 0.07), transparent 60%),
+    radial-gradient(70rem 45rem at 15% 110%, rgba(255, 77, 77, 0.05), transparent 60%),
+    radial-gradient(60rem 40rem at 95% 60%, rgba(245, 196, 81, 0.035), transparent 60%),
+    var(--color-ground);
+  background-attachment: fixed;
+}
+
+/* Noise across the whole page. You don't see it; you only notice that things look
+   less digital. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23r)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+/* Lifts the page above the grid lines, which sit at z-index -1 behind it.
+   Skips anything already positioned: this rule is outside a layer, so it beats
+   Tailwind's own `fixed` and quietly turned a full-screen overlay portalled onto
+   the body into an element in normal flow.
+
+   It has now bitten twice, so read it carefully before adding anything to the
+   nav. Every direct child of <body> lands on the same layer: <header> and <main>
+   both get z-index 1, and <main> comes second, so the page paints over the nav.
+   The header's `sticky top-0 z-50` is therefore dead — all three of those
+   utilities lose to this rule — and anything dropping down out of the nav lands
+   underneath the page, taking its clicks with it.
+
+   The wallet panel escapes by portalling to the body rather than by another
+   exception here. Adding one would be the third patch on a rule that keeps
+   winning arguments it was never meant to be in, and the real fix is to give
+   <header> and <main> an order that says which is on top — which also means
+   portalling the full-screen overlays, since anything inside <main> is sealed
+   under its z-index and could no longer cover the nav. That is a bigger change
+   than a dropdown deserved. */
+body > *:not(.fixed) {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Grid ---------------------------------------------------------------- */
+
+/* Grid lines that fade out towards the edges, so it doesn't become wallpaper. */
+.grid-lines::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(70rem 45rem at 50% 20%, black, transparent 75%);
+}
+
+/* --- Panels -------------------------------------------------------------- */
+
+/* Light edge along the top, shadow underneath. That's what makes a panel sit
+   somewhere instead of being a rectangle. */
+.panel {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 45%),
+    var(--color-panel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 48px -28px rgba(0, 0, 0, 0.9);
+}
+
+.panel-raised {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 45%),
+    var(--color-panel-raised);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 24px 48px -28px rgba(0, 0, 0, 0.9);
+}
+
+/* --- Type ---------------------------------------------------------------- */
+
+.display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+}
+
+/* Heading with gold running through it. Use sparingly. */
+.gold-gradient {
+  background-image: linear-gradient(100deg, #ffe9a8, var(--color-gold) 45%, #c9922a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.green-gradient {
+  background-image: linear-gradient(100deg, #9dffd6, var(--color-pump) 55%, #00a566);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* --- Glow ---------------------------------------------------------------- */
+
+.glow-pump {
+  box-shadow: 0 0 32px -10px rgba(0, 224, 138, 0.55);
+}
+.glow-dump {
+  box-shadow: 0 0 32px -10px rgba(255, 77, 77, 0.55);
+}
+.glow-gold {
+  box-shadow: 0 0 32px -10px rgba(245, 196, 81, 0.5);
+}
+
+/* --- Motion in a match --------------------------------------------------- */
+
+/* The card taking damage. Short and hard; it should read as a punch. */
+@keyframes hit {
+  0% { transform: translate(0, 0) rotate(0); }
+  20% { transform: translate(-4px, 2px) rotate(-1.2deg); }
+  40% { transform: translate(4px, -2px) rotate(1.2deg); }
+  60% { transform: translate(-3px, 1px) rotate(-0.8deg); }
+  80% { transform: translate(2px, -1px) rotate(0.5deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+.hit {
+  animation: hit 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* The screen flashes red when something gets rugged. */
+@keyframes rug-flash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.rug-flash {
+  animation: rug-flash 0.7s ease-out both;
+}
+
+/* The ticker tape under the hero: two identical halves, shifted by half. */
+@keyframes tape {
+  to { transform: translateX(-50%); }
+}
+.tape {
+  animation: tape 70s linear infinite;
+}
+
+/* Soft pulse for "to move". */
+@keyframes breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+.breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+/* --- Misc ---------------------------------------------------------------- */
+
+/* Chrome gives a disabled button its own grey text colour. Cards on the board are
+   buttons that are only clickable while you're aiming, and those should not grey
+   out.
+   Only reset the colour: leave opacity alone here, or you override the opacity-40
+   that an unplayable hand card is supposed to have. */
+button:disabled {
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3c4653;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tape,
+  .hit,
+  .rug-flash,
+  .breathe {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Card frame
+   ---------------------------------------------------------------------------
+   The frame was hairlines: a 1px border, two rules and some corner ticks. That
+   reads as a wireframe of a card rather than a card, because a printed card is
+   not lines — it is a stack of surfaces with edges that catch light.
+
+   So: a rounded edge, a rarity band with an inner keyline, a bevel that lifts
+   the top and drops the bottom, and a grain over everything so the black is a
+   material instead of an absence. The tier lives in the band, which is the part
+   you see before you have read anything.
+*/
+
+.card-frame {
+  border-radius: 10px;
+  /* Three edges rather than one: a dark outer lip, the rarity band, and an inner
+     keyline. That is what a printed border looks like at arm's length. */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 18px 38px -26px rgba(0, 0, 0, 0.95);
+}
+
+/* Grain. Without it the dark areas are flat and the card looks like a screen
+   rather than card stock. Two stops of a repeating gradient is cheap and does
+   not need a file. */
+.card-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.01) 0 1px, transparent 1px 4px);
+  mix-blend-mode: overlay;
+}
+
+/* The sheen across a legendary or mythic. A single diagonal band, still rather
+   than animated: this ends up as a PNG, and a frame that only looks right in
+   motion is a frame that looks wrong everywhere it matters. */
+.card-foil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.055) 44%,
+    rgba(255, 255, 255, 0.11) 50%,
+    rgba(255, 255, 255, 0.045) 56%,
+    transparent 70%
+  );
+}
+
+/* The window the art sits in: pressed into the card rather than laid on it. */
+.card-window {
+  border-radius: 5px;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* The plate the name sits on. A bevel, not two rules. */
+.card-plate {
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+}
+
+/* A groove between the stats and the effect: light under, dark over, which is
+   how an impressed line reads. */
+.card-groove {
+  border: 0;
+  height: 2px;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0 1px, rgba(255, 255, 255, 0.06) 1px 2px);
+}

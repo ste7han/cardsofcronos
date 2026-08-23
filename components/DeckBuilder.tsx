@@ -1,0 +1,741 @@
+"use client";
+
+import Link from "next/link";
+import { memo, useEffect, useMemo, useState } from "react";
+
+import { CardSizePicker } from "@/components/CardSizePicker";
+import { CardView } from "@/components/CardView";
+import { Icon } from "@/components/Icon";
+import { PRESET_DECKS, type PresetDeck } from "@/data/preset-decks";
+import {
+  buildDeck,
+  buildDeckPreferring,
+  countProjects,
+  deckProblems,
+} from "@/engine/deck";
+import type { Card, CardType, Rarity, Sector } from "@/engine/types";
+import {
+  CARD_TYPES,
+  MARKETING_COST,
+  RARITIES,
+  RULES,
+  SECTORS,
+} from "@/engine/types";
+import { formatMC, searchText } from "@/engine/format";
+import {
+  clearDeck,
+  loadDeck,
+  saveDeck,
+  type LoadedDeck,
+} from "@/lib/deck-storage";
+import { DECK_FROM_COLLECTION, copiesHeld, ownedForRules, poolCards } from "@/lib/collection";
+import { useSession } from "@/lib/use-session";
+import { sizeOf, useCardSize } from "@/lib/card-size";
+import { cx } from "@/lib/cx";
+import { RARITY, SECTOR_LABEL, TYPE_LABEL } from "@/lib/rarity";
+import { INDEX, SET } from "@/lib/set";
+
+export function DeckBuilder() {
+  // Loaded after mount, not during render. loadDeck reads localStorage, which
+  // does not exist on the server, so calling it in a useMemo made the server
+  // render the starter deck and the client render the saved one — a hydration
+  // mismatch that React papered over by throwing the tree away and redoing it.
+  const [initial, setInitial] = useState<LoadedDeck>(() => ({
+    cardIds: [],
+    name: "",
+    rejected: [],
+  }));
+  /** What you call this deck. Shown to you at the table and to nobody else. */
+  const [name, setName] = useState("");
+  const [picked, setPicked] = useState<string[]>([]);
+  const [saved, setSaved] = useState(false);
+  /**
+   * The cards this player owns. Empty until after mount, because the collection
+   * lives in localStorage — the same reason the deck is loaded in an effect.
+   */
+  const { wallet, ready: sessionReady } = useSession();
+  const [pool, setPool] = useState<Card[]>([]);
+  /** How many of each card this player holds. Second copies are trade, not deck. */
+  const [copies, setCopies] = useState<Map<string, number>>(() => new Map());
+  /**
+   * Whether the collection has been read yet. Without this every card renders as
+   * NOT OWNED for one frame — the pool is empty until the effect runs, and a
+   * flash of "you own nothing" is a worse lie than no marking at all.
+   */
+  const [poolReady, setPoolReady] = useState(false);
+
+  // Keyed on the wallet, not just on mount. Signing in or out changes whose
+  // cards these are, and a builder still holding the last wallet's deck would be
+  // offering to save cards this one does not own.
+  useEffect(() => {
+    setPool(poolCards());
+    setCopies(copiesHeld());
+    setPoolReady(true);
+    const stored = loadDeck();
+    setInitial(stored);
+    setPicked(stored.cardIds);
+    setName(stored.name);
+    setSaved(stored.cardIds.length > 0);
+  }, [wallet]);
+
+  const [type, setType] = useState<CardType | null>(null);
+  const [rarity, setRarity] = useState<Rarity | null>(null);
+  const [sector, setSector] = useState<Sector | null>(null);
+  const [search, setSearch] = useState("");
+  /** Which ready-made deck is on screen, so the button can show it. */
+  const [loaded, setLoaded] = useState<string | null>(null);
+  /**
+   * Hide the cards you do not own, rather than showing them greyed out.
+   *
+   * On by default once a deck may only hold cards you own, and it was off for a
+   * while after that rule came back — which meant building a deck out of sixty
+   * cards while looking at six hundred and fifty-five, with the ones you could
+   * actually use scattered through them. The set is still worth browsing, so the
+   * toggle stays; it just no longer starts pointed at the wrong thing.
+   */
+  const [onlyOwned, setOnlyOwned] = useState(DECK_FROM_COLLECTION);
+  const [size, setSize] = useCardSize();
+  const step = sizeOf(size);
+
+  const inDeck = useMemo(() => new Set(picked), [picked]);
+  // What the deck costs to play, not to build: there is no deck budget any more.
+  const avgCost =
+    picked.length > 0
+      ? picked.reduce(
+          (sum, id) => sum + MARKETING_COST[INDEX.get(id)!.rarity],
+          0,
+        ) / picked.length
+      : 0;
+  const curve = RARITIES.map((r) => ({
+    rarity: r,
+    n: picked.filter((id) => INDEX.get(id)?.rarity === r).length,
+  }));
+  const owned = useMemo(() => new Set(pool.map((c) => c.id)), [pool]);
+  // The same check the storage layer runs, so the panel cannot say a deck is fine
+  // and then have Save refuse it.
+  const enforcing = DECK_FROM_COLLECTION && poolReady;
+  const problems = deckProblems(picked, INDEX, enforcing ? owned : undefined);
+  const legal = problems.length === 0;
+  const slotsLeft = RULES.deckSize - picked.length;
+  const projects = countProjects(picked, INDEX);
+
+  const visible = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return SET.filter((card) => {
+      if (onlyOwned && poolReady && !owned.has(card.id)) return false;
+      if (type && card.type !== type) return false;
+      if (rarity && card.rarity !== rarity) return false;
+      if (sector && (card.type !== "project" || card.sector !== sector))
+        return false;
+      if (term && !`${card.name} ${card.ticker}`.toLowerCase().includes(term))
+        return false;
+      return true;
+    });
+  }, [type, rarity, sector, search, onlyOwned, owned, poolReady]);
+
+  /**
+   * A ready-made deck, built out of the cards this player owns.
+   *
+   * It leans towards the theme rather than being made of it — the builder has
+   * always worked that way, because no sector has forty cards. With a small
+   * collection it leans less, which is exactly what owning less means.
+   */
+  function loadPreset(preset: PresetDeck) {
+    const from = DECK_FROM_COLLECTION ? pool : SET;
+    if (from.length < RULES.deckSize) return;
+    setPicked(buildDeckPreferring(from, preset.seed, preset.prefer));
+    setLoaded(preset.id);
+    // The preset's name comes with it, unless you have already named this deck
+    // something of your own — overwriting that would be taking it off you.
+    if (!name.trim() || PRESET_DECKS.some((p) => p.name === name)) setName(preset.name);
+    setSaved(false);
+  }
+
+  function rollRandom() {
+    // Math.random is fine here: this is a UI convenience, not the engine. A
+    // match's randomness runs through the seeded generator so it stays
+    // replayable; picking a deck to look at does not have to.
+    const from = DECK_FROM_COLLECTION ? pool : SET;
+    if (from.length < RULES.deckSize) return;
+    setPicked(buildDeck(from, Math.floor(Math.random() * 1_000_000)));
+    setLoaded("random");
+    setSaved(false);
+  }
+
+  function toggle(card: Card) {
+    // Dimming is a hint; this is the rule. Clicking a card you do not own does
+    // nothing, and saving one would be refused by the storage layer anyway.
+    if (enforcing && !owned.has(card.id) && !inDeck.has(card.id)) return;
+    setSaved(false);
+    setLoaded(null);
+    setPicked((current) =>
+      current.includes(card.id)
+        ? current.filter((id) => id !== card.id)
+        : [...current, card.id],
+    );
+  }
+
+  /** Would adding this card break the deck? Used to dim rather than to enforce. */
+  function blocked(card: Card): string | null {
+    if (inDeck.has(card.id)) return null;
+    if (enforcing && !owned.has(card.id)) return "You don't own this card yet.";
+    if (slotsLeft <= 0) return `Your deck is already ${RULES.deckSize} cards.`;
+    return null;
+  }
+
+  // Signed out. Below every hook, like the branch under it: React counts hooks
+  // per render, and an early return between them renders fewer than the last
+  // pass and throws.
+  //
+  // Waits for sessionReady rather than reading `wallet === null` straight away.
+  // Before the session has been read those two look the same and mean opposite
+  // things — "nobody is signed in" against "we have not looked" — and getting it
+  // wrong flashes a locked door at somebody who is signed in perfectly well.
+  if (sessionReady && wallet === null) {
+    return (
+      <div className="panel border border-line px-6 py-16 text-center">
+        <p className="text-[10px] tracking-[0.28em] text-faint">NOT SIGNED IN</p>
+        <h2 className="display mt-3 text-2xl">A DECK BELONGS TO A WALLET</h2>
+        <p className="mx-auto mt-4 max-w-md text-[11px] leading-relaxed text-muted">
+          A deck is {RULES.deckSize} cards out of the cards you hold, and holding is something an
+          address does rather than a browser. Sign in and your collection follows you to any
+          machine — no wallet, no cards, and nothing to build from.
+        </p>
+        <p className="mx-auto mt-3 max-w-md text-[10px] leading-relaxed text-faint">
+          Signing in costs nothing and moves nothing. You sign a line of text, not a transaction.
+        </p>
+        <p className="mt-8 text-[10px] tracking-[0.18em] text-pump">
+          USE THE WALLET BUTTON, TOP RIGHT
+        </p>
+      </div>
+    );
+  }
+
+  // Signed in and holding nothing.
+  if (poolReady && pool.length === 0) {
+    return (
+      <div className="panel border border-line px-6 py-16 text-center">
+        <p className="text-[10px] tracking-[0.28em] text-faint">EMPTY COLLECTION</p>
+        <h2 className="display mt-3 text-2xl">YOU OWN NOTHING YET</h2>
+        <p className="mx-auto mt-4 max-w-md text-[11px] leading-relaxed text-muted">
+          A deck is {RULES.deckSize} cards out of the cards you own, and you have not minted any.
+          Sixty in one go leaves twenty to leave out, which is the part where a deck becomes yours;
+          ten at a time is the one you open for the pull.
+        </p>
+        <Link
+          href="/mint"
+          className="glow-pump mt-8 inline-block border border-pump bg-pump/10 px-6 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
+        >
+          GO TO THE MINT
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_20rem] lg:items-start">
+      <div className="min-w-0 space-y-4">
+        <div className="panel space-y-3 border border-line p-4">
+          <Row label="TYPE">
+            {CARD_TYPES.map((t) => (
+              <Chip
+                key={t}
+                active={type === t}
+                onClick={() => setType(type === t ? null : t)}
+              >
+                {TYPE_LABEL[t]}
+              </Chip>
+            ))}
+          </Row>
+          <Row label="RARITY">
+            {RARITIES.map((r) => (
+              <Chip
+                key={r}
+                active={rarity === r}
+                colour={RARITY[r].colour}
+                onClick={() => setRarity(rarity === r ? null : r)}
+              >
+                {RARITY[r].label} · {formatMC(MARKETING_COST[r])}
+              </Chip>
+            ))}
+          </Row>
+          <Row label="SECTOR">
+            {SECTORS.map((s) => (
+              <Chip
+                key={s}
+                active={sector === s}
+                onClick={() => setSector(sector === s ? null : s)}
+              >
+                {SECTOR_LABEL[s]}
+              </Chip>
+            ))}
+          </Row>
+          <div className="flex flex-wrap items-center gap-3 border-t border-line pt-3">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="search by name or ticker…"
+              className="min-w-0 flex-1 border border-line bg-ground px-3 py-1.5 text-[11px] text-fg placeholder:text-muted focus:border-line-strong focus:outline-none"
+            />
+            {/* Both of these answer "which of these are mine?", which is not a
+                question while the mint is shut — every card is. A toggle stuck
+                on WHOLE SET and a count reading "610 owned" would each be a
+                small lie in the same direction. */}
+            {DECK_FROM_COLLECTION && (
+              <button
+                type="button"
+                onClick={() => setOnlyOwned((v) => !v)}
+                className={cx(
+                  "border px-2 py-1.5 text-[10px] tracking-[0.14em] transition-colors",
+                  onlyOwned
+                    ? "border-pump text-pump"
+                    : "border-line text-muted hover:border-line-strong",
+                )}
+              >
+                {onlyOwned ? "OWNED ONLY" : "WHOLE SET"}
+              </button>
+            )}
+            <CardSizePicker size={size} onPick={setSize} />
+            <span className="text-[10px] tracking-[0.14em] text-muted">
+              {/* The owned figure waits for the collection, the same way the
+                  cards do. Before the effect runs the pool is empty, and this
+                  read "0 owned" on every single load — a flash of having
+                  nothing, which is the one number nobody wants to see wrong. */}
+              {DECK_FROM_COLLECTION
+                ? `${visible.length} shown · ${poolReady ? `${owned.size} owned` : "counting"} / ${SET.length}`
+                : `${visible.length} of ${SET.length} shown`}
+            </span>
+          </div>
+        </div>
+
+        {/* A column count is the wrong way to lay these out. The full card is
+            drawn for about 400px across — that is the width it is rendered at
+            for an NFT — and four columns in this panel is 230px, at which the
+            wordmark wraps and the rules text runs out of the bottom. A minimum
+            width instead: the cards keep their size and the grid decides how
+            many fit, which is the same trade the other way round. */}
+        <div
+          className="grid gap-3"
+          style={{
+            gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${step.min}px), 1fr))`,
+          }}
+        >
+          {visible.map((card) => (
+            <PickableCard
+              key={card.id}
+              card={card}
+              chosen={inDeck.has(card.id)}
+              blocked={blocked(card)}
+              owned={!enforcing || owned.has(card.id)}
+              held={copies.get(card.id) ?? 0}
+              compact={step.compact}
+              onToggle={toggle}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* The panel grew past the height of a screen once it carried a curve and
+          the ready-made decks, and a sticky element taller than the viewport
+          stops being sticky: you had to scroll past all 174 cards to reach the
+          save button. It is capped to the screen now and scrolls inside itself,
+          with the counters pinned and the card list taking whatever is left. */}
+      <aside className="lg:sticky lg:top-[4.5rem]">
+        {/* The cap goes on the panel, not on the aside. The aside is a grid item
+            whose height is its content, so max-h-full there resolves to the
+            content height and constrains nothing. */}
+        <div className="panel flex flex-col border border-line lg:max-h-[calc(100vh-5.5rem)]">
+          <div className="shrink-0 overflow-y-auto border-b border-line p-4">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[9px] tracking-[0.2em] text-faint">
+                CARDS
+              </span>
+              <span
+                className={cx(
+                  "display text-xl",
+                  picked.length === RULES.deckSize ? "text-pump" : "text-fg",
+                )}
+              >
+                {picked.length}
+                <span className="text-sm text-faint">/{RULES.deckSize}</span>
+              </span>
+            </div>
+
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-[9px] tracking-[0.2em] text-faint">
+                AVG COST
+              </span>
+              <span className="display text-xl text-gold">
+                {picked.length > 0 ? formatMC(Math.round(avgCost)) : "—"}
+                <span className="text-sm text-faint">
+                  /turn {formatMC(RULES.budgetPerTurn)}–
+                  {formatMC(RULES.budgetPerTurn * RULES.turns)}
+                </span>
+              </span>
+            </div>
+
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-[9px] tracking-[0.2em] text-faint">
+                PROJECTS
+              </span>
+              <span
+                className={cx(
+                  "display text-xl",
+                  projects < RULES.minProjects ? "text-dump" : "text-fg",
+                )}
+              >
+                {projects}
+                <span className="text-sm text-faint">
+                  /{RULES.minProjects} min
+                </span>
+              </span>
+            </div>
+
+            {/* Bars beat numbers: you see at a glance which limit you are about to
+                run into. */}
+            <Bar value={picked.length / RULES.deckSize} tone="pump" />
+            <Bar
+              value={Math.min(1, avgCost / (RULES.budgetPerTurn / 2))}
+              tone="gold"
+            />
+            <Bar
+              value={Math.min(1, projects / RULES.minProjects)}
+              tone={projects < RULES.minProjects ? "dump" : "pump"}
+            />
+          </div>
+
+          {/* Everything between the counters and the buttons scrolls. */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 max-lg:max-h-[30rem]">
+            {/* The curve. Under this system it is the thing you are building, so
+                it should be visible while you build it rather than something you
+                work out afterwards. */}
+            <div className="mt-3 border-t border-line pt-3">
+              <p className="text-[9px] tracking-[0.2em] text-faint">CURVE</p>
+              <div className="mt-2 flex items-end gap-1">
+                {curve.map(({ rarity, n }) => {
+                  const tallest = Math.max(1, ...curve.map((c) => c.n));
+                  return (
+                    <div
+                      key={rarity}
+                      className="flex flex-1 flex-col items-center gap-1"
+                    >
+                      <span className="text-[8px] tabular-nums text-muted">
+                        {n}
+                      </span>
+                      <span
+                        className="w-full transition-all duration-300"
+                        style={{
+                          height: `${Math.max(2, (n / tallest) * 40)}px`,
+                          background: RARITY[rarity].colour,
+                          opacity: n === 0 ? 0.2 : 0.85,
+                        }}
+                      />
+                      <span className="text-[7px] tracking-[0.1em] text-faint">
+                        {formatMC(MARKETING_COST[rarity])}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[9px] leading-snug text-muted">
+                Your marketing budget grows: {formatMC(RULES.budgetPerTurn)} on
+                turn one, {formatMC(RULES.budgetPerTurn * RULES.turns)} on turn
+                ten. It does not carry, and what you don't spend comes off your
+                market cap. A deck of nothing but expensive cards leaves money
+                on the table early; a deck of nothing but cheap ones cannot
+                spend it late.
+              </p>
+            </div>
+
+            {/* Ready-made decks. Above the save row because this is where you
+                start, not where you finish. */}
+            <div className="mt-4 border-t border-line pt-3">
+              <p className="text-[9px] tracking-[0.2em] text-faint">
+                READY-MADE
+              </p>
+              <div className="mt-2 space-y-1">
+                {PRESET_DECKS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => loadPreset(preset)}
+                    className={cx(
+                      "block w-full border px-2 py-1.5 text-left transition-colors",
+                      loaded === preset.id
+                        ? "border-pump bg-pump/10"
+                        : "border-line hover:border-line-strong",
+                    )}
+                  >
+                    <span
+                      className={cx(
+                        "text-[9px] tracking-[0.16em]",
+                        loaded === preset.id ? "text-pump" : "text-fg",
+                      )}
+                    >
+                      {preset.name}
+                    </span>
+                    <span className="mt-0.5 block text-[9px] leading-snug text-muted">
+                      {preset.blurb}
+                    </span>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={rollRandom}
+                  className={cx(
+                    "block w-full border px-2 py-1.5 text-left transition-colors",
+                    loaded === "random"
+                      ? "border-gold bg-gold/10"
+                      : "border-line hover:border-line-strong",
+                  )}
+                >
+                  <span
+                    className={cx(
+                      "text-[9px] tracking-[0.16em]",
+                      loaded === "random" ? "text-gold" : "text-fg",
+                    )}
+                  >
+                    ROLL A RANDOM DECK
+                  </span>
+                  <span className="mt-0.5 block text-[9px] leading-snug text-muted">
+                    A fresh legal deck every click. Weaker than the four above.
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="shrink-0 border-t border-line p-4">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!legal}
+                onClick={() => {
+                  const failed = saveDeck(picked);
+                  setSaved(failed.length === 0);
+                }}
+                className={cx(
+                  "flex-1 border px-3 py-2 text-[9px] tracking-[0.18em] transition-colors",
+                  legal
+                    ? "glow-pump border-pump bg-pump/10 text-pump hover:bg-pump hover:text-ground"
+                    : "cursor-not-allowed border-line-strong text-faint",
+                )}
+              >
+                {saved ? "SAVED" : "SAVE DECK"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPicked([]);
+                  setSaved(false);
+                  setLoaded(null);
+                }}
+                className="border border-line-strong px-3 py-2 text-[9px] tracking-[0.16em] text-muted hover:border-dump hover:text-dump"
+              >
+                CLEAR
+              </button>
+            </div>
+
+            {problems.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {problems.map((problem) => (
+                  <li
+                    key={problem}
+                    className="text-[10px] leading-relaxed text-dump"
+                  >
+                    {problem}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {initial.rejected.length > 0 && (
+              <p className="mt-3 text-[10px] leading-relaxed text-gold">
+                Your saved deck was not legal any more, so the starter deck is
+                loaded. {initial.rejected[0]}
+              </p>
+            )}
+          </div>
+
+          <div className="hidden">
+            {picked.length === 0 ? (
+              <p className="px-1 py-6 text-center text-[10px] text-faint">
+                Nothing picked yet. Click a card to add it.
+              </p>
+            ) : (
+              <ol className="space-y-1">
+                {[...picked]
+                  .map((id) => INDEX.get(id))
+                  .filter((c): c is Card => Boolean(c))
+                  .sort(
+                    (a, b) =>
+                      MARKETING_COST[b.rarity] - MARKETING_COST[a.rarity] ||
+                      a.name.localeCompare(b.name),
+                  )
+                  .map((card) => (
+                    <li key={card.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggle(card)}
+                        title={`Remove ${card.name}`}
+                        className="flex w-full items-center gap-2 border-l-2 px-2 py-1 text-left text-[10px] transition-colors hover:bg-panel-raised"
+                        style={{ borderColor: RARITY[card.rarity].colour }}
+                      >
+                        <span className="flex-1 truncate text-fg">
+                          {card.name}
+                        </span>
+                        <span className="shrink-0 text-[8px] tracking-[0.12em] text-faint">
+                          {TYPE_LABEL[card.type].slice(0, 4)}
+                        </span>
+                        <span className="shrink-0 tabular-nums text-gold">
+                          {formatMC(MARKETING_COST[card.rarity])}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/**
+ * Memoised: toggling one card re-renders the summary, and without this every one
+ * of the cards in the set would redraw its chart along with it.
+ */
+const PickableCard = memo(function PickableCard({
+  card,
+  chosen,
+  blocked,
+  owned,
+  held,
+  compact,
+  onToggle,
+}: {
+  card: Card;
+  chosen: boolean;
+  blocked: string | null;
+  owned: boolean;
+  held: number;
+  compact: boolean;
+  onToggle: (card: Card) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(card)}
+      disabled={!chosen && blocked !== null}
+      title={blocked ?? (chosen ? `Remove ${card.name}` : `Add ${card.name}`)}
+      className={cx(
+        "relative text-left transition-opacity",
+        chosen
+          ? "cursor-pointer"
+          : blocked
+            ? "cursor-not-allowed opacity-35"
+            : "cursor-pointer",
+      )}
+    >
+      <CardView
+        card={card}
+        compact={compact}
+        className={cx(chosen && "ring-2 ring-pump")}
+      />
+
+      {/* Only when it is in the deck. It used to print the card's price when it
+          was not, which the card already prints itself in the corner of its own
+          art — two of the same number, and the duplicate sat on top of the
+          rarity label and hid it. */}
+      {/* Bottom right, both of them. Top right is where the card prints its own
+          rarity, and a badge there covers it — which is the second time a badge
+          in this component has hidden something the card was already saying. */}
+      {chosen ? (
+        <span className="absolute right-3 bottom-3 z-20 flex items-center gap-1 border border-pump bg-pump px-1.5 py-0.5 text-[9px] tracking-[0.1em] text-ground">
+          <Icon name="mc" className="h-2.5 w-2.5" />
+          IN DECK
+        </span>
+      ) : (
+        // Only ever above one. A deck takes one of each however many you hold,
+        // so this is not a number you can spend here — it is what you have to
+        // trade, and the only place the interface admits duplicates exist.
+        held > 1 && (
+          <span className="absolute right-3 bottom-3 z-20 border border-line-strong bg-ground/85 px-1.5 py-0.5 text-[9px] tracking-[0.1em] text-gold tabular-nums">
+            ×{held}
+          </span>
+        )
+      )}
+    </button>
+  );
+});
+
+function Bar({
+  value,
+  tone,
+}: {
+  value: number;
+  tone: "pump" | "gold" | "dump";
+}) {
+  const colour = { pump: "bg-pump", gold: "bg-gold", dump: "bg-dump" }[tone];
+  return (
+    <div className="mt-1.5 h-[3px] w-full bg-line">
+      <div
+        className={cx("h-full transition-all duration-300", colour)}
+        style={{ width: `${Math.min(100, value * 100)}%` }}
+      />
+    </div>
+  );
+}
+
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-16 shrink-0 text-[9px] tracking-[0.16em] text-muted">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  colour,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  colour?: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "border px-2 py-1 text-[9px] tracking-[0.12em] transition-colors",
+        active
+          ? "text-ground"
+          : "border-line text-muted hover:border-line-strong hover:text-fg",
+      )}
+      style={
+        active
+          ? {
+              background: colour ?? "#e8eaed",
+              borderColor: colour ?? "#e8eaed",
+            }
+          : undefined
+      }
+    >
+      {children}
+    </button>
+  );
+}
