@@ -52,10 +52,11 @@ What comes over from TCG and what does not:
 ## The rules, as they stand
 
 Authoritative source is `engine/types.ts` (`RULES`, `MARKETING_COST`) and
-`engine/match.ts`. `DESIGN.md` is TCG's design document, carried over as the
-spec of the mechanics — it is still written in Trenches' terms and parts of it
-have drifted from the code. **When the document and the code disagree, the code
-is right.**
+`engine/match.ts`. `DESIGN.md` describes this game and what was decided along the
+way; `test/design.test.ts` checks its numbers against the engine, because the
+document it replaced had drifted so far that its first paragraph described a turn
+structure the engine had not used for a long time. **When the document and the
+code disagree, the code is right.**
 
 - Ten turns, alternating. Highest market cap at the end wins.
 - Turn N gets N × $40K of marketing budget. It does not carry over, and whatever

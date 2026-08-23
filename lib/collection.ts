@@ -27,8 +27,9 @@
 // on 110 beat one built on 80 in 86% of matches. Card ownership is that argument
 // in different clothes. What makes it survivable is that a collection buys
 // *choice*, not power: a BONK is a BONK either way, and packs are 62% common, so
-// a bigger collection is mostly a bigger pile of commons. See DESIGN.md for what
-// that is worth in win rate, and scripts/collection-packs.ts for the number.
+// a bigger collection is mostly a bigger pile of commons. DESIGN.md has the
+// argument; scripts/collection-packs.ts is what would put a number on it, and it
+// has not been run against this set.
 //
 // Opening the mint again is one constant below and nothing else.
 
