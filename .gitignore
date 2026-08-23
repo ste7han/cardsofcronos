@@ -42,6 +42,11 @@ art-source/
 *.mov
 assets/raw/
 
+# Compiler output. The source is the record; ABIs are regenerated with
+# `npm run compile` and a stale one committed beside a changed contract is a
+# file that lies.
+contracts/out/
+
 # Debug
 npm-debug.log*
 yarn-debug.log*

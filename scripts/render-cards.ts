@@ -200,21 +200,26 @@ async function main() {
       if (lastError) throw lastError;
     }
 
-    // Metadata beside the picture, in the shape Metaplex expects. The image
-    // field is a filename rather than a URL: it gets rewritten to the permanent
-    // one at upload time, and guessing that here would bake in an address
-    // nobody has registered yet.
+    // Metadata beside the picture, in the shape an ERC721 marketplace reads.
+    //
+    // This was Metaplex-shaped, which is the Solana convention: it carried a
+    // `symbol` and a `properties.files` block that nothing on an EVM chain looks
+    // at. What is left — name, description, image, attributes — is what OpenSea
+    // and everything that copied it actually parses, and it is a subset rather
+    // than a translation, so no field lost meaning on the way across.
+    //
+    // The image field is a filename rather than a URL. It gets rewritten to the
+    // permanent one at upload time, and guessing that here would bake in an
+    // address nobody has registered yet.
     const label = card.type === "project" && card.moment ? `${card.name} · ${card.moment}` : card.name;
     await writeFile(
       path.join(OUT, "metadata", `${card.id}.json`),
       `${JSON.stringify(
         {
           name: label,
-          symbol: "COC",
           description: card.flavour,
           image: `${card.id}.png`,
           attributes: attributesOf(card),
-          properties: { files: [{ uri: `${card.id}.png`, type: "image/png" }], category: "image" },
         },
         null,
         2,
@@ -227,7 +232,7 @@ async function main() {
 
   await browser.close();
   console.log(`\n${done} cards rendered at ${268 * SCALE}x${375 * SCALE} into ${OUT}/`);
-  console.log(`Metadata in ${OUT}/metadata/ — image fields are filenames, to be rewritten on upload.`);
+  console.log(`Metadata in ${OUT}/metadata/ — ERC721 shape; image fields are filenames, to be rewritten on upload.`);
 }
 
 main().catch((error) => {

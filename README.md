@@ -39,6 +39,17 @@ npm run baseline -- check --touched=a,b   what moved that should not have
 tests miss: it reports matches whose outcome moved *without* a changed card
 being anywhere near them.
 
+### The collection
+
+```
+npm run holders      read every owner off Cronos into data/holders-snapshot.json
+npm run allowlist    turn that into a merkle tree for the free mints
+npm run compile      solc over contracts/, and the deploy-size limit
+```
+
+`npm run allowlist -- --per-card` builds the other policy. Both are described in
+`docs/the-first-collection.md`.
+
 ### The card images
 
 ```
@@ -63,7 +74,7 @@ which is why `/cards` says so instead of promising illustrations.
 | `db/schema.sql` | Cloudflare D1. |
 | `test/` | 25 suites, including one test per card. |
 | `scripts/` | Measurement, art, and end-to-end drivers. |
-| `contracts/` | The first collection's contract, as deployed. |
+| `contracts/` | The first collection as deployed, and the new one. |
 | `docs/` | What was measured, and what is known about the first collection. |
 | `legacy/` | Artwork from the first version. Built by nothing, served by nothing. |
 
@@ -114,8 +125,17 @@ holds the old Firebase and EmailJS keys and which nothing reads any more, and
 ## What is not finished
 
 - No art. Every card falls back to a generated chart; see The card images above.
-- No contract for the new line, and no free mints for existing holders.
-  `docs/the-first-collection.md` has everything the snapshot needs.
+- **The new contract is written and compiles, and has no tests.**
+  `contracts/CardsOfCronosSetOne.sol` — free mints against a merkle root, a paid
+  mint with the $CROCARD discount carried over from the first collection. It is
+  the one artefact here that cannot be changed after it ships, and it is the one
+  with the least evidence behind it. The list of what has to be proved before it
+  is deployed is at the bottom of the file; it needs a Solidity test runner,
+  which this repo does not have.
+- Its `maxSupply`, name, symbol and `baseURI` are all still open, because the
+  card set is being redesigned and there is no art to upload.
+- The snapshot and the allowlist are done. 49 addresses, 505 free mints, root in
+  `data/allowlist.json`.
 - No addresses. The admin list and all four revenue wallets are deliberately
   empty rather than guessed — see `lib/admin.ts` and `lib/revenue.ts`, and the
   tests that fail the moment somebody fills one in.

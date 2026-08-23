@@ -1,0 +1,689 @@
+{
+  "root": "0xc1d2094cca1acd9dcae65268b30faabe48f2ad934b11119a3f995406b4788dc5",
+  "policy": "one per token held",
+  "fromSnapshot": {
+    "contract": "0x10B47dAbfEaCBd87dD2bAd5f6d489C5082181902",
+    "chainId": 25,
+    "atBlock": 89737757,
+    "readAt": "2026-08-23T14:33:57.096Z"
+  },
+  "addresses": 49,
+  "mints": 505,
+  "excluded": {
+    "burnAddress": "0x42BCc1355808aDf2344773c54e364257911CcC99",
+    "tokens": 10
+  },
+  "claims": [
+    {
+      "address": "0x1B95F8F67639BBc3153e6D277070518ff122c421",
+      "quantity": 53,
+      "tokensHeld": 53,
+      "distinctCards": 50,
+      "proof": [
+        "0x83df6527444bea1a8fd2789c7310d02e4334547abb7bdd8dfc2acd30ca57c85d",
+        "0x06243f8f551e9baf6ef1de5c6cc5efd8b2a93487a205b814b5c1733651cb86b6",
+        "0x0f946fad173f39e41fcfa8e36bd7e0fa32724d69457772b0f4772d32abfc39a4",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x1D9B981b7ABa1a747883833fB8a1B5072Eac5d8f",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0xbec96224f42d4ec0f6d60c22ca276424587c82f52636c72b29877e78b8d29988",
+        "0xf0556d1fce8a691fb5bcb2fa3d388dae3572afb47c2f5bdf2331f13fc1f5d3e7",
+        "0x172afeea88ed922761f9dac669e178fe0d7adbacdd631a80c9c9e99cd461bfcb",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x20C9Aa89B1fe45B7F055F66639543CfBBAB8319E",
+      "quantity": 6,
+      "tokensHeld": 6,
+      "distinctCards": 6,
+      "proof": [
+        "0x19d748786c1f75bd3c555af3ebf456ec2b1d01c274e9b21ec250289ad6b357e2",
+        "0x7dc5b8e3d2e2fc2740aeadc14467caadb4efc78780a5b199412f571bd91cac98",
+        "0x05bdafd4f63396eb3640fdfe26f1d9cd2ecfc9a9b90ebbe01d61e38ae3d88cdd",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x20E18e1e9894A79437F3ca683b28B8fa2F2CdBd6",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0xedce7c3096531c44baa52369ac36359caf276abeb5abe965ece46ae9e08c3260",
+        "0xea16ba61687d25660309f0004ca4ef34bc4fe893ad562057ddbbf10dac3ca2ec",
+        "0xcbe8feeb1e080393390b156f361296f7cab80b5c63853157dcffcaa929dec4df",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x2d33180291694c6b2E93598c1B5ddf86fcd6a9Bb",
+      "quantity": 4,
+      "tokensHeld": 4,
+      "distinctCards": 4,
+      "proof": [
+        "0x5edd73acca074a2aa9dc99276c1c4c5fb09e5d8d0edf32f719fde619d78f7a55",
+        "0x69e516837b4b400010d00864848b317096c75c5fc421f941d072443241cdda6b",
+        "0xa0401e74e0cf4bd968e1321f23014745d96d71671a01c434af8904a901f14ce9",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x34BA7Dcc4691B80be3CCA15cc532b03d51De51D6",
+      "quantity": 12,
+      "tokensHeld": 12,
+      "distinctCards": 11,
+      "proof": [
+        "0xe8f31334f4a01485c4045ea972452cf93faa4e29ae469af34711daf5ed717187",
+        "0xf759a9fc3e62da2476b8cd0d81bc5276c99785e06e5c4723f4b7572f02b36ee1",
+        "0xcbe8feeb1e080393390b156f361296f7cab80b5c63853157dcffcaa929dec4df",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x353dCf198D99c82f7e3eDb8528c3e0603C987f98",
+      "quantity": 12,
+      "tokensHeld": 12,
+      "distinctCards": 11,
+      "proof": [
+        "0xdd9f7e1e772c0a4ee22199aca9bd14c660f01eda36b1a373a354f3a9c9d3772f",
+        "0xe621653a800c141b91957dd1f612065749dd78fdbb1244bdcfbaad053e762307",
+        "0x38f34d5f9602e65fb99dd87201ffe923274da12d71d6291608b93b335f46226b",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x3b036A651E4536E50840Ba753558b8a29Afd609a",
+      "quantity": 19,
+      "tokensHeld": 19,
+      "distinctCards": 19,
+      "proof": [
+        "0x3f6e00e618a28a2b4d6bcb2f388b0db2f5d6f3d7339d94d4c4068ac3ebe9362f",
+        "0x0a615696b5898d527cd830cbfa99ce7e6eebc5e4bef43881869459cdc318240a",
+        "0xa368e7cf0d67b189299a47a233081065dfdef56779ce9c62acbb529f45493e03",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x49c7D1051843dFA97CEDcEF54c03F80FcE25E1d6",
+      "quantity": 6,
+      "tokensHeld": 6,
+      "distinctCards": 6,
+      "proof": [
+        "0xa3b18c7be3d5bbbcc404c8386a32ebc6415066ae0a2ed85da19fa4ebd276ee2a",
+        "0x732f9da70f54af8cb7067cd1878160cd476838beab27c3393d23e96b5224dcd3",
+        "0x358f3c88e6d3fcd1358aa214f200e70837135d42387517bad1a1235cab85bdb0",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x4c487dfb5b48D223d12C787Fdb69432b69DBADBf",
+      "quantity": 30,
+      "tokensHeld": 30,
+      "distinctCards": 28,
+      "proof": [
+        "0xa460bc2058daede65241b1f3715cfaf9344b2ef9807d2617c0012abbf41e6389",
+        "0x7e8888bbb1a856528999748237394d23c023aab8f82689de427af3156d5e4da1",
+        "0x86379af06fcb6b9aea18c96ac566d198dfc08a6ea59859b47e9b9f3df468e073",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x4e487Dc9d4abc2fe56Bb1A2360A120D34B35dd5b",
+      "quantity": 34,
+      "tokensHeld": 34,
+      "distinctCards": 32,
+      "proof": [
+        "0xe08f7cd9c99872ad3d2eb5aa24ce01de2d99195c33d98119434164fda0c74634",
+        "0xf759a9fc3e62da2476b8cd0d81bc5276c99785e06e5c4723f4b7572f02b36ee1",
+        "0xcbe8feeb1e080393390b156f361296f7cab80b5c63853157dcffcaa929dec4df",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x63d30b6CB8D1AAA56b53dD2e18c3CF560a38EEBB",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0x9f2b6e6461b05e5a5b0d1fe100728c5f9bdf9bd2950a3bd4e13a53a08362f09e",
+        "0x732f9da70f54af8cb7067cd1878160cd476838beab27c3393d23e96b5224dcd3",
+        "0x358f3c88e6d3fcd1358aa214f200e70837135d42387517bad1a1235cab85bdb0",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x69B623d036E2f0bCD4d1fec7ebCeAF0250a28196",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0xdeb1578d26a6279c1a000e26258e045f36c4cfded77735d9af2ecd81e113e306",
+        "0xe621653a800c141b91957dd1f612065749dd78fdbb1244bdcfbaad053e762307",
+        "0x38f34d5f9602e65fb99dd87201ffe923274da12d71d6291608b93b335f46226b",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x72dE5bdc510460bf40cc2b102493594ccE6501D7",
+      "quantity": 4,
+      "tokensHeld": 4,
+      "distinctCards": 4,
+      "proof": [
+        "0x2de539ad64bb28f49482b9489f3ec4209a80e0d1d66c5ea35e0e2c2aa09af0a3",
+        "0x65aecb7a36f66373f64d806e52794a7817ac26320a134857cac02d7e4336b47b",
+        "0xd4c2779597a78e92ab233bbed27182424614366a577021f5a533e820b315d937",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x7333C0ef63Ff615995255D458bdE71A07d23508f",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0xa3883ad9913c82932cd3a6d5f32159821f14aff1de8a933cb500d43c4fb1591d",
+        "0xc34b402e49e8d1c7fb6badade1cb4ce82eed40c82b4440a3c54b28166826bfde",
+        "0xc39fd9a33c3e6953354672ef1ada175f35e6e1b1eb0bf04654fd7069dd2a5f0a",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x75F05DF49358eFAC50d68955d8D888f73Fe8D13A",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0xc194e9861d37014c1e8cc25e5c974218dd2df1c6db2d737287eeba5163d1e2e0",
+        "0x48f8f4fd1d90e56666f897b7bf57ee2e5aab25953d0b45793a2b2d0edbc6743e",
+        "0x172afeea88ed922761f9dac669e178fe0d7adbacdd631a80c9c9e99cd461bfcb",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x773cD64e52D435Ce8bDAd02aA61a679A7EE241e8",
+      "quantity": 18,
+      "tokensHeld": 18,
+      "distinctCards": 17,
+      "proof": [
+        "0xf27e2384087f940b7f7ba8a44fcfb3bae50c99fe77dcb8f4a83c6b7aeaca45b6",
+        "0xb89a65efefbe180b031fecf6b1ff5fb229ae84af96d29cc7d02cec090543f388",
+        "0xc39fd9a33c3e6953354672ef1ada175f35e6e1b1eb0bf04654fd7069dd2a5f0a",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x798Ca1146cdaCfa6e12A288b5795D79b4292dca9",
+      "quantity": 5,
+      "tokensHeld": 5,
+      "distinctCards": 5,
+      "proof": [
+        "0x229cc07e33714fa6f842c8014a60eb7dc9381a225fdb446253696088a142146d",
+        "0x75fd12d1f8d856ae43c82112aa9031608366f0c28b2ca8ccf8050b1142ffad2f",
+        "0xd4c2779597a78e92ab233bbed27182424614366a577021f5a533e820b315d937",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x7E3e91b6912042f8FC446385299785Ac2F12C0d0",
+      "quantity": 63,
+      "tokensHeld": 63,
+      "distinctCards": 59,
+      "proof": [
+        "0xca95bc8ceb6528b624c42d6f43d1039cb8db71df425fdd1e995f59123678b8bd",
+        "0x8fd966eb825504f788d625398970b73b2242f8f67e5a0dfcb914b5075e2ed8a7",
+        "0x38f34d5f9602e65fb99dd87201ffe923274da12d71d6291608b93b335f46226b",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x81a6147d6bd8B43F13704908D1Fb30460980283d",
+      "quantity": 15,
+      "tokensHeld": 15,
+      "distinctCards": 15,
+      "proof": [
+        "0x0d2e103b8a523d11e12775faf986f44048a0bfc308a57e989a646a46be2cc538",
+        "0xfd8f1732cb6f7170eb0703cc4109f3df905f99d795b102e8c0c08def833dcca3",
+        "0xc34b402e49e8d1c7fb6badade1cb4ce82eed40c82b4440a3c54b28166826bfde",
+        "0xc39fd9a33c3e6953354672ef1ada175f35e6e1b1eb0bf04654fd7069dd2a5f0a",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x846CB5EF601d463A5Bf4a391e8d05677B4056E1B",
+      "quantity": 5,
+      "tokensHeld": 5,
+      "distinctCards": 5,
+      "proof": [
+        "0x10a63386e9df2bb1b773e3e1210743f4673492b41c77fc0086dc1b2227f0e0b1",
+        "0x7dc5b8e3d2e2fc2740aeadc14467caadb4efc78780a5b199412f571bd91cac98",
+        "0x05bdafd4f63396eb3640fdfe26f1d9cd2ecfc9a9b90ebbe01d61e38ae3d88cdd",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x85F78899c135174f5C22E489586B214E647E7640",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0xc996a09130170a81555e4025b121e1be04b79c4ef1246f0f8252e73de0c481ce",
+        "0x48f8f4fd1d90e56666f897b7bf57ee2e5aab25953d0b45793a2b2d0edbc6743e",
+        "0x172afeea88ed922761f9dac669e178fe0d7adbacdd631a80c9c9e99cd461bfcb",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0x8c9437B84e773E2C66c28d5Da0351d8beE422EDD",
+      "quantity": 6,
+      "tokensHeld": 6,
+      "distinctCards": 6,
+      "proof": [
+        "0x275283205c7e00c49cdc69e253fe5f25c3d25ce2ec94b106f25a9c039c5a293b",
+        "0x65aecb7a36f66373f64d806e52794a7817ac26320a134857cac02d7e4336b47b",
+        "0xd4c2779597a78e92ab233bbed27182424614366a577021f5a533e820b315d937",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x90B0EdC71B95025EF65ca350350dD47BFCc06b5b",
+      "quantity": 4,
+      "tokensHeld": 4,
+      "distinctCards": 4,
+      "proof": [
+        "0x2067af306097fa25155823ef3d134ab499b8a5565d3a235d2bf05e9e37dc428d",
+        "0x28fb006efcd0712356e0985acebc518cac9ba4923ffe6323cb6cc08642b217bb",
+        "0x05bdafd4f63396eb3640fdfe26f1d9cd2ecfc9a9b90ebbe01d61e38ae3d88cdd",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0x9125DCced615AA7c3059c206692979e8932c44f9",
+      "quantity": 17,
+      "tokensHeld": 17,
+      "distinctCards": 14,
+      "proof": [
+        "0x0e3cee3caf6061b6247378ec2321297fc11a015dfb9870ad9ca24eb23d9d4388",
+        "0xfd8f1732cb6f7170eb0703cc4109f3df905f99d795b102e8c0c08def833dcca3",
+        "0xc34b402e49e8d1c7fb6badade1cb4ce82eed40c82b4440a3c54b28166826bfde",
+        "0xc39fd9a33c3e6953354672ef1ada175f35e6e1b1eb0bf04654fd7069dd2a5f0a",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0xa542b8ca57781D4495Dce5d71704bb0d4301123f",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0x8a99b00c25a485740553ff6511da59fca009d03c3a334edce74c6ebab84ffc6a",
+        "0x78d4bd97eaa2fbb9b197a475d1fe14200e6cf3ffc36503601700d29d667bac2e",
+        "0x358f3c88e6d3fcd1358aa214f200e70837135d42387517bad1a1235cab85bdb0",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xa9AE2e2DEa52349fD6Dbe2ECc287A33BD34B9d19",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0x77e1c98699f41bbb05df13eb62726640cf085ea1618132a3e88bd97785392ed3",
+        "0xb79dcfd4d60dd3b6009c59f1084906ba98fefbd5d48da24e8e7dba130a6a7164",
+        "0xbbcacd420b1187feb1241a66585b6bfc5e962a166cefdc96f6313f372d3379aa",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xAcbCF8D4e67f70529372F1F18Cab322A6e23eDbb",
+      "quantity": 16,
+      "tokensHeld": 16,
+      "distinctCards": 14,
+      "proof": [
+        "0xa59a96cdd795cb34514994ba93e630f14fe17676c3f530c5ae1d33f49ad963d8",
+        "0x7e8888bbb1a856528999748237394d23c023aab8f82689de427af3156d5e4da1",
+        "0x86379af06fcb6b9aea18c96ac566d198dfc08a6ea59859b47e9b9f3df468e073",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xB4c4a6672f495a8F1B3175327772e08229B0608B",
+      "quantity": 9,
+      "tokensHeld": 9,
+      "distinctCards": 8,
+      "proof": [
+        "0xae2d4211f6f81e47bd45afd35ff792ad68b23b55874e6fea6cfa763fc4ecc63a",
+        "0xfa611a13dd5c7f3e544aec4d7aa204497cc019365c80557d984d012db12d5461",
+        "0x86379af06fcb6b9aea18c96ac566d198dfc08a6ea59859b47e9b9f3df468e073",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xB7831ee473078e91577f6Ad4984BdDD01DD953A0",
+      "quantity": 6,
+      "tokensHeld": 6,
+      "distinctCards": 6,
+      "proof": [
+        "0x5adb30c69cce937ba37735f3bbe70f8c3a7d6e9deeb8436ba6fd954a4d99411b",
+        "0x35b1816ecc1b01be87162162d3fe10e0cc07e8f4c1c931b2df80c3e88062de70",
+        "0xa0401e74e0cf4bd968e1321f23014745d96d71671a01c434af8904a901f14ce9",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xbEfE6eF828FDfad22efCeF8E14b2B65f643553E0",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0x7b0a63ed51d539f9df668ab31ef0107d110a621b22ea94b226647db2e5a68ffd",
+        "0xb79dcfd4d60dd3b6009c59f1084906ba98fefbd5d48da24e8e7dba130a6a7164",
+        "0xbbcacd420b1187feb1241a66585b6bfc5e962a166cefdc96f6313f372d3379aa",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xc3069c08dF6f214C19d7FEa23E9B88FC76df2c8F",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0xdb02f53da42c0c3bb49f5bdd22102683917f321098a979eea75efd37353e68ab",
+        "0x8fd966eb825504f788d625398970b73b2242f8f67e5a0dfcb914b5075e2ed8a7",
+        "0x38f34d5f9602e65fb99dd87201ffe923274da12d71d6291608b93b335f46226b",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0xC6EDA82B712DD1cd8A602d6F0f3d30A733ADB63b",
+      "quantity": 30,
+      "tokensHeld": 30,
+      "distinctCards": 30,
+      "proof": [
+        "0x21ccfc2f90e873405d00a259f4fd7c28b0553f9f8e74eea6858bfbd54fef253b",
+        "0x75fd12d1f8d856ae43c82112aa9031608366f0c28b2ca8ccf8050b1142ffad2f",
+        "0xd4c2779597a78e92ab233bbed27182424614366a577021f5a533e820b315d937",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xC928620f0Aae35374794729C3e89D02ecc9faCf2",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0x4c1904f7b2dc326f796599db7852693dde635dac08dfc69eec124bd5f58d3e48",
+        "0xb0787826c7d61d570c6939699d674ab3706b9c1fcec3cd9870cea706aa81aaae",
+        "0xa368e7cf0d67b189299a47a233081065dfdef56779ce9c62acbb529f45493e03",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xCBa243C836764892123ddF8996bEa38837c8aC6b",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0x8709dce278af4766ee0ba8fd443dd5653def794a00bbf5c3026eb0f5bbd9062d",
+        "0x06243f8f551e9baf6ef1de5c6cc5efd8b2a93487a205b814b5c1733651cb86b6",
+        "0x0f946fad173f39e41fcfa8e36bd7e0fa32724d69457772b0f4772d32abfc39a4",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xd1Db928D0e7700F78acaC79Fed1b6b8B028Eaf8A",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0xad6c9445357f7996f4f87112e841be8b8b36bec435e544545c9b79462a1ee507",
+        "0xfa611a13dd5c7f3e544aec4d7aa204497cc019365c80557d984d012db12d5461",
+        "0x86379af06fcb6b9aea18c96ac566d198dfc08a6ea59859b47e9b9f3df468e073",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xD442b07294A3e84F24B317A7E9C1E3Fa4c1E5CAF",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0x446ea713c7be43400674518c03822a96627fc678a3bab7ae1e48a2768b22645a",
+        "0xb0787826c7d61d570c6939699d674ab3706b9c1fcec3cd9870cea706aa81aaae",
+        "0xa368e7cf0d67b189299a47a233081065dfdef56779ce9c62acbb529f45493e03",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xdBa6D762D498F969584DDfAfD9Bd4e75fa4418cC",
+      "quantity": 10,
+      "tokensHeld": 10,
+      "distinctCards": 10,
+      "proof": [
+        "0x9eac70f9302e3a816b2928a41015a8f03f5f510f121b9c97d1c6b95064578aaa",
+        "0x78d4bd97eaa2fbb9b197a475d1fe14200e6cf3ffc36503601700d29d667bac2e",
+        "0x358f3c88e6d3fcd1358aa214f200e70837135d42387517bad1a1235cab85bdb0",
+        "0x8e32a8e594fcecd1ab5408f44f2eea1d617f96a513613ffda9392d4afc670aeb",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xDbCFF885dc2BE77Fa28Caf882c10ED2c16DC2Ce7",
+      "quantity": 4,
+      "tokensHeld": 4,
+      "distinctCards": 4,
+      "proof": [
+        "0xf503c77ba1bd27281f4e3587330ccf69a3ac2383a2fb61e3621cf26ac8638fc6",
+        "0xb89a65efefbe180b031fecf6b1ff5fb229ae84af96d29cc7d02cec090543f388",
+        "0xc39fd9a33c3e6953354672ef1ada175f35e6e1b1eb0bf04654fd7069dd2a5f0a",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0xe2421a2a5b26A8bDBACa1466e74Dd54c37E8248e",
+      "quantity": 26,
+      "tokensHeld": 26,
+      "distinctCards": 25,
+      "proof": [
+        "0x7be1d8f826b250a6c827a195a1d0099fa0bb1ca08164a875bd4b32df54b40880",
+        "0x9cece875edc4a25ffae4c4e2062f6e0bdaf5bd53eaba3b800a04c9f710bce8e9",
+        "0x0f946fad173f39e41fcfa8e36bd7e0fa32724d69457772b0f4772d32abfc39a4",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xE57526b5f6fC52b1D21f7Ac122c95250692593b9",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0xf04a104bb7a3eadb70c1e471fc9335776e864756bb435babd6bee6670f8b73a7",
+        "0xea16ba61687d25660309f0004ca4ef34bc4fe893ad562057ddbbf10dac3ca2ec",
+        "0xcbe8feeb1e080393390b156f361296f7cab80b5c63853157dcffcaa929dec4df",
+        "0xfc4d902019d790d75e67ba5d1908be24c9f905e8d6f432bda50ee04665fae5d7",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0xe5Fb79d674280A938B0Fe15e75683ea75DbE17f2",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0x1c95b9109273fd74d6d12bc8d031f93ee3d65a91101aad88eccaa2177970a575",
+        "0x28fb006efcd0712356e0985acebc518cac9ba4923ffe6323cb6cc08642b217bb",
+        "0x05bdafd4f63396eb3640fdfe26f1d9cd2ecfc9a9b90ebbe01d61e38ae3d88cdd",
+        "0x9b4e7d6b19945fb62f9e509a285cdeb8ecc5a2fa2883ebd5c7e967fef4f29c19",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xe972e44ACE30d86c85b5Bf1375C6aBf8b1A4C43A",
+      "quantity": 2,
+      "tokensHeld": 2,
+      "distinctCards": 2,
+      "proof": [
+        "0x77452b013d9f3e9ce491b234cb945107daeb9263f2aa1e10c1bf15c11ee802cc",
+        "0x507335eb01f24560a9001cff9a930f2459697b3307d17cc95d8d426977788e6e",
+        "0xbbcacd420b1187feb1241a66585b6bfc5e962a166cefdc96f6313f372d3379aa",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xEa3801a423E685A458F1adB418EAe12a17a9F9EA",
+      "quantity": 30,
+      "tokensHeld": 30,
+      "distinctCards": 26,
+      "proof": [
+        "0x42b39270364ee8064f7a1c839de4c48830868b6fdfddf0ca575c861eb099f1d6",
+        "0x0a615696b5898d527cd830cbfa99ce7e6eebc5e4bef43881869459cdc318240a",
+        "0xa368e7cf0d67b189299a47a233081065dfdef56779ce9c62acbb529f45493e03",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xF7c2722C0Ec95F49595634D3666eD143B5824D46",
+      "quantity": 6,
+      "tokensHeld": 6,
+      "distinctCards": 5,
+      "proof": [
+        "0x74ce537b46a41db309ed506ec3b5bfe598d281fabba33490bf02f5e2d82eca12",
+        "0x507335eb01f24560a9001cff9a930f2459697b3307d17cc95d8d426977788e6e",
+        "0xbbcacd420b1187feb1241a66585b6bfc5e962a166cefdc96f6313f372d3379aa",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xF8Ed3A12832b106b0EDc947b007C64439Ad74402",
+      "quantity": 7,
+      "tokensHeld": 7,
+      "distinctCards": 7,
+      "proof": [
+        "0x515bebcb5de3c6e2c07cad0671229b21d69956543687ec8322ebb6082b7f96b6",
+        "0x35b1816ecc1b01be87162162d3fe10e0cc07e8f4c1c931b2df80c3e88062de70",
+        "0xa0401e74e0cf4bd968e1321f23014745d96d71671a01c434af8904a901f14ce9",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xF8F60513B852e350f3c67D3e82E98514A3b56e0b",
+      "quantity": 11,
+      "tokensHeld": 11,
+      "distinctCards": 10,
+      "proof": [
+        "0xafde22b76cbc8d9c3f10a9295693baae28c492eda6b3e5b4fd8977bccda7ab07",
+        "0xf0556d1fce8a691fb5bcb2fa3d388dae3572afb47c2f5bdf2331f13fc1f5d3e7",
+        "0x172afeea88ed922761f9dac669e178fe0d7adbacdd631a80c9c9e99cd461bfcb",
+        "0x2d619897bb9ec68fa37de4427aa01886fed73f6b8869c876b58c789128cd227b",
+        "0xd24489c9d53f4bc740ad2927da5fba599c74d50e755e5bdf5be2d26fb942d474"
+      ]
+    },
+    {
+      "address": "0xFc559845Fb191beA6C7204945CfA16FDF83e7381",
+      "quantity": 1,
+      "tokensHeld": 1,
+      "distinctCards": 1,
+      "proof": [
+        "0x7e60e673541a14a8261e3b29468d1ab35f8c1a094b2faae963961e1a64f222ae",
+        "0x9cece875edc4a25ffae4c4e2062f6e0bdaf5bd53eaba3b800a04c9f710bce8e9",
+        "0x0f946fad173f39e41fcfa8e36bd7e0fa32724d69457772b0f4772d32abfc39a4",
+        "0x9ca9b6dc8269198344889a2075cc5117180ca5fc75c50750b46c9eaa9768d9ec",
+        "0x83d4f3944a40a99b5d21caf3a0579b83f90b3a1d31f29210cab90fe0ef65c0c9",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    },
+    {
+      "address": "0xFe468045a94A17Ced0Ca0227D3cbc79AC1DdE25f",
+      "quantity": 11,
+      "tokensHeld": 11,
+      "distinctCards": 11,
+      "proof": [
+        "0x6e40b6de25461ba6eea1dbb2e13204ced3485dbc181cfaad111c2612cf5c5fef",
+        "0x69e516837b4b400010d00864848b317096c75c5fc421f941d072443241cdda6b",
+        "0xa0401e74e0cf4bd968e1321f23014745d96d71671a01c434af8904a901f14ce9",
+        "0xa87baab6742771b446e07001d4f46564bac7dc8646d5675567b7398c2302d7d3",
+        "0x7d035be2798944697396ebdf4e5cc48a37c1c326b1f3a9de197d44f66992b764",
+        "0x95dbbb4b28a71ad7a2dd0a3d683f31f62a775368dd0efc29954ad5745faf1416"
+      ]
+    }
+  ]
+}
