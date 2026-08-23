@@ -15,18 +15,16 @@ founder, and ~10,300 lines of Python computed the whole match in one pass
 through six fixed phases. The browser then replayed the transcript. You never
 made a move.
 
-Most of that version has been removed from this branch. What is left, and why:
+That version is gone from this branch, Firebase and all. What was kept out of
+it, and where:
 
-- **`functions/` and `game-engine/`** are still deployed and still running —
-  a weekly token airdrop and the old arena's engine. They stay until somebody
-  decides where the airdrop lives. `README.md` states the decision needed.
-- **`legacy/`** holds the first version's artwork and its Firebase admin
-  scripts. Kept because they are somebody's work, not because anything uses
-  them.
+- `docs/first-version/` — what its engine measured over 25,000 matches.
+- `data/legacy-cards.json`, `data/legacy-token-mapping.json`, `contracts/` and
+  `docs/the-first-collection.md` — everything the existing 1894 NFTs and the
+  free mints need.
+- `legacy/public/` — its artwork. Excluded in `tsconfig.json`, built by nothing.
 
-All three are excluded in `tsconfig.json` and built by nothing. **Do not add
-features to them.** Everything else from the old app is on the
-`fix/battle-system` branch and in the history.
+Everything else is on the `fix/battle-system` branch and in the history.
 
 The rebuild takes its foundation from the maker's other project, TCG (Trenches
 Card Game), at `/Users/stephandanser/Desktop/TCG`. Same genre, built on the
@@ -121,7 +119,7 @@ now; it was one `git add .` away from being permanent.
 
 - Rules first, then code.
 - If something can fail silently, make it loud.
-- Do not build on `functions/`, `game-engine/` or `legacy/`. `src/` is gone.
+- Do not build on `legacy/`. Everything else of the old app is gone.
 - The plan for the rebuild is at `~/.claude/plans/cozy-greeting-dolphin.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->

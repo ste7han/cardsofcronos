@@ -38,13 +38,6 @@
   ],
   "exclude": [
     "node_modules",
-    "src",
-    "functions",
-    "game-engine",
-    "legacy",
-    "web3.ts.patch.ts",
-    "web3.ts.patch.js",
-    "functions kopie",
-    "game-engine kopie"
+    "legacy"
   ]
 }

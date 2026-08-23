@@ -3,9 +3,10 @@
 A card game on Cronos. Ten turns, a marketing budget that grows every one of
 them, and the highest market cap at the end wins.
 
-Being rebuilt. The first version launched in early 2025 and is still deployed;
-what is in this branch replaces it. `CLAUDE.md` explains what changed and why,
-and the plan behind it is at `~/.claude/plans/cozy-greeting-dolphin.md`.
+Being rebuilt. The first version launched in early 2025; this branch replaces
+it and everything of it has been taken out — see below, including the one step
+that still has to be run by hand. `CLAUDE.md` explains what changed and why, and
+the plan behind it is at `~/.claude/plans/cozy-greeting-dolphin.md`.
 
 ---
 
@@ -64,47 +65,55 @@ which is why `/cards` says so instead of promising illustrations.
 | `scripts/` | Measurement, art, and end-to-end drivers. |
 | `contracts/` | The first collection's contract, as deployed. |
 | `docs/` | What was measured, and what is known about the first collection. |
-| `legacy/` | Art and scripts from the first version. Built by nothing. |
+| `legacy/` | Artwork from the first version. Built by nothing, served by nothing. |
 
 Deployed to Cloudflare Workers with OpenNext (`npm run deploy`). It does not
 deploy yet: `wrangler.jsonc` still needs a domain and a D1 database id.
 
 ---
 
-## Two things are still live, and this is the decision they are waiting for
+## The first version is switched off
 
-The first version is running. Two pieces of it are in this repo, still deployed,
-and were deliberately **not** removed with the rest:
+Everything of it has been removed from this branch: the Next app, the Python
+engine, the Firebase functions and every piece of Firebase configuration. The
+weekly `$CROCARD` airdrop is stopped.
 
-**`functions/`** — one Firebase function, `claimWeeklyTokens`. A weekly token
-airdrop gated on a `$CROCARD` balance, signing with a wallet whose key is a
-Firebase secret. It pays real people real tokens on a schedule. Deleting the
-source would not stop it; it would only mean nobody can fix it.
+**Deleting the source did not stop the deployed function.** `claimWeeklyTokens`
+keeps running on Firebase until it is deleted there:
 
-**`game-engine/`** — the Python engine of the first version, deployed as two
-more Firebase functions. The rebuild replaces what it does, but it is what the
-live arena still calls.
+```
+firebase functions:delete claimWeeklyTokens --project my-project-1472564361903
+```
 
-Alongside them: `firebase.json`, `firebase.rules`, `firestore.indexes.json`,
-`storage.rules`, `.firebaserc`, and Firestore collections holding `matches`,
-`lobbies`, `requests` and `stats/burnStats`.
+That has to be run by somebody with access to the project, and it is the step
+that actually stops the payouts. Until it is run, the function is still on a
+schedule with a funded wallet behind it.
 
-**What has to be decided.** Does the weekly airdrop move to a Worker, keep
-running on Firebase beside the new site, or stop? And do the Firestore
-collections get migrated into D1, exported, or left where they are? Until
-somebody answers, all of it stays exactly where it is. `tsconfig.json` excludes
-both directories, so neither affects the build.
+What was kept out of it:
 
-`game-engine/AUDIT.md`, `VOORWAARDEN.md` and `DREMPELS.md` are in there too, and
-those are worth keeping whatever happens: twenty-five thousand simulated matches
-measuring every card of the first version. They are the reason two cards of each
-faction were dropped rather than picked.
+- `docs/first-version/` — the balance audit, condition rates and threshold
+  distributions. Twenty-five thousand simulated matches, and the reason two of
+  every faction's ten cards were dropped rather than picked.
+- `data/legacy-cards.json` — the 235 cards of the first version, which are what
+  the existing 1894 NFTs depict.
+- `data/legacy-token-mapping.json`, `contracts/`, `docs/the-first-collection.md`
+  — everything the free mints need.
+- `legacy/public/` — the first version's artwork.
+
+The rest is on the `fix/battle-system` branch and in the history. The Firestore
+collections (`matches`, `lobbies`, `requests`, `stats/burnStats`) still exist in
+the Firebase project; nothing here reads them, and whether they are exported or
+dropped is a decision about that project rather than about this repository.
+
+Two leftovers that are harmless and were left alone: `.env.local`, which still
+holds the old Firebase and EmailJS keys and which nothing reads any more, and
+`.idx/`, a Firebase Studio dev environment.
 
 ---
 
 ## What is not finished
 
-- No art. See above.
+- No art. Every card falls back to a generated chart; see The card images above.
 - No contract for the new line, and no free mints for existing holders.
   `docs/the-first-collection.md` has everything the snapshot needs.
 - No addresses. The admin list and all four revenue wallets are deliberately

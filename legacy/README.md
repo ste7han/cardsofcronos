@@ -18,11 +18,6 @@ upload hashes and never renamed.
 The new site draws rarity in CSS rather than from an image, so none of it is
 used. It is somebody's work, so it is here rather than deleted.
 
-**`scripts/`** — one-off admin scripts for the Firebase side: adding an admin,
-initialising the project, configuring CORS, a lobby garbage collector and a
-Firestore rules test. Several want `credentials/firebase-adminsdk.json`, which
-is gitignored and not in this repo. They go when Firebase does.
-
 ## What is deliberately NOT here
 
 The old Next app, the dead contract's test scripts, and the documents about a
@@ -34,7 +29,9 @@ All of it is still on the `fix/battle-system` branch and in the history. Nothing
 that was ever committed has been lost — `git show fix/battle-system:src/lib/web3.ts`
 and so on.
 
-## The two things that are still live
+## Firebase is gone
 
-`functions/` and `game-engine/` are **not** in here, and that is on purpose: they
-are still deployed and still running. See the root `README.md`.
+The Firebase functions, the Python engine and every rule and config file went
+with the airdrop. What that engine measured was kept — see
+`docs/first-version/`. The admin scripts that used to sit in this directory went
+with the rest; they only ever talked to Firebase.
