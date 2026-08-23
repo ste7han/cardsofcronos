@@ -29,11 +29,11 @@ export function Footer() {
         <p className="tracking-[0.16em]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/wolf.svg"
+            src="/logo.png"
             alt="Cards of Cronos"
-            className="inline-block h-7 w-auto align-middle mix-blend-screen"
-            width={26}
-            height={34}
+            className="inline-block h-7 w-auto align-middle"
+            width={1224}
+            height={1604}
           />
           <span className="ml-2 align-middle">CARDS OF CRONOS</span>
         </p>

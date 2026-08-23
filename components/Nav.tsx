@@ -43,13 +43,22 @@ export function Nav() {
               while the gold comes through unchanged. It is why the mark sits on
               the bar instead of sitting in a black box on it — and it is also
               why the site staying dark is now load-bearing. */}
+          {/* The card back, in perspective, made by `npm run site-logo` from the
+              CardBack component — so the mark is a card from this game rather
+              than a picture of one, and it cannot drift from the backs on the
+              table.
+
+              It replaced /wolf.svg, which was Wolfswap's mark. Wolfswap is a
+              faction in the set: the site was wearing one of its own cards as
+              its logo, three lines above a footer promising no affiliation with
+              any project it names. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/wolf.svg"
+            src="/logo.png"
             alt="Cards of Cronos"
-            className="h-9 w-auto mix-blend-screen sm:h-11"
-            width={26}
-            height={34}
+            className="h-9 w-auto sm:h-11"
+            width={1224}
+            height={1604}
           />
           <span className="hidden text-[9px] tracking-[0.22em] text-faint transition-colors group-hover:text-muted lg:inline">
             CARDS OF CRONOS

@@ -52,7 +52,7 @@ const back = (svg: string, w: number, h: number, radius: number, rotate = 0, ext
 const OUT = process.argv[2] ?? "logo";
 const SIZE = Number(process.argv[3] ?? 1024);
 const PICK = process.argv[4];
-const SITE = "http://localhost:3000";
+const SITE = process.env.SITE ?? `http://localhost:${process.env.PORT ?? 3000}`;
 
 type Variant = { id: string; title: string; html: (s: number) => string };
 

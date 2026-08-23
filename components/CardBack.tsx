@@ -42,29 +42,47 @@ type Design = "coin" | "wordmark" | "guilloche" | "foil";
  * what you look at before you know, and a rarer card wearing a better back would
  * hand you the answer through the wrapper.
  */
+const GROUND = "#080a0d";
+
 const DESIGN: Design = "guilloche";
-const FACE: keyof typeof PALETTES = "gold";
+const FACE: keyof typeof PALETTES = "cronos";
 
 const PALETTES = {
-  gold: {
+  /**
+   * Deep purple struck with gold — the two colours this game has always been.
+   * `--color-primary` and `--color-gold` are where they come from; the shades
+   * around them are the same hues taken lighter and darker, because what makes
+   * a face read as struck metal is that the light is uneven across it.
+   *
+   * `mark` is the odd one out and it is the reason this field exists. On a gold
+   * face the letters are punched through to the dark and read as stamped. On a
+   * dark face that is invisible, so they are laid on in gold instead. The
+   * design does not change; which side of it is lit does.
+   */
+  cronos: {
     /** The lit corner, the body, the turned-away edge. */
+    from: "#8b3fd4",
+    mid: "#3b1668",
+    to: "#150827",
+    ink: "#ffd700",
+    mark: "#ffd700",
+    halo: ["#9d4edd", "#ffd700"],
+  },
+  /**
+   * Trenches' gold, kept because the two games share this component and a
+   * palette is one word to switch. Nothing in Cards of Cronos selects it.
+   */
+  gold: {
     from: "#fff3cf",
     mid: "#f5c451",
     to: "#a8761f",
     ink: "#f5c451",
+    mark: GROUND,
     halo: ["#f5c451", "#c9922a"],
-  },
-  solana: {
-    from: "#9945ff",
-    mid: "#7a6bf5",
-    to: "#14f195",
-    ink: "#14f195",
-    halo: ["#9945ff", "#14f195"],
   },
 } as const;
 
 const P = PALETTES[FACE];
-const GROUND = "#080a0d";
 
 export type BackSize = "large" | "small" | "tiny";
 
@@ -93,7 +111,7 @@ export function CardBack({
             vertical line a box of zero width, and a gradient on a zero-width box
             paints nothing at all. */}
         <linearGradient
-          id="tcg-back-face"
+          id="coc-back-face"
           gradientUnits="userSpaceOnUse"
           x1="20"
           y1="20"
@@ -110,7 +128,7 @@ export function CardBack({
             uneven along it — a flat gold line at any opacity reads as a drawn
             border, and a gradient one reads as an edge catching the light. */}
         <linearGradient
-          id="tcg-back-edge"
+          id="coc-back-edge"
           gradientUnits="userSpaceOnUse"
           x1="0"
           y1="0"
@@ -123,23 +141,23 @@ export function CardBack({
           <stop offset="100%" stopColor={P.mid} />
         </linearGradient>
 
-        <radialGradient id="tcg-back-bloom-a" cx="50%" cy="50%" r="50%">
+        <radialGradient id="coc-back-bloom-a" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor={P.halo[0]} stopOpacity="0.26" />
           <stop offset="100%" stopColor={P.halo[0]} stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="tcg-back-bloom-b" cx="50%" cy="50%" r="50%">
+        <radialGradient id="coc-back-bloom-b" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor={P.halo[1]} stopOpacity="0.26" />
           <stop offset="100%" stopColor={P.halo[1]} stopOpacity="0" />
         </radialGradient>
 
-        <radialGradient id="tcg-back-vignette" cx="50%" cy="50%" r="62%">
+        <radialGradient id="coc-back-vignette" cx="50%" cy="50%" r="62%">
           <stop offset="35%" stopColor="#060709" stopOpacity="0" />
           <stop offset="100%" stopColor="#060709" stopOpacity="0.8" />
         </radialGradient>
 
         {/* Knocked out rather than drawn on top: the letters are whatever sits
             behind showing through, which is how a stamped back works. */}
-        <mask id="tcg-back-mark">
+        <mask id="coc-back-mark">
           <rect x="0" y="0" width="100" height="140" fill="white" />
           <text
             x="50"
@@ -156,7 +174,7 @@ export function CardBack({
           </text>
         </mask>
 
-        <pattern id="tcg-back-weave" width="9" height="9" patternUnits="userSpaceOnUse">
+        <pattern id="coc-back-weave" width="9" height="9" patternUnits="userSpaceOnUse">
           <path
             d="M0 9 L9 0 M-2 2 L2 -2 M7 11 L11 7"
             stroke={P.mid}
@@ -168,7 +186,7 @@ export function CardBack({
         {/* The same hatch at three times the tile, for the card in the
             opponent's hand. Nine units there is three and a half pixels and the
             lines turn to mud; twenty-six is ten, which reads as lines. */}
-        <pattern id="tcg-back-weave-wide" width="26" height="26" patternUnits="userSpaceOnUse">
+        <pattern id="coc-back-weave-wide" width="26" height="26" patternUnits="userSpaceOnUse">
           <path
             d="M0 26 L26 0 M-6 6 L6 -6 M20 32 L32 20"
             stroke={P.mid}
@@ -178,7 +196,7 @@ export function CardBack({
         </pattern>
       </defs>
 
-      <rect x="0" y="0" width="100" height="140" fill={foil ? "url(#tcg-back-face)" : GROUND} />
+      <rect x="0" y="0" width="100" height="140" fill={foil ? "url(#coc-back-face)" : GROUND} />
 
       {design === "guilloche" && (
         <>
@@ -192,7 +210,7 @@ export function CardBack({
             y="0"
             width="100"
             height="140"
-            fill={tiny ? "url(#tcg-back-weave-wide)" : "url(#tcg-back-weave)"}
+            fill={tiny ? "url(#coc-back-weave-wide)" : "url(#coc-back-weave)"}
             opacity={tiny ? 0.42 : 0.5}
           />
           {!tiny &&
@@ -213,12 +231,12 @@ export function CardBack({
 
       {!foil && (
         <>
-          <circle cx="44" cy="62" r="40" fill="url(#tcg-back-bloom-a)" />
-          <circle cx="57" cy="79" r="40" fill="url(#tcg-back-bloom-b)" />
+          <circle cx="44" cy="62" r="40" fill="url(#coc-back-bloom-a)" />
+          <circle cx="57" cy="79" r="40" fill="url(#coc-back-bloom-b)" />
         </>
       )}
 
-      <rect x="0" y="0" width="100" height="140" fill="url(#tcg-back-vignette)" opacity={foil ? 0.35 : 1} />
+      <rect x="0" y="0" width="100" height="140" fill="url(#coc-back-vignette)" opacity={foil ? 0.35 : 1} />
 
       {design === "coin" && (
         <>
@@ -232,8 +250,8 @@ export function CardBack({
             strokeWidth={tiny ? 1.4 : 0.7}
           />
           <circle cx="50" cy="70" r="25" fill="#07080b" />
-          <g mask="url(#tcg-back-mark)">
-            <circle cx="50" cy="70" r="25" fill="url(#tcg-back-face)" />
+          <g mask="url(#coc-back-mark)">
+            <circle cx="50" cy="70" r="25" fill="url(#coc-back-face)" />
             {/* Metal turns away from the light before it ends. Flat colour to
                 the very edge reads as a sticker. */}
             <circle
@@ -259,7 +277,7 @@ export function CardBack({
           fontSize="34"
           fontWeight="800"
           letterSpacing="-1.6"
-          fill="url(#tcg-back-face)"
+          fill="url(#coc-back-face)"
         >
           COC
         </text>
@@ -277,7 +295,7 @@ export function CardBack({
             fontSize="15"
             fontWeight="800"
             letterSpacing="-0.3"
-            fill="url(#tcg-back-face)"
+            fill="url(#coc-back-face)"
           >
             COC
           </text>
@@ -287,9 +305,9 @@ export function CardBack({
       {/* Foil is the whole card inverted: gold everywhere, the mark and the
           address punched out of it in the dark. */}
       {foil && (
-        <g mask="url(#tcg-back-mark)">
+        <g mask="url(#coc-back-mark)">
           <rect x="0" y="0" width="100" height="140" fill={GROUND} fillOpacity="0" />
-          <rect x="0" y="0" width="100" height="140" fill="url(#tcg-back-face)" />
+          <rect x="0" y="0" width="100" height="140" fill="url(#coc-back-face)" />
         </g>
       )}
       {foil && (
@@ -302,7 +320,7 @@ export function CardBack({
           fontSize="15"
           fontWeight="800"
           letterSpacing="-0.3"
-          fill={GROUND}
+          fill={P.mark}
         >
           COC
         </text>
@@ -315,7 +333,7 @@ export function CardBack({
         fontFamily="var(--font-mono), ui-monospace, monospace"
         fontSize={large ? 4.4 : tiny ? 6 : 4.8}
         letterSpacing={large ? 1.9 : tiny ? 0.7 : 1.6}
-        fill={foil ? GROUND : P.ink}
+        fill={foil ? P.mark : P.ink}
         fillOpacity={foil ? 0.85 : 0.7}
       >
         CARDS OF CRONOS
@@ -331,7 +349,7 @@ export function CardBack({
         height="135"
         rx="7"
         fill="none"
-        stroke={foil ? GROUND : "url(#tcg-back-edge)"}
+        stroke={foil ? P.mark : "url(#coc-back-edge)"}
         strokeOpacity={foil ? 0.5 : 0.95}
         strokeWidth={tiny ? 1.6 : 0.9}
       />
