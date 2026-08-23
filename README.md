@@ -132,11 +132,27 @@ keeps running on Firebase until it is deleted there:
 
 ```
 firebase functions:delete claimWeeklyTokens --project my-project-1472564361903
+firebase functions:secrets:destroy GAME_WALLET_PKEY --project my-project-1472564361903
 ```
 
-That has to be run by somebody with access to the project, and it is the step
-that actually stops the payouts. Until it is run, the function is still on a
-schedule with a funded wallet behind it.
+Both have to be run by somebody with access to that project, and they are the
+step that actually stops the payouts.
+
+**What it does, since the source is no longer here to read.** It is an
+`https.onCall`, so it does not run on a schedule — "weekly" is the claim window,
+one per wallet per ISO week, recorded in a Firestore `claims` document. Called
+with an address, it reads that address's $CROCARD balance off Cronos and
+transfers six tokens to it — PACK, CRY, CAW777, NFX, CLOVE and OBS — signing with
+a private key held as the `GAME_WALLET_PKEY` secret.
+
+It checks no authentication at all. It takes the address out of the request and
+pays out, so anyone who knows the project id and the function name can call it.
+That makes it a faucet that does not run by itself but is open to whoever finds
+it, for as long as the game wallet holds anything. Emptying that wallet is worth
+doing alongside.
+
+The old site may also still be on Firebase Hosting, in which case its `/rewards`
+page is still there calling this.
 
 What was kept out of it:
 
