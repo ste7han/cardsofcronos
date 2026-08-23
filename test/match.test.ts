@@ -371,12 +371,19 @@ describe("tools", () => {
     const aura = auraOf(tool);
     if (!aura) throw new Error("The fixture tool is supposed to carry an aura.");
 
+    // The position gets the holders the card prints, not a number picked here.
+    // pumpOf scales what a position pays by holders/printed, so a fixture that
+    // says four against a card that prints three multiplies the aura by four
+    // thirds — and the test then measures the scaling rather than the aura.
+    const project = cardById(index, soloOfSector(aura.sector));
+    if (project.type !== "project") throw new Error("The fixture project is not a project.");
+
     const state = structuredClone(newMatch(CARDS, 12)) as State;
     state.turn = 8;
     state.budgetThisTurn = budgetForTurn(state.turn);
     state.players.you.hand = [AURA_TOOL];
     state.players.you.projects = [
-      { cardId: soloOfSector(aura.sector), holders: 4, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: project.id, holders: project.holders, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
 
     const bare = pumpOf(state, "you", 0, index);

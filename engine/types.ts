@@ -38,21 +38,24 @@ export const WASTE_PENALTY = 1;
 /**
  * What kind of project a card is a card of.
  *
- * These four are the maker's own words, taken from the tags the first version of
- * this game already carried, rather than a taxonomy invented on top of them. He
- * knows what these projects are and an outsider guessing would get it wrong:
+ *   meme    the joke is the product; you hold it for the chart and the chat
+ *   nft     you hold a picture, and there is a floor under it
+ *   defi    money goes in and something happens to it
+ *   dex     where you swap
+ *   infra   marketplaces and the tools everything else runs on
  *
- *   meme        the joke is the product
- *   memetility  a meme that grew something you can use
- *   lunar       the pack — a collection with a community around it
- *   machine     built rather than drawn
+ * This replaced meme/memetility/lunar/machine, which were the tags the first
+ * version of this game put on its own factions. Two of those named exactly one
+ * faction each — lunar was the Howlers and machine was the Reckless Robots — so
+ * they were not sectors at all, and the moment projects arrived that were
+ * neither, there was nowhere to put them.
  *
- * `meme` is much the largest and that is fine; the same is true of every card
- * game with a house style. `lunar` and `machine` have one project family each
- * today, which makes an aura on them narrow — they want company in set 02, and
- * the sector-presence script is the thing that will say when they have it.
+ * Five, and not four, because nineteen families over four sectors leaves one of
+ * them holding seven and another holding three. Every sector here carries at
+ * least three families, which is twenty-four project cards — enough that
+ * building around one is a decision rather than a wish.
  */
-export const SECTORS = ["meme", "memetility", "lunar", "machine"] as const;
+export const SECTORS = ["meme", "nft", "defi", "dex", "infra"] as const;
 export type Sector = (typeof SECTORS)[number];
 
 export const PLAYERS = ["you", "opponent"] as const;

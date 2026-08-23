@@ -83,7 +83,7 @@ describe("when the table agrees", () => {
     // Two of the sector plus one of another: the other must not count.
     place(state, "you", meme);
     place(state, "you", CARDS.find((c) => c.type === "project" && c.sector === "meme" && c.id !== meme.id) as ProjectCard);
-    place(state, "you", projectOfSector("memetility"));
+    place(state, "you", projectOfSector("defi"));
     expect(holds(condition, state, "you", index)).toBe(false);
 
     place(state, "you", CARDS.filter((c) => c.type === "project" && c.sector === "meme")[2] as ProjectCard);

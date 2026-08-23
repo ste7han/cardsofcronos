@@ -52,13 +52,16 @@
 // preset that loses nine matches in ten is a trap however good the name is —
 // which is the same reason Blue Chips and Toolbox went.
 //
-// ── THREE, AND NOT FIVE ─────────────────────────────────────────────────────
-// This set has four sectors and two of them hold one project family each. A
-// preset built on `lunar` or `machine` would be eight cards on theme and
-// thirty-two of filler, which is precisely the failure the paragraph above
-// describes: it does not lean anywhere, it just picks worse cards than a random
-// forty would. They come back when those sectors have company, and the honest
-// signal for that is `npx tsx scripts/sector-presence.ts`.
+// ── FOUR ────────────────────────────────────────────────────────────────────
+// One per sector that can carry a deck, plus the tactics-and-events one. THE
+// VAULT takes defi and dex together: they are four families between them and
+// each on its own would be thin, which is the failure the paragraph above
+// describes — a theme that does not lean anywhere and just picks worse cards
+// than a random forty would.
+//
+// `infra` has no preset. Three families is twenty-four projects and that is
+// enough to build one by hand; it is not enough to build one that beats the
+// field, and `npx tsx scripts/preset-seeds.ts` is what would say when it is.
 //
 // ── THE SEEDS ARE INHERITED AND UNMEASURED ──────────────────────────────────
 // Every number in this file was measured against a different set of cards. They
@@ -92,13 +95,20 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
       (c.type === "project" && c.sector === "meme") || auraOf(c)?.sector === "meme",
   },
   {
-    id: "memetility",
-    name: "MEMETILITY",
-    blurb: "Jokes that grew something you can use. Slower, and it compounds.",
+    id: "jpegs",
+    name: "FLOOR SWEEP",
+    blurb: "Pictures with a floor under them. Slower, and it holds.",
+    seed: 7_137,
+    prefer: (c) => (c.type === "project" && c.sector === "nft") || auraOf(c)?.sector === "nft",
+  },
+  {
+    id: "yield",
+    name: "THE VAULT",
+    blurb: "Money in, something out. Less spectacle, more compounding.",
     seed: 8_507,
     prefer: (c) =>
-      (c.type === "project" && c.sector === "memetility") ||
-      auraOf(c)?.sector === "memetility",
+      (c.type === "project" && (c.sector === "defi" || c.sector === "dex")) ||
+      ["defi", "dex"].includes(auraOf(c)?.sector ?? ""),
   },
   {
     id: "full-contact",
