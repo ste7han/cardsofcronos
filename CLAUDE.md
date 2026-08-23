@@ -15,10 +15,18 @@ founder, and ~10,300 lines of Python computed the whole match in one pass
 through six fixed phases. The browser then replayed the transcript. You never
 made a move.
 
-That version is still on disk while the rebuild happens — `src/`, `functions/`,
-`game-engine/`, `legacy/` — as reference, not as build input. They are excluded
-in `tsconfig.json` and they will be removed in the last phase. **Do not add
-features to them.**
+Most of that version has been removed from this branch. What is left, and why:
+
+- **`functions/` and `game-engine/`** are still deployed and still running —
+  a weekly token airdrop and the old arena's engine. They stay until somebody
+  decides where the airdrop lives. `README.md` states the decision needed.
+- **`legacy/`** holds the first version's artwork and its Firebase admin
+  scripts. Kept because they are somebody's work, not because anything uses
+  them.
+
+All three are excluded in `tsconfig.json` and built by nothing. **Do not add
+features to them.** Everything else from the old app is on the
+`fix/battle-system` branch and in the history.
 
 The rebuild takes its foundation from the maker's other project, TCG (Trenches
 Card Game), at `/Users/stephandanser/Desktop/TCG`. Same genre, built on the
@@ -35,9 +43,11 @@ What comes over from TCG and what does not:
   interaction layer of the game.
 - **Solana projects and Solana people do not come over.** Not the 610 project
   cards, not the 20 named influencers, not the 26 named tools. Cards of Cronos
-  has its own projects: the fourteen factions this game already had.
-- **The colours do not come over.** The palette stays Cards of Cronos: deep
-  near-black cosmic purple, `#9D4EDD` primary, `#FFD700` gold, Cinzel headings.
+  has its own projects: the twelve factions this game already had.
+- **The colours do not come over, and only the colours.** The palette stays
+  Cards of Cronos — `#050314` ground, `#9D4EDD` primary, `#FFD700` for headings
+  — over TCG's layout and TCG's typeface. The brief was colours; Cinzel over a
+  mono grid would pull the screen back to the old site. See app/globals.css.
 
 ---
 
@@ -111,7 +121,7 @@ now; it was one `git add .` away from being permanent.
 
 - Rules first, then code.
 - If something can fail silently, make it loud.
-- Do not build on `src/`, `functions/`, `game-engine/` or `legacy/`.
+- Do not build on `functions/`, `game-engine/` or `legacy/`. `src/` is gone.
 - The plan for the rebuild is at `~/.claude/plans/cozy-greeting-dolphin.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
