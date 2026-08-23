@@ -2,6 +2,8 @@
 
 Opgeschreven op 2026-08-23, toen het domein nog bij Firebase stond en de nieuwe
 site alleen op `cards-of-cronos.steph-danser.workers.dev` te bereiken was.
+Stap 1 tot en met 4 zijn diezelfde dag gedaan; wat daarbij tegenviel staat
+onderaan. Stap 5 staat nog open en heeft geen haast.
 
 De reden dat dit een document is en geen commando: een Cloudflare Worker kan een
 eigen domein alleen bedienen als de zone bij Cloudflare staat. Een CNAME vanaf
@@ -78,6 +80,38 @@ stuk tot de rest af is.
    claims, wedstrijden en lobbies. Wat daar niet in zit zijn de gesprekken bij
    elf van die bestellingen — bewust overgeslagen, de bestellingen zelf dragen
    alles wat nodig is om er kaarten van te maken.
+
+## Wat er onderweg tegenviel
+
+Drie dingen, alle drie het opschrijven waard omdat ze geen van drieën een
+foutmelding gaven op het moment dat het misging.
+
+**Wrangler weigert een bestaand DNS-record te overschrijven.** De eerste deploy
+brak af op `Hostname already has externally managed DNS records`. Dat is goed
+gedrag: records die je niet zelf hebt gezet stilzwijgend vervangen is hoe een
+domein bij de verkeerde site uitkomt. Het A-record en de `www`-CNAME moeten er
+met de hand uit, en dan pas deployen. Daar zit een gaatje van een halve minuut
+waarin de apex onbereikbaar is.
+
+**De DNS-cache van de eigen machine liegt.** Vlak na de omschakeling gaf
+`curl https://cardsofcronos.com` nog de oude Firebase-site, compleet met de
+oude titel en 404's op de nieuwe routes -- wat leest als een mislukte
+omschakeling. Het antwoord kwam uit de resolver van de laptop, die het oude
+adres nog vasthield. De headers verraadden het: `x-served-by: cache-ams-...`
+is Fastly, waar Firebase achter zit, en er zat geen `cf-ray` bij. Meet er langs
+heen:
+
+    curl -s --resolve cardsofcronos.com:443:188.114.96.0 https://cardsofcronos.com
+
+Een antwoord met `server: cloudflare` en een `cf-ray` komt van de Worker.
+
+**`npm run build` is niet wat er gedeployd wordt.** Dat is `next build`; de
+adapterstap zit in `npm run deploy` (`opennextjs-cloudflare build && ... deploy`).
+En `.open-next/cache/` houdt de geprerenderde pagina's van de vorige build vast:
+na een wijziging in `app/layout.tsx` stond de oude metadata nog gewoon in de
+uitgeserveerde HTML, met een schone build ernaast. Bij een wijziging aan
+metadata of layout dus eerst `rm -rf .next .open-next`, en daarna
+`npm run deploy` -- niet `npm run build`.
 
 ## Terug kunnen
 
