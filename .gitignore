@@ -46,6 +46,7 @@ assets/raw/
 # `npm run compile` and a stale one committed beside a changed contract is a
 # file that lies.
 contracts/out/
+contracts/cache/
 
 # Debug
 npm-debug.log*

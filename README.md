@@ -74,6 +74,20 @@ npm run compile      solc over contracts/, and the deploy-size limit
 `npm run allowlist -- --per-card` builds the other policy. Both are described in
 `docs/the-first-collection.md`.
 
+### The contract
+
+```
+npm run contract     forge test — 21 tests over contracts/
+```
+
+Needs [Foundry](https://getfoundry.sh). Everything else here is npm; the
+contract is the one thing that needs a Solidity test runner, because the leaf
+shape it hashes has to be verified by the contract itself rather than by the
+library that produces the proofs.
+
+On an Intel Mac `forge` may start with `Library not loaded: libusb-1.0.0.dylib`.
+`brew install libusb` fixes it.
+
 ### The card images
 
 ```
@@ -149,13 +163,12 @@ holds the old Firebase and EmailJS keys and which nothing reads any more, and
 ## What is not finished
 
 - No art. Every card falls back to a generated chart; see The card images above.
-- **The new contract is written and compiles, and has no tests.**
+- **The new contract is written, tested and not audited.**
   `contracts/CardsOfCronosSetOne.sol` — free mints against a merkle root, a paid
-  mint with the $CROCARD discount carried over from the first collection. It is
-  the one artefact here that cannot be changed after it ships, and it is the one
-  with the least evidence behind it. The list of what has to be proved before it
-  is deployed is at the bottom of the file; it needs a Solidity test runner,
-  which this repo does not have.
+  mint with the $CROCARD discount carried over from the first collection. Every
+  proof in `data/allowlist.json` is fed to it and accepted; the rest of what is
+  proved, and what is not, is at the bottom of the file. Tests are not an audit
+  and this one holds money.
 - Its `maxSupply`, name, symbol and `baseURI` are all still open, because the
   card set is being redesigned and there is no art to upload.
 - The snapshot and the allowlist are done. 49 addresses, 505 free mints, root in

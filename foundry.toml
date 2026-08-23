@@ -1,0 +1,32 @@
+# Foundry, for the one artefact in this repository that cannot be changed after
+# it ships.
+#
+# Everything else here is TypeScript and is tested with vitest. A Solidity
+# contract needs a Solidity test runner: the leaf shape in
+# contracts/CardsOfCronosSetOne.sol has to be verified by the contract itself
+# rather than by the library that produces the proofs, and no amount of
+# TypeScript can do that.
+#
+# Paths are all non-default. Foundry expects src/ and test/, and both of those
+# names are taken — test/ is the vitest suite and would be compiled as Solidity.
+
+[profile.default]
+src = "contracts"
+test = "contracts/test"
+out = "contracts/out"
+cache_path = "contracts/cache"
+libs = ["node_modules"]
+solc = "0.8.26"
+optimizer = true
+optimizer_runs = 200
+# The deployed contract is a flattened verification artefact with its own copy of
+# OpenZeppelin inside it. It is here to be read, not built.
+skip = ["contracts/CardsOfCronos.sol"]
+remappings = [
+  "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+  "forge-std/=node_modules/forge-std/src/",
+]
+
+# The tests read data/allowlist.json — the real one, so that what is proved is
+# that the contract accepts the proofs this project will actually deploy with.
+fs_permissions = [{ access = "read", path = "./data" }]
