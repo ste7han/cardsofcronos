@@ -45,9 +45,28 @@ import { CardBack } from "../components/CardBack";
 const SITE = process.env.SITE ?? `http://localhost:${process.env.PORT ?? 3000}`;
 const OUT = path.resolve(process.argv[2] ?? "public/logo.png");
 
-/** Card proportions. The nav sizes by height, so only the ratio matters. */
-const W = 612;
-const H = 802;
+// The card, and then the frame around it — in that order, because the card is
+// the thing and the frame is only what is left over.
+//
+// CARD_RATIO is not a taste decision. CardBack is a 100x140 SVG drawn with
+// preserveAspectRatio="xMidYMid slice", which means a box of any other shape
+// does not letterbox it, it *crops* it. A box 5% too short quietly ate the top
+// and bottom strips of the back — including the gold edge line along them — and
+// the result read as a card photographed slightly too close rather than as a
+// mistake. Derive the height from the width and it cannot happen.
+const CARD_W = 560;
+const CARD_RATIO = 140 / 100;
+const CARD_H = CARD_W * CARD_RATIO;
+
+// How much of the frame the card takes. Trenches' mark fills 99% of its width
+// and 93% of its height, bleeding off three sides — it is shot on black, where
+// running off the edge costs nothing. This one is shot on transparency, so it
+// keeps a margin: partly so the tilt and the thickness have somewhere to go,
+// and partly because the border being empty is what the check at the end of
+// this file reads to prove nothing is standing behind the card.
+const MARGIN = 0.055;
+const W = Math.round(CARD_W / (1 - 2 * MARGIN));
+const H = Math.round(CARD_H / (1 - 2 * MARGIN));
 
 // Composed in the running site rather than in a bare page, because the letters
 // are set in --font-display and the face gradient is the component's own. A
@@ -55,23 +74,45 @@ const H = 802;
 // different mark.
 const card = renderToStaticMarkup(<CardBack size="large" design="foil" />);
 
+// CARD_RATIO above is a copy of a number that lives in CardBack, so it is read
+// back out of the markup and checked rather than trusted. If the back is ever
+// redrawn on a different viewBox, this stops with the two numbers side by side
+// instead of shipping a logo with its top and bottom shaved off — which is what
+// happened, and which looked like a crop rather than a bug.
+const viewBox = /viewBox="0 0 (\d+) (\d+)"/.exec(card);
+if (!viewBox) throw new Error("CardBack no longer renders a viewBox this script can read");
+const drawn = Number(viewBox[2]) / Number(viewBox[1]);
+if (Math.abs(drawn - CARD_RATIO) > 0.001) {
+  throw new Error(
+    `CardBack is drawn ${viewBox[1]}x${viewBox[2]} (${drawn.toFixed(3)}) and this script frames ` +
+      `it at ${CARD_RATIO.toFixed(3)}. preserveAspectRatio="slice" crops the difference away ` +
+      `instead of showing it. Set CARD_RATIO to ${drawn.toFixed(4)}.`,
+  );
+}
+
 const html = `
 <div style="position:relative;width:${W}px;height:${H}px;display:flex;
      align-items:center;justify-content:center;perspective:${W * 2.6}px">
 
-  <div style="position:relative;transform:rotateY(-15deg) rotateX(3deg) rotateZ(-1.5deg);
+  <!-- Nudged left, because what the frame has to hold is not the card but the
+       card plus its thickness, and the slabs only stick out on one side. Centre
+       the card and the thing you see sits off-centre; this centres what is
+       actually drawn. The number came from measuring the render, not from
+       taste. -->
+  <div style="position:relative;transform:translateX(-${CARD_W * 0.038}px)
+       rotateY(-15deg) rotateX(3deg) rotateZ(-1.5deg);
        transform-style:preserve-3d">
 
     <!-- The thickness. Two slabs behind the face, each a step further back and
          darker, which is cheaper than a real extruded edge and reads the same
          at the size this is ever shown. -->
-    <div style="position:absolute;inset:0;border-radius:${W * 0.062}px;
-      background:#160a2c;transform:translateZ(-14px) translateX(9px)"></div>
-    <div style="position:absolute;inset:0;border-radius:${W * 0.062}px;
+    <div style="position:absolute;inset:0;border-radius:${CARD_W * 0.068}px;
+      background:#170b2e;transform:translateZ(-14px) translateX(9px)"></div>
+    <div style="position:absolute;inset:0;border-radius:${CARD_W * 0.068}px;
       background:#2a1250;transform:translateZ(-7px) translateX(4px)"></div>
 
-    <div style="position:relative;width:${W * 0.80}px;height:${H * 0.80}px;
-      border-radius:${W * 0.062}px;overflow:hidden">
+    <div style="position:relative;width:${CARD_W}px;height:${CARD_H}px;
+      border-radius:${CARD_W * 0.068}px;overflow:hidden">
       ${card}
 
       <!-- The sheen. A single soft diagonal band, low opacity: what sells a
