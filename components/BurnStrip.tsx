@@ -13,10 +13,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { toCro, toTokens } from "@/lib/units";
+
 interface Total {
   burns: number;
-  lamports: number;
-  burned: number;
+  /** Decimal strings, both of them. Wei does not survive a JSON number. */
+  wei: string;
+  burned: string;
 }
 
 export function BurnStrip() {
@@ -41,16 +44,16 @@ export function BurnStrip() {
       className="mt-7 flex flex-wrap items-baseline justify-between gap-3 border border-line px-5 py-4 transition-colors hover:border-line-strong"
     >
       <span className="text-[8px] tracking-[0.2em] text-faint">
-        $TCG BURNED SO FAR
+        $CROCARD BURNED SO FAR
         <span className="ml-3 normal-case tracking-normal text-muted">
           {total.burns === 0
             ? "nothing yet, and zero is the honest number"
-            : `${total.burns} burns, ${(total.lamports / 1_000_000_000).toFixed(2)} SOL spent`}
+            : `${total.burns} burns, ${toCro(total.wei).toFixed(2)} CRO spent`}
         </span>
       </span>
       <span className="flex items-baseline gap-3">
         <span className="display text-2xl tabular-nums text-dump">
-          {total.burned.toLocaleString("en-US")}
+          {toTokens(total.burned).toLocaleString("en-US")}
         </span>
         <span className="text-[9px] tracking-[0.18em] text-pump">SEE THE SPLITS →</span>
       </span>

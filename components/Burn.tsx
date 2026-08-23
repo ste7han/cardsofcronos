@@ -15,30 +15,33 @@
 import { useEffect, useState } from "react";
 
 import { STREAMS, WALLETS, nameOf, walletFor, type Destination } from "@/lib/revenue";
+import { EXPLORER, toCro, toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
 
 interface BurnRow {
-  signature: string;
+  txHash: string;
   stream: string;
-  lamports: number;
-  burned: number;
+  /** Decimal strings. Wei has eighteen zeroes and a JSON number does not. */
+  wei: string;
+  burned: string;
   at: number;
 }
 
 interface Answer {
-  total: { burns: number; lamports: number; burned: number };
+  total: { burns: number; wei: string; burned: string };
   burns: BurnRow[];
 }
 
 interface WalletBalance {
   id: string;
-  address: string;
+  /** Null while nobody has said what this wallet is. Not the same as unknown. */
+  address: string | null;
   what: string;
   /** null means the chain would not answer, which is not the same as empty. */
-  lamports: number | null;
+  wei: string | null;
 }
 
-const short = (address: string) => `${address.slice(0, 4)}…${address.slice(-4)}`;
+const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 
 /**
  * A colour per destination, in one place.
@@ -54,7 +57,6 @@ const COLOUR: Record<Destination, { bar: string; text: string }> = {
   tournament: { bar: "bg-fg/60", text: "text-fg" },
   deployer: { bar: "bg-dump", text: "text-dump" },
 };
-const sol = (lamports: number) => (lamports / 1_000_000_000).toFixed(2);
 
 /** Burn shares are the ones worth reading first, so they are drawn differently. */
 function Bar({ shares }: { shares: readonly { to: Destination; percent: number }[] }) {
@@ -104,15 +106,15 @@ export function Burn() {
         <h2 className="display text-xl">BURNED SO FAR</h2>
         <dl className="mt-4 grid gap-px border border-line bg-line sm:grid-cols-3">
           <div className="bg-panel px-4 py-4">
-            <dt className="text-[8px] tracking-[0.18em] text-faint">$TCG BURNED</dt>
+            <dt className="text-[8px] tracking-[0.18em] text-faint">$CROCARD BURNED</dt>
             <dd className="display mt-1.5 text-2xl tabular-nums text-dump">
-              {answer === null ? "—" : answer.total.burned.toLocaleString("en-US")}
+              {answer === null ? "—" : toTokens(answer.total.burned).toLocaleString("en-US")}
             </dd>
           </div>
           <div className="bg-panel px-4 py-4">
-            <dt className="text-[8px] tracking-[0.18em] text-faint">SOL SPENT BUYING IT</dt>
+            <dt className="text-[8px] tracking-[0.18em] text-faint">CRO SPENT BUYING IT</dt>
             <dd className="display mt-1.5 text-2xl tabular-nums">
-              {answer === null ? "—" : sol(answer.total.lamports)}
+              {answer === null ? "—" : toCro(answer.total.wei).toFixed(2)}
             </dd>
           </div>
           <div className="bg-panel px-4 py-4">
@@ -136,14 +138,14 @@ export function Burn() {
                 <tr className="border-b border-line text-[8px] tracking-[0.18em] text-faint">
                   <th className="px-4 py-3 font-normal">WHEN</th>
                   <th className="px-4 py-3 font-normal">FROM</th>
-                  <th className="px-4 py-3 text-right font-normal">SOL</th>
-                  <th className="px-4 py-3 text-right font-normal">$TCG</th>
+                  <th className="px-4 py-3 text-right font-normal">CRO</th>
+                  <th className="px-4 py-3 text-right font-normal">$CROCARD</th>
                   <th className="px-4 py-3 text-right font-normal">TX</th>
                 </tr>
               </thead>
               <tbody>
                 {answer.burns.map((burn) => (
-                  <tr key={burn.signature} className="border-b border-line last:border-0">
+                  <tr key={burn.txHash} className="border-b border-line last:border-0">
                     <td className="px-4 py-3 text-[10px] tabular-nums text-faint">
                       {new Date(burn.at).toLocaleDateString(undefined, {
                         day: "numeric",
@@ -152,19 +154,19 @@ export function Burn() {
                     </td>
                     <td className="px-4 py-3 text-[10px] text-muted">{burn.stream}</td>
                     <td className="px-4 py-3 text-right text-[10px] tabular-nums text-muted">
-                      {sol(burn.lamports)}
+                      {toCro(burn.wei).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-right text-[10px] tabular-nums text-dump">
-                      {burn.burned.toLocaleString("en-US")}
+                      {toTokens(burn.burned).toLocaleString("en-US")}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <a
-                        href={`https://solscan.io/tx/${burn.signature}`}
+                        href={`${EXPLORER}/tx/${burn.txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-[10px] text-pump hover:underline"
                       >
-                        {burn.signature.slice(0, 6)}…
+                        {burn.txHash.slice(0, 8)}…
                       </a>
                     </td>
                   </tr>
@@ -178,8 +180,9 @@ export function Burn() {
       <section>
         <h2 className="display text-xl">WHERE THE MONEY GOES</h2>
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
-          Four things earn, and three of the four send most of it into the token. Every buy-and-burn
-          runs through the deployer wallet, so all of it lands in one place anybody can watch.
+          Three things earn, and all three send most of what they earn into the token. Every
+          buy-and-burn runs through the deployer wallet, so all of it lands in one place anybody
+          can watch.
         </p>
 
         <div className="mt-5 space-y-3">
@@ -205,14 +208,21 @@ export function Burn() {
                     </dt>
                     <dd className="min-w-0 flex-1 text-muted">
                       {nameOf(share.to)}{" "}
-                      <a
-                        href={`https://solscan.io/account/${walletFor(share.to).address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-faint hover:text-fg"
-                      >
-                        {short(walletFor(share.to).address)}
-                      </a>
+                      {/* No address, no link. A wallet nobody has named yet says
+                          so — a placeholder here would be an address somebody
+                          could send money to, and it would not be ours. */}
+                      {walletFor(share.to).address === null ? (
+                        <span className="text-gold">not announced yet</span>
+                      ) : (
+                        <a
+                          href={`${EXPLORER}/address/${walletFor(share.to).address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-faint hover:text-fg"
+                        >
+                          {short(walletFor(share.to).address!)}
+                        </a>
+                      )}
                     </dd>
                   </div>
                 ))}
@@ -240,32 +250,41 @@ export function Burn() {
                     {wallet.id.toUpperCase()}
                   </dt>
                   <dd className="mt-1 text-[10px] leading-relaxed text-muted">{wallet.what}</dd>
-                  <a
-                    href={`https://solscan.io/account/${wallet.address}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 block font-mono text-[10px] break-all text-fg hover:text-pump"
-                  >
-                    {wallet.address}
-                  </a>
+                  {wallet.address === null ? (
+                    <p className="mt-1 text-[10px] text-gold">Not announced yet.</p>
+                  ) : (
+                    <a
+                      href={`${EXPLORER}/address/${wallet.address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 block font-mono text-[10px] break-all text-fg hover:text-pump"
+                    >
+                      {balance?.address ?? wallet.address}
+                    </a>
+                  )}
                 </div>
 
-                {/* Three states and never two. Empty is a fact about the wallet;
-                    unknown is a fact about the request, and reading "0 SOL"
-                    because something timed out is the one wrong answer this
-                    section can give. */}
+                {/* Four states and never three. Empty is a fact about the
+                    wallet; unknown is a fact about the request; and an address
+                    nobody has chosen yet is a fact about the project. Reading
+                    "0 CRO" for any of the other three is the one wrong answer
+                    this section can give. */}
                 <span className="shrink-0 text-right">
                   <span className="display block text-xl tabular-nums">
-                    {held === null
-                      ? "…"
-                      : balance?.lamports === null || balance === undefined
-                        ? "—"
-                        : sol(balance.lamports)}
+                    {wallet.address === null
+                      ? "—"
+                      : held === null
+                        ? "…"
+                        : balance?.wei == null
+                          ? "—"
+                          : toCro(balance.wei).toFixed(2)}
                   </span>
                   <span className="block text-[8px] tracking-[0.18em] text-faint">
-                    {held !== null && (balance?.lamports === null || balance === undefined)
-                      ? "NOT KNOWN"
-                      : "SOL"}
+                    {wallet.address === null
+                      ? "NO WALLET YET"
+                      : held !== null && balance?.wei == null
+                        ? "NOT KNOWN"
+                        : "CRO"}
                   </span>
                 </span>
               </div>

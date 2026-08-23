@@ -1,55 +1,52 @@
 "use client";
 
-// Talking to a Solana wallet, without a wallet library.
+// Talking to an EVM wallet, without a wallet library.
 //
-// @solana/wallet-adapter is the right answer once players connect, because it
-// handles the long tail of wallets and the UI that goes with picking one. Today
-// exactly one person connects — the deployer — and pulling in a provider tree
-// and a modal for one wallet is a lot of dependency for one signature. The
-// injected provider is what the adapter talks to underneath anyway.
+// The old dapp reached for Reown AppKit, and for what it was doing — minting,
+// which is a real transaction — that was the right call. Nothing here sends a
+// transaction. Signing in needs one method, `personal_sign`, and every wallet on
+// Cronos injects an EIP-1193 provider that has it. A provider tree, a modal and
+// a chain adapter for one signature is a lot of dependency for one signature,
+// and AppKit talks to this same injected object underneath anyway.
 //
-// Nothing here signs a transaction and nothing here can. signMessage takes plain
-// bytes and returns a signature over them; a wallet will not turn that into a
-// transfer, and the text it shows the signer says so.
+// When the mint arrives and something actually has to be sent, that is the point
+// where a wallet library earns its place. Not before.
+//
+// Nothing here signs a transaction and nothing here can. `personal_sign` takes
+// plain bytes and returns a signature over them; a wallet will not turn that
+// into a transfer, and the text it shows the signer says so.
 
 import { challenge, newNonce, type WalletProof } from "@/lib/session";
-import { base58Encode } from "@/lib/base58";
+import { bytesToHex, normalise } from "@/lib/address";
 
-interface SolanaProvider {
-  publicKey?: { toString(): string } | null;
-  connect(): Promise<{ publicKey: { toString(): string } }>;
-  disconnect?(): Promise<void>;
-  signMessage(message: Uint8Array, encoding?: string): Promise<unknown>;
+interface Eip1193 {
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+  isMetaMask?: boolean;
+  /** MetaMask's convention when more than one extension is installed. */
+  providers?: Eip1193[];
 }
 
 interface Injected {
-  phantom?: { solana?: SolanaProvider };
-  backpack?: SolanaProvider;
-  solflare?: SolanaProvider;
-  solana?: SolanaProvider;
+  ethereum?: Eip1193;
+  /** Crypto.com's wallet, which is the one this game's players are likeliest to have. */
+  deficonnectProvider?: Eip1193;
 }
 
 /**
  * The wallet this browser has, if it has one.
  *
- * Named providers before the generic `window.solana`, because more than one
- * extension writes to that and the last one to load wins — asking for Phantom by
- * name gets Phantom rather than whatever installed itself most recently.
+ * `window.ethereum` is a single slot that every extension writes to, and the
+ * last one to load wins. When several are installed MetaMask publishes the whole
+ * list on `.providers`, so prefer that over whoever happened to load last.
  */
-export function provider(): SolanaProvider | null {
+export function provider(): Eip1193 | null {
   if (typeof window === "undefined") return null;
   const w = window as unknown as Injected;
-  return w.phantom?.solana ?? w.backpack ?? w.solflare ?? w.solana ?? null;
-}
-
-/** Different wallets hand back the signature differently. Both shapes are real. */
-function signatureBytes(result: unknown): Uint8Array {
-  if (result instanceof Uint8Array) return result;
-  if (result && typeof result === "object" && "signature" in result) {
-    const signature = (result as { signature: unknown }).signature;
-    if (signature instanceof Uint8Array) return signature;
+  const injected = w.ethereum;
+  if (injected?.providers?.length) {
+    return injected.providers[0] ?? injected;
   }
-  throw new Error("The wallet returned a signature in a shape this site cannot read.");
+  return injected ?? w.deficonnectProvider ?? null;
 }
 
 /**
@@ -62,25 +59,45 @@ function signatureBytes(result: unknown): Uint8Array {
 export async function connectAndProve(): Promise<WalletProof> {
   const wallet = provider();
   if (!wallet) {
-    throw new Error("No Solana wallet found in this browser. Phantom, Solflare and Backpack all work.");
+    throw new Error(
+      "No wallet found in this browser. MetaMask and the Crypto.com wallet both work.",
+    );
   }
 
-  const { publicKey } = await wallet.connect();
-  const address = publicKey.toString();
+  const accounts = await wallet.request({ method: "eth_requestAccounts" });
+  if (!Array.isArray(accounts) || typeof accounts[0] !== "string") {
+    throw new Error("The wallet connected but named no account.");
+  }
+  // Normalised before it is signed, so the address inside the message and the
+  // address the site stores are the same string. A wallet that hands back a
+  // checksummed address and a database that keys on lowercase is two of one
+  // player, and it looks like nothing until somebody counts.
+  const address = normalise(accounts[0]);
 
   const unsigned = { address, issuedAt: Date.now(), nonce: newNonce() };
-  const signature = signatureBytes(
-    await wallet.signMessage(new TextEncoder().encode(challenge(unsigned)), "utf8"),
-  );
+  const message = challenge(unsigned);
 
-  return { ...unsigned, signature: base58Encode(signature) };
+  // Hex rather than the plain string. Wallets accept both, but a message that
+  // begins with 0x — or that a wallet decides looks like hex — is ambiguous, and
+  // the ambiguity is resolved differently by different wallets.
+  const hex = "0x" + bytesToHex(new TextEncoder().encode(message));
+  const signature = await wallet.request({ method: "personal_sign", params: [hex, address] });
+
+  if (typeof signature !== "string") {
+    throw new Error("The wallet returned a signature in a shape this site cannot read.");
+  }
+
+  return { ...unsigned, signature };
 }
 
 /** What went wrong, in words a person can act on. */
 export function reasonFor(error: unknown): string {
   const code = (error as { code?: number } | null)?.code;
-  // 4001 is the EIP-1193 code every wallet borrowed for "the user said no".
+  // 4001 is the EIP-1193 code for "the user said no".
   if (code === 4001) return "You turned down the signature. Nothing happened.";
+  // -32002 is a request already sitting in the wallet, unanswered. Telling
+  // somebody to look at their extension is more use than telling them it failed.
+  if (code === -32002) return "The wallet is already asking. Open it and answer there.";
   if (error instanceof Error && error.message) return error.message;
   return "The wallet did not answer.";
 }

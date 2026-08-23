@@ -798,26 +798,35 @@ export async function spendPoints(
 }
 
 export interface Burn {
-  signature: string;
+  /** The Cronos transaction hash, lowercase. */
+  txHash: string;
   stream: string;
-  lamports: number;
-  burned: number;
+  /** Wei spent buying, as a decimal string. Eighteen zeroes do not fit a number. */
+  wei: string;
+  /** Base units of $CROCARD destroyed, as a decimal string. */
+  burned: string;
   at: number;
 }
 
 export interface BurnTotal {
   burns: number;
-  lamports: number;
-  burned: number;
+  wei: string;
+  burned: string;
 }
 
 /** Every burn, newest first, capped so one page cannot become a slow one. */
 export async function burns(db: Database, limit = 50): Promise<Burn[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM burns ORDER BY at DESC LIMIT ?`)
+    .prepare(`SELECT tx_hash, stream, wei, burned, at FROM burns ORDER BY at DESC LIMIT ?`)
     .bind(limit)
-    .all<Burn>();
-  return results;
+    .all<{ tx_hash: string; stream: string; wei: string; burned: string; at: number }>();
+  return results.map((row) => ({
+    txHash: row.tx_hash,
+    stream: row.stream,
+    wei: row.wei,
+    burned: row.burned,
+    at: row.at,
+  }));
 }
 
 /**
@@ -827,34 +836,45 @@ export async function burns(db: Database, limit = 50): Promise<Burn[]> {
  * and the only thing that makes a burn counter worth reading is that it cannot.
  */
 export async function burnTotal(db: Database): Promise<BurnTotal> {
-  const row = await db
-    .prepare(
-      `SELECT COUNT(*) AS burns,
-              COALESCE(SUM(lamports), 0) AS lamports,
-              COALESCE(SUM(burned), 0) AS burned
-         FROM burns`,
-    )
-    .first<BurnTotal>();
-  return row ?? { burns: 0, lamports: 0, burned: 0 };
+  // Summed here rather than by SQL. Both columns are wei — eighteen zeroes —
+  // and they are TEXT for that reason; SUM() over TEXT would coerce them to
+  // doubles and round, quietly, in whichever direction the floats happened to
+  // fall. There are as many rows here as there have been buy-and-burns, which
+  // is a number a person can count, so reading them all costs nothing.
+  const { results } = await db
+    .prepare(`SELECT wei, burned FROM burns`)
+    .all<{ wei: string; burned: string }>();
+
+  let wei = 0n;
+  let burned = 0n;
+  for (const row of results) {
+    wei += BigInt(row.wei);
+    burned += BigInt(row.burned);
+  }
+  return { burns: results.length, wei: wei.toString(), burned: burned.toString() };
 }
 
 /**
  * Record a burn.
  *
- * DO NOTHING on conflict, because the signature is the key: the same
+ * DO NOTHING on conflict, because the transaction hash is the key: the same
  * transaction reported twice is the one mistake that makes the total wrong in
  * the flattering direction, and it has to be impossible rather than unlikely.
  */
 export async function recordBurn(db: Database, burn: Burn): Promise<boolean> {
   const written = await db
     .prepare(
-      `INSERT INTO burns (signature, stream, lamports, burned, at)
+      `INSERT INTO burns (tx_hash, stream, wei, burned, at)
        VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT (signature) DO NOTHING
-       RETURNING signature`,
+       ON CONFLICT (tx_hash) DO NOTHING
+       RETURNING tx_hash`,
     )
-    .bind(burn.signature, burn.stream, burn.lamports, burn.burned, burn.at)
-    .first<{ signature: string }>();
+    // Lowercased here as well as checked by the table. An explorer will hand you
+    // a hash in either case, and the table refusing it is a 500 where this is a
+    // row — the constraint is there to catch a path that forgot, not to be the
+    // path.
+    .bind(burn.txHash.toLowerCase(), burn.stream, burn.wei, burn.burned, burn.at)
+    .first<{ tx_hash: string }>();
   return written !== null;
 }
 

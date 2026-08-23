@@ -9,20 +9,9 @@
 // qualified by itself the whole thing is a wallet-generating machine.
 //
 // It writes rows. Clean up after yourself.
-import { ed25519 } from "@noble/curves/ed25519";
-
-import { base58Encode } from "@/lib/base58";
-import { challenge } from "@/lib/session";
+import { wallet } from "@/scripts/lib/signer";
 
 const BASE = process.argv[2] ?? "https://trenches.cards";
-
-function wallet(nonce: string) {
-  const secret = ed25519.utils.randomPrivateKey();
-  const address = base58Encode(ed25519.getPublicKey(secret));
-  const u = { address, issuedAt: Date.now(), nonce };
-  const sig = ed25519.sign(new TextEncoder().encode(challenge(u)), secret);
-  return { address, proof: { ...u, signature: base58Encode(sig) } };
-}
 
 async function ask(path: string, proof: unknown, body: Record<string, unknown> = {}) {
   const r = await fetch(`${BASE}${path}`, {

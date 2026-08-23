@@ -16,9 +16,9 @@ interface CloudflareEnv {
   /** A Worker secret. It is also the HMAC key the login payload is signed with. */
   TELEGRAM_BOT_TOKEN?: string;
   /**
-   * A Solana RPC endpoint. Absent falls back to the public one, which is
-   * rate-limited but free. A paid provider's URL carries its key, so it is a
-   * secret and never a var.
+   * A Cronos RPC endpoint. Absent falls back to the public ones in
+   * lib/cronos.ts, which are rate-limited but free and tried in order. A paid
+   * provider's URL carries its key, so it is a secret and never a var.
    */
-  SOLANA_RPC?: string;
+  CRONOS_RPC?: string;
 }

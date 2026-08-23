@@ -7,9 +7,9 @@
 // buys more: the deployer can mint while the mint is shut, and this button says
 // so when it is that wallet and stays quiet when it is not.
 //
-// It asks for a signature, not just an address. Every Solana address is public
-// the moment its wallet does anything on-chain, so an address alone proves
-// nothing; lib/session.ts has the long version.
+// It asks for a signature, not just an address. Every address is public the
+// moment its wallet does anything on-chain, so an address alone proves nothing;
+// lib/session.ts has the long version.
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -23,9 +23,9 @@ type Status = "idle" | "asking" | "failed";
 /**
  * How long to wait before saying the wallet might not have surfaced.
  *
- * connect() returns a promise that a wallet is free to leave pending forever,
- * and Phantom does exactly that when it cannot raise its own window: the request
- * goes and sits behind the toolbar icon instead. Nothing rejects, nothing times
+ * eth_requestAccounts returns a promise a wallet is free to leave pending
+ * forever, and extensions do exactly that when they cannot raise their own
+ * window: the request goes and sits behind the toolbar icon instead. Nothing rejects, nothing times
  * out, and from where the person is standing the button simply stopped. Eight
  * seconds is long enough that nobody who is reading a signing prompt gets nagged
  * and short enough that nobody concludes the site is broken.
@@ -194,9 +194,9 @@ export function WalletButton() {
                 // promise cannot tell anybody by itself.
                 <div className="mt-3 border border-line-strong px-3 py-2">
                   <p className="text-[10px] leading-relaxed text-muted">
-                    Phantom has not come forward. The request is still waiting — open the extension
-                    from the toolbar and it should be sitting there. A locked wallet asks for the
-                    password first.
+                    The wallet has not come forward. The request is still waiting — open the
+                    extension from the toolbar and it should be sitting there. A locked wallet asks
+                    for the password first.
                   </p>
                   <button
                     type="button"

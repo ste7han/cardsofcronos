@@ -2,20 +2,21 @@
 
 import { useState } from "react";
 
-import { TCG_MINT } from "@/lib/launch";
+import { TOKEN } from "@/lib/launch";
 
 /**
- * The TCG contract address, once it exists. Comes from lib/launch.ts, which is
- * also what the copycat banner reads — the two must never disagree about whether
- * a token exists, and one of them saying "not launched" while the other shows an
- * address is exactly what a scam wants the site to look like.
+ * The $CROCARD contract address. Comes from lib/launch.ts, which is also what
+ * the copycat banner reads — the two must never disagree about whether a token
+ * exists, and one of them saying "not launched" while the other shows an address
+ * is exactly what a scam wants the site to look like.
  *
- * While that is empty it says exactly that: not launched yet. A fake address, or a
- * grey box implying something is there, costs trust you don't get twice in this
+ * The empty branch is kept rather than deleted: an override that is set to
+ * nothing has to read as "not launched" and not as a blank box, because a blank
+ * box implying something is there costs trust you do not get twice in this
  * corner of the market.
  */
 export function ContractAddress() {
-  const address = TCG_MINT;
+  const address = TOKEN;
   const [copied, setCopied] = useState(false);
 
   if (!address) {

@@ -17,6 +17,20 @@ import { IllegalMove } from "@/engine/types";
 import type { MatchRecord } from "@/engine/record";
 import type { Move } from "@/engine/types";
 
+// Wallets that look like wallets.
+//
+// db/schema.sql checks every wallet column for lowercase, forty-two characters
+// and a leading 0x. The fake database below is a set of string matches and
+// enforces no constraints at all, so ALICE would pass here and be refused by
+// the real D1 — a test that is green about something production rejects, which
+// is exactly the shape this project has been caught by before.
+//
+// Still readable: a wallet of forty a's is as easy to follow as ALICE and it
+// is a valid address.
+const ALICE = "0x" + "a".repeat(40);
+const BOB = "0x" + "b".repeat(40);
+const CAROL = "0x" + "c".repeat(40);
+
 const index = buildIndex(CARDS);
 const T0 = 1_700_000_000_000;
 
@@ -25,7 +39,7 @@ function record(mode: "live" | "correspondence" = "correspondence"): MatchRecord
     id: "m1",
     mode,
     stake: 0,
-    seats: { you: "alice", opponent: "bob" },
+    seats: { you: ALICE, opponent: BOB },
     seed: 4242,
     decks: { you: buildDeck(CARDS, 4242), opponent: buildDeck(CARDS, 9191) },
     now: T0,
@@ -54,14 +68,14 @@ describe("a match as a record", () => {
 
   it("knows who is at the table and who is not", () => {
     const r = record();
-    expect(seatOf(r, "alice")).toBe("you");
-    expect(seatOf(r, "bob")).toBe("opponent");
-    expect(seatOf(r, "carol")).toBeNull();
+    expect(seatOf(r, ALICE)).toBe("you");
+    expect(seatOf(r, BOB)).toBe("opponent");
+    expect(seatOf(r, CAROL)).toBeNull();
   });
 
   it("refuses a move from somebody who is not in it", () => {
     const r = record();
-    expect(() => playInto(r, "carol", { kind: "endTurn" }, T0, CARDS, index)).toThrow(IllegalMove);
+    expect(() => playInto(r, CAROL, { kind: "endTurn" }, T0, CARDS, index)).toThrow(IllegalMove);
   });
 
   it("refuses a move from the player who is not to move", () => {
@@ -69,7 +83,7 @@ describe("a match as a record", () => {
     const state = stateOf(r, CARDS, index);
     expect(state.toMove).toBe("you");
     // Bob is at the table and it is not his turn.
-    expect(() => playInto(r, "bob", { kind: "endTurn" }, T0, CARDS, index)).toThrow(/not .*'s turn/);
+    expect(() => playInto(r, BOB, { kind: "endTurn" }, T0, CARDS, index)).toThrow(/not .*'s turn/);
   });
 });
 
@@ -127,12 +141,12 @@ describe("a move against the clock", () => {
     expect(playable).toBeGreaterThanOrEqual(0);
 
     const at = T0 + 1000;
-    const afterPlay = playInto(r, "alice", { kind: "playCard", handIndex: playable }, at, CARDS, index);
+    const afterPlay = playInto(r, ALICE, { kind: "playCard", handIndex: playable }, at, CARDS, index);
     // Still your turn, so still your original deadline. Playing a card must not
     // buy another twenty-four hours, or a match never has to end.
     expect(afterPlay.deadline).toBe(r.deadline);
 
-    const afterEnd = playInto(afterPlay, "alice", { kind: "endTurn" }, at, CARDS, index);
+    const afterEnd = playInto(afterPlay, ALICE, { kind: "endTurn" }, at, CARDS, index);
     expect(afterEnd.deadline).toBe(at + TURN_CLOCK.correspondence);
   });
 
@@ -141,7 +155,7 @@ describe("a move against the clock", () => {
     // then the clock has already ended that turn for her and it is Bob's.
     const r = record();
     const late = T0 + TURN_CLOCK.correspondence + 1000;
-    expect(() => playInto(r, "alice", { kind: "endTurn" }, late, CARDS, index)).toThrow(
+    expect(() => playInto(r, ALICE, { kind: "endTurn" }, late, CARDS, index)).toThrow(
       /not .*'s turn/,
     );
   });

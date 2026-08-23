@@ -13,6 +13,20 @@ import type { Database, Link, Listing, Statement } from "@/lib/store";
 import { PERFECT_SCORE, TASKS } from "@/lib/points";
 import type { MatchRecord } from "@/engine/record";
 
+// Wallets that look like wallets.
+//
+// db/schema.sql checks every wallet column for lowercase, forty-two characters
+// and a leading 0x. The fake database below is a set of string matches and
+// enforces no constraints at all, so ALICE would pass here and be refused by
+// the real D1 — a test that is green about something production rejects, which
+// is exactly the shape this project has been caught by before.
+//
+// Still readable: a wallet of forty a's is as easy to follow as ALICE and it
+// is a valid address.
+const ALICE = "0x" + "a".repeat(40);
+const BOB = "0x" + "b".repeat(40);
+const CAROL = "0x" + "c".repeat(40);
+
 /**
  * A fake that stores rows and answers the handful of queries this file writes.
  *
@@ -296,7 +310,7 @@ const T0 = 1_700_000_000_000;
 
 const listing = (over: Partial<Listing> = {}): Listing => ({
   id: "l1",
-  playerId: "alice",
+  playerId: ALICE,
   mode: "correspondence",
   stake: 0,
   deck: ["a", "b"],
@@ -307,7 +321,7 @@ const listing = (over: Partial<Listing> = {}): Listing => ({
 });
 
 const link = (over: Partial<Link> = {}): Link => ({
-  wallet: "alice",
+  wallet: ALICE,
   network: "x",
   accountId: "111",
   handle: "alice_x",
@@ -319,7 +333,7 @@ const record = (over: Partial<MatchRecord> = {}): MatchRecord => ({
   id: "m1",
   mode: "correspondence",
   stake: 0,
-  seats: { you: "alice", opponent: "bob" },
+  seats: { you: ALICE, opponent: BOB },
   seed: 4242,
   decks: { you: ["a"], opponent: ["b"] },
   moves: [],
@@ -370,34 +384,34 @@ describe("the lobby", () => {
 describe("the limits", () => {
   it("counts offers as well as matches", async () => {
     const db = fakeDb();
-    expect(await hasRoomFor(db, "alice", "live", T0)).toBe(true);
+    expect(await hasRoomFor(db, ALICE, "live", T0)).toBe(true);
 
     // One live offer standing is one live match committed to. Counting only
     // matches would let a player hold five offers and five matches.
     await putListing(db, listing({ id: "offer", mode: "live" }));
-    expect(await hasRoomFor(db, "alice", "live", T0)).toBe(false);
+    expect(await hasRoomFor(db, ALICE, "live", T0)).toBe(false);
   });
 
   it("lets go once an offer expires", async () => {
     const db = fakeDb();
     await putListing(db, listing({ id: "offer", mode: "live", expiresAt: T0 + 10 }));
-    expect(await hasRoomFor(db, "alice", "live", T0)).toBe(false);
-    expect(await hasRoomFor(db, "alice", "live", T0 + 11)).toBe(true);
+    expect(await hasRoomFor(db, ALICE, "live", T0)).toBe(false);
+    expect(await hasRoomFor(db, ALICE, "live", T0 + 11)).toBe(true);
   });
 
   it("holds five correspondence matches and refuses the sixth", async () => {
     const db = fakeDb();
     for (let i = 0; i < CONCURRENT.correspondence; i++) {
       await putMatch(db, record({ id: `m${i}` }));
-      expect(await hasRoomFor(db, "alice", "correspondence", T0)).toBe(i < CONCURRENT.correspondence - 1);
+      expect(await hasRoomFor(db, ALICE, "correspondence", T0)).toBe(i < CONCURRENT.correspondence - 1);
     }
   });
 
   it("counts a mode against itself only", async () => {
     const db = fakeDb();
     await putMatch(db, record({ id: "live1", mode: "live" }));
-    expect(await hasRoomFor(db, "alice", "live", T0)).toBe(false);
-    expect(await hasRoomFor(db, "alice", "correspondence", T0)).toBe(true);
+    expect(await hasRoomFor(db, ALICE, "live", T0)).toBe(false);
+    expect(await hasRoomFor(db, ALICE, "correspondence", T0)).toBe(true);
   });
 });
 
@@ -411,10 +425,10 @@ describe("a match in storage", () => {
 
   it("finds a player on either side of the table", async () => {
     const db = fakeDb();
-    await putMatch(db, record({ id: "m1", seats: { you: "alice", opponent: "bob" } }));
-    expect((await matchesOf(db, "alice")).map((m) => m.id)).toEqual(["m1"]);
-    expect((await matchesOf(db, "bob")).map((m) => m.id)).toEqual(["m1"]);
-    expect(await matchesOf(db, "carol")).toEqual([]);
+    await putMatch(db, record({ id: "m1", seats: { you: ALICE, opponent: BOB } }));
+    expect((await matchesOf(db, ALICE)).map((m) => m.id)).toEqual(["m1"]);
+    expect((await matchesOf(db, BOB)).map((m) => m.id)).toEqual(["m1"]);
+    expect(await matchesOf(db, CAROL)).toEqual([]);
   });
 
   it("writes moves back and marks a finish", async () => {
@@ -427,7 +441,7 @@ describe("a match in storage", () => {
     expect(back!.deadline).toBe(T0 + 5000);
     // Finished matches stop counting against the limit, which is the only thing
     // finished_at is for.
-    expect(await hasRoomFor(db, "alice", "correspondence", T0)).toBe(true);
+    expect(await hasRoomFor(db, ALICE, "correspondence", T0)).toBe(true);
   });
 });
 
@@ -435,24 +449,24 @@ describe("linking an account", () => {
   it("attaches one, and finds it again", async () => {
     const db = fakeDb();
     expect(await linkAccount(db, link())).toBeNull();
-    const [back] = await linksOf(db, "alice");
+    const [back] = await linksOf(db, ALICE);
     expect(back).toMatchObject({ network: "x", accountId: "111", handle: "alice_x" });
   });
 
   it("refuses an account another wallet already holds, and says who", async () => {
     const db = fakeDb();
-    await linkAccount(db, link({ wallet: "alice" }));
+    await linkAccount(db, link({ wallet: ALICE }));
     // The whole defence of a referral system. Without it, points are farmed by
     // making wallets, and wallets are free.
-    expect(await linkAccount(db, link({ wallet: "bob" }))).toBe("alice");
-    expect(await linksOf(db, "bob")).toEqual([]);
+    expect(await linkAccount(db, link({ wallet: BOB }))).toBe(ALICE);
+    expect(await linksOf(db, BOB)).toEqual([]);
   });
 
   it("lets a wallet re-link its own account, because people rename themselves", async () => {
     const db = fakeDb();
     await linkAccount(db, link({ handle: "old_name" }));
     expect(await linkAccount(db, link({ handle: "new_name" }))).toBeNull();
-    const rows = await linksOf(db, "alice");
+    const rows = await linksOf(db, ALICE);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.handle).toBe("new_name");
   });
@@ -462,7 +476,7 @@ describe("linking an account", () => {
     // Between the two there is a moment where another wallet can take the
     // account, and a player cannot act on a 500.
     const db = fakeDb();
-    await linkAccount(db, link({ wallet: "alice" }));
+    await linkAccount(db, link({ wallet: ALICE }));
 
     const real = db.prepare;
     db.prepare = (sql: string) => {
@@ -475,16 +489,16 @@ describe("linking an account", () => {
       return statement;
     };
 
-    expect(await linkAccount(db, link({ wallet: "carol" }))).toBe("alice");
+    expect(await linkAccount(db, link({ wallet: CAROL }))).toBe(ALICE);
   });
 
   it("frees the account again when it is unlinked", async () => {
     const db = fakeDb();
-    await linkAccount(db, link({ wallet: "alice" }));
-    await unlinkAccount(db, "alice", "x");
+    await linkAccount(db, link({ wallet: ALICE }));
+    await unlinkAccount(db, ALICE, "x");
     // What stops farming is that an account cannot be in two places at once, not
     // that it can never move.
-    expect(await linkAccount(db, link({ wallet: "bob" }))).toBeNull();
+    expect(await linkAccount(db, link({ wallet: BOB }))).toBeNull();
   });
 });
 
@@ -496,11 +510,11 @@ describe("who brought whom", () => {
 
   it("gives a code once and keeps giving the same one", async () => {
     const db = fakeDb();
-    const first = await seen(db, "alice");
+    const first = await seen(db, ALICE);
     expect(first).toHaveLength(8);
     // A code that changed would rewrite who brought whom every time somebody
     // reloaded their profile.
-    expect(await ensureRefCode(db, "alice")).toBe(first);
+    expect(await ensureRefCode(db, ALICE)).toBe(first);
   });
 
   it("uses an alphabet you can read off one phone and type into another", () => {
@@ -511,102 +525,102 @@ describe("who brought whom", () => {
 
   it("records a referral, and only ever one", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
-    await seePlayer(db, "bob", T0);
+    const code = await seen(db, ALICE);
+    await seePlayer(db, BOB, T0);
 
-    expect(await claimReferral(db, "bob", code, T0)).toBe("claimed");
+    expect(await claimReferral(db, BOB, code, T0)).toBe("claimed");
     // Once, forever. "Who brought this player" has one answer for the life of
     // the wallet.
-    expect(await claimReferral(db, "bob", code, T0)).toBe("already");
-    expect(await referralsBy(db, "alice")).toHaveLength(1);
+    expect(await claimReferral(db, BOB, code, T0)).toBe("already");
+    expect(await referralsBy(db, ALICE)).toHaveLength(1);
   });
 
   it("is not case-sensitive, because nobody types a code the way it is printed", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
-    await seePlayer(db, "bob", T0);
-    expect(await claimReferral(db, "bob", code.toLowerCase(), T0)).toBe("claimed");
+    const code = await seen(db, ALICE);
+    await seePlayer(db, BOB, T0);
+    expect(await claimReferral(db, BOB, code.toLowerCase(), T0)).toBe("claimed");
   });
 
   it("refuses your own code and a code that is not one", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
+    const code = await seen(db, ALICE);
     // Referring yourself would be the whole exploit in one step — a wallet is
     // free — and it is also the honest mistake people make with their own link.
-    expect(await claimReferral(db, "alice", code, T0)).toBe("self");
-    expect(await claimReferral(db, "bob", "NOTACODE", T0)).toBe("unknown");
+    expect(await claimReferral(db, ALICE, code, T0)).toBe("self");
+    expect(await claimReferral(db, BOB, "NOTACODE", T0)).toBe("unknown");
   });
 
   it("pays the doer and whoever brought them, one point each", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
-    await seePlayer(db, "bob", T0);
-    await claimReferral(db, "bob", code, T0);
+    const code = await seen(db, ALICE);
+    await seePlayer(db, BOB, T0);
+    await claimReferral(db, BOB, code, T0);
 
-    expect(await completeTask(db, "bob", "demo", "verified", T0)).toBe(true);
-    expect((await ledgerOf(db, "bob")).balance).toBe(1);
+    expect(await completeTask(db, BOB, "demo", "verified", T0)).toBe(true);
+    expect((await ledgerOf(db, BOB)).balance).toBe(1);
     // The whole shape of the maker's design in one assertion: a referral is
     // worth up to five because each of the five tasks pays the referrer once.
-    expect((await ledgerOf(db, "alice")).balance).toBe(1);
+    expect((await ledgerOf(db, ALICE)).balance).toBe(1);
   });
 
   it("pays for a task once, however many times it is reported", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
-    await seePlayer(db, "bob", T0);
-    await claimReferral(db, "bob", code, T0);
+    const code = await seen(db, ALICE);
+    await seePlayer(db, BOB, T0);
+    await claimReferral(db, BOB, code, T0);
 
-    await completeTask(db, "bob", "demo", "verified", T0);
+    await completeTask(db, BOB, "demo", "verified", T0);
     // A point paid twice cannot be corrected: nothing in the row says it
     // happened twice.
-    expect(await completeTask(db, "bob", "demo", "verified", T0 + 1)).toBe(false);
-    expect((await ledgerOf(db, "bob")).balance).toBe(1);
-    expect((await ledgerOf(db, "alice")).balance).toBe(1);
+    expect(await completeTask(db, BOB, "demo", "verified", T0 + 1)).toBe(false);
+    expect((await ledgerOf(db, BOB)).balance).toBe(1);
+    expect((await ledgerOf(db, ALICE)).balance).toBe(1);
   });
 
   it("pays five for five, and five to the referrer", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
-    await seePlayer(db, "bob", T0);
-    await claimReferral(db, "bob", code, T0);
+    const code = await seen(db, ALICE);
+    await seePlayer(db, BOB, T0);
+    await claimReferral(db, BOB, code, T0);
 
-    for (const task of TASKS) await completeTask(db, "bob", task, "verified", T0);
-    expect((await ledgerOf(db, "bob")).balance).toBe(PERFECT_SCORE);
-    expect((await ledgerOf(db, "alice")).balance).toBe(PERFECT_SCORE);
+    for (const task of TASKS) await completeTask(db, BOB, task, "verified", T0);
+    expect((await ledgerOf(db, BOB)).balance).toBe(PERFECT_SCORE);
+    expect((await ledgerOf(db, ALICE)).balance).toBe(PERFECT_SCORE);
   });
 
   it("pays a referrer nothing for somebody nobody referred", async () => {
     const db = fakeDb();
-    await seePlayer(db, "carol", T0);
-    await completeTask(db, "carol", "demo", "verified", T0);
-    expect((await ledgerOf(db, "carol")).balance).toBe(1);
+    await seePlayer(db, CAROL, T0);
+    await completeTask(db, CAROL, "demo", "verified", T0);
+    expect((await ledgerOf(db, CAROL)).balance).toBe(1);
   });
 
   it("takes back a botted task and the referral point with it", async () => {
     const db = fakeDb();
-    const code = await seen(db, "alice");
-    await seePlayer(db, "bob", T0);
-    await claimReferral(db, "bob", code, T0);
-    await completeTask(db, "bob", "follow_x", "declared", T0);
+    const code = await seen(db, ALICE);
+    await seePlayer(db, BOB, T0);
+    await claimReferral(db, BOB, code, T0);
+    await completeTask(db, BOB, "follow_x", "declared", T0);
 
-    await voidTask(db, "bob", "follow_x", T0 + 10);
-    expect((await ledgerOf(db, "bob")).balance).toBe(0);
+    await voidTask(db, BOB, "follow_x", T0 + 10);
+    expect((await ledgerOf(db, BOB)).balance).toBe(0);
     // Both sides. The referrer earned that point from a task that is no longer
     // standing.
-    expect((await ledgerOf(db, "alice")).balance).toBe(0);
+    expect((await ledgerOf(db, ALICE)).balance).toBe(0);
     // Voided, not deleted: it is evidence, and it stops the same point being
     // earned again.
-    expect((await tasksOf(db, "bob"))[0]!.voided).toBe(true);
-    expect(await completeTask(db, "bob", "follow_x", "declared", T0 + 20)).toBe(false);
+    expect((await tasksOf(db, BOB))[0]!.voided).toBe(true);
+    expect(await completeTask(db, BOB, "follow_x", "declared", T0 + 20)).toBe(false);
   });
 
   it("remembers how it knows, and does not blur the two", async () => {
     const db = fakeDb();
-    await seePlayer(db, "bob", T0);
-    await completeTask(db, "bob", "join_telegram", "verified", T0);
-    await completeTask(db, "bob", "follow_x", "declared", T0);
+    await seePlayer(db, BOB, T0);
+    await completeTask(db, BOB, "join_telegram", "verified", T0);
+    await completeTask(db, BOB, "follow_x", "declared", T0);
 
-    const done = await tasksOf(db, "bob");
+    const done = await tasksOf(db, BOB);
     expect(done.find((t) => t.task === "join_telegram")!.proof).toBe("verified");
     expect(done.find((t) => t.task === "follow_x")!.proof).toBe("declared");
   });
@@ -620,37 +634,37 @@ describe("spending points", () => {
 
   it("takes the cost off the balance", async () => {
     const db = fakeDb();
-    await fill(db, "alice");
-    expect(await spendPoints(db, "alice", "card", 5, T0)).toBe(true);
-    expect(await ledgerOf(db, "alice")).toMatchObject({ balance: 0, earned: 5, spent: 5 });
+    await fill(db, ALICE);
+    expect(await spendPoints(db, ALICE, "card", 5, T0)).toBe(true);
+    expect(await ledgerOf(db, ALICE)).toMatchObject({ balance: 0, earned: 5, spent: 5 });
   });
 
   it("refuses what cannot be afforded", async () => {
     const db = fakeDb();
-    await fill(db, "alice");
-    expect(await spendPoints(db, "alice", "booster", 25, T0)).toBe(false);
-    expect((await ledgerOf(db, "alice")).balance).toBe(PERFECT_SCORE);
+    await fill(db, ALICE);
+    expect(await spendPoints(db, ALICE, "booster", 25, T0)).toBe(false);
+    expect((await ledgerOf(db, ALICE)).balance).toBe(PERFECT_SCORE);
   });
 
   it("lets the same reward be claimed twice, unlike a task", async () => {
     const db = fakeDb();
-    await seePlayer(db, "alice", T0);
+    await seePlayer(db, ALICE, T0);
     for (let i = 0; i < 12; i++) await completeTask(db, `filler${i}`, "demo", "verified", T0);
     // Points from nowhere would be cleaner, but this is what the ledger allows
     // without an adjust route: give alice her own five and check the refusal
     // instead of the second claim.
-    await fill(db, "alice");
-    expect(await spendPoints(db, "alice", "card", 5, T0)).toBe(true);
-    expect(await spendPoints(db, "alice", "card", 5, T0)).toBe(false);
+    await fill(db, ALICE);
+    expect(await spendPoints(db, ALICE, "card", 5, T0)).toBe(true);
+    expect(await spendPoints(db, ALICE, "card", 5, T0)).toBe(false);
   });
   it("keeps the date of the first demo, not the last", async () => {
     const db = fakeDb();
-    await seePlayer(db, "bob", T0);
-    await markDemoDone(db, "bob", T0);
-    await markDemoDone(db, "bob", T0 + 90_000);
+    await seePlayer(db, BOB, T0);
+    await markDemoDone(db, BOB, T0);
+    await markDemoDone(db, BOB, T0 + 90_000);
     // "When did they first meet the game" has one answer, and playing ten demos
     // is not meeting it ten times.
-    expect((await playerOf(db, "bob")).demoDoneAt).toBe(T0);
+    expect((await playerOf(db, BOB)).demoDoneAt).toBe(T0);
   });
 
 });
@@ -658,13 +672,13 @@ describe("spending points", () => {
 describe("a record", () => {
   it("counts wins, losses and draws apart", async () => {
     const db = fakeDb();
-    await seePlayer(db, "alice", T0);
-    await addResult(db, "alice", "win", T0);
-    await addResult(db, "alice", "win", T0);
-    await addResult(db, "alice", "loss", T0);
-    await addResult(db, "alice", "draw", T0);
+    await seePlayer(db, ALICE, T0);
+    await addResult(db, ALICE, "win", T0);
+    await addResult(db, ALICE, "win", T0);
+    await addResult(db, ALICE, "loss", T0);
+    await addResult(db, ALICE, "draw", T0);
 
-    const player = await playerOf(db, "alice");
+    const player = await playerOf(db, ALICE);
     expect([player.wins, player.losses, player.draws]).toEqual([2, 1, 1]);
     // Cosmetic and separate from the rank, which only staked matches move.
     expect(player.rank).toBe(1000);

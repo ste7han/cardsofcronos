@@ -10,21 +10,11 @@
 // cannot answer any of those, and this is the only thing that can.
 //
 // It writes rows. Run it against the live site and clean up after yourself.
-import { ed25519 } from "@noble/curves/ed25519";
-import { base58Encode } from "@/lib/base58";
-import { challenge } from "@/lib/session";
+import { wallet } from "@/scripts/lib/signer";
 import { buildDeckPreferring } from "@/engine/deck";
 import { SET } from "@/lib/set";
 
 const BASE = `${process.argv[2] ?? "https://trenches.cards"}/api/pvp`;
-
-function wallet(nonce: string) {
-  const secret = ed25519.utils.randomPrivateKey();
-  const address = base58Encode(ed25519.getPublicKey(secret));
-  const u = { address, issuedAt: Date.now(), nonce };
-  const sig = ed25519.sign(new TextEncoder().encode(challenge(u)), secret);
-  return { address, proof: { ...u, signature: base58Encode(sig) } };
-}
 
 async function ask(path: string, proof: unknown, body: Record<string, unknown> = {}) {
   const r = await fetch(`${BASE}/${path}`, {

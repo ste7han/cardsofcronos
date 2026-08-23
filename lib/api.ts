@@ -12,6 +12,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Database } from "@/lib/store";
 import { seePlayer } from "@/lib/store";
 import { verifyProof, type WalletProof } from "@/lib/session";
+import { normalise } from "@/lib/address";
 
 export function env(): CloudflareEnv {
   return getCloudflareContext().env;
@@ -32,7 +33,13 @@ export function db(): Database {
 export function walletFrom(body: unknown): string | null {
   const proof = (body as { proof?: WalletProof } | null)?.proof;
   if (!proof || typeof proof !== "object") return null;
-  return verifyProof(proof, Date.now()) ? proof.address : null;
+  if (!verifyProof(proof, Date.now())) return null;
+  // Normalised, not taken as written. An EVM address is the same wallet in any
+  // case, so a proof signed with a checksummed address and one signed with a
+  // lowercase one are the same person — and storing both spellings would make
+  // them two players, two referral rows and two sets of points. This is the door
+  // every wallet comes through, so this is where the spelling is settled.
+  return normalise(proof.address);
 }
 
 /** Reads the proof out of a request and makes sure the player exists. */

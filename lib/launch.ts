@@ -6,23 +6,35 @@
 // launch is worse than no warning at all: it is the thing that makes the real
 // site look like the fake one.
 //
-// NEXT_PUBLIC_ because the browser needs it, and it is not a secret: a mint
-// address is the most public thing about a token. Absent means not launched,
-// which is the only sensible default — a missing variable must never read as
-// "yes, this is live".
+// For this project the answer is yes, and has been since the first version.
+// $CROCARD is on Cronos, people hold it, and the old dapp already gave a mint
+// discount for holding it. That is a different starting point from the one this
+// code came from, where the file existed because there was nothing yet — so the
+// copycat banner draws nothing and the address panel simply shows the address.
+//
+// The override stays because a testnet or a preview deploy is a real thing to
+// want, and NEXT_PUBLIC_ because the browser needs it. A contract address is the
+// most public fact about a token; there is no secret here.
 
+import { CROCARD } from "@/lib/revenue";
 import { TELEGRAM_CHANNEL, X_ACCOUNT, X_HANDLE } from "@/lib/links";
 
-export const TCG_MINT = process.env.NEXT_PUBLIC_TCG_MINT ?? "";
+export const TOKEN = process.env.NEXT_PUBLIC_TOKEN ?? CROCARD;
 
-export const LAUNCHED = TCG_MINT.length > 0;
+export const LAUNCHED = TOKEN.length > 0;
 
 /**
  * Where an official link actually comes from.
  *
  * The URLs are imported rather than repeated. This object had its own copy of
- * the Telegram address, which is one edit away from the banner naming a channel
+ * the Telegram address, which is one edit away from a banner naming a channel
  * that no longer exists while telling people it is the safe one.
+ *
+ * TODO: `site` is still the other project's domain, and so are the accounts in
+ * lib/links.ts. Nothing renders them today — LAUNCHED is true, so the copycat
+ * banner draws nothing — but the moment anything does, this sentence would be
+ * pointing people at somebody else's Telegram while calling it the safe one.
+ * They go together with the rest of the naming.
  */
 export const OFFICIAL = {
   site: "trenches.cards",

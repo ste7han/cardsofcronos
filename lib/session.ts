@@ -6,37 +6,43 @@
 // another. Folding the two together is how you end up with a site where the
 // only person who can log in is the one person who does not need to.
 //
-// A signature and not an address. Every Solana address is public the moment its
-// wallet does anything on-chain, so an address someone typed proves nothing at
-// all — the only thing separating a holder from a reader is that a holder can
-// sign. The wallet signs a line of text naming itself, the moment and a nonce,
-// and that signature is re-checked on every read rather than swapped for a
-// stored "yes".
+// A signature and not an address. Every address is public the moment its wallet
+// does anything on-chain, so an address someone typed proves nothing at all —
+// the only thing separating a holder from a reader is that a holder can sign.
+// The wallet signs a line of text naming itself, the moment and a nonce, and
+// that signature is re-checked on every read rather than swapped for a stored
+// "yes".
+//
+// On EVM the check runs the other way round from the Solana version this came
+// from. There is no public key to fetch: the address *is* a hash of the key, so
+// the key is recovered from the signature and hashed, and the result either is
+// the address the proof claims or it is not. One fewer thing to look up, and no
+// way to verify against a key the proof did not actually name.
 //
 // What this is not: security. Verification happens in a browser the visitor
 // owns, so a determined person can patch the running app and claim any address
 // they like. Today that gets them a deck builder full of cards nobody can play
 // for money. The moment there is a stake, this same proof has to be checked on
-// the server and the client's answer stops counting. There is a matching note in
-// DESIGN.md so this cannot quietly become load-bearing.
+// the server and the client's answer stops counting.
 
-import { ed25519 } from "@noble/curves/ed25519";
+import { secp256k1 } from "@noble/curves/secp256k1";
+import { keccak_256 } from "@noble/hashes/sha3";
 
-import { base58Decode } from "@/lib/base58";
+import { addressOf, hexToBytes, normalise } from "@/lib/address";
 
 /** How long a session lasts before the wallet has to sign again. */
 export const SESSION_LIFE = 12 * 60 * 60 * 1000;
 
-const KEY = "tcg.session.v1";
+const KEY = "coc.session.v1";
 
 /** Fired on this window whenever the session appears, changes or goes. */
-export const SESSION_EVENT = "tcg:session";
+export const SESSION_EVENT = "coc:session";
 
 export interface WalletProof {
   address: string;
   issuedAt: number;
   nonce: string;
-  /** The signature over `challenge()`, base58 as wallets hand it over. */
+  /** The signature over `challenge()`, 65 bytes of hex as personal_sign returns it. */
   signature: string;
 }
 
@@ -50,7 +56,7 @@ export interface WalletProof {
  */
 export function challenge(proof: Pick<WalletProof, "address" | "issuedAt" | "nonce">): string {
   return [
-    "Trenches Card Game — sign in",
+    "Cards of Cronos — sign in",
     "",
     `Wallet: ${proof.address}`,
     `Issued: ${new Date(proof.issuedAt).toISOString()}`,
@@ -62,11 +68,33 @@ export function challenge(proof: Pick<WalletProof, "address" | "issuedAt" | "non
 }
 
 /**
+ * What `personal_sign` actually hashes.
+ *
+ * EIP-191: a 0x19 byte, then the fixed string, then the message's own byte
+ * length, then the message itself. The 0x19 is what stops a wallet being talked
+ * into signing something that is also a valid transaction, so it is the whole
+ * point of the prefix rather than decoration on it.
+ *
+ * The length is in bytes and not characters — a message with an accent in it
+ * hashes to the wrong thing if you count the string instead, and it would fail
+ * only for the people whose names have one.
+ */
+export function signingHash(message: string): Uint8Array {
+  const body = new TextEncoder().encode(message);
+  const prefix = new TextEncoder().encode(`\x19Ethereum Signed Message:\n${body.length}`);
+  const both = new Uint8Array(prefix.length + body.length);
+  both.set(prefix);
+  both.set(body, prefix.length);
+  return keccak_256(both);
+}
+
+/**
  * Does this proof show that someone holds the address it names?
  *
- * The key comes out of the address in the proof rather than from a list, because
- * that is the question being asked: not "is this the admin" — that is decided
- * afterwards, by comparing addresses — but "is this address anybody's to claim".
+ * The address is recovered from the signature rather than compared against a
+ * list, because that is the question being asked: not "is this the admin" — that
+ * is decided afterwards, by comparing addresses — but "is this address anybody's
+ * to claim".
  */
 export function verifyProof(proof: WalletProof, now: number): boolean {
   if (!Number.isFinite(proof.issuedAt)) return false;
@@ -75,14 +103,26 @@ export function verifyProof(proof: WalletProof, now: number): boolean {
   if (now < proof.issuedAt || now - proof.issuedAt > SESSION_LIFE) return false;
 
   try {
-    const key = base58Decode(proof.address);
-    if (key.length !== 32) return false;
-    const signature = base58Decode(proof.signature);
-    if (signature.length !== 64) return false;
-    return ed25519.verify(signature, new TextEncoder().encode(challenge(proof)), key);
+    const claimed = normalise(proof.address);
+    const bytes = hexToBytes(proof.signature);
+    if (bytes.length !== 65) return false;
+
+    // v is 27 or 28 by long convention, and 0 or 1 from wallets that never read
+    // the convention. Both are real and both arrive here.
+    const v = bytes[64]!;
+    const recovery = v >= 27 ? v - 27 : v;
+    if (recovery !== 0 && recovery !== 1) return false;
+
+    const hash = signingHash(challenge(proof));
+    const signature = secp256k1.Signature.fromCompact(bytes.subarray(0, 64)).addRecoveryBit(
+      recovery,
+    );
+    const signer = addressOf(signature.recoverPublicKey(hash).toRawBytes(false));
+    return signer === claimed;
   } catch {
-    // Malformed base58, a signature that is not a point on the curve — all of
-    // these are "no", and none of them should take the page down.
+    // A malformed address, hex that is not hex, a signature that is not a point
+    // on the curve — all of these are "no", and none of them should take the
+    // page down.
     return false;
   }
 }
@@ -125,11 +165,14 @@ export function proofOf(now: number = Date.now()): WalletProof | null {
  * Re-verified on every call rather than trusting a stored flag. That is the
  * whole reason the signature is what gets kept: writing this key by hand gets
  * you nowhere without the private key that goes with the address.
+ *
+ * Lowercase, always. This is the identity every other part of the site keys on,
+ * and one wallet arriving under two spellings is one player counted twice.
  */
 export function signedIn(now: number = Date.now()): string | null {
   const proof = read();
   if (proof === null || !verifyProof(proof, now)) return null;
-  return proof.address;
+  return normalise(proof.address);
 }
 
 /** Keeps a proof, if it is good. Returns the address it proves, or null. */
@@ -137,7 +180,7 @@ export function keepProof(proof: WalletProof, now: number = Date.now()): string 
   if (!verifyProof(proof, now)) return null;
   window.localStorage.setItem(KEY, JSON.stringify(proof));
   window.dispatchEvent(new Event(SESSION_EVENT));
-  return proof.address;
+  return normalise(proof.address);
 }
 
 export function signOut(): void {

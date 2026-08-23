@@ -4,40 +4,38 @@
 // asking an RPC once per visitor is how you get rate-limited by lunchtime.
 
 import { env } from "@/lib/api";
-import { BALANCE_TTL, balances } from "@/lib/solana";
+import { BALANCE_TTL, PUBLIC_RPCS, balances } from "@/lib/cronos";
 import { WALLETS } from "@/lib/revenue";
+import { checksum } from "@/lib/address";
 
 export const dynamic = "force-dynamic";
 
-/**
- * A public endpoint that answers a Worker, unless something better is set.
- *
- * Not api.mainnet-beta.solana.com, which was the obvious choice and returns 403
- * here: it refuses datacenter traffic, and a Cloudflare Worker is datacenter
- * traffic. It answers a laptop perfectly, which is exactly why that was worth
- * finding out from the Worker's own logs rather than from a terminal.
- *
- * This one is free, needs no key, and is rate-limited in ways nobody publishes.
- * Survivable, because a refusal shows as "not known" rather than as a wrong
- * number, and because one cached call a minute is not much to ask. Set
- * SOLANA_RPC as a Worker secret to point at a paid provider — a paid URL carries
- * its key, so it is a secret and never a var.
- */
-const PUBLIC_RPC = "https://solana-rpc.publicnode.com";
-
 export async function GET() {
-  const rpc = env().SOLANA_RPC ?? PUBLIC_RPC;
+  // A secret first, then the free ones in order. Cronos' public endpoints go
+  // down often enough that a single one is not a plan — the old dapp's holder
+  // scan learned that the hard way and kept a list.
+  const secret = env().CRONOS_RPC;
+  const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
 
   const wallets = Object.values(WALLETS);
-  const lamports = await balances(rpc, wallets.map((wallet) => wallet.address));
+  // Only the ones that have an address. The others are not zero and not a
+  // failed lookup — nobody has said what they are yet, and the page says so.
+  const known = wallets.filter((wallet) => wallet.address !== null);
+  const wei = await balances(rpcs, known.map((wallet) => wallet.address!));
+  const found = new Map(known.map((wallet, i) => [wallet.id, wei[i] ?? null]));
 
   return Response.json(
     {
-      wallets: wallets.map((wallet, i) => ({
+      wallets: wallets.map((wallet) => ({
         id: wallet.id,
-        address: wallet.address,
+        // Checksummed on the way out, so an address on screen can be checked by
+        // eye against Cronoscan. Lowercase is the storage form, not the reading
+        // form.
+        address: wallet.address === null ? null : checksum(wallet.address),
         what: wallet.what,
-        lamports: lamports[i] ?? null,
+        // A string: wei has eighteen zeroes behind it and JSON numbers stop
+        // being exact long before that.
+        wei: (found.get(wallet.id) ?? null)?.toString() ?? null,
       })),
       readAt: Date.now(),
     },
