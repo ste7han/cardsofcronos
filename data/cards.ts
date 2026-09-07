@@ -3202,7 +3202,16 @@ const TACTICS: TacticCard[] = [
     name: "Ape In",
     ticker: "APE",
     rarity: "common",
-    effect: { kind: "directMC", target: "self", mc: 25_000 },
+    // The common tactics ran from $8.8K to $255.1K, and the band they were pulled
+    // to is the high end rather than the median. A tactic costs what a common
+    // project costs and is pure effect — no position, no pump — while a common
+    // project's effect alone measures $51.7K and hands you a board slot on top.
+    // $35K for the same price was the tier being underpaid, not the top being
+    // overpaid.
+    //
+    // Chart's green, questions come later: the plainest card in the set, and the
+    // set wants one. $35.2K.
+    effect: { kind: "directMC", target: "self", mc: 60_000 },
     flavour: "Chart's green. Questions come later.",
   },
   {
@@ -3220,13 +3229,12 @@ const TACTICS: TacticCard[] = [
     name: "Buy The Dip",
     ticker: "DIP",
     rarity: "common",
-    effect: { kind: "healHolders", target: "ownProject", amount: 2 },
-    // Twenty percent off is only a discount if it fell. A common, so the amount
-    // is small and the moment is the point.
-    payoff: {
-      when: { kind: "behindBy", mc: 300_000 },
-      effect: { kind: "directMC", target: "self", mc: 120_000 },
-    },
+    // Twenty percent off is a discount, you tell yourself — so it is the comeback
+    // card, and comebackMC is a share of the gap rather than a gate: nothing when
+    // the scores are level, more the further under you are. There is no better
+    // card in the set to be named after, and the version with a behindBy threshold
+    // on top of two heals measured $8.8K, the lowest common tactic there was.
+    effect: { kind: "comebackMC", percentage: 26 },
     flavour: "Twenty percent off is a discount, you tell yourself.",
   },
   {
@@ -3244,7 +3252,13 @@ const TACTICS: TacticCard[] = [
     name: "Jeet",
     ticker: "JEET",
     rarity: "common",
-    effect: { kind: "directMC", target: "opponent", mc: -20_000 },
+    // The common tactics ran from $8.8K to $255.1K, and the band they were pulled
+    // to is the high end rather than the median. A tactic costs what a common
+    // project costs and is pure effect — no position, no pump — while a common
+    // project's effect alone measures $51.7K and hands you a board slot on top.
+    // $35K for the same price was the tier being underpaid, not the top being
+    // overpaid. $22.3K.
+    effect: { kind: "directMC", target: "opponent", mc: -55_000 },
     flavour: "He sold at forty thousand. It went to four million.",
   },
   {
@@ -3253,7 +3267,20 @@ const TACTICS: TacticCard[] = [
     name: "Paper Hands",
     ticker: "PAPER",
     rarity: "common",
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
+    // The whole group chat at once, which was a holder off every position they own
+    // — the effect taken off GIGA's epic and ZEREBRO's legendary the same day for
+    // being two rarities too strong, sitting here on a common at $255.1K against a
+    // tier running $8.8K to $148.9K.
+    //
+    // damageHolders has no unit below one, so the size had to come from a
+    // different shape. Everybody selling at once still scales with how much they
+    // have; it takes market cap instead of holders now.
+    effect: {
+      kind: "directMC",
+      target: "opponent",
+      mc: -14_000,
+      per: "theirs",
+    },
     flavour: "The whole group chat at once. Nobody admits it afterwards.",
   },
   {
@@ -3262,11 +3289,16 @@ const TACTICS: TacticCard[] = [
     name: "Diamond Hands",
     ticker: "DIAMOND",
     rarity: "common",
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // You have watched it go to zero three times and you are still here, so
+    // everything comes back — "full" rather than one holder, which is the variant
+    // worth most on a board that has been taken apart, and not the one that
+    // measured nothing on Switchboard, Grape, Boryoku and Sanctum. The payoff below
+    // stays: being behind is when still being here means something. $34.5K.
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     // You have watched it go to zero three times. Holding is worth nothing while
     // you are winning.
     payoff: {
-      when: { kind: "behindBy", mc: 500_000 },
+      when: { kind: "behindBy", mc: 250_000 },
       effect: { kind: "directMC", target: "self", mc: 150_000 },
     },
     flavour: "You've watched it go to zero three times. You're still here.",
@@ -3286,7 +3318,13 @@ const TACTICS: TacticCard[] = [
     name: "Shill",
     ticker: "SHILL",
     rarity: "common",
-    effect: { kind: "pumpProject", target: "ownProject", mc: 8_000 },
+    // A single-position pump under about $20K is under the floor and does nothing:
+    // this read -$1.1K at $7K, Shill read $24 at $8K and Cabal Call -$36.6K at
+    // $15K, while Graduation does the same thing at $22K and reads $104K.
+    //
+    // Three replies, a chart screenshot and a rocket — it is marketing that costs
+    // nothing, so it hands back a share of the marketing that did cost something.
+    effect: { kind: "refundMC", percentage: 8 },
     flavour:
       "Three replies, a chart screenshot and a rocket. It works every time.",
   },
@@ -3296,7 +3334,10 @@ const TACTICS: TacticCard[] = [
     name: "Slippage",
     ticker: "SLIP",
     rarity: "common",
-    effect: { kind: "directMC", target: "opponent", mc: -15_000 },
+    // He set it to twenty percent to be safe and it took all twenty — so it takes a
+    // percentage, which is what slippage is. It was a flat $15K, which made it Jeet
+    // at a smaller size on the same rarity, and measured $29.5K.
+    effect: { kind: "scaleMC", target: "opponent", percentage: -5 },
     flavour: "He set it to twenty percent to be safe. It took all twenty.",
   },
   {
@@ -3305,7 +3346,7 @@ const TACTICS: TacticCard[] = [
     name: "Exit Liquidity",
     ticker: "EXIT",
     rarity: "common",
-    effect: { kind: "stealMC", percentage: 6 },
+    effect: { kind: "stealMC", percentage: 4 },
     flavour: "Somebody has to be on the other side. Today it isn't you.",
   },
   {
@@ -3314,7 +3355,22 @@ const TACTICS: TacticCard[] = [
     name: "Rebrand",
     ticker: "REBRAND",
     rarity: "common",
-    effect: { kind: "pumpProject", target: "ownProject", mc: 7_000 },
+    // A single-position pump under about $20K is under the floor and does nothing:
+    // this read -$1.1K at $7K, Shill read $24 at $8K and Cabal Call -$36.6K at
+    // $15K, while Graduation does the same thing at $22K and reads $104K.
+    //
+    // Rebrand and Shill were also the same card twice — one common pumping $7K and
+    // another pumping $8K. New logo, new ticker, same dev: nothing underneath
+    // changed and the rate went up anyway, which is what scalePump is. It
+    // multiplies what the position already pays instead of adding to it.
+    //
+    // 22% read $4.1K and 45% reads $22K, which is where it stays: scalePump is
+    // capped at 50 by validation, so there is almost no room above this, and $22K
+    // is where Jeet and Slippage sit. A common tactic that lands one notch under
+    // the median is a common tactic; the alternative is a different effect, and
+    // this one is the only reading of "new logo, new ticker, same dev" the set
+    // can express.
+    effect: { kind: "scalePump", target: "ownProject", percentage: 45 },
     flavour: "New logo, new ticker, same dev. Somehow that fixes it.",
   },
 
@@ -3334,7 +3390,13 @@ const TACTICS: TacticCard[] = [
     name: "Cabal Call",
     ticker: "CABAL",
     rarity: "rare",
-    effect: { kind: "pumpProject", target: "ownProject", mc: 15_000 },
+    // A single-position pump under about $20K is under the floor and does nothing:
+    // this read -$1.1K at $7K, Shill read $24 at $8K and Cabal Call -$36.6K at
+    // $15K, while Graduation does the same thing at $22K and reads $104K.
+    //
+    // Forty guys in a chat, and this time you are in it. The chat is the holders,
+    // so the card counts them.
+    effect: { kind: "directMC", target: "self", mc: 5_000, per: "holders" },
     flavour: "Forty guys in a chat, and this time you're in it.",
   },
   {
@@ -3343,7 +3405,34 @@ const TACTICS: TacticCard[] = [
     name: "MEV Sandwich",
     ticker: "MEV",
     rarity: "rare",
-    effect: { kind: "stealMC", percentage: 10 },
+    // The steal ladder was priced as though a percentage of their market cap were
+    // an ordinary rate. It is not: a steal moves the margin twice, taking from one
+    // side and adding to the other, and it measures about $30K per percentage
+    // point. Four percent on a common already read $87.9K.
+    //
+    //     Exit Liquidity   common       4%   $87.9K
+    //     MEV Sandwich     rare        10%  $321.4K
+    //     Insider Wallet   epic        18%  $546.6K
+    //     Cabal Exit       legendary   30%  $998.5K
+    //
+    // Against medians of $68K, $106K, $156K and $395K, every rung above the common
+    // was three times its tier.
+    //
+    // And compressing the ladder alone would have left four cards doing one thing
+    // at four sizes, with the rare and the common a percentage point apart. A
+    // sandwich is not one trade — it is a trade in front and a trade behind, with
+    // theirs in the middle. So this one takes twice, which is the only card in the
+    // set shaped like what it is named after.
+    //
+    // Two turns rather than one because validation refuses one: under two is not a
+    // wait at all in a ten-turn match, and it is right — a timer nobody can answer
+    // is not a timer.
+    effect: {
+      kind: "after",
+      turns: 2,
+      now: { kind: "stealMC", percentage: 2 },
+      effect: { kind: "stealMC", percentage: 2 },
+    },
     flavour:
       "Your transaction sat right between two others. Coincidence, obviously.",
   },
@@ -3353,12 +3442,13 @@ const TACTICS: TacticCard[] = [
     name: "Community Takeover",
     ticker: "CTO",
     rarity: "rare",
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
+    // The card the effect was written for. It said 'each of your projects pumps' for as long as the engine had no way to say what a community takeover is.
+    effect: { kind: "takeOver" },
     // The dev is gone and the community picks it up — which nobody does while
     // the chart is fine.
     payoff: {
       when: { kind: "behindBy", mc: 350_000 },
-      effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
+      effect: { kind: "stealMC", percentage: 11 },
     },
     flavour:
       "The dev is gone. The community picks it up. Sometimes that works.",
@@ -3378,7 +3468,12 @@ const TACTICS: TacticCard[] = [
     name: "Bundle",
     ticker: "BUNDLE",
     rarity: "rare",
-    effect: { kind: "extraBudget", target: "self", mc: 70_000 },
+    // Marketing budget on a card that costs a card and budget to play is a card
+    // that loses money — it measured -$24.4K, the same way six tools did.
+    //
+    // Eight wallets, one block, one owner: everything on the table is still yours,
+    // which is the number unbankedMC reads.
+    effect: { kind: "unbankedMC", percentage: 14 },
     flavour: "Eight wallets, one block, one owner. Check the bubble map.",
   },
   {
@@ -3406,6 +3501,12 @@ const TACTICS: TacticCard[] = [
     ticker: "GAS",
     rarity: "rare",
     effect: { kind: "directMC", target: "opponent", mc: -30_000 },
+    // Pays for having already taken money off the table, which is what this
+    // moment is about and what nothing in the set used to reward.
+    payoff: {
+      when: { kind: "bankedAtLeast", count: 1 },
+      effect: { kind: "extraBudget", target: "self", mc: 60_000 },
+    },
     flavour: "Nine failed transactions and a filled one at the top.",
   },
   {
@@ -3418,8 +3519,8 @@ const TACTICS: TacticCard[] = [
     // Left for dead on Tuesday. The card is the comeback, so it is worth most
     // when there is something to come back from.
     payoff: {
-      when: { kind: "behindBy", mc: 400_000 },
-      effect: { kind: "directMC", target: "self", mc: 300_000 },
+      when: { kind: "behindBy", mc: 350_000 },
+      effect: { kind: "directMC", target: "self", mc: 210_000 },
     },
     flavour: "Left for dead on Tuesday, back on the front page by Friday.",
   },
@@ -3449,7 +3550,19 @@ const TACTICS: TacticCard[] = [
     name: "Insider Wallet",
     ticker: "LEAK",
     rarity: "epic",
-    effect: { kind: "stealMC", percentage: 18 },
+    // The steal ladder was priced as though a percentage of their market cap were
+    // an ordinary rate. It is not: a steal moves the margin twice, taking from one
+    // side and adding to the other, and it measures about $30K per percentage
+    // point. Four percent on a common already read $87.9K.
+    //
+    //     Exit Liquidity   common       4%   $87.9K
+    //     MEV Sandwich     rare        10%  $321.4K
+    //     Insider Wallet   epic        18%  $546.6K
+    //     Cabal Exit       legendary   30%  $998.5K
+    //
+    // Against medians of $68K, $106K, $156K and $395K, every rung above the common
+    // was three times its tier.
+    effect: { kind: "stealMC", percentage: 5 },
     flavour:
       "Funded from the same exchange address nine minutes before launch.",
   },
@@ -3474,7 +3587,14 @@ const TACTICS: TacticCard[] = [
     name: "Coordinated Dump",
     ticker: "COORD",
     rarity: "epic",
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
+    // Two holders off every position they own is the heaviest damage in the set and
+    // it was on an epic, at $556.3K against a $156.1K median. damageHolders has no
+    // unit below one, and one would still have read about $255K — the figure Paper
+    // Hands had before the same problem was fixed there.
+    //
+    // Everybody selling at the same moment is a price move, and a percentage is
+    // the shape of a price move.
+    effect: { kind: "scaleMC", target: "opponent", percentage: -8 },
     flavour: "Same minute, same size, forty different wallets.",
   },
   {
@@ -3504,7 +3624,23 @@ const TACTICS: TacticCard[] = [
     name: "Cancelled",
     ticker: "CANCEL",
     rarity: "rare",
-    effect: { kind: "cancel", target: "opponent", count: 1 },
+    // cancel is not a card on its own. The set has five cards carrying it and the
+    // three that work are epics where it sits beside something else; the two that
+    // measured nothing are these, where it is the whole card.
+    //
+    // It is not that there was nothing to cancel — the opponent has a tool or an
+    // influencer on the table in 49% of your turns and at some point in 82% of
+    // matches. It is that trading a card for a card builds nothing, and the bot
+    // agreed: Cancelled was played 29 times and thrown away 112.
+    //
+    // So the takedown happens now and the fallout lands later, which is also how
+    // this actually goes.
+    effect: {
+      kind: "after",
+      turns: 2,
+      now: { kind: "cancel", target: "opponent", count: 1 },
+      effect: { kind: "directMC", target: "self", mc: 100_000 },
+    },
     flavour: "Somebody found the old posts. That was the whole career.",
   },
   {
@@ -3513,7 +3649,23 @@ const TACTICS: TacticCard[] = [
     name: "Mass Unfollow",
     ticker: "UNFOLLOW",
     rarity: "legendary",
-    effect: { kind: "cancel", target: "opponent", count: 2 },
+    // cancel is not a card on its own. The set has five cards carrying it and the
+    // three that work are epics where it sits beside something else; the two that
+    // measured nothing are these, where it is the whole card.
+    //
+    // It is not that there was nothing to cancel — the opponent has a tool or an
+    // influencer on the table in 49% of your turns and at some point in 82% of
+    // matches. It is that trading a card for a card builds nothing, and the bot
+    // agreed: Cancelled was played 29 times and thrown away 112.
+    //
+    // So the takedown happens now and the fallout lands later, which is also how
+    // this actually goes.
+    effect: {
+      kind: "after",
+      turns: 2,
+      now: { kind: "cancel", target: "opponent", count: 2 },
+      effect: { kind: "directMC", target: "self", mc: 320_000 },
+    },
     flavour: "Two hundred thousand followers on Monday. Nobody on Friday.",
   },
   {
@@ -3524,7 +3676,7 @@ const TACTICS: TacticCard[] = [
     rarity: "epic",
     effect: { kind: "pumpProject", target: "ownProject", mc: 22_000 },
     flavour:
-      "The curve filled and it opened on a real book. From here it is in public.",
+      "The curve filled and it moved to Raydium. From here it happens in public.",
   },
   {
     id: "cex-listing",
@@ -3537,7 +3689,7 @@ const TACTICS: TacticCard[] = [
     // listing lands.
     payoff: {
       when: { kind: "turnAtLeast", turn: 7 },
-      effect: { kind: "directMC", target: "self", mc: 90_000 },
+      effect: { kind: "scaleMC", target: "self", percentage: 13 },
     },
     flavour:
       "The announcement half the timeline had been front-running for a week.",
@@ -3548,7 +3700,25 @@ const TACTICS: TacticCard[] = [
     name: "Cabal Exit",
     ticker: "CABALEX",
     rarity: "legendary",
-    effect: { kind: "stealMC", percentage: 30 },
+    // The steal ladder was priced as though a percentage of their market cap were
+    // an ordinary rate. It is not: a steal moves the margin twice, taking from one
+    // side and adding to the other, and it measures about $30K per percentage
+    // point. Four percent on a common already read $87.9K.
+    //
+    //     Exit Liquidity   common       4%   $87.9K
+    //     MEV Sandwich     rare        10%  $321.4K
+    //     Insider Wallet   epic        18%  $546.6K
+    //     Cabal Exit       legendary   30%  $998.5K
+    //
+    // Against medians of $68K, $106K, $156K and $395K, every rung above the common
+    // was three times its tier.
+    //
+    // This rung sits above that band on purpose. Compressed to 10% it read $469.4K
+    // and the maker called it too weak for a legendary, which is a judgement the
+    // median cannot make: the top of a rarity is meant to be the card you build a
+    // deck to reach, and a measured median is the middle of a tier rather than a
+    // ceiling for it. 20%, and it reads what it reads.
+    effect: { kind: "stealMC", percentage: 20 },
     flavour:
       "They were never going to tell you when. You were the reason it worked.",
   },
@@ -3576,16 +3746,49 @@ const EVENTS: EventCard[] = [
     name: "Volatility",
     ticker: "VOL",
     rarity: "common",
+    // $175.9K on a common against about $74K for the tier, and it stays there.
+    // damageHolders has no unit below one and an event has to hit the whole table
+    // by rule, so there is no smaller version of this card to write. The set wants
+    // a cheap board-wide shake-out and this is the only size one can be.
     effect: { kind: "damageHolders", target: "allProjects", amount: 1 },
     flavour: "Nothing happened. Everything moved twenty percent anyway.",
   },
   {
+    // TCG aims this at gaming, which this game does not have. It lands on nft
+    // here: retail arriving is the floor moving, and a floor is the one number
+    // in this set that a newcomer can read without being told what it means.
     id: "retail-arrives",
     type: "event",
     name: "Retail Arrives",
     ticker: "RETAIL",
     rarity: "common",
-    effect: { kind: "pumpProject", target: "allProjects", mc: 4_000 },
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement, and the attempt is the part worth
+    // keeping. Read with the ordinary deck builder they look weak — and worse,
+    // they read WORSE as the number goes up. Airdrop Season went $71.7K at $16K a
+    // head, $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus
+    // lands on both boards, so a bigger one helps whoever is heavier in that
+    // sector, and in a deck not built for it that is as likely to be the opponent.
+    //
+    // Measured again in a deck that leans the sector they read three to eight
+    // times higher — ETF Approval $159.6K generic against $1.2M in an infra deck.
+    // Six of these had already been raised two to five times on the strength of
+    // the generic reading; all six are back at the sizes they shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns. Neither is a
+    // number to tune against.
+    effect: {
+      kind: "pumpBySector",
+      target: "allProjects",
+      bonuses: { nft: 10_000 },
+    },
     flavour:
       "Your uncle asks which app to download. Historically this is the top.",
   },
@@ -3595,7 +3798,7 @@ const EVENTS: EventCard[] = [
     name: "Green Day",
     ticker: "GREEN",
     rarity: "common",
-    effect: { kind: "scaleMC", target: "both", percentage: 8 },
+    effect: { kind: "scaleMC", target: "both", percentage: 14 },
     flavour: "Everything up. No reason given, none asked for.",
   },
   {
@@ -3604,7 +3807,12 @@ const EVENTS: EventCard[] = [
     name: "Sideways",
     ticker: "CHOP",
     rarity: "common",
-    effect: { kind: "scaleMC", target: "both", percentage: -8 },
+    // $38.5K, and it stays there. A percentage handed to both players scales with
+    // each player's own market cap, so a bigger number helps whoever is already
+    // ahead — which is why The Flippening measured LOWER at 72% than at 50%. The
+    // seven both-players percentages in this set are not tunable in the direction
+    // they look tunable in, and this is the smallest of them.
+    effect: { kind: "scaleMC", target: "both", percentage: -18 },
     flavour:
       "Three days of nothing. The chop takes more people than the crash.",
   },
@@ -3634,7 +3842,33 @@ const EVENTS: EventCard[] = [
     name: "Airdrop Season",
     ticker: "AIRDROP",
     rarity: "rare",
-    effect: { kind: "pumpProject", target: "allProjects", mc: 7_000 },
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement, and the attempt is the part worth
+    // keeping. Read with the ordinary deck builder they look weak — and worse,
+    // they read WORSE as the number goes up. Airdrop Season went $71.7K at $16K a
+    // head, $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus
+    // lands on both boards, so a bigger one helps whoever is heavier in that
+    // sector, and in a deck not built for it that is as likely to be the opponent.
+    //
+    // Measured again in a deck that leans the sector they read three to eight
+    // times higher — ETF Approval $159.6K generic against $1.2M in an infra deck.
+    // Six of these had already been raised two to five times on the strength of
+    // the generic reading; all six are back at the sizes they shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns. Neither is a
+    // number to tune against.
+    effect: {
+      kind: "pumpBySector",
+      target: "allProjects",
+      bonuses: { defi: 16_000 },
+    },
     flavour:
       "Six months of farming, one morning of claiming, one afternoon of selling.",
   },
@@ -3644,7 +3878,50 @@ const EVENTS: EventCard[] = [
     name: "Rotation",
     ticker: "ROTATE",
     rarity: "rare",
-    effect: { kind: "healHolders", target: "allProjects", amount: 1 },
+    // A holder back on every position, both sides, measured MINUS $13.2K — the
+    // symmetric version of the effect that already measured nothing on four
+    // project cards. Handing both players the same small mend is the one shape
+    // that genuinely cannot move a margin.
+    //
+    // "Full" was tried and read $7K. Healing is thin whichever way it is written:
+    // a match loses 1.53 positions to damage against 20.83 closed by their own
+    // owner, so mending is answering a question almost nobody asks — and doing it
+    // for both players at once answers it for nobody.
+    //
+    // The money did not leave, it moved one narrative to the left. That is a
+    // sector rotating, and TCG rotates it into AI — a sector this game does not
+    // have. Here it lands on dex, because a rotation is not a narrative you can
+    // see, it is volume, and volume turns up where people swap. Like every sector
+    // event this favours whoever holds more of it, and says nothing about which
+    // deck that is.
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement and the attempt is worth recording.
+    // Read with the ordinary deck builder they look weak, and worse, they read
+    // WORSE as the number goes up — Airdrop Season went $71.7K at $16K a head,
+    // $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus lands
+    // on both boards, so a bigger one helps whoever is heavier in that sector, and
+    // in a deck not built for it that is as likely to be the other player.
+    //
+    // So they were measured again in a deck that leans the sector, where they read
+    // three to eight times higher — ETF Approval $159.6K generic against $1.2M in
+    // an infra deck. On the strength of the generic reading six of these had
+    // already been raised two to five times; all six are back at the sizes they
+    // shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns; neither is a
+    // number to tune against, and these six are left where the maker set them.
+    effect: {
+      kind: "pumpBySector",
+      target: "allProjects",
+      bonuses: { dex: 30_000 },
+    },
     flavour: "The money didn't leave. It just moved one narrative to the left.",
   },
   {
@@ -3653,22 +3930,61 @@ const EVENTS: EventCard[] = [
     name: "Network Outage",
     ticker: "OUTAGE",
     rarity: "rare",
-    effect: { kind: "damageHolders", target: "allProjects", amount: 1 },
+    // Volatility is a holder off every position on a common and measured $142.5K;
+    // this was the same card on a rare at $159.2K. One effect, two rarities, twelve
+    // percent apart.
+    //
+    // A permanent rate cut on every position was tried first and measured MINUS
+    // $40K. An event hits both boards by rule, so a penalty lands on yours too —
+    // and it is worse than a wash, because the player holding the card is usually
+    // the one who has built something to lose.
+    //
+    // perHolder is the way out and the only one an event has: the damage stays
+    // symmetric and the payment does not. Everyone learned what a validator was
+    // that week, and you are paid for every holder the lesson cost anybody.
+    effect: {
+      kind: "damageHolders",
+      target: "allProjects",
+      amount: 1,
+      perHolder: { kind: "directMC", target: "self", mc: 3_000 },
+    },
     flavour:
-      "Seventeen hours. Everybody learned what a validator was that week.",
+      "Seventeen hours. Everyone learned what a validator was that week.",
   },
 
   // --- epic ---
   {
-    // Replaces "Nation State Meta", which pumped a politics sector this game
-    // does not have. The slot is the same shape — one epic that lifts a single
-    // sector across the whole table — and DeFi Summer is the first version's own
-    // card for exactly that season.
+    // TCG's card is "Nation State Meta" and it pumps politics, a sector this game
+    // does not have. Cards of Cronos put DeFi Summer in that slot at the fork and
+    // it goes back there: same type, same rarity, same $30K, aimed at a sector
+    // that exists here.
     id: "defi-summer",
     type: "event",
     name: "DeFi Summer",
     ticker: "SUMMER",
     rarity: "epic",
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement, and the attempt is the part worth
+    // keeping. Read with the ordinary deck builder they look weak — and worse,
+    // they read WORSE as the number goes up. Airdrop Season went $71.7K at $16K a
+    // head, $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus
+    // lands on both boards, so a bigger one helps whoever is heavier in that
+    // sector, and in a deck not built for it that is as likely to be the opponent.
+    //
+    // Measured again in a deck that leans the sector they read three to eight
+    // times higher — ETF Approval $159.6K generic against $1.2M in an infra deck.
+    // Six of these had already been raised two to five times on the strength of
+    // the generic reading; all six are back at the sizes they shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns. Neither is a
+    // number to tune against.
     effect: {
       kind: "pumpBySector",
       target: "allProjects",
@@ -3711,7 +4027,33 @@ const EVENTS: EventCard[] = [
     name: "ETF Approval",
     ticker: "ETF",
     rarity: "epic",
-    effect: { kind: "pumpProject", target: "allProjects", mc: 14_000 },
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement, and the attempt is the part worth
+    // keeping. Read with the ordinary deck builder they look weak — and worse,
+    // they read WORSE as the number goes up. Airdrop Season went $71.7K at $16K a
+    // head, $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus
+    // lands on both boards, so a bigger one helps whoever is heavier in that
+    // sector, and in a deck not built for it that is as likely to be the opponent.
+    //
+    // Measured again in a deck that leans the sector they read three to eight
+    // times higher — ETF Approval $159.6K generic against $1.2M in an infra deck.
+    // Six of these had already been raised two to five times on the strength of
+    // the generic reading; all six are back at the sizes they shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns. Neither is a
+    // number to tune against.
+    effect: {
+      kind: "pumpBySector",
+      target: "allProjects",
+      bonuses: { infra: 36_000 },
+    },
     flavour:
       "The suits are in. Everyone who called them idiots is now very quiet.",
   },
@@ -3723,7 +4065,19 @@ const EVENTS: EventCard[] = [
     name: "The Purge",
     ticker: "PURGE",
     rarity: "legendary",
-    effect: { kind: "cancel", target: "both", count: 1 },
+    // Symmetric on the face and not in effect: it takes the biggest name off each
+    // side, so it pays whoever was behind on support. $66.9K on a legendary against
+    // $395K, and it only reached the table in 76 matches of 180 — it is expensive
+    // and the bot often had better things to do with the turn. Going from one name
+    // to two moved it to $57.1K, which is to say it did not move.
+    //
+    // Left as it is and flagged. cancel is documented as weak on its own — trading
+    // a card for a card builds nothing — and the two tactics carrying it were
+    // fixed by pairing it with a timer, which an event cannot use: validation
+    // requires an event's effect to name allProjects or both, and `after` names
+    // neither. Whether a symmetric cancel is worth a legendary slot is a design
+    // question rather than a number.
+    effect: { kind: "cancel", target: "both", count: 2 },
     flavour: "The platform woke up one morning and decided nobody was famous.",
   },
   {
@@ -3732,15 +4086,41 @@ const EVENTS: EventCard[] = [
     name: "The Bottom",
     ticker: "BOTTOM",
     rarity: "legendary",
-    effect: { kind: "pumpProject", target: "allProjects", mc: 20_000 },
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement, and the attempt is the part worth
+    // keeping. Read with the ordinary deck builder they look weak — and worse,
+    // they read WORSE as the number goes up. Airdrop Season went $71.7K at $16K a
+    // head, $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus
+    // lands on both boards, so a bigger one helps whoever is heavier in that
+    // sector, and in a deck not built for it that is as likely to be the opponent.
+    //
+    // Measured again in a deck that leans the sector they read three to eight
+    // times higher — ETF Approval $159.6K generic against $1.2M in an infra deck.
+    // Six of these had already been raised two to five times on the strength of
+    // the generic reading; all six are back at the sizes they shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns. Neither is a
+    // number to tune against.
+    effect: {
+      kind: "pumpBySector",
+      target: "allProjects",
+      bonuses: { infra: 25_000, defi: 25_000 },
+    },
     // The turn. A bottom is only a bottom if you were down, and the whole card
     // is about the moment nobody wanted it.
     payoff: {
-      when: { kind: "behindBy", mc: 700_000 },
-      effect: { kind: "scaleMC", target: "self", percentage: 35 },
+      when: { kind: "behindBy", mc: 600_000 },
+      effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
     },
     flavour:
-      "Nothing left but the people who could not sell. That was the turn.",
+      "Solana at eight dollars and a dog token nobody asked for. That was the turn.",
   },
   {
     id: "ftx-collapse",
@@ -3750,17 +4130,22 @@ const EVENTS: EventCard[] = [
     rarity: "legendary",
     effect: { kind: "damageHolders", target: "allProjects", amount: 3 },
     flavour:
-      "Every chain was declared dead by people who had never used one.",
+      "Eight dollars. The chain was declared dead by people who had never used it.",
   },
   {
-    id: "the-flippening",
+    id: "sol-flips-eth",
     type: "event",
     name: "The Flippening",
     ticker: "FLIP",
     rarity: "legendary",
+    // Back to 50 after 72 measured LOWER — $220.4K against $283.8K. A percentage
+    // handed to both players scales with each player's own market cap, so making
+    // it bigger helps whoever is already ahead, and the player holding the card is
+    // not reliably that player. The seven both-players percentages in this set are
+    // not tunable in the direction they look tunable in.
     effect: { kind: "scaleMC", target: "both", percentage: 50 },
     flavour:
-      "The chart everybody has been posting since 2021, finally doing the thing.",
+      "The chart everyone has been posting since 2021, finally doing the thing.",
   },
 
   // --- mythic ---
@@ -3781,6 +4166,28 @@ const EVENTS: EventCard[] = [
     name: "Elon Posts",
     ticker: "ELON",
     rarity: "legendary",
+    // A sector bonus on the whole table is the set's best implicit synergy: the
+    // card never says which deck it favours, and it favours whoever holds more of
+    // that sector than the other player does.
+    //
+    // These numbers are not set by measurement, and the attempt is the part worth
+    // keeping. Read with the ordinary deck builder they look weak — and worse,
+    // they read WORSE as the number goes up. Airdrop Season went $71.7K at $16K a
+    // head, $59.9K at $28K and $42.6K at $55K. That is the card working: the bonus
+    // lands on both boards, so a bigger one helps whoever is heavier in that
+    // sector, and in a deck not built for it that is as likely to be the opponent.
+    //
+    // Measured again in a deck that leans the sector they read three to eight
+    // times higher — ETF Approval $159.6K generic against $1.2M in an infra deck.
+    // Six of these had already been raised two to five times on the strength of
+    // the generic reading; all six are back at the sizes they shipped with.
+    //
+    // The second instrument is not stable either. On the original numbers Airdrop
+    // Season reads $70.4K generic and $58.1K in a defi deck, and The Bottom $115.9K
+    // and $30.1K — lower in the deck built for them. Leaning a deck into one sector
+    // changes every other card in it, so that reading moves for reasons that are
+    // not this card. scripts/sector-events.ts holds both columns. Neither is a
+    // number to tune against.
     effect: {
       kind: "pumpBySector",
       target: "allProjects",

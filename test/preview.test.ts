@@ -33,7 +33,13 @@ function preview(cardId: string, state = board()) {
 
 describe("the hover preview", () => {
   it("covers the opponent's whole board for a table-wide attack", () => {
-    const { slots } = preview("paper-hands");
+    // Found by what it does, not by name. This was `paper-hands` until the day
+    // that card stopped damaging positions, and the failure it produced was an
+    // empty slot list in a test that is not about any particular card.
+    const wide = CARDS.find(
+      (c) => c.effect?.kind === "damageHolders" && c.effect.target === "allEnemyProjects",
+    )!;
+    const { slots } = preview(wide.id);
     expect(slots).toHaveLength(2);
     expect(slots.every((s) => s.owner === "opponent")).toBe(true);
     expect(slots.every((s) => s.impact === "hurts" && s.certain)).toBe(true);
@@ -74,7 +80,10 @@ describe("the hover preview", () => {
   });
 
   it("shows a steal as one side up and the other down", () => {
-    const { players } = preview("mev-sandwich");
+    // Any plain steal. MEV Sandwich was the one named here and it is now a steal
+    // wrapped in a timer, which previews as the timer rather than as the steal.
+    const steal = CARDS.find((c) => c.effect?.kind === "stealMC")!;
+    const { players } = preview(steal.id);
     expect(players).toEqual([
       { player: "you", impact: "helps" },
       { player: "opponent", impact: "hurts" },
