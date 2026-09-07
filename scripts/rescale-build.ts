@@ -21,8 +21,8 @@
 //
 //   directMC      26/44/82/105/120K    against    7/27/-/-/-K        3.0x
 //   extraBudget   50/90/120/-/420K     against    22/45/95/-/200K    1.9x
-//   pumpProject   11/22/28/-/-K        against    2/6/15/-/-K        3.7x
-//   pumpBySector  -/62/7/160/-K        against    -/8/9/14/-K        6.7x
+//   pumpProject   11/22/28/-/-K        against    2/6/15/-/-K        3.7x  <- not used
+//   pumpBySector  -/62/7/160/-K        against    -/8/9/14/-K        6.7x  <- not used
 //   scaleMC       -/9/13/16/19         against    -/7/13/14/18       1.1x
 //
 // So this multiplies each kind by what TCG's own set says it should be, and
@@ -46,12 +46,30 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { CARDS } from "../data/cards";
 import type { ProjectCard } from "../engine/types";
 
-/** What TCG's set says each shape is worth, against what ours prints. */
+/**
+ * What each shape is worth, and where the number comes from.
+ *
+ * directMC, extraBudget and scaleMC are TCG's own medians against ours. The two
+ * pump kinds are NOT, and the first version of this file used them — 3.7 and 6.7
+ * — which put momentum fifteen points clear of the field and simply moved the
+ * problem that takes had.
+ *
+ * A median cannot price a pump. Measured over 3,760 pump cards actually played:
+ * they go down on turn 5.8 with 2.9 positions standing, so the printed number
+ * pays out about twelve times before the match ends. A common printing $22K
+ * delivers $272K; a rare printing $42K delivers $478K; a legendary, $1.46M. A
+ * money card delivers what it prints, once. Matching TCG's median on a shape
+ * worth twelve times its face was multiplying the wrong number.
+ *
+ * So the pumps are swept against the outcome instead: at 3.7 the spread between
+ * the five intents is 17.3 points, at 2.0 it is 15.6, at 1.5 it is 14.2 and at
+ * 1.0 it is 14.4. 1.5 is the floor of that curve.
+ */
 const RATIO: Record<string, number> = {
   directMC: 3.0,
   extraBudget: 1.9,
-  pumpProject: 3.7,
-  pumpBySector: 6.7,
+  pumpProject: 1.5,
+  pumpBySector: 1.5,
   scaleMC: 1.5,
 };
 

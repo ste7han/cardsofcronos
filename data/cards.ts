@@ -497,7 +497,7 @@ const ROBOTS: ProjectCard[] = [
     pumpMC: 8_000,
     holders: 2,
     // shipped with a bug and shipped anyway, which is how momentum starts
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 7_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Shipped with a bug in the mint and shipped anyway.",
   },
   {
@@ -517,7 +517,7 @@ const ROBOTS: ProjectCard[] = [
     // outcome is fixed by the seed is a card that lies twice a match. It costs
     // itself something and gains more instead — the same trade, said honestly.
     // heads it works, tails it also sort of works
-    effect: { kind: "pumpProject", target: "ownProject", mc: 44_000 },
+    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
     flavour: "Heads it works. Tails it also sort of works.",
   },
   {
@@ -534,7 +534,7 @@ const ROBOTS: ProjectCard[] = [
     holders: 3,
     // one is a toy, four hundred is an argument
     payoff: { when: { kind: "ownProjectCount", atLeast: 4 }, effect: { kind: "directMC", target: "self", mc: 60_000 } },
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 60_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 14_000 } },
     flavour: "One is a toy. Four hundred is an argument.",
   },
   {
@@ -549,7 +549,7 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 28_000,
     pumpMC: 14_000,
     holders: 3,
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 22_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
     flavour: "They took one apart on stream and the floor went up.",
   },
   {
@@ -565,7 +565,7 @@ const ROBOTS: ProjectCard[] = [
     pumpMC: 28_000,
     holders: 2,
     // twice as hot for half as long, and everybody knew
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 30_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 12_000 },
     flavour: "Ran twice as hot for half as long. Everybody knew and nobody left.",
   },
   {
@@ -1094,7 +1094,7 @@ const NOVA: ProjectCard[] = [
     pumpMC: 9_000,
     holders: 3,
     // launched quietly on a Sunday, and everything it touched moved after
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 7_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Launched quietly on a Sunday, which is not how anybody does it.",
   },
   {
@@ -1165,7 +1165,7 @@ const NOVA: ProjectCard[] = [
     holders: 4,
     // six products, one login, and a roadmap that actually shipped
     morePositions: 2,
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 60_000, meme: 27_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 14_000, meme: 6_000 } },
     flavour: "Six products, one login, and a roadmap that actually shipped.",
   },
   {
@@ -1200,7 +1200,7 @@ const NOVA: ProjectCard[] = [
     holders: 5,
     // nobody voted for it; everybody integrated it
     standing: { kind: "directMC", target: "self", mc: 105_000 },
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 85_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 20_000 } },
     flavour: "Nobody voted for it. Everybody integrated it.",
   },
   {
@@ -1553,7 +1553,7 @@ const CAW: ProjectCard[] = [
     pumpMC: 7_000,
     holders: 2,
     // somebody checked the address and there they were — the count starts
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 7_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Somebody checked the contract address and there they were.",
   },
   {
@@ -1569,7 +1569,7 @@ const CAW: ProjectCard[] = [
     pumpMC: 7_000,
     holders: 3,
     // block seven-seven-seven-seven, and the screenshot did numbers
-    effect: { kind: "pumpProject", target: "ownProject", mc: 44_000 },
+    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
     flavour: "Block seven-seven-seven-seven. The screenshot did numbers.",
   },
   {
@@ -1587,7 +1587,7 @@ const CAW: ProjectCard[] = [
     // a week to the hour, and it did the whole thing again
     payoff: { when: { kind: "turnAtLeast", turn: 7 }, effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 } },
     // a week to the hour, and it did the whole thing again
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 22_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
     flavour: "A week to the hour, and it did the whole thing again.",
   },
   {
@@ -1603,7 +1603,7 @@ const CAW: ProjectCard[] = [
     pumpMC: 17_000,
     holders: 3,
     // the chat found sevens in the supply, the fee and the founder's age
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 55_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
     flavour: "The chat found sevens in the supply, the fee and the founder's age.",
   },
   {
@@ -1620,7 +1620,7 @@ const CAW: ProjectCard[] = [
     holders: 4,
     // seven in a row — every one of them counted
     onYourPlay: { mc: 30_000 },
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 47_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 11_000 } },
     flavour: "Seven in a row. On the eighth everybody was watching, so it stopped.",
   },
   {
@@ -1656,7 +1656,7 @@ const CAW: ProjectCard[] = [
     // it stopped there, and nobody could get the count to move past it
     standing: { kind: "directMC", target: "self", mc: 105_000 },
     // seven in a row, and nobody could get the count to move past it
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 95_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 21_000 } },
     flavour: "It stopped there. Nobody could get the count to move past it.",
   },
   {
@@ -1849,7 +1849,7 @@ const VVS: ProjectCard[] = [
     pumpMC: 9_000,
     holders: 3,
     // very, very simple, and volume begets volume from there
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 7_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Very, very simple. That was the entire pitch and it worked.",
   },
   {
@@ -1865,7 +1865,7 @@ const VVS: ProjectCard[] = [
     pumpMC: 8_000,
     holders: 3,
     // emissions on everything; for a while the yield was the product
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 7_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Emissions on everything. For a while the yield was the product.",
   },
   {
@@ -1881,7 +1881,7 @@ const VVS: ProjectCard[] = [
     pumpMC: 15_000,
     holders: 3,
     // every pair anybody wanted, and a few nobody did
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 55_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 12_000 } },
     flavour: "Every pair anybody wanted, and a few nobody did.",
   },
   {
@@ -1899,7 +1899,7 @@ const VVS: ProjectCard[] = [
     // the fees were the moat and nobody undercut it for two years
     payoff: { when: { kind: "turnAtMost", turn: 4 }, effect: { kind: "extraBudget", target: "self", mc: 60_000 } },
     // the fees were the moat; nobody undercut it for two years
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 22_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
     flavour: "The fees were the moat. Nobody undercut it for two years.",
   },
   {
@@ -1914,7 +1914,7 @@ const VVS: ProjectCard[] = [
     launchMC: 39_000,
     pumpMC: 24_000,
     holders: 4,
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 60_000, defi: 34_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 14_000, defi: 8_000 } },
     flavour: "If it did not route through here it probably did not route.",
   },
   {
@@ -1930,7 +1930,7 @@ const VVS: ProjectCard[] = [
     pumpMC: 25_000,
     holders: 4,
     // volume begets volume — that is the whole business and it is enough
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 55_000 },
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 23_000 },
     flavour: "Volume begets volume. That is the whole business and it is enough.",
   },
   {
@@ -1947,7 +1947,7 @@ const VVS: ProjectCard[] = [
     holders: 5,
     // the front door of the chain, whether or not it meant to be
     discount: 32,
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 100_000, defi: 55_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 23_000, defi: 12_000 } },
     flavour: "The front door of the chain, whether or not it meant to be.",
   },
   {
