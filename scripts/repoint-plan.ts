@@ -6,7 +6,7 @@
 // fill, and these already do something — something else.
 //
 // It is also where the rest of the ported vocabulary finally speaks. Twelve
-// effect kinds arrived with the engine and nothing used them; ten of them are in
+// effect kinds arrived with the engine and nothing used them; all twelve are in
 // here, on the cards whose flavour was already describing them:
 //
 //   merge          Reckless Robots VIII — every unit back to the workshop
@@ -21,6 +21,7 @@
 //   peakMC         Obsidian VI — it takes an edge nothing else can hold
 //   budgetToMC     Mad Meerkat V — the buyback was bigger than the emissions
 //   recoverCard    Clove VII — a group chat that never slept
+//   discardCards   Crazzzy Monsters III — it did not check whose side anybody was on
 //
 // TECTONIC IS NOT ALL RESTRICTIONS, and that is read off TCG rather than
 // invented. Its three locks families — Kamino, Serum, Firedancer — carry money
@@ -142,6 +143,15 @@ const PLAN: Record<string, { effect: Effect; why: string }> = {
   },
 
   // ---- monsters — takes --------------------------------------------------
+  "monsters-loose": {
+    // The last effect kind in the engine that nothing spoke. It went here rather
+    // than somewhere it would merely fit: "both" is the whole card, and this is
+    // the only effect in the set that costs the player holding it something.
+    // Monsters had six damageHolders in a row before this; a family of one card
+    // at eight prices is what the family work is against.
+    effect: { kind: "discardCards", target: "both", amount: 1 },
+    why: "it did not check whose side anybody was on, and it never has",
+  },
   "monsters-mutate": {
     effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
     why: "traits nobody drew started showing up in the metadata",

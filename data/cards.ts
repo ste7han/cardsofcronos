@@ -982,7 +982,8 @@ const MONSTERS: ProjectCard[] = [
     launchMC: 24_000,
     pumpMC: 15_000,
     holders: 3,
-    effect: { kind: "damageHolders", target: "allProjects", amount: 1 },
+    // it did not check whose side anybody was on, and it never has
+    effect: { kind: "discardCards", target: "both", amount: 1 },
     flavour: "It did not check whose side anybody was on. It never has.",
   },
   {
