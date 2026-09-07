@@ -125,11 +125,8 @@ const CLOVE: ProjectCard[] = [
     launchMC: 38_000,
     pumpMC: 23_000,
     holders: 4,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { meme: 6_000 },
-    },
+    // for about nine days it was the only chart anybody had open
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "For about nine days it was the only chart anybody had open.",
   },
   {
@@ -161,11 +158,8 @@ const CLOVE: ProjectCard[] = [
     launchMC: 66_000,
     pumpMC: 40_000,
     holders: 5,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { meme: 9_000 },
-    },
+    // there was never a roadmap; there was a group chat that never slept
+    effect: { kind: "recoverCard", amount: 1 },
     flavour: "There was never a roadmap. There was a group chat that never slept.",
   },
   {
@@ -182,11 +176,8 @@ const CLOVE: ProjectCard[] = [
     holders: 6,
     // two cycles later the chat is still open, and it still keeps people in
     standing: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { meme: 12_000, infra: 5_000 },
-    },
+    // two cycles later the chat is still open and still arguing
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     flavour: "Two cycles later the chat is still open and still arguing.",
   },
 ];
@@ -301,11 +292,8 @@ const CROOKS: ProjectCard[] = [
     holders: 5,
     // two weeks of silence, then a PDF, then the deposits doubled
     onTheirPlay: { cardType: "project", mc: 34_000 },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { defi: 8_000 },
-    },
+    // two weeks of silence, then a PDF, then the deposits doubled
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "Two weeks of silence, then a PDF, then the deposits doubled.",
   },
   {
@@ -322,11 +310,8 @@ const CROOKS: ProjectCard[] = [
     holders: 6,
     // everything routed through it eventually, whether it meant to or not
     standing: { kind: "directMC", target: "self", mc: 105_000 },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { defi: 11_000, meme: 5_000 },
-    },
+    // everything routed through it eventually, whether it meant to or not
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     flavour: "Everything routed through it eventually, whether it meant to or not.",
   },
   {
@@ -420,7 +405,8 @@ const WOLFSWAP: ProjectCard[] = [
     holders: 3,
     // volume was the product and the token was the receipt — a cut of what they spend
     tip: 20,
-    effect: { kind: "extraBudget", target: "self", mc: 40_000 },
+    // volume was the product and the token was the receipt — you see what is coming
+    effect: { kind: "peekAndBurn", look: 3 },
     flavour: "Volume was the product. The token was the receipt.",
   },
   {
@@ -529,7 +515,8 @@ const ROBOTS: ProjectCard[] = [
     // engine can do that, but a card whose text says "50% chance" and whose
     // outcome is fixed by the seed is a card that lies twice a match. It costs
     // itself something and gains more instead — the same trade, said honestly.
-    effect: { kind: "directMC", target: "self", mc: -6_000 },
+    // heads it works, tails it also sort of works
+    effect: { kind: "pumpProject", target: "ownProject", mc: 12_000 },
     flavour: "Heads it works. Tails it also sort of works.",
   },
   {
@@ -596,7 +583,8 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 44_000,
     pumpMC: 22_000,
     holders: 4,
-    effect: { kind: "damageHolders", target: "allProjects", amount: 1 },
+    // every unit, both sides of the table, back to the workshop
+    effect: { kind: "benchmark", target: "ownProject", plus: 15_000 },
     flavour: "Every unit, both sides of the table, back to the workshop.",
   },
   {
@@ -613,7 +601,8 @@ const ROBOTS: ProjectCard[] = [
     holders: 5,
     // came back online with a different serial number and the same wallet
     shield: 38,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // came back online with a different serial number and the same wallet
+    effect: { kind: "attach", target: "ownProject", every: { kind: "scalePump", target: "ownProject", percentage: 25 } },
     flavour: "Came back online with a different serial number and the same wallet.",
   },
   {
@@ -628,7 +617,8 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 120_000,
     pumpMC: 50_000,
     holders: 4,
-    effect: { kind: "damageHolders", target: "allProjects", amount: 3 },
+    // ten percent chance, they said — and everything ends up in one place
+    effect: { kind: "merge" },
     flavour: "Ten percent chance, they said. It was a Tuesday.",
   },
 ];
@@ -691,11 +681,8 @@ const HOWLERS: ProjectCard[] = [
     holders: 3,
     // once a month the floor moved and nobody had a reason for it
     payoff: { when: { kind: "turnAtLeast", turn: 6 }, effect: { kind: "directMC", target: "self", mc: 55_000 } },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 12_000 },
-    },
+    // once a month the floor moved and nobody had a reason for it
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "Once a month the floor moved and nobody had a reason for it.",
   },
   {
@@ -710,7 +697,8 @@ const HOWLERS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    effect: { kind: "stealMC", percentage: 8 },
+    // whatever the other side did, it turned up in the pack a week later
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
     flavour: "Whatever the other side did, it turned up in the pack a week later.",
   },
   {
@@ -742,7 +730,8 @@ const HOWLERS: ProjectCard[] = [
     launchMC: 43_000,
     pumpMC: 25_000,
     holders: 4,
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 10_000 } },
+    // eight months of nothing and the group chat never went quiet once
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "Eight months of nothing and the group chat never went quiet once.",
   },
   {
@@ -759,11 +748,8 @@ const HOWLERS: ProjectCard[] = [
     holders: 5,
     // they stopped counting holders and started counting who showed up
     morePositions: 3,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 20_000, meme: 6_000 },
-    },
+    // they stopped counting holders and started counting who showed up
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     flavour: "They stopped counting holders and started counting who showed up.",
   },
   {
@@ -782,7 +768,8 @@ const HOWLERS: ProjectCard[] = [
     // not a thing this engine can express, and the nearest honest version is a
     // scale on both sides: it widens whoever is ahead and narrows whoever is
     // not, so it is a decision rather than a wash.
-    effect: { kind: "scaleMC", target: "both", percentage: -22 },
+    // the chart flipped, and for one evening every loser was a genius
+    effect: { kind: "recoverCard", amount: 2 },
     payoff: {
       when: { kind: "behindBy", mc: 600_000 },
       effect: { kind: "directMC", target: "self", mc: 320_000 },
@@ -828,11 +815,8 @@ const FFS: ProjectCard[] = [
     launchMC: 20_000,
     pumpMC: 7_000,
     holders: 2,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { meme: 5_000 },
-    },
+    // sold its own bag to fund a marketing wallet for everyone else
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Sold its own bag to fund a marketing wallet for everyone else.",
   },
   {
@@ -847,7 +831,8 @@ const FFS: ProjectCard[] = [
     launchMC: 30_000,
     pumpMC: 12_000,
     holders: 2,
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
+    // down eighty percent and still funding the others, on purpose
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
     flavour: "Down eighty percent and still funding the others. On purpose.",
   },
   {
@@ -917,11 +902,8 @@ const FFS: ProjectCard[] = [
     holders: 4,
     // the wallet hit zero and the token did its best week ever — it pays for yours
     freePlays: 2,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { meme: 14_000 },
-    },
+    // the wallet hit zero and the token did its best week ever
+    effect: { kind: "drawCards", amount: 4 },
     flavour: "The wallet hit zero and the token did its best week ever.",
   },
   {
@@ -1052,7 +1034,8 @@ const MONSTERS: ProjectCard[] = [
     holders: 3,
     // traits nobody drew started showing up in the metadata
     standing: { kind: "damageHolders", target: "enemyBest", amount: 1 },
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 8_000 },
+    // traits nobody drew started showing up in the metadata
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
     flavour: "Traits nobody drew started showing up in the metadata.",
   },
   {
@@ -1145,7 +1128,8 @@ const NOVA: ProjectCard[] = [
     holders: 3,
     // whatever you were building, there was a Nova thing that plugged in
     payoff: { when: { kind: "ownProjectsInSector", sector: "infra", atLeast: 2 }, effect: { kind: "pumpProject", target: "allOwnProjects", mc: 8_000 } },
-    effect: { kind: "drawCards", amount: 2 },
+    // whatever you were building, there was a Nova thing that plugged in
+    effect: { kind: "benchmark", target: "ownProject" },
     flavour: "Whatever you were building, there was a Nova thing that plugged in.",
   },
   {
@@ -1238,7 +1222,8 @@ const NOVA: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 57_000,
     holders: 6,
-    effect: { kind: "drawCards", amount: 3 },
+    // the wallet screenshot that started three hundred copycat threads
+    effect: { kind: "fork" },
     payoff: {
       when: { kind: "ownProjectCount", atLeast: 5 },
       effect: { kind: "directMC", target: "self", mc: 300_000 },
@@ -1350,7 +1335,8 @@ const CR00TS: ProjectCard[] = [
     launchMC: 41_000,
     pumpMC: 25_000,
     holders: 5,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // whatever you sent at it turned up in your own book by Friday
+    effect: { kind: "burnForDamage", target: "ownProject", keep: 130 },
     flavour: "Whatever you sent at it turned up in your own book by Friday.",
   },
   {
@@ -1435,7 +1421,8 @@ const OBSIDIAN: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 8_000,
     holders: 4,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // whatever came for the small deposits had to come through it first
+    effect: { kind: "mcPerHolderLost", mc: 3_000 },
     flavour: "Whatever came for the small deposits had to come through it first.",
   },
   {
@@ -1470,7 +1457,8 @@ const OBSIDIAN: ProjectCard[] = [
     holders: 5,
     // nine figures locked and the outflow chart is a flat line, proudly
     payoff: { when: { kind: "bankedAtMost", count: 1 }, effect: { kind: "directMC", target: "self", mc: 90_000 } },
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 5_000 },
+    // nine figures locked and the outflow chart is a flat line, proudly
+    effect: { kind: "unbankedMC", percentage: 20 },
     flavour: "Nine figures locked and the outflow chart is a flat line. Proudly.",
   },
   {
@@ -1505,11 +1493,8 @@ const OBSIDIAN: ProjectCard[] = [
     holders: 5,
     // volcanic, and it takes an edge nothing else on the chain can hold
     standing: { kind: "directMC", target: "self", mc: 74_000 },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { defi: 8_000 },
-    },
+    // volcanic, and it takes an edge nothing else on the chain can hold
+    effect: { kind: "peakMC", percentage: 12 },
     flavour: "Volcanic, and it takes an edge nothing else on the chain can hold.",
   },
   {
@@ -1544,7 +1529,8 @@ const OBSIDIAN: ProjectCard[] = [
     holders: 8,
     // three years, four bear markets, and the floor never once broke
     shield: 50,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 3 },
+    // three years, four bear markets, and the floor never once broke
+    effect: { kind: "scaleMC", target: "self", percentage: 16 },
     flavour: "Three years, four bear markets, and the floor never once broke.",
   },
 ];
@@ -1587,7 +1573,8 @@ const CAW: ProjectCard[] = [
     launchMC: 17_000,
     pumpMC: 7_000,
     holders: 3,
-    effect: { kind: "directMC", target: "self", mc: 7_000 },
+    // block seven-seven-seven-seven, and the screenshot did numbers
+    effect: { kind: "pumpProject", target: "ownProject", mc: 12_000 },
     flavour: "Block seven-seven-seven-seven. The screenshot did numbers.",
   },
   {
@@ -1604,7 +1591,8 @@ const CAW: ProjectCard[] = [
     holders: 3,
     // a week to the hour, and it did the whole thing again
     payoff: { when: { kind: "turnAtLeast", turn: 7 }, effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 } },
-    effect: { kind: "directMC", target: "self", mc: 27_000 },
+    // a week to the hour, and it did the whole thing again
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
     flavour: "A week to the hour, and it did the whole thing again.",
   },
   {
@@ -1619,7 +1607,8 @@ const CAW: ProjectCard[] = [
     launchMC: 27_000,
     pumpMC: 17_000,
     holders: 3,
-    effect: { kind: "drawCards", amount: 2 },
+    // the chat found sevens in the supply, the fee and the founder's age
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 8_000 } },
     flavour: "The chat found sevens in the supply, the fee and the founder's age.",
   },
   {
@@ -1691,7 +1680,8 @@ const CAW: ProjectCard[] = [
     launchMC: 107_000,
     pumpMC: 57_000,
     holders: 7,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
+    // seven sevens on one screen; two people printed it and framed it
+    effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
     payoff: {
       when: { kind: "ownProjectsInSector", sector: "meme", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 277_000 },
@@ -1754,7 +1744,8 @@ const DAK: ProjectCard[] = [
     holders: 2,
     // dumped the small one to buy more of the big one, and it worked twice
     payoff: { when: { kind: "bankedAtLeast", count: 2 }, effect: { kind: "stealMC", percentage: 10 } },
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
+    // dumped the small one to buy more of the big one, and it worked twice
+    effect: { kind: "burnForDamage", target: "ownProject", keep: 45 },
     flavour: "Dumped the small one to buy more of the big one. It worked twice.",
   },
   {
@@ -1882,7 +1873,8 @@ const VVS: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 8_000,
     holders: 3,
-    effect: { kind: "extraBudget", target: "self", mc: 20_000 },
+    // emissions on everything; for a while the yield was the product
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     flavour: "Emissions on everything. For a while the yield was the product.",
   },
   {
@@ -1897,7 +1889,8 @@ const VVS: ProjectCard[] = [
     launchMC: 25_000,
     pumpMC: 15_000,
     holders: 3,
-    effect: { kind: "drawCards", amount: 2 },
+    // every pair anybody wanted, and a few nobody did
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 8_000 } },
     flavour: "Every pair anybody wanted, and a few nobody did.",
   },
   {
@@ -1914,7 +1907,8 @@ const VVS: ProjectCard[] = [
     holders: 4,
     // the fees were the moat and nobody undercut it for two years
     payoff: { when: { kind: "turnAtMost", turn: 4 }, effect: { kind: "extraBudget", target: "self", mc: 60_000 } },
-    effect: { kind: "extraBudget", target: "self", mc: 45_000 },
+    // the fees were the moat; nobody undercut it for two years
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
     flavour: "The fees were the moat. Nobody undercut it for two years.",
   },
   {
@@ -1948,7 +1942,8 @@ const VVS: ProjectCard[] = [
     launchMC: 42_000,
     pumpMC: 25_000,
     holders: 4,
-    effect: { kind: "extraBudget", target: "self", mc: 95_000 },
+    // volume begets volume — that is the whole business and it is enough
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 15_000 },
     flavour: "Volume begets volume. That is the whole business and it is enough.",
   },
   {
@@ -1984,7 +1979,8 @@ const VVS: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 55_000,
     holders: 6,
-    effect: { kind: "extraBudget", target: "self", mc: 200_000 },
+    // deep enough that size stopped mattering
+    effect: { kind: "scalePump", target: "allOwnProjects", percentage: 50 },
     flavour: "Deep enough that size stopped mattering. That is rare anywhere.",
   },
 ];
@@ -2026,7 +2022,8 @@ const MMF: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 10_000,
     holders: 2,
-    effect: { kind: "stealMC", percentage: 5 },
+    // it took a cut of everything and told you it was taking it
+    effect: { kind: "extraBudget", target: "self", mc: 22_000 },
     flavour: "It took a cut of everything and told you it was taking it.",
   },
   {
@@ -2041,7 +2038,8 @@ const MMF: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    effect: { kind: "stealMC", percentage: 10 },
+    // the mob arrived at whatever was moving and left with the spread
+    effect: { kind: "directMC", target: "self", mc: 27_000 },
     flavour: "The mob arrived at whatever was moving and left with the spread.",
   },
   {
@@ -2056,7 +2054,8 @@ const MMF: ProjectCard[] = [
     launchMC: 24_000,
     pumpMC: 16_000,
     holders: 3,
-    effect: { kind: "drawCards", amount: 2 },
+    // a DEX, a launchpad, an NFT line and a burn — all at once, loudly
+    effect: { kind: "extraBudget", target: "self", mc: 45_000 },
     flavour: "A DEX, a launchpad, an NFT line and a burn. All at once, loudly.",
   },
   {
@@ -2073,7 +2072,8 @@ const MMF: ProjectCard[] = [
     holders: 3,
     // somebody worked out the buyback was bigger than the emissions
     payoff: { when: { kind: "discardAtLeast", count: 4 }, effect: { kind: "directMC", target: "self", mc: 80_000 } },
-    effect: { kind: "stealMC", percentage: 17 },
+    // somebody worked out the buyback was bigger than the emissions
+    effect: { kind: "budgetToMC", percentage: 40 },
     flavour: "Somebody worked out the buyback was bigger than the emissions.",
   },
   {
@@ -2088,11 +2088,8 @@ const MMF: ProjectCard[] = [
     launchMC: 37_000,
     pumpMC: 26_000,
     holders: 4,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { dex: 8_000, meme: 6_000 },
-    },
+    // half a serious venue and half a meme, and it never picked one
+    effect: { kind: "scaleMC", target: "self", percentage: 13 },
     flavour: "Half a serious venue and half a meme, and it never picked one.",
   },
   {
@@ -2109,7 +2106,8 @@ const MMF: ProjectCard[] = [
     holders: 4,
     // the buyback ran on a timer and the chart knew what time it was
     toll: { percentage: 12 },
-    effect: { kind: "stealMC", percentage: 25 },
+    // the buyback ran on a timer and the chart knew what time it was
+    effect: { kind: "directMC", target: "self", mc: 22_000, per: "turn" },
     flavour: "The buyback ran on a timer and the chart knew what time it was.",
   },
   {
@@ -2124,7 +2122,8 @@ const MMF: ProjectCard[] = [
     launchMC: 105_000,
     pumpMC: 57_000,
     holders: 5,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
+    // the whole mob at once, and nothing else on the chain that loud
+    effect: { kind: "scaleMC", target: "self", percentage: 16 },
     payoff: {
       when: { kind: "ownProjectsInSector", sector: "dex", atLeast: 2 },
       effect: { kind: "stealMC", percentage: 15 },
@@ -2168,7 +2167,8 @@ const TECTONIC: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 8_000,
     holders: 4,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // the health factor is a number you check more than you admit
+    effect: { kind: "extraBudget", target: "self", mc: 22_000 },
     flavour: "The health factor is a number you check more than you admit.",
   },
   {
@@ -2183,7 +2183,8 @@ const TECTONIC: ProjectCard[] = [
     launchMC: 25_000,
     pumpMC: 15_000,
     holders: 4,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
+    // somebody's collateral goes first when the whole market moves
+    effect: { kind: "scaleMC", target: "self", percentage: 7 },
     flavour: "Somebody's collateral goes first when the whole market moves.",
   },
   {
@@ -2198,7 +2199,8 @@ const TECTONIC: ProjectCard[] = [
     launchMC: 27_000,
     pumpMC: 14_000,
     holders: 5,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // top it up before it tops you up — that is the whole discipline
+    effect: { kind: "directMC", target: "self", mc: 27_000 },
     flavour: "Top it up before it tops you up. That is the whole discipline.",
   },
   {
@@ -2215,11 +2217,8 @@ const TECTONIC: ProjectCard[] = [
     holders: 5,
     // everything on the chain ended up posted here as collateral
     standing: { kind: "directMC", target: "self", mc: 74_000 },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { defi: 10_000 },
-    },
+    // everything on the chain ended up posted here as collateral
+    effect: { kind: "directMC", target: "self", mc: 12_000, per: "holders" },
     flavour: "Everything on the chain ended up posted here as collateral.",
   },
   {
@@ -2236,7 +2235,8 @@ const TECTONIC: ProjectCard[] = [
     holders: 4,
     // supply something, borrow against it, try not to think about it
     leverage: 24,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
+    // a cascade does not ask which position it liked best
+    effect: { kind: "mcPerPositionGone", mc: 34_000 },
     flavour: "A cascade does not ask which position it liked best.",
   },
   {
@@ -2251,7 +2251,8 @@ const TECTONIC: ProjectCard[] = [
     launchMC: 65_000,
     pumpMC: 43_000,
     holders: 6,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // the biggest book on the chain, and the quietest one about it
+    effect: { kind: "scaleMC", target: "self", percentage: 16 },
     payoff: {
       when: { kind: "ownProjectsInSector", sector: "defi", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 180_000 },
@@ -2272,7 +2273,8 @@ const TECTONIC: ProjectCard[] = [
     holders: 7,
     // solvent through every drawdown anybody on this chain remembers
     restriction: { kind: "banTakeProfit" },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 3 },
+    // solvent through every drawdown anybody on this chain remembers
+    effect: { kind: "scaleMC", target: "self", percentage: 20 },
     flavour: "Solvent through every drawdown anybody on this chain remembers.",
   },
 ];
@@ -2314,7 +2316,8 @@ const FERRO: ProjectCard[] = [
     launchMC: 17_000,
     pumpMC: 9_000,
     holders: 4,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // slippage measured in basis points, and it stayed there
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     flavour: "Slippage measured in basis points, and it stayed there.",
   },
   {
@@ -2347,11 +2350,8 @@ const FERRO: ProjectCard[] = [
     holders: 5,
     // underneath the venues, quoting the boring half of every trade
     payoff: { when: { kind: "playedThisTurnAtLeast", cards: 2 }, effect: { kind: "extraBudget", target: "self", mc: 50_000 } },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { defi: 6_000, dex: 4_000 },
-    },
+    // underneath the venues, quoting the boring half of every trade
+    effect: { kind: "directMC", target: "self", mc: 9_000, per: "any" },
     flavour: "Underneath the venues, quoting the boring half of every trade.",
   },
   {
@@ -2384,7 +2384,8 @@ const FERRO: ProjectCard[] = [
     holders: 6,
     // it held its peg through the week everything else did not
     standing: { kind: "directMC", target: "self", mc: 74_000 },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // it held its peg through the week everything else did not
+    effect: { kind: "refundMC", percentage: 30 },
     flavour: "It held its peg through the week everything else did not.",
   },
   {
@@ -2401,11 +2402,8 @@ const FERRO: ProjectCard[] = [
     holders: 6,
     // every route that mattered had one of its pools in the middle
     uptime: true,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { defi: 12_000, dex: 7_000 },
-    },
+    // every route that mattered had one of its pools in the middle
+    effect: { kind: "directMC", target: "self", mc: 20_000, per: "table" },
     flavour: "Every route that mattered had one of its pools in the middle.",
   },
   {
@@ -2481,11 +2479,8 @@ const LIONS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 4,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 7_000 },
-    },
+    // holding one got you into rooms, and that was most of the point
+    effect: { kind: "scaleMC", target: "self", percentage: 7 },
     flavour: "Holding one got you into rooms. That was most of the point.",
   },
   {
@@ -2502,7 +2497,8 @@ const LIONS: ProjectCard[] = [
     holders: 5,
     // the floor moved slowly in both directions, which suited everybody
     payoff: { when: { kind: "bankedAtMost", count: 1 }, effect: { kind: "directMC", target: "self", mc: 65_000 } },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // the floor moved slowly in both directions, which suited everybody
+    effect: { kind: "extraBudget", target: "self", mc: 45_000 },
     flavour: "The floor moved slowly in both directions, which suited everybody.",
   },
   {
@@ -2519,11 +2515,8 @@ const LIONS: ProjectCard[] = [
     holders: 5,
     // the one collection everybody could name without checking
     standing: { kind: "directMC", target: "self", mc: 74_000 },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 12_000 },
-    },
+    // the one collection everybody could name without checking
+    effect: { kind: "peakMC", percentage: 12 },
     flavour: "The one collection everybody could name without checking.",
   },
   {
@@ -2558,11 +2551,8 @@ const LIONS: ProjectCard[] = [
     holders: 6,
     // blue chip is a thing people call you; nobody applies for it
     loyalty: 40,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 19_000 },
-    },
+    // blue chip is a thing people call you; nobody applies for it
+    effect: { kind: "scaleMC", target: "self", percentage: 14 },
     flavour: "Blue chip is a thing people call you. Nobody applies for it.",
   },
   {
@@ -2577,11 +2567,8 @@ const LIONS: ProjectCard[] = [
     launchMC: 108_000,
     pumpMC: 56_000,
     holders: 7,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 24_000, meme: 8_000 },
-    },
+    // two cycles in and the floor is still where the floor was
+    effect: { kind: "scaleMC", target: "self", percentage: 18 },
     flavour: "Two cycles in and the floor is still where the floor was.",
   },
 ];
@@ -2655,11 +2642,8 @@ const CHIMPS: ProjectCard[] = [
     launchMC: 28_000,
     pumpMC: 14_000,
     holders: 4,
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 6_000, infra: 4_000 },
-    },
+    // half the projects on this chain started in somebody's chimp chat
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "Half the projects on this chain started in somebody's chimp chat.",
   },
   {
@@ -2755,7 +2739,8 @@ const MINTED: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    effect: { kind: "drawCards", amount: 1 },
+    // a list, a filter and a buy button — somebody has to make one
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     flavour: "A list, a filter and a buy button. Somebody has to make one.",
   },
   {
@@ -2785,7 +2770,8 @@ const MINTED: ProjectCard[] = [
     launchMC: 27_000,
     pumpMC: 15_000,
     holders: 3,
-    effect: { kind: "cancel", target: "opponent", count: 1 },
+    // delisted is not destroyed; it is worse — nobody can find it
+    effect: { kind: "extraBudget", target: "self", mc: 45_000 },
     flavour: "Delisted is not destroyed. It is worse: nobody can find it.",
   },
   {
@@ -2802,11 +2788,8 @@ const MINTED: ProjectCard[] = [
     holders: 4,
     // every collection needed it and none of them owned it
     payoff: { when: { kind: "ownProjectCount", atLeast: 4 }, effect: { kind: "directMC", target: "self", mc: 70_000 } },
-    effect: {
-      kind: "pumpBySector",
-      target: "allOwnProjects",
-      bonuses: { nft: 8_000, infra: 5_000 },
-    },
+    // every collection needed it and none of them owned it
+    effect: { kind: "directMC", target: "self", mc: 9_000, per: "any" },
     flavour: "Every collection needed it and none of them owned it.",
   },
   {
@@ -2823,7 +2806,8 @@ const MINTED: ProjectCard[] = [
     holders: 4,
     // the front page decided what a good week looked like
     standing: { kind: "directMC", target: "self", mc: 74_000 },
-    effect: { kind: "drawCards", amount: 2 },
+    // the front page decided what a good week looked like
+    effect: { kind: "directMC", target: "self", mc: 12_000, per: "plays" },
     flavour: "The front page decided what a good week looked like.",
   },
   {
@@ -2855,7 +2839,8 @@ const MINTED: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    effect: { kind: "cancel", target: "opponent", count: 1 },
+    // the venue outlasts everything it lists — that is always true
+    effect: { kind: "scaleMC", target: "self", percentage: 14 },
     payoff: {
       when: { kind: "ownProjectsInSector", sector: "infra", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 150_000 },
@@ -2876,7 +2861,8 @@ const MINTED: ProjectCard[] = [
     holders: 6,
     // two names off the front page and a market that forgets by Friday
     restriction: { kind: "banType", cardType: "tool" },
-    effect: { kind: "cancel", target: "opponent", count: 2 },
+    // two names off the front page and a market that forgets by Friday
+    effect: { kind: "directMC", target: "self", mc: 20_000, per: "theirs" },
     flavour: "Two names off the front page and a market that forgets by Friday.",
   },
 ];

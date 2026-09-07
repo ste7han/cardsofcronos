@@ -121,3 +121,46 @@ export function intentOf(card: Card): Intent {
   if (!e) return "none";
   return intentOfEffect(e);
 }
+
+/**
+ * How each family plays. Read off the flavour already on its cards; see
+ * scripts/family-proposal.ts for the reasoning line by line.
+ *
+ * One map, because two scripts wanted it and they had a copy each within the
+ * hour — and the copies already disagreed about Tectonic. That is the drift this
+ * file was made to stop, arriving in the file that stops it.
+ *
+ * TECTONIC PLAYS AS LOCKS AND ITS EFFECTS READ AS MONEY, and both are true. TCG's
+ * three locks families — Kamino, Serum, Firedancer — carry money effects on
+ * nearly every card and put the lock in the second layer: a shield, an uptime, a
+ * ban on one card type. A family that locked on all eight would be unplayable to
+ * sit across from. So `familyIntent` is what the family IS, and a locks family
+ * is checked against money when its effect layer is being read.
+ */
+export const FAMILY_INTENT: Record<string, Intent> = {
+  clove: "community",
+  ffs: "community",
+  monsters: "takes",
+  caw: "momentum",
+  dak: "takes",
+  crooks: "community",
+  obsidian: "money",
+  tectonic: "locks",
+  ferro: "money",
+  wolfswap: "takes",
+  vvs: "momentum",
+  mmf: "money",
+  robots: "momentum",
+  howlers: "community",
+  lions: "money",
+  chimps: "community",
+  nova: "momentum",
+  cr00ts: "takes",
+  minted: "money",
+};
+
+/** What a family's EFFECT layer should read as. Locks families run on money. */
+export function effectIntentFor(family: string): Intent | undefined {
+  const i = FAMILY_INTENT[family];
+  return i === "locks" ? "money" : i;
+}

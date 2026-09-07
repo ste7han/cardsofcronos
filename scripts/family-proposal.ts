@@ -20,35 +20,31 @@
 
 import { CARDS } from "../data/cards";
 import type { ProjectCard } from "../engine/types";
-import { type Intent, intentOf } from "./intent";
+import { FAMILY_INTENT, type Intent, effectIntentFor, intentOf } from "./intent";
 
 
-/** Why each family plays the way it is proposed to. One line, from its flavour. */
-const PROPOSAL: Record<string, { intent: Intent; because: string }> = {
-  // ---- meme -------------------------------------------------------------
-  clove: { intent: "community", because: "a group chat that never slept, and everyone early stayed early" },
-  ffs: { intent: "community", because: "sold its own bag to fund a marketing wallet for everyone else" },
-  monsters: { intent: "takes", because: "it did not check whose side anybody was on, and it ate the thing eating everything else" },
-  caw: { intent: "momentum", because: "seven in a row, and a week to the hour it did the whole thing again" },
-  dak: { intent: "takes", because: "a floor sweep, and whatever the other collection lost turned up in this one's floor" },
-  // ---- defi -------------------------------------------------------------
-  crooks: { intent: "community", because: "down forty percent in an hour and the deposits went up" },
-  obsidian: { intent: "money", because: "everybody counts at the end; it had been counting the whole time" },
-  tectonic: { intent: "locks", because: "supply something, borrow against it — everything on the chain ends up posted here" },
-  ferro: { intent: "money", because: "underneath the venues, quoting the boring half of every trade" },
-  // ---- dex --------------------------------------------------------------
-  wolfswap: { intent: "takes", because: "the other pool did not close, it just stopped being quoted" },
-  vvs: { intent: "momentum", because: "volume begets volume, and that is the whole business" },
-  mmf: { intent: "money", because: "the buyback ran on a timer and the chart knew what time it was" },
-  // ---- nft --------------------------------------------------------------
-  robots: { intent: "momentum", because: "ran twice as hot for half as long, and everybody knew" },
-  howlers: { intent: "community", because: "the pack moves at the speed of its slowest, which is the whole idea" },
-  lions: { intent: "money", because: "two cycles in and the floor is still where the floor was" },
-  chimps: { intent: "community", because: "the oldest group chat on the chain, and it still moves markets" },
-  // ---- infra ------------------------------------------------------------
-  nova: { intent: "momentum", because: "nobody voted for it; everybody integrated it" },
-  cr00ts: { intent: "takes", because: "two percent nobody notices is a business nobody complains about" },
-  minted: { intent: "money", because: "fees on both sides of every sale, quietly, forever" },
+/** Why each family plays the way it does. One line, from its flavour.
+ * The intent itself lives in scripts/intent.ts; this is only the reasoning. */
+const BECAUSE: Record<string, string> = {
+  clove: "a group chat that never slept, and everyone early stayed early",
+  ffs: "sold its own bag to fund a marketing wallet for everyone else",
+  monsters: "it did not check whose side anybody was on, and it ate the thing eating everything else",
+  caw: "seven in a row, and a week to the hour it did the whole thing again",
+  dak: "a floor sweep, and whatever the other collection lost turned up in this one's floor",
+  crooks: "down forty percent in an hour and the deposits went up",
+  obsidian: "everybody counts at the end; it had been counting the whole time",
+  tectonic: "supply something, borrow against it — everything on the chain ends up posted here",
+  ferro: "underneath the venues, quoting the boring half of every trade",
+  wolfswap: "the other pool did not close, it just stopped being quoted",
+  vvs: "volume begets volume, and that is the whole business",
+  mmf: "the buyback ran on a timer and the chart knew what time it was",
+  robots: "ran twice as hot for half as long, and everybody knew",
+  howlers: "the pack moves at the speed of its slowest, which is the whole idea",
+  lions: "two cycles in and the floor is still where the floor was",
+  chimps: "the oldest group chat on the chain, and it still moves markets",
+  nova: "nobody voted for it; everybody integrated it",
+  cr00ts: "two percent nobody notices is a business nobody complains about",
+  minted: "fees on both sides of every sale, quietly, forever",
 };
 
 
@@ -65,18 +61,22 @@ const missing: string[] = [];
 
 for (const [key, cards] of fams) {
   if (cards.length < 8) continue;
-  const p = PROPOSAL[key];
-  if (!p) { missing.push(`${cards[0]!.name} (${key})`); continue; }
+  const intent = FAMILY_INTENT[key];
+  const because = BECAUSE[key];
+  if (!intent || !because) { missing.push(`${cards[0]!.name} (${key})`); continue; }
   const kinds = cards.map(intentOf);
   rows.push({
     key,
     name: cards[0]!.name,
     sector: cards[0]!.sector,
-    want: p.intent,
-    fits: kinds.filter((k) => k === p.intent).length,
+    want: intent,
+    // Counted against the EFFECT intent, which for a locks family is money —
+    // see effectIntentFor. Counting Tectonic's eight money cards as misses
+    // reported ten cards to re-point that were already where they belong.
+    fits: kinds.filter((k) => k === effectIntentFor(key)).length,
     speaks: kinds.filter((k) => k !== "none").length,
     blank: kinds.filter((k) => k === "none").length,
-    because: p.because,
+    because,
   });
 }
 
