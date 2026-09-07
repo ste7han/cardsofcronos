@@ -32,7 +32,10 @@ export const TURN_CLOCK: Record<MatchMode, number> = {
 export interface MatchRecord {
   id: string;
   mode: MatchMode;
-  /** SOL at stake per side. Zero is a friendly match. */
+  /** What is at stake per side. Zero is a friendly match, and for now the only
+   * value lib/pvp.ts will accept: there is nowhere on Cronos to hold a stake
+   * yet, and a stake nobody holds is not a stake. The unit is decided with the
+   * escrow, not here. */
   stake: number;
   /** Whose player id sits on which side of the table. */
   seats: Record<Player, string>;

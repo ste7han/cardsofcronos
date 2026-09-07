@@ -8,7 +8,13 @@ import { CardBack } from "@/components/CardBack";
 import { CardView } from "@/components/CardView";
 import { Icon } from "@/components/Icon";
 import { BoardProject } from "@/components/game/BoardProject";
-import { EMPTY_FLASH, key, makeFlash, type Flash } from "@/components/game/diff";
+import { CardPeek } from "@/components/game/CardPeek";
+import { PeekButton } from "@/components/game/PeekButton";
+import { EMPTY_FLASH, FLASH_MS, key, makeFlash, type Flash } from "@/components/game/diff";
+import { SoundToggle } from "@/components/game/SoundToggle";
+import { cuesFor, endCue } from "@/lib/audio/cues";
+import { play, playAll } from "@/lib/audio/sfx";
+import { musicOn, start as startMusic, stop as stopMusic } from "@/lib/audio/music";
 import { Log } from "@/components/game/Log";
 import { MCCounter } from "@/components/game/MCCounter";
 import { chooseMove } from "@/engine/bot";
@@ -17,20 +23,42 @@ import { PRESET_DECKS } from "@/data/preset-decks";
 import { cardLabel, formatMC, formatMCExact, formatMCPair, plural } from "@/engine/format";
 import { cardById } from "@/engine/helpers";
 import {
+  FIRST_MOVER,
   applyMove,
-  canDiscard,
-  canTakeProfit,
+  discardRequirementOf,
+  withinFreeCap,
   needsPortfolioSlot,
   newMatch,
   playable,
   pumpOf,
   targetRequirementOf,
   upgradesAPosition,
+  whyNoDiscard,
+  whyNoProfit,
   whyNot,
+  priceFor,
 } from "@/engine/match";
-import { EMPTY_PREVIEW, mcDeltaOf, previewOf, type Preview } from "@/engine/preview";
-import { describeAura, rulesText } from "@/engine/rules-text";
-import type { ChoiceTarget, Move, Player, State } from "@/engine/types";
+import { EMPTY_PREVIEW, budgetDeltaOf, mcDeltaOf, previewOf, type Preview } from "@/engine/preview";
+import { budgetNote, freePlayNote } from "@/engine/rules-text";
+import { snapshotOfState } from "@/engine/snapshot";
+import { DiscardButton } from "@/components/game/DiscardButton";
+import { TakeProfitButton } from "@/components/game/TakeProfitButton";
+import type { Refusal } from "@/engine/match";
+import type { Card, ChoiceTarget, Move, Player, State } from "@/engine/types";
+
+/**
+ * Does the free play cover this card, right now?
+ *
+ * The badge has to answer the same question the engine does. It used to ask only
+ * whether a free play was left, which was right while the play covered anything
+ * and became a lie the day it stopped covering mythics. At module level because
+ * the hand and the two previews all need it and they are three components.
+ */
+function freeFor(state: State, card: Card): boolean {
+  return (
+    state.freePlays[FIRST_MOVER] > 0 && state.toMove === FIRST_MOVER && withinFreeCap(card)
+  );
+}
 import { RULES, TURN_ACTION_COST, auraOf, boardOf } from "@/engine/types";
 import { MINT_OPEN } from "@/lib/collection";
 import { proofOf } from "@/lib/session";
@@ -45,8 +73,6 @@ import { INDEX, SET } from "@/lib/set";
 
 /** How long the bot takes per move. Purely for the viewer; the engine is instant. */
 const BOT_TEMPO_MS = 1150;
-/** How long a rising number and its caption stay on screen. */
-const FLASH_MS = 1050;
 
 interface Aiming {
   target: ChoiceTarget;
@@ -54,6 +80,15 @@ interface Aiming {
   reason: "effect" | "close" | "profit";
   /** Set for "profit": banking uses no card from hand. */
   handIndex: number | null;
+  /**
+   * The position already picked to close, when a card asks both questions.
+   *
+   * A project with an effect that aims at a single position, played into a full
+   * portfolio, needs two answers: which of yours goes, and which of theirs gets
+   * hit. They are asked one after the other and this carries the first one into
+   * the second.
+   */
+  closed?: number;
 }
 
 export function Game() {
@@ -67,6 +102,16 @@ export function Game() {
   const [hovered, setHovered] = useState<number | null>(null);
   // The log opens on a click rather than sitting in the way of the table.
   const [logOpen, setLogOpen] = useState(false);
+  /**
+   * Which of the opponent's positions is being pointed at as the reason a
+   * control of yours is switched off.
+   *
+   * Here rather than inside the button, because the button and the board it
+   * points at are siblings. Cleared on every state change below — a highlight
+   * that outlives the rule it explains is worse than none: it points at a card
+   * that is no longer stopping anything, with exactly the same confidence.
+   */
+  const [blaming, setBlaming] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** The end screen has been dismissed so the board and the log can be read. */
   const [reviewing, setReviewing] = useState(false);
@@ -199,13 +244,38 @@ export function Game() {
       // moves would not replay, and the server would blame the player.
       played.current.moves.push(move);
 
-      setFlash(makeFlash(current, next, move, INDEX));
+      const was = snapshotOfState(current, INDEX);
+      const is = snapshotOfState(next, INDEX);
+      setFlash(makeFlash(was, is));
       if (flashTimer.current) clearTimeout(flashTimer.current);
       flashTimer.current = setTimeout(() => setFlash(EMPTY_FLASH), FLASH_MS);
+
+      // The same two moments the markers are read from, so the table cannot
+      // show one thing and say another. A card arriving in hand is the one cue
+      // a board diff cannot carry — a hand is not on a board — so it is counted
+      // here, where both hands are in reach.
+      const cues = cuesFor(was, is, move);
+      const drew = next.players.you.hand.length > current.players.you.hand.length;
+      playAll(drew ? [...cues, "draw"] : cues);
+
+      // The end, from the state rather than from the diff. cues.ts refuses to
+      // guess at this and says why.
+      if (next.finished && !current.finished) {
+        play(endCue(next.winner), 0.45);
+      }
     } catch (e) {
+      // A refused move has to be heard as well as seen. This is the one sound
+      // that fires for something that did NOT happen.
+      play("deny");
       setError(e instanceof Error ? e.message : String(e));
     }
   }, []);
+
+  // A highlight is about one moment. Cleared whenever the match moves rather
+  // than in each of the handlers that move it — doMove, the bot's own timer and
+  // starting a fresh match are three paths, and the fourth one somebody adds
+  // later would not know it had to clear this.
+  useEffect(() => setBlaming(null), [state]);
 
   // The bot plays its turn move by move, so you can follow what happens.
   useEffect(() => {
@@ -279,6 +349,16 @@ export function Game() {
       theirMC: state.players.opponent.mc,
       won: state.winner === null ? null : state.winner === "you",
     });
+
+    // TCG also sends the seed and the moves up to /api/solo, where the server
+    // replays the match and writes down what its own engine produced — because a
+    // number this browser computed is fine as a private note to itself, which is
+    // what the line above is, and is not a record the moment somebody else reads
+    // it back. That route is not built here, so the record stops at this browser
+    // and the code that would send it is gone rather than pointed at a 404.
+    //
+    // What comes with it: lib/solo.ts, /api/solo, and the half of the profile
+    // that shows a record somebody other than this tab has checked.
   }, [state, demo, deckInfo]);
 
   /**
@@ -309,6 +389,32 @@ export function Game() {
     });
   }, [demo, state?.finished, wallet]);
 
+  // NO WEEKLY TOURNAMENT HERE, and the code for one is gone rather than dormant.
+  //
+  // TCG posts every win against the bot to /api/tournament, which replays the
+  // seed and the moves on the server and answers with where it landed on the
+  // week's board. That route does not exist in this game, so the call came over
+  // as a POST to a 404 whose failure path is a `.catch` that does nothing — a
+  // request per won match, silently dropped, and a feature the screen could
+  // never show. Failing silently is the one thing this codebase does not do.
+  //
+  // What comes back with the tournament when it is built: this effect, the Entry
+  // shape, BoardStanding, and the link to /tournament under the result.
+
+
+  /**
+   * The music runs with the table and stops with it.
+   *
+   * Started here rather than in the toggle because the toggle can be thrown
+   * before a match exists, and because leaving a drone running under the end
+   * screen was the first thing that felt wrong.
+   */
+  useEffect(() => {
+    if (!musicOn()) return;
+    startMusic();
+    return () => stopMusic();
+  }, []);
+
   // Escape cancels aiming.
   useEffect(() => {
     if (!aiming) return;
@@ -323,15 +429,39 @@ export function Game() {
     if (deckInfo && deckInfo.cardIds.length === 0) {
       return (
         <div className="mx-auto max-w-md px-4 py-24 text-center">
-          <p className="text-[10px] tracking-[0.28em] text-faint">NO DECK</p>
-          <h1 className="display mt-3 text-3xl">NOTHING TO PLAY WITH</h1>
+          {/* A REJECTED DECK IS NOT AN EMPTY COLLECTION, and this screen said it
+              was. It headed both cases NOTHING TO PLAY WITH, which is a plain
+              untruth told to somebody holding sixty-seven cards whose saved deck
+              happens to hold cards from another wallet — and the way out of that
+              is /deck, which the page did not offer because it thought there was
+              nothing to build from. */}
+          <p className="text-[10px] tracking-[0.28em] text-faint">
+            {deckInfo.rejected.length > 0 ? "SAVED DECK" : "NO DECK"}
+          </p>
+          <h1 className="display mt-3 text-3xl">
+            {deckInfo.rejected.length > 0 ? "THIS DECK NEEDS REBUILDING" : "NOTHING TO PLAY WITH"}
+          </h1>
           <p className="mt-4 text-[11px] leading-relaxed text-muted">
             {deckInfo.rejected.length > 0
               ? deckInfo.rejected.join(" ")
               : wallet === null
-                ? `A deck belongs to a wallet rather than to a browser. Sign in with the button at the top right, and whatever that address holds comes with it.`
+                // TCG says "rather than to a browser" here, because over there a
+                // deck moved into the database. Here it is still keyed by wallet
+                // in localStorage — lib/deck-storage.ts — so it belongs to a
+                // wallet and lives in this browser, and the sentence says only
+                // the half that is true. Say the other half once it is.
+                ? `A deck belongs to a wallet. Sign in with the button at the top right, and whatever that address holds comes with it.`
                 : `A deck is ${RULES.deckSize} cards out of the cards you hold, and this wallet holds none yet.`}
           </p>
+
+          {deckInfo.rejected.length > 0 && wallet !== null && (
+            <Link
+              href="/deck"
+              className="glow-pump mt-6 inline-block border border-pump bg-pump/10 px-5 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
+            >
+              REBUILD IT
+            </Link>
+          )}
 
           <p className="mt-3 text-[10px] leading-relaxed text-faint">
             Or borrow a deck and play a match right now. It is the whole game — same ten turns,
@@ -395,12 +525,30 @@ export function Game() {
       ? mcDeltaOf(state, hovered, INDEX)
       : null;
 
+  // What the hovered card does to the budget. Separate from mcDelta because a
+  // card can leave the market caps alone and still change what you can afford
+  // next — and because the number nobody can do in their head is this one: a
+  // card that costs $280K and hands $420K back reads as unaffordable right up
+  // until you play it.
+  const budgetDelta =
+    hovered !== null && hoveredCard && playable(state, hoveredCard, "you", INDEX)
+      ? budgetDeltaOf(state, hovered, INDEX)
+      : null;
+
   /** The card being hovered, so the hand can lift it out of the row. */
   const lifted = hovered !== null ? state.players.you.hand[hovered] : undefined;
+
+  /** What the hovered card asks of the discard, read off the card itself. */
+  const wantsDiscard = hoveredCard ? discardRequirementOf(hoveredCard) : null;
+
 
   function clickHandCard(handIndex: number) {
     const current = stateRef.current;
     if (!current) return;
+    // The hand re-indexes the moment a card leaves it, so a hover held over slot
+    // three starts describing whatever moved into slot three. Let go of it here
+    // rather than in every branch below.
+    setHovered(null);
     const card = cardById(INDEX, current.players.you.hand[handIndex]!);
     if (!playable(current, card, "you", INDEX)) return;
 
@@ -412,6 +560,7 @@ export function Game() {
 
     const requirement = targetRequirementOf(card);
     if (requirement) {
+      play("select");
       setAiming({ handIndex, target: requirement, reason: "effect" });
       return;
     }
@@ -423,14 +572,19 @@ export function Game() {
     if (aiming.reason === "profit") {
       doMove({ kind: "takeProfit", slot });
     } else if (aiming.handIndex !== null) {
-      // closeIndex, not targetIndex, when the click is choosing a position to
-      // close. TCG split the two the day a card both closed a position and hit
-      // one: a single number cannot be counted against two different lists, and
-      // while they shared a field the engine read the wrong board.
+      const card = cardById(INDEX, stateRef.current!.players.you.hand[aiming.handIndex]!);
+      const requirement = targetRequirementOf(card);
+      // Closing was only the first half. If the card also aims at something, ask
+      // that now and keep the position just picked.
+      if (aiming.reason === "close" && requirement) {
+        setAiming({ handIndex: aiming.handIndex, target: requirement, reason: "effect", closed: slot });
+        return;
+      }
       doMove({
         kind: "playCard",
         handIndex: aiming.handIndex,
         ...(aiming.reason === "close" ? { closeIndex: slot } : { targetIndex: slot }),
+        ...(aiming.closed === undefined ? {} : { closeIndex: aiming.closed }),
       });
     }
     setAiming(null);
@@ -442,6 +596,7 @@ export function Game() {
   }
 
   function startTakeProfit() {
+    play("select");
     setAiming({ handIndex: null, target: "ownProject", reason: "profit" });
   }
 
@@ -494,6 +649,8 @@ export function Game() {
               flash={flash}
               preview={preview}
               mcDelta={mcDelta?.opponent ?? null}
+              blaming={blaming}
+              wantsDiscard={null}
               onTarget={clickTarget}
             />
           </div>
@@ -503,6 +660,7 @@ export function Game() {
               is where you are looking anyway. */}
           <TurnBar
             state={state}
+            budgetDelta={budgetDelta}
             yourTurn={yourTurn}
             aiming={aiming}
             flash={flash}
@@ -513,6 +671,7 @@ export function Game() {
             onEnd={endTurn}
             onCancel={() => setAiming(null)}
             onTakeProfit={startTakeProfit}
+            onBlame={setBlaming}
             onNew={() => start(demo)}
           />
 
@@ -527,6 +686,10 @@ export function Game() {
               flash={flash}
               preview={preview}
               mcDelta={mcDelta?.you ?? null}
+              // Only ever the opponent's board: every standing rule in the set
+              // is carried by a position on the other side of the table.
+              blaming={null}
+              wantsDiscard={wantsDiscard}
               onTarget={clickTarget}
             />
           </div>
@@ -598,8 +761,35 @@ export function Game() {
             onHover={setHovered}
             onClick={clickHandCard}
             onDiscard={throwAway}
-            discardable={canDiscard(state, "you") && aiming === null}
+            offerDiscard={yourTurn && aiming === null}
+            noDiscard={whyNoDiscard(state, "you")}
           />
+
+          {/* The log, in the flow, under the hand — you scroll to it.
+              It was a fixed panel over the board, which is the wrong shape for
+              the screen with the least board on it: a phone had the log covering
+              the thing the log is about.
+
+              In the flow the page grows and scrolls, and the note above the
+              desktop panel is right that this once broke things — a fixed panel
+              against a scrolling page comes away from the header. That applied
+              at 1440, where the card preview beside the table is fixed. Below lg
+              nothing is: the preview there is absolute and scrolls with the
+              page, and the only fixed things left are two full-screen overlays
+              that do not care.
+
+              No toggle here either. The LOG button folds a margin panel away to
+              centre the table, and there is no margin to fold on a phone —
+              scrolling past it is the same gesture as not scrolling to it. */}
+          <div className="mt-3 border-t border-line pt-3 lg:hidden">
+            <p className="mb-1.5 text-[9px] tracking-[0.2em] text-faint">THE LOG</p>
+            <div className="h-64 border border-line">
+              <Log entries={state.log} />
+            </div>
+            <div className="mt-2">
+              <StakeBar deck={deckInfo} demo={demo} />
+            </div>
+          </div>
       </div>
 
       {/* In the left margin, beside the table rather than instead of part of it. */}
@@ -615,6 +805,10 @@ export function Game() {
           line on its own and the log would appear to move by itself. Overlaying
           costs nothing: it is behind a toggle, so covering the board is a thing
           you asked for and can undo. */}
+      {/* Desktop only, and it is a margin panel because there is a margin. The
+          narrow screens get the log under the hand instead — see below the Hand.
+          It was briefly this same overlay at every width, which put a panel over
+          the board on the screen with the least of it. */}
       {logOpen && (
         <div className="fixed top-[4.5rem] left-4 z-30 hidden h-[calc(100dvh-5.5rem)] w-[16rem] flex-col gap-2 lg:flex">
           <div className="min-h-0 flex-1">
@@ -640,7 +834,10 @@ export function Game() {
           transition={{ type: "spring", stiffness: 460, damping: 34 }}
           className="pointer-events-none fixed top-[4.5rem] right-4 z-40 hidden w-[min(248px,calc((100dvh-6rem)*5/7))] min-[1440px]:block"
         >
-          <CardView card={cardById(INDEX, lifted)} />
+          <CardView
+            card={cardById(INDEX, lifted)}
+            free={freeFor(state, cardById(INDEX, lifted))}
+          />
         </motion.div>
       )}
 
@@ -660,9 +857,17 @@ export function Game() {
           // which one won came down to the order Tailwind happened to emit them
           // in — and it emitted them the wrong way round, showing both previews
           // at once. This says the condition instead of overriding it.
-          className="pointer-events-none absolute top-[4.5rem] right-6 z-40 hidden w-[248px] lg:max-[1439px]:block"
+          // Every width below 1440, not just down to 1024. It used to stop at
+          // `lg`, which left phones and any narrow window with no preview at
+          // all — and the hand card clamps its rules text to two lines, so
+          // below 1024 there was no way to read the rest of a card. The width
+          // gives way rather than the card being cut off.
+          className="pointer-events-none absolute top-[4.5rem] right-4 z-40 hidden w-[min(248px,calc(100vw-2rem))] max-[1439px]:block"
         >
-          <CardView card={cardById(INDEX, lifted)} />
+          <CardView
+            card={cardById(INDEX, lifted)}
+            free={freeFor(state, cardById(INDEX, lifted))}
+          />
         </motion.div>
       )}
 
@@ -813,11 +1018,11 @@ function StakeBar({ deck, demo }: { deck: LoadedDeck | null; demo: boolean }) {
       )}
       <div className="flex items-baseline justify-between gap-2">
         <span>STAKE</span>
-        <span className="text-fg">0 $CROCARD</span>
+        <span className="text-fg">0 TCG</span>
       </div>
       <div className="flex items-baseline justify-between gap-2">
         <span>BURN</span>
-        <span className="text-fg">0 $CROCARD</span>
+        <span className="text-fg">0 TCG</span>
       </div>
       <p className="pt-1 leading-relaxed text-dump">
         NOT ON-CHAIN YET — THIS MATCH RUNS IN YOUR BROWSER
@@ -845,6 +1050,8 @@ function SidePanel({
   flash,
   preview,
   mcDelta,
+  blaming,
+  wantsDiscard,
   onTarget,
 }: {
   state: State;
@@ -854,6 +1061,10 @@ function SidePanel({
   preview: Preview;
   /** What the hovered card would do to this player's market cap, or null. */
   mcDelta: number | null;
+  /** Which of this side's positions is the reason a control of yours is off. */
+  blaming: number | null;
+  /** How many cards the hovered card wants in the discard, or null. */
+  wantsDiscard: number | null;
   onTarget: (slot: number) => void;
 }) {
   const side = state.players[player];
@@ -908,6 +1119,26 @@ function SidePanel({
             {side.projects.length}/{RULES.portfolioSize} POSITIONS
           </span>
           <span>DECK {side.deck.length}</span>
+          {/* Two families are paid off this pile and nothing used to show it, so
+              a player had a condition they could not check. Hovering a card that
+              asks about it says whether the answer is yes yet. */}
+          <span
+            className={cx(
+              wantsDiscard === null
+                ? undefined
+                : side.discard.length >= wantsDiscard
+                  ? "glow-pump text-pump"
+                  : "text-dump",
+            )}
+            title={
+              wantsDiscard === null
+                ? undefined
+                : `${side.discard.length} in the discard, and this card wants ${wantsDiscard}`
+            }
+          >
+            DISCARD {side.discard.length}
+            {wantsDiscard !== null && ` / ${wantsDiscard}`}
+          </span>
         </div>
       </header>
 
@@ -924,12 +1155,14 @@ function SidePanel({
             }
             const aura = auraOf(card);
             return (
+              // The title attribute is gone with the peek. It was plain text,
+              // arrived half a second late, and on a phone it did not exist —
+              // which is most of why you could not tell what was on the table.
+              <CardPeek key={`${entry.cardId}-${i}`} card={card}>
               <motion.span
-                key={`${entry.cardId}-${i}`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                title={aura ? describeAura(aura) : `${card.name} — ${rulesText(card).map((l) => l.text).join(" ")}`}
-                className="flex items-center gap-1 border px-1.5 py-0.5 text-[8px] tracking-[0.12em]"
+                className="flex cursor-help items-center gap-1 border px-1.5 py-0.5 text-[8px] tracking-[0.12em]"
                 style={{
                   borderColor: `${RARITY[card.rarity].colour}66`,
                   color: RARITY[card.rarity].colour,
@@ -939,6 +1172,7 @@ function SidePanel({
                 <Icon name={aura ? "aura" : "effect"} className="h-2.5 w-2.5" />
                 {card.ticker}
               </motion.span>
+              </CardPeek>
             );
           })}
         </div>
@@ -964,16 +1198,21 @@ function SidePanel({
               const card = cardById(INDEX, onBoard.cardId);
               if (card.type !== "project") return null;
               return (
+                // Wrapped rather than folded into BoardProject: the same
+                // component draws both boards and both games, so the peek is
+                // written once here instead of four times inside it.
+                <CardPeek key={onBoard.cardId} card={card} disabled={Boolean(targetable)}>
                 <BoardProject
-                  key={onBoard.cardId}
                   card={card}
                   onBoard={onBoard}
                   pump={pumpOf(state, player, i, INDEX)}
                   targetable={targetable}
                   preview={preview.slots.find((s) => s.owner === player && s.slot === i)}
+                  blocking={blaming === i}
                   marker={flash.projects[key(player, onBoard.cardId)]}
                   onClick={() => onTarget(i)}
                 />
+                </CardPeek>
               );
           })}
         </AnimatePresence>
@@ -995,6 +1234,7 @@ function askOf(aiming: Aiming): string {
 
 function TurnBar({
   state,
+  budgetDelta,
   yourTurn,
   aiming,
   flash,
@@ -1005,9 +1245,12 @@ function TurnBar({
   onEnd,
   onCancel,
   onTakeProfit,
+  onBlame,
   onNew,
 }: {
   state: State;
+  /** What the hovered hand card would do to the budget, or null while nothing is hovered. */
+  budgetDelta: { spendable: number; price: number } | null;
   yourTurn: boolean;
   aiming: Aiming | null;
   flash: Flash;
@@ -1018,6 +1261,8 @@ function TurnBar({
   onEnd: () => void;
   onCancel: () => void;
   onTakeProfit: () => void;
+  /** Point at the opponent's position holding a rule up, or at nothing. */
+  onBlame: (slot: number | null) => void;
   onNew: () => void;
 }) {
   const left = state.budgetThisTurn - state.budgetSpentThisTurn;
@@ -1075,17 +1320,34 @@ function TurnBar({
             is left comes off their market cap when the turn ends. */}
         <div
           className="flex items-center gap-2"
-          title={
-            left > 0
-              ? `${formatMC(left)} of marketing budget left. Unspent budget comes off your market cap when the turn ends.`
-              : "The whole budget is spent — nothing comes off your market cap."
-          }
+          title={budgetNote(left, state.toMove === FIRST_MOVER)}
         >
           <span className="text-[10px] tracking-[0.18em] text-faint">BUDGET</span>
           <span className={cx("display text-base", left > 0 ? "text-gold" : "text-pump")}>
             {formatMC(left)}
           </span>
-          <span className="text-[9px] text-faint">/ {formatMC(state.budgetThisTurn)}</span>
+          {/* Where the budget lands if the hovered card is played. The resulting
+              amount rather than the delta, because "you will have $80K" is the
+              thing being decided and "-$200K" still has to be subtracted. Both
+              are shown when the card hands budget back, since a card that costs
+              $280K and leaves you richer is otherwise unreadable. */}
+          {budgetDelta !== null && budgetDelta.spendable !== 0 ? (
+            <span
+              className={cx(
+                "display text-base",
+                budgetDelta.spendable > 0 ? "text-pump" : "text-dump",
+              )}
+            >
+              → {formatMC(left + budgetDelta.spendable)}
+              {budgetDelta.price > 0 && budgetDelta.spendable > 0 && (
+                <span className="ml-1 text-[9px] tracking-normal text-faint">
+                  (costs {formatMC(budgetDelta.price)}, gives more back)
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="text-[9px] text-faint">/ {formatMC(state.budgetThisTurn)}</span>
+          )}
           <span className="h-1 w-14 shrink-0 bg-line">
             <span
               className="block h-full bg-pump transition-[width]"
@@ -1095,11 +1357,40 @@ function TurnBar({
             />
           </span>
         </div>
+
+        {/* The free card for moving first. Shown while it is unspent and gone
+            once it is, because a marker that never changes is scenery. */}
+        {state.freePlays[FIRST_MOVER] > 0 && (
+          <div
+            className="flex items-center gap-1.5"
+            title={freePlayNote(
+              state.freePlays[FIRST_MOVER],
+              0,
+              state.toMove === FIRST_MOVER,
+            )}
+          >
+            <span className="text-[10px] tracking-[0.18em] text-faint">FREE CARD</span>
+            <span className="display border border-gold px-1.5 text-[10px] text-gold">1</span>
+          </div>
+        )}
+
+        {/* Last, deliberately. This group is the one that gives when the bar is
+            tight, and within it these are the least important things on the
+            table — so if anything is ever pushed onto a second line, it is the
+            mute button rather than END TURN. */}
+        <SoundToggle />
       </div>
 
       <Beat flash={flash} />
 
-      <div className="flex shrink-0 items-center gap-2">
+      {/* ml-auto, and it is not decoration. The bar wraps on purpose — it has to,
+          because a long deck name plus the budget plus these controls does not
+          fit 864px at every width. What was wrong is where they landed when it
+          did: under justify-between a wrapped group is alone on its line and
+          goes to the START of it, so take profit, the log and END TURN dropped
+          to the bottom LEFT. A margin that eats the free space keeps them on the
+          right whether they wrapped or not. */}
+      <div className="ml-auto flex shrink-0 items-center gap-2">
         {aiming ? (
           <>
             <span className={cx("text-[10px]", aiming.reason === "profit" ? "text-gold" : "text-dump")}>
@@ -1141,18 +1432,20 @@ function TurnBar({
           </>
         ) : yourTurn ? (
           <>
-            {canTakeProfit(state, "you", INDEX) && (
-              <button
-                type="button"
-                onClick={onTakeProfit}
-                title={`Close a position and bank what it made. Costs ${formatMC(TURN_ACTION_COST)} of this turn's marketing budget.`}
-                className="border border-gold/60 bg-gold/10 px-3 py-2 text-[9px] tracking-[0.18em] text-gold transition-colors hover:bg-gold hover:text-ground"
-              >
-                TAKE PROFIT{" "}
-                <span className="text-gold/70">{formatMC(TURN_ACTION_COST)}</span>
-              </button>
-            )}
-            <LogToggle open={logOpen} onToggle={onToggleLog} />
+            {/* Always drawn, never conditional. It was `canTakeProfit && …`
+                and the button disappeared, which is the complaint that started
+                this: no way to bank, and nothing on screen willing to say why. */}
+            <TakeProfitButton
+              noProfit={whyNoProfit(state, "you", INDEX)}
+              onTakeProfit={onTakeProfit}
+              onBlame={onBlame}
+            />
+            {/* Folds the margin panel away. There is no margin below lg and the
+                log lives under the hand there, so the control has nothing to do
+                on a phone. */}
+            <span className="hidden lg:block">
+              <LogToggle open={logOpen} onToggle={onToggleLog} />
+            </span>
             {/* What ending the turn costs, on the button that does it.
                 Unspent marketing budget comes off your market cap in full, and
                 that is the largest swing in the game — a cheap hand on turn six
@@ -1197,7 +1490,8 @@ function Hand({
   onHover,
   onClick,
   onDiscard,
-  discardable,
+  offerDiscard,
+  noDiscard,
 }: {
   state: State;
   yourTurn: boolean;
@@ -1206,8 +1500,17 @@ function Hand({
   onHover: (handIndex: number | null) => void;
   onClick: (handIndex: number) => void;
   onDiscard: (handIndex: number) => void;
-  /** Named to avoid shadowing the engine's canDiscard, which this file imports. */
-  discardable: boolean;
+  /**
+   * Should the × be on the cards at all?
+   *
+   * Not the same question as whether the move is legal, which is what this used
+   * to be and is why a short budget made the mechanic vanish. This is only "is
+   * the hand yours to act on right now" — your turn, and not in the middle of
+   * choosing a target, where a row of × answers a different question.
+   */
+  offerDiscard: boolean;
+  /** Why the move is refused, or null. The × greys itself and says so. */
+  noDiscard: Refusal | null;
 }) {
   return (
     <section className="shrink-0">
@@ -1221,7 +1524,7 @@ function Hand({
         YOUR HAND — {state.players.you.hand.length} CARDS
         <span className="ml-3 text-faint/60">PLAY A PROJECT TO ADD IT TO YOUR PORTFOLIO</span>
         <span className="ml-3 text-faint/60">
-          · THROW ONE AWAY FOR {formatMC(TURN_ACTION_COST)} TO DRAW A FRESH ONE NEXT TURN
+          · × THROWS ONE AWAY FOR {formatMC(TURN_ACTION_COST)} AND DRAWS A FRESH ONE NEXT TURN
         </span>
       </h2>
 
@@ -1265,21 +1568,52 @@ function Hand({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -24, scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 340, damping: 28 }}
-                onMouseEnter={() => onHover(i)}
-                onMouseLeave={() => onHover(null)}
+                // pointerType, not a media query. A finger fires mouseenter
+                // too and never fires mouseleave, so a tap meant to PLAY a card
+                // opened the big preview and left it open — over the board, on
+                // the smallest screen, showing whichever card slid into that
+                // index after the hand re-shuffled. Asking the event what kind
+                // of pointer it is answers per touch instead of per device, so a
+                // laptop with a touchscreen still hovers with its mouse.
+                onPointerEnter={(event) => {
+                  if (event.pointerType === "mouse") onHover(i);
+                }}
+                onPointerLeave={(event) => {
+                  if (event.pointerType === "mouse") onHover(null);
+                }}
                 whileHover={canPlay ? { y: -10, scale: 1.03 } : undefined}
                 // Width only. The card is aspect-[5/7], so giving it a height —
                 // which this did, h-[232px] inside a 128px slot — makes it 166px
                 // wide and it laps over its neighbour. Set the width and let the
                 // ratio pick the height, and the slot cannot disagree with the
                 // card it holds.
-                className="relative w-[160px] shrink-0 self-start"
+                // `group` so the × on this card reveals on hover. Without it
+                // the × is invisible on every pointer that can hover, which is
+                // most of them — see DiscardButton.
+                // A board tile is 104px on a phone. At 196px a hand card was
+                // nearly twice that and the table stopped looking like one
+                // table. It was 196 because the card's type was a fixed pixel
+                // size and would not fit in anything smaller — that is sized in
+                // cqw now, so the card can be small and still be a card.
+                // @container so the note below can size itself against the
+                // card the way the card's own type does. The card frame is a
+                // container too, but the note is a sibling of it rather than a
+                // child, so it needs one here or its cqw resolves against
+                // whatever ancestor happens to be one.
+                className="group @container relative w-[132px] shrink-0 self-start sm:w-[160px]"
               >
                 <button
                   type="button"
                   disabled={!canPlay}
                   onClick={() => onClick(i)}
-                  onFocus={() => onHover(i)}
+                  // Keyboard focus, not the focus a tap leaves behind. Tapping
+                  // a button focuses it, so this opened the preview on touch
+                  // even after the pointer handlers stopped doing it.
+                  // :focus-visible is exactly the distinction the browser
+                  // already draws.
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(":focus-visible")) onHover(i);
+                  }}
                   onBlur={() => onHover(null)}
                   title={
                     reason ||
@@ -1294,7 +1628,14 @@ function Hand({
                     hovered === i && canPlay && chosen === null && "ring-1 ring-gold/60",
                   )}
                 >
-                  <CardView card={card} compact className="w-full" />
+                  <CardView
+                    card={card}
+                    compact
+                    free={freeFor(state, card)}
+                    // The engine's number, not the rarity's. See CardView.price.
+                    price={priceFor(state, card, "you", INDEX)}
+                    className="w-full"
+                  />
                 </button>
 
                 {/* The reason, on the card.
@@ -1310,7 +1651,11 @@ function Hand({
                   // the fold — which is a new bug in place of the old one.
                   <p
                     className={cx(
-                      "pointer-events-none absolute inset-x-0 bottom-0 line-clamp-3 border-t px-1.5 py-1 text-[9px] leading-snug",
+                      // Sized against the card, like everything on it. At a
+                      // fixed 9px this was larger than the rules text it was
+                      // covering on a phone, which is the wrong way round: the
+                      // note explains the card, it is not the card.
+                      "pointer-events-none absolute inset-x-0 bottom-0 line-clamp-3 border-t px-1.5 py-1 text-[5.6cqw] leading-snug @[150px]:text-[9px]",
                       canPlay
                         ? "border-gold/40 bg-ground/95 text-gold"
                         : "border-line-strong bg-ground/95 text-muted",
@@ -1320,28 +1665,24 @@ function Hand({
                   </p>
                 )}
 
-                {/* Its own button rather than a mode on the card: a card you
-                    cannot play is exactly the one you most want to throw away,
-                    so the two must not share a disabled state. */}
-                {discardable && (
-                  <button
-                    type="button"
-                    onClick={() => onDiscard(i)}
-                    title={`Throw away ${cardLabel(card)} — costs ${formatMC(TURN_ACTION_COST)} of this turn's budget, and you draw back up next turn.`}
-                    className={cx(
-                      "absolute -top-2 -right-2 z-20 flex h-6 w-6 items-center justify-center",
-                      "border border-line-strong bg-ground text-[11px] leading-none text-muted",
-                      "transition-colors hover:border-dump hover:bg-dump hover:text-ground",
-                      // A pointer that cannot hover never reveals this, which
-                      // took the whole throw-away mechanic off every phone.
-                      // Hidden until hover only where hovering is a thing.
-                      hovered === i
-                        ? "opacity-100"
-                        : "opacity-0 focus-visible:opacity-100 [@media(hover:none)]:opacity-100",
-                    )}
-                  >
-                    ×
-                  </button>
+                {/* Drawn whenever it is your turn, refused or not — the same
+                    component the PvP table draws, reading the same sentence out
+                    of the same engine call. It was `discardable && …` here too,
+                    so a short budget took the × away rather than explaining it. */}
+                {/* Reading a card is not a move, so this is not behind
+                    offerDiscard: it is there on the opponent's turn too, which
+                    is when you most want to look. */}
+                <PeekButton
+                  open={hovered === i}
+                  onToggle={() => onHover(hovered === i ? null : i)}
+                />
+
+                {offerDiscard && (
+                  <DiscardButton
+                    cardName={cardLabel(card)}
+                    noDiscard={noDiscard}
+                    onDiscard={() => onDiscard(i)}
+                  />
                 )}
               </motion.div>
             );
@@ -1352,6 +1693,15 @@ function Hand({
   );
 }
 
+/**
+ * The weekly board, on the end screen, after the server has checked the match.
+ *
+ * Three states and they say different things on purpose. Top of the board is a
+ * position to defend. Second by a margin is a number to chase, and the margin is
+ * printed because "you are second" is a fact while "you are second by $40K" is a
+ * reason to press ONE MORE. A win that did not beat your own best says so rather
+ * than going quiet, because silence there reads as a submission that failed.
+ */
 function EndScreen({
   state,
   demo,

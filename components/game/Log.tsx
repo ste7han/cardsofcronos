@@ -13,10 +13,31 @@ const TONE_COLOUR = {
 } as const;
 
 export function Log({ entries }: { entries: readonly LogEntry[] }) {
-  const bottom = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
 
+  /**
+   * Keep the newest line in view, and NEVER move the page to do it.
+   *
+   * This was scrollIntoView on a sentinel at the bottom, which does what it says
+   * and rather more: it scrolls every scrollable ancestor, the document
+   * included. On a wide screen the log is a fixed panel in the margin and there
+   * is no page scrolling to be done, so it looked right. On a phone the log sits
+   * under the hand, and every time the bot finished its turn the whole page
+   * slid down to it — the opponent deciding what the player was looking at.
+   *
+   * Setting scrollTop on the log's own box cannot leave that box.
+   *
+   * And it only does it when you are already at the bottom. Somebody who has
+   * scrolled back to read what a card did is reading; dragging them to the
+   * newest line is the same fault at a smaller scale. Fifty pixels of slack,
+   * because "at the bottom" after a smooth scroll is rarely exact.
+   */
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end" });
+    const el = box.current;
+    if (!el) return;
+    const slack = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (slack > 50) return;
+    el.scrollTop = el.scrollHeight;
   }, [entries.length]);
 
   return (
@@ -26,7 +47,7 @@ export function Log({ entries }: { entries: readonly LogEntry[] }) {
         <span className="text-faint/60">{entries.length}</span>
       </h2>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+      <div ref={box} className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         <ol className="space-y-1">
           {entries.map((entry, i) => (
             <li
@@ -55,7 +76,6 @@ export function Log({ entries }: { entries: readonly LogEntry[] }) {
             </li>
           ))}
         </ol>
-        <div ref={bottom} />
       </div>
     </section>
   );

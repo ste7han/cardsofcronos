@@ -6,8 +6,8 @@
 // would become a silent bug in the animation.
 
 import { formatDelta, formatMC } from "@/engine/format";
-import { pumpOf } from "@/engine/match";
-import type { CardIndex, Move, Player, State } from "@/engine/types";
+import type { Snapshot } from "@/engine/snapshot";
+import type { Player } from "@/engine/types";
 import { PLAYERS } from "@/engine/types";
 
 export interface Marker {
@@ -37,11 +37,35 @@ export const EMPTY_FLASH: Flash = {
   beatTone: "neutral",
 };
 
+/**
+ * How long a marker stays up.
+ *
+ * Here rather than on either table, because both of them show these and a beat
+ * that is one length on one screen and another length on the other is exactly
+ * the kind of difference nobody reports and everybody feels.
+ */
+export const FLASH_MS = 1050;
+
 export function key(player: Player, cardId: string): string {
   return `${player}:${cardId}`;
 }
 
-export function makeFlash(before: State, after: State, move: Move, index: CardIndex): Flash {
+/**
+ * What visibly changed between two moments.
+ *
+ * Takes Snapshots rather than States, which is what lets the PvP table have
+ * these at all — it holds a PlayerView and may never hold a State, so for a
+ * long time nothing rose off a card there and a hit looked like nothing
+ * happening.
+ *
+ * The move is gone from the arguments and that is not a tidy-up. It was needed
+ * for one branch, the pump phase, and the PvP table does not know what move the
+ * opponent made — it polls and a new view arrives. A turn ending is visible in
+ * the pair itself: toMove changed, and the player who ended it is the one who
+ * held it. Reading the fact off the two moments rather than off a label is the
+ * same discipline as reading the outcome rather than the log.
+ */
+export function makeFlash(before: Snapshot, after: Snapshot): Flash {
   const flash: Flash = { projects: {}, mc: {}, rug: false, beat: null, beatTone: "neutral" };
 
   for (const player of PLAYERS) {
@@ -86,10 +110,10 @@ export function makeFlash(before: State, after: State, move: Move, index: CardIn
 
   // The pump phase: ending a turn adds each project's pump. That doesn't show up
   // as a difference on the project itself, so we fetch it here.
-  if (move.kind === "endTurn") {
+  if (before.toMove !== after.toMove) {
     const player = before.toMove;
-    before.players[player].projects.forEach((project, i) => {
-      const yield_ = pumpOf(before, player, i, index);
+    before.players[player].projects.forEach((project) => {
+      const yield_ = project.pump;
       if (yield_ <= 0) return;
       flash.projects[key(player, project.cardId)] = {
         text: `+${formatMC(yield_)}`,

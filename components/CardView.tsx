@@ -30,10 +30,52 @@ interface Props {
   card: Card;
   /** Smaller size, for the hand. */
   compact?: boolean;
+  /**
+   * Show the price as free rather than as what the card costs.
+   *
+   * For the free play the first seat gets — see RULES.firstMoveFreeCard. The
+   * marker on the turn bar says one card is free; it does not say which, and the
+   * card badge is the only place a player is looking while they choose. Without
+   * this the obvious move is the cheap one, which is the exact opposite of the
+   * right one and throws the whole compensation away.
+   *
+   * The card's own price is untouched everywhere else — the gallery, the mint,
+   * the card page. This is what it costs you now, not what it is worth.
+   */
+  free?: boolean;
+  /**
+   * What this card costs the player holding it right now, when that is not what
+   * is printed on it.
+   *
+   * A position can discount it, the other side can tax it, and a card that came
+   * back out of the discard is half off. All three were invisible here: the card
+   * showed its rarity's price and the player found out the real one by playing
+   * it. Left undefined wherever there is no player and no table — the gallery,
+   * the mint, the deck builder — and those go on showing the printed price,
+   * which is the true answer when nobody is holding it.
+   */
+  price?: number;
   className?: string;
 }
 
-export function CardView({ card, compact = false, className }: Props) {
+/**
+ * Compact type is sized in cqw, a percentage of the card's own width, and that
+ * is the difference between a card that scales and a card that shrinks.
+ *
+ * Every one of these was a fixed pixel value written against a 160px hand card.
+ * The card is aspect-[5/7] so the frame scaled with its container and the
+ * lettering did not: at 196px it read sparse and swam, and anywhere under about
+ * 140px the rules text stopped fitting at all. Which is why a phone got a hand
+ * card twice the width of a board tile — the only way to make the text fit was
+ * to make the card bigger, and the proportions went with it.
+ *
+ * 160px is the reference the old numbers were written for, so 9px there is
+ * 5.6cqw everywhere. Nothing changes at 160. Everything else follows the card.
+ */
+export function CardView({ card, compact = false, free = false, price, className }: Props) {
+  const printed = MARKETING_COST[card.rarity];
+  const showing = price ?? printed;
+  const cut = !free && showing < printed;
   const style = RARITY[card.rarity];
   const lines = compact ? effectLines(card) : rulesText(card);
   const precious = card.rarity === "legendary" || card.rarity === "mythic";
@@ -111,13 +153,13 @@ export function CardView({ card, compact = false, className }: Props) {
         }}
       >
         <span
-          className={cx("display tracking-tight", compact ? "text-[9px]" : "text-[10px]")}
+          className={cx("display tracking-tight", compact ? "text-[5.6cqw]" : "text-[10px]")}
           style={{ color: style.colour }}
         >
           {compact ? "COC" : "CARDS OF CRONOS"}
         </span>
         <span
-          className={cx("flex items-center gap-1 tracking-[0.16em]", compact ? "text-[6.5px]" : "text-[7.5px]")}
+          className={cx("flex items-center gap-1 tracking-[0.16em]", compact ? "text-[4.1cqw]" : "text-[7.5px]")}
           style={{ color: style.colour }}
         >
           {style.label}
@@ -135,13 +177,34 @@ export function CardView({ card, compact = false, className }: Props) {
             every card game anyone has played. */}
         <span
           className={cx(
-            "absolute z-10 flex items-center justify-center border border-gold bg-ground/90",
-            "display tabular-nums text-gold",
-            compact ? "top-0.5 left-0.5 px-1 text-[8px]" : "top-1 left-1 px-1.5 py-0.5 text-[10px]",
+            "absolute z-10 flex items-center justify-center border bg-ground/90",
+            "display tabular-nums",
+            free
+              ? "border-pump text-pump"
+              : cut
+                ? "border-pump text-pump"
+                : "border-gold text-gold",
+            compact ? "top-0.5 left-0.5 px-1 text-[5cqw]" : "top-1 left-1 px-1.5 py-0.5 text-[10px]",
           )}
-          title={`Costs ${formatMC(MARKETING_COST[card.rarity])} of marketing budget to play`}
+          title={
+            free
+              ? `Free — this is your one free card for moving first. It normally costs ` +
+                `${formatMC(printed)} of marketing budget, and the next card will.`
+              : cut
+                ? `Costs ${formatMC(showing)} of marketing budget to play, down from ${formatMC(printed)}`
+                : `Costs ${formatMC(showing)} of marketing budget to play`
+          }
         >
-          {formatMC(MARKETING_COST[card.rarity])}
+          {free ? (
+            "FREE"
+          ) : cut ? (
+            <>
+              <s className="mr-1 opacity-50">{formatMC(printed)}</s>
+              {formatMC(showing)}
+            </>
+          ) : (
+            formatMC(showing)
+          )}
         </span>
         <div
           className="card-window relative overflow-hidden border"
@@ -151,7 +214,14 @@ export function CardView({ card, compact = false, className }: Props) {
               the share a printed card gives its window. In the hand the card is
               168px and a three-line effect ran off the bottom, so the window
               flattens to 2:1 there — the art is decoration at that size and the
-              rules are the thing you are reading. */}
+              rules are the thing you are reading.
+
+              2:1 is as far as that goes. Flattening it again to 3:1 on a phone
+              bought about twenty pixels for the rules and cost the picture: the
+              art is object-cover, so a shorter window crops rather than fits,
+              and the card read as a horizontal slot with a stripe of painting
+              in it. The room was not needed — the larger type below fits without
+              it. */}
           <CardArt
             card={card}
             className={cx("block w-full", compact ? "aspect-[2/1]" : "aspect-video")}
@@ -171,7 +241,7 @@ export function CardView({ card, compact = false, className }: Props) {
           background: `linear-gradient(to bottom, ${style.colour}${tint(0x55)}, ${style.colour}${tint(0x18)} 55%, rgba(0,0,0,0.34))`,
         }}
       >
-        <h3 className={cx("display leading-none", compact ? "text-[10px]" : "text-[13px]")}>
+        <h3 className={cx("display leading-none", compact ? "text-[6.25cqw]" : "text-[13px]")}>
           {card.name}
         </h3>
         {/* The moment, under the project it belongs to. Eight cards called
@@ -184,7 +254,7 @@ export function CardView({ card, compact = false, className }: Props) {
               // One line in hand. A long subtitle wrapped to two at 128px wide
               // and pushed the effect off the bottom, which is a name costing a
               // rule its place on the card. A numeral cannot do that.
-              compact ? "truncate text-[7.5px]" : "text-[9px]",
+              compact ? "truncate text-[4.7cqw]" : "text-[9px]",
             )}
           >
             {card.moment}
@@ -193,7 +263,7 @@ export function CardView({ card, compact = false, className }: Props) {
         <p
           className={cx(
             "mt-1 tracking-[0.18em] text-faint",
-            compact ? "text-[6px]" : "text-[7px]",
+            compact ? "text-[3.8cqw]" : "text-[7px]",
           )}
         >
           {TYPE_LABEL[card.type]}
@@ -238,7 +308,21 @@ export function CardView({ card, compact = false, className }: Props) {
             // because the height depends on the text and the text is different
             // on every card. min-h-0 with overflow hidden makes "never overflows"
             // a property of the layout instead of a coincidence of the wording.
-            compact ? "min-h-0 flex-1 overflow-hidden text-[8px]" : "text-[9.5px]",
+            // Bigger type on the narrow card, not smaller: 5cqw of 132px is
+            // 6.6px and nobody reads that. Under 150px the card spends its room
+            // on the one thing you need before deciding, and drops back to the
+            // 160px sizing the moment it has the width for it.
+            // Both sizes scale with the card now. The compact one always did;
+            // the full one was a fixed 9.5px, so a card drawn larger kept
+            // nine-and-a-half pixel text and grew a hole underneath it — 74px
+            // of empty at 268 wide, 227px at 420, with the flavour pinned to
+            // the bottom by mt-auto. It reads as text that has jumped to the
+            // middle, and it only showed up where a card is drawn big.
+            //
+            // 3.54cqw is 9.5px at the 268px the card is designed at, so nothing
+            // renders differently at that size — including every card image
+            // already rendered.
+            compact ? "min-h-0 flex-1 overflow-hidden text-[6.4cqw] @[150px]:text-[5cqw]" : "text-[3.54cqw]",
             card.type === "project" && "pt-1.5",
           )}
         >
@@ -253,18 +337,29 @@ export function CardView({ card, compact = false, className }: Props) {
                   silently cut, and the full text is one hover away in the card
                   beside the table — which you have to hover anyway to play it.
                   At full size nothing is clamped, because nothing needs to be. */}
-              <span className={cx("text-fg/85", compact && "line-clamp-2")}>{line.text}</span>
+              {/* Two lines where the card is narrow and three where it is not,
+                  asked of the card rather than of the screen — the same
+                  container query the flavour line below uses. A hand card is
+                  160px beside two boards on a laptop and wider than that on a
+                  phone, where the row scrolls instead of fitting, and the
+                  difference is whether a rule can be read without opening
+                  anything. */}
+              <span className={cx("text-fg/85", compact && "line-clamp-2 @[180px]:line-clamp-3")}>
+                {line.text}
+              </span>
             </li>
           ))}
 
         </ul>
 
-        {!compact && (
-          <hr
-            className="card-groove mt-auto"
-            aria-hidden
-          />
-        )}
+        {/* The divider belongs to the flavour, not to the space above it.
+            Both this and the paragraph below carried mt-auto, and two auto
+            margins SHARE the free space rather than one taking it — so on a
+            card with a short effect the rule floated in the middle of an empty
+            panel with a gap on either side. One auto margin, on the paragraph,
+            and the emptiness collects above the pair where it reads as room
+            rather than as a mistake. */}
+        {!compact && <hr className="card-groove" aria-hidden />}
         {/* The flavour, on every card at every size.
             It used to appear on a compact card only when there were no rules
             lines at all — a fallback so a card with no effect did not show a
@@ -284,7 +379,8 @@ export function CardView({ card, compact = false, className }: Props) {
             // for. Passing a size in would mean the gallery, the hand, the deck
             // builder and the pack opening each having to agree, and one of them
             // eventually not.
-            compact ? "hidden pt-1 text-[7.5px] @[170px]:line-clamp-2 @[170px]:block" : "pt-2 text-[9px]",
+            // 3.36cqw is 9px at 268, for the same reason as the rules above.
+            compact ? "hidden pt-1 text-[4.7cqw] @[170px]:line-clamp-2 @[170px]:block" : "pt-2 text-[3.36cqw]",
           )}
         >
           {card.flavour}
@@ -309,7 +405,7 @@ function Stat({
     <span
       className={cx(
         "inline-flex items-center gap-1 tabular-nums",
-        compact ? "text-[8px]" : "text-[10px]",
+        compact ? "text-[5cqw]" : "text-[10px]",
         tone === "pump" ? "text-pump" : "text-fg",
       )}
     >
