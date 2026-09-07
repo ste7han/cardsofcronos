@@ -1150,7 +1150,7 @@ function SidePanel({
             // else would put a card on the board and draw nothing — so it throws
             // instead, because a card you cannot see is a card you cannot play
             // around.
-            if (card.type !== "influencer" && card.type !== "tool") {
+            if (card.type !== "person" && card.type !== "tool") {
               throw new Error(`A ${card.type} card ("${card.id}") is sitting in support.`);
             }
             const aura = auraOf(card);

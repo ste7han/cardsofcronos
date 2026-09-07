@@ -70,7 +70,7 @@ export function auraOn(aura: Aura, project: ProjectCard): AuraOn {
   }
 }
 
-/** What this project yields this turn, including built-up pump and influencer auras. */
+/** What this project yields this turn, including built-up pump and the auras people carry. */
 export function pumpOf(state: State, player: Player, slot: number, index: CardIndex): number {
   const onBoard = state.players[player].projects[slot];
   if (!onBoard) throw new Error(`No project in slot ${slot} for ${player}.`);
@@ -84,12 +84,12 @@ export function pumpOf(state: State, player: Player, slot: number, index: CardIn
   let times = 1;
   for (const entry of state.players[player].support) {
     const supporter = cardById(index, entry.cardId);
-    if (supporter.type !== "influencer" && supporter.type !== "tool") {
+    if (supporter.type !== "person" && supporter.type !== "tool") {
       throw new Error(
         `Card "${entry.cardId}" sits in support but is a ${supporter.type}, which cannot be there.`,
       );
     }
-    // A tool need not carry an aura; an influencer always does.
+    // A tool need not carry an aura; a person always does.
     if (supporter.aura) {
       const on = auraOn(supporter.aura, card);
       bonus += on.add;

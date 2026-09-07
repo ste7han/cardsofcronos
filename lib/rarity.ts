@@ -55,7 +55,7 @@ export const TYPE_LABEL: Record<CardType, string> = {
   project: "PROJECT",
   tactic: "TACTIC",
   event: "EVENT",
-  influencer: "INFLUENCER",
+  person: "PERSON",
   tool: "TOOL",
 };
 

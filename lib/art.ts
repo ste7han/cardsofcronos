@@ -13,19 +13,19 @@ export type Mood = "pump" | "dump";
  * One list, read by two callers that used to decide this separately: CardArt
  * renders whatever the first hit resolves to, and scripts/art.ts reports what is
  * still bare. They disagreed on 2026-09-01 — the renderer had learned that an
- * influencer falls back to the person and the report had not, so it announced 22
+ * person card falls back to their portrait and the report had not, so it announced 22
  * cards on procedural art while every one of them was showing a photograph.
  *
  *   the card id      this exact moment — "clove-i"
  *   the family       a project's eight cards — "clove"
- *   the person       an influencer's ladder — the slug of their name
+ *   the person       a person's ladder — the slug of their name
  *
  * A number is worth having only if it is the same number the screen is using.
  */
 export function artKeysFor(card: Card): string[] {
   const keys = [card.id];
   if (card.type === "project") keys.push(card.project);
-  if (card.type === "influencer") keys.push(slug(card.name));
+  if (card.type === "person") keys.push(slug(card.name));
   return keys;
 }
 
@@ -43,7 +43,7 @@ export const slug = (text: string) =>
 export function moodOf(card: Card): Mood {
   if (
     card.type === "project" ||
-    card.type === "influencer" ||
+    card.type === "person" ||
     card.type === "tool"
   ) {
     return "pump";

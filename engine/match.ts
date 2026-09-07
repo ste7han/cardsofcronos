@@ -313,14 +313,14 @@ function playCard(
       break;
     }
 
-    case "influencer": {
+    case "person": {
       state.players[player].support.push({ cardId: card.id });
       log(state, player, `${card.name} joins — ${shortAura(card.aura)}.`, "pump");
       break;
     }
 
     case "tool": {
-      // Stays on the table like an influencer: a tool is something you have, not
+      // Stays on the table like a person: a tool is something you have, not
       // something you spend. Its one-off effect is applied below, with every
       // other card's, so a tool cannot quietly skip it.
       state.players[player].support.push({ cardId: card.id });

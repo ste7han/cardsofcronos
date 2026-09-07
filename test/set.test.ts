@@ -68,7 +68,7 @@ describe("the card set", () => {
     // as covering nothing — and this test would then have gone on passing while
     // quietly measuring less than it says it does.
     const covered = new Set(
-      CARDS.flatMap((c) => (c.type === "influencer" && c.aura ? auraSectors(c.aura, CARDS) : [])),
+      CARDS.flatMap((c) => (c.type === "person" && c.aura ? auraSectors(c.aura, CARDS) : [])),
     );
     for (const sector of sectors) {
       if (DELIBERATELY_WITHOUT_AURA.has(sector)) {
@@ -182,7 +182,7 @@ function buildSetup(card: Card): State {
   // Same rule as the sector pump above: a card that cancels influencers needs
   // influencers on the table, on whichever side it points at.
   if (effect?.kind === "cancel") {
-    const names = CARDS.filter((c) => c.type === "influencer").slice(0, 2);
+    const names = CARDS.filter((c) => c.type === "person").slice(0, 2);
     if (names.length < 2) throw new Error("Not enough influencers to test a cancel against.");
     if (effect.target !== "opponent") {
       state.players.you.support = [{ cardId: names[0]!.id }];

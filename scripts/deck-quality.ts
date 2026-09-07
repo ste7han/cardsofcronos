@@ -55,7 +55,7 @@ function shapeOf(cards: Card[]): Record<string, number> {
     projects: projects.length,
     tactics: cards.filter((c) => c.type === "tactic").length,
     events: cards.filter((c) => c.type === "event").length,
-    influencers: cards.filter((c) => c.type === "influencer").length,
+    influencers: cards.filter((c) => c.type === "person").length,
     tools: cards.filter((c) => c.type === "tool").length,
     auras: cards.filter((c) => auraOf(c) !== null).length,
     "distinct projects": new Set(projects.map((p) => p.project)).size,

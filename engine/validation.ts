@@ -62,9 +62,9 @@ export const MAX_RULES_LINE = 120;
  * That is what BONK is, and the ticker is exactly what says so. What must not
  * happen is two different things both calling themselves BONK.
  *
- * An influencer is keyed by name for the same reason a project is keyed by its
+ * A person is keyed by name for the same reason a project is keyed by its
  * family. This said "a card that is not a project stands alone" until 2026-09-01,
- * which was true of every influencer in the set on the day it was written and
+ * which was true of every person in the set on the day it was written and
  * stopped being true the moment five of them grew ladders — Ansem at common and
  * Ansem at mythic are one person, and the ticker is what says so. A person is
  * their name here the way a project is its family; two different people both
@@ -77,7 +77,7 @@ function tickerProblems(cards: readonly Card[]): string[] {
     const owner =
       card.type === "project"
         ? card.project
-        : card.type === "influencer"
+        : card.type === "person"
         ? card.name
         : card.id;
     owners.set(card.ticker, (owners.get(card.ticker) ?? new Set()).add(owner));
@@ -1312,7 +1312,7 @@ export function validateRestriction(
       // Everything except a project. Projects are the market cap engine and the
       // only way either player scores; a card that switches them off is not a
       // card, it is the end of the match with extra steps. Tactics, events,
-      // tools and influencers are all fair game — taking somebody's answers
+      // tools and people are all fair game — taking somebody's answers
       // away is a card, taking their engine away is not.
       return restriction.cardType === "project"
         ? [

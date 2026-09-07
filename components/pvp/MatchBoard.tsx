@@ -416,7 +416,7 @@ export function MatchBoard({ id }: { id: string }) {
         <div className="mt-2 flex flex-wrap gap-1.5">
           {support.map((entry, i) => {
             const card = cardById(INDEX, entry.cardId);
-            if (card.type !== "influencer" && card.type !== "tool") {
+            if (card.type !== "person" && card.type !== "tool") {
               throw new Error(`A ${card.type} card ("${card.id}") is sitting in support.`);
             }
             const aura = auraOf(card);

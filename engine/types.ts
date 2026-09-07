@@ -699,7 +699,7 @@ export type Effect =
   /** Removes a project from the board immediately, however many holders it has. */
   | { kind: "rug"; target: TargetProject }
   /**
-   * Takes influencers and tools off the board, biggest name first.
+   * Takes people and tools off the board, biggest name first.
    *
    * Everything in this game had an answer except the row beside your portfolio.
    * You could wipe someone's entire portfolio and their Murad would still be
@@ -871,7 +871,7 @@ export type Effect =
 export type EffectKind = Effect["kind"];
 
 /**
- * A standing bonus from an influencer. Deliberately not an Effect: an aura works
+ * A standing bonus from a person. Deliberately not an Effect: an aura works
  * every turn during the pump phase, not once when played. Were it part of Effect,
  * `applyEffect` would need a branch for it that does nothing — and exactly that
  * kind of silent branch left 110 cards dead in Cards of Cronos.
@@ -1708,8 +1708,8 @@ export interface ToolCard extends CardBase {
   aura?: Aura;
 }
 
-export interface InfluencerCard extends CardBase {
-  type: "influencer";
+export interface PersonCard extends CardBase {
+  type: "person";
   aura: Aura;
   /** Optional one-off effect when played, on top of the standing aura. */
   effect?: Effect;
@@ -1719,7 +1719,7 @@ export type Card =
   | ProjectCard
   | TacticCard
   | EventCard
-  | InfluencerCard
+  | PersonCard
   | ToolCard;
 
 /**
@@ -1735,14 +1735,14 @@ export const CARD_TYPES = [
   "tool",
   "tactic",
   "event",
-  "influencer",
+  "person",
 ] as const;
 
 /**
  * The standing bonus a card carries, if it carries one.
  *
  * Two card types can now have an aura and only one of them must. Every place
- * that asked `card.type === "influencer"` was really asking "does this have an
+ * that asked `card.type === "person"` was really asking "does this have an
  * aura", and each of those would have silently ignored a tool's aura — the card
  * text would not have mentioned it, the bot would not have valued it, and
  * validation would not have checked it. One function, so the question is
@@ -1753,7 +1753,7 @@ export const CARD_TYPES = [
 // that expression is true for every card in the set without TypeScript objecting.
 // It cost one measurement an entire column before it was noticed.
 export function auraOf(card: Card): Aura | null {
-  if (card.type === "influencer") return card.aura;
+  if (card.type === "person") return card.aura;
   if (card.type === "tool") return card.aura ?? null;
   return null;
 }
@@ -1765,7 +1765,7 @@ const _allTypesListed: Record<CardType, true> = {
   tool: true,
   tactic: true,
   event: true,
-  influencer: true,
+  person: true,
 };
 void _allTypesListed;
 
@@ -1826,7 +1826,7 @@ export interface Tick {
 }
 
 /**
- * A card that sits beside your portfolio and keeps working: an influencer or a
+ * A card that sits beside your portfolio and keeps working: a person or a
  * tool. Not a position — it produces no market cap of its own and a rug cannot
  * take it.
  */

@@ -350,7 +350,7 @@ function restrictionWorth(restriction: Restriction): number {
       switch (restriction.cardType) {
         case "project":
           return 603_000;
-        case "influencer":
+        case "person":
           return 56_000;
         case "tactic":
           return 40_000;

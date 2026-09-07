@@ -164,8 +164,8 @@ function scoreAura(aura: Aura, profile: FamilyProfile): number {
  * than the slots available, so affinity still decides who gets in — this only
  * stops any one type from taking the lot.
  */
-export const SUPPORT_SHARE: Readonly<Record<"tactic" | "event" | "influencer" | "tool", number>> = {
-  influencer: 0.45,
+export const SUPPORT_SHARE: Readonly<Record<"tactic" | "event" | "person" | "tool", number>> = {
+  person: 0.45,
   tactic: 0.3,
   tool: 0.25,
   event: 0.2,

@@ -5,7 +5,7 @@ import { SET } from "@/lib/set";
 
 export const metadata: Metadata = {
   title: "The set — Cards of Cronos",
-  description: "Every card in the first set: projects, tactics and influencers.",
+  description: "Every card in the first set: projects, people, tools, tactics and events.",
 };
 
 export default function CardsPage() {

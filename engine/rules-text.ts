@@ -426,8 +426,8 @@ function pluralType(cardType: CardType): string {
       return "events";
     case "tool":
       return "tools";
-    case "influencer":
-      return "influencers";
+    case "person":
+      return "people";
     default:
       return assertNever(cardType, "pluralType");
   }
@@ -774,8 +774,8 @@ export function describeEffect(
           ? "the opponent's"
           : "each player's";
       return effect.count === 1
-        ? `Cancels ${who} biggest influencer or tool.`
-        : `Cancels ${who} ${effect.count} biggest influencers or tools.`;
+        ? `Cancels ${who} biggest person or tool.`
+        : `Cancels ${who} ${effect.count} biggest people or tools.`;
     }
     case "extraBudget": {
       // Says where it lands, because the two are opposites. Yours is money to

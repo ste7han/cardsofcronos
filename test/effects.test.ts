@@ -62,7 +62,7 @@ describe("unknown values fail loudly", () => {
   it("an aura on a sector with no projects is rejected", () => {
     const pointless: Card = {
       id: "pointless-influencer",
-      type: "influencer",
+      type: "person",
       name: "Pointless Influencer",
       ticker: "NOTHING",
       rarity: "common",
