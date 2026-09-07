@@ -159,7 +159,40 @@ export const FAMILY_INTENT: Record<string, Intent> = {
   minted: "money",
 };
 
-/** What a family's EFFECT layer should read as. Locks families run on money. */
+/**
+ * What a family's EFFECT layer should read as. Locks families run on money.
+ *
+ * COMMUNITY WAS TRIED THE SAME WAY AND MEASURED WORSE, which is worth writing
+ * down because the argument for it was good and the outcome was not.
+ *
+ * intentOfEffect calls drawCards, healHolders and recoverCard "community", and
+ * five families here are built almost entirely out of those three. Two of the
+ * three do nothing unless somebody has already hurt you. TCG does not build them
+ * that way at all: across its nineteen community families, 152 cards run on
+ * directMC 30, scaleMC 24, pumpProject 14 and extraBudget 13, with only 23 that
+ * draw, heal or recover — the community lives in the second layer, where those
+ * cards carry 57 payoffs, 20 standings, 8 tolls and 6 freePlays.
+ *
+ * So twenty-four of the forty were rebuilt on shapes that pay, and it cost nine
+ * points: FFS -22.6, Chimp Club -19.0, Crooks -3.6, measured against fourteen
+ * other families over six seeds each. Raising the new effects to TCG's own bands
+ * did not recover it either — 36.9% against 36.4%, so it is not that this set's
+ * money numbers are small.
+ *
+ * What the measurement found instead is one intent ahead of the field rather
+ * than one behind it. Row wins against column, every family against every other:
+ *
+ *              takes  moment   money  commun   locks
+ *   takes        35%     69%     62%     51%     67%
+ *   momentum     26%     65%     58%     45%     54%
+ *   money        32%     55%     54%     43%     43%
+ *   community    26%     44%     40%     31%     37%
+ *   locks        46%     25%     43%     33%       -
+ *
+ * Takes beats everything and community loses to everything including itself.
+ * Changing what community is made of does not touch that, and this returns the
+ * intent unchanged until somebody decides what to do about the column that wins.
+ */
 export function effectIntentFor(family: string): Intent | undefined {
   const i = FAMILY_INTENT[family];
   return i === "locks" ? "money" : i;

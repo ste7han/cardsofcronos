@@ -134,10 +134,24 @@ const byRarity = [...FAMILY_CARDS].sort(
   (a, b) => ORDER.indexOf(a.rarity) - ORDER.indexOf(b.rarity),
 );
 
-/** The cheapest card of that family, and the dearest one below the mythic. */
+/**
+ * The cheapest card of that family, and the dearest one below the mythic.
+ *
+ * UPGRADE_HIGH also has to be a card that does not reach into the discard. The
+ * upgrade test checks that a replaced card lands there, and the legendary this
+ * picked carried recoverCard — so it put the card in the discard and then took
+ * it straight back out again, and the test read an empty discard as the engine
+ * losing the card. Nothing was wrong with either the engine or the card; the
+ * fixture picked the one card in the family that undoes what it is measuring.
+ */
+const TOUCHES_DISCARD = (c: ProjectCard) =>
+  c.effect?.kind === "recoverCard" || c.effect?.kind === "peekAndBurn";
+
 export const UPGRADE_LOW: ProjectCard = byRarity[0]!;
 export const UPGRADE_HIGH: ProjectCard =
-  [...byRarity].reverse().find((c) => c.rarity !== "mythic") ?? byRarity.at(-1)!;
+  [...byRarity].reverse().find((c) => c.rarity !== "mythic" && !TOUCHES_DISCARD(c)) ??
+  [...byRarity].reverse().find((c) => c.rarity !== "mythic") ??
+  byRarity.at(-1)!;
 
 /**
  * A card that carries the biggest aura in the set, and one that carries the
