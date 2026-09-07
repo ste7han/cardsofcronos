@@ -63,6 +63,5 @@ export const SECTOR_LABEL: Record<Sector, string> = {
   meme: "MEME",
   nft: "NFT",
   defi: "DEFI",
-  dex: "DEX",
   infra: "INFRA",
 };

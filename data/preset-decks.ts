@@ -44,9 +44,12 @@
 // exactly what focusing multiplies.
 //
 // ── THREE, AND ALL THREE ARE SECTOR DECKS ───────────────────────────────────
-// THE VAULT takes defi and dex together: four families between them, and each on
-// its own would be thin. `infra` has no preset — three families is enough to
-// build one by hand and not enough to beat the field.
+// THE VAULT is defi on its own. It took defi and dex together while each was
+// thin; dex is part of infra now and defi holds ten families by itself.
+//
+// `infra` has no preset and now has the families for one — eight, once the venues
+// joined it. It does not get one on that ground alone: a preset ships when it has
+// been measured winning, and this one has not been measured at all.
 //
 // FULL CONTACT was the fourth and it is gone. It preferred every tactic and
 // every event, and the deck it built held exactly twelve projects — the floor —
@@ -135,9 +138,10 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
     name: "THE VAULT",
     blurb: "Money in, something out. Less spectacle, more compounding.",
     seed: 8_233,
-    prefer: (c) =>
-      (c.type === "project" && (c.sector === "defi" || c.sector === "dex")) ||
-      helpsSector(c, "defi") ||
-      helpsSector(c, "dex"),
+    // Was defi and dex together, because four families between them was thin and
+    // each on its own was thinner. dex is part of infra now and defi holds ten
+    // families by itself, so the deck is one sector again — which is what the
+    // other two presets always were.
+    prefer: (c) => (c.type === "project" && c.sector === "defi") || helpsSector(c, "defi"),
   },
 ];

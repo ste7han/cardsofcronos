@@ -221,7 +221,7 @@ const PLAN: Record<string, { effect: Effect; why: string }> = {
     why: "emissions on everything; for a while the yield was the product",
   },
   "vvs-iii": {
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { dex: 8_000 } },
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 8_000 } },
     why: "every pair anybody wanted, and a few nobody did",
   },
   "vvs-iv": {

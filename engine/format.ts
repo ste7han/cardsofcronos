@@ -97,8 +97,6 @@ export function sectorName(sector: Sector): string {
       return "NFT";
     case "defi":
       return "DeFi";
-    case "dex":
-      return "DEX";
     case "infra":
       return "infra";
     default:

@@ -146,8 +146,17 @@ export const WASTE_PENALTY = 1;
  *   meme    the joke is the product; you hold it for the chart and the chat
  *   nft     you hold a picture, and there is a floor under it
  *   defi    money goes in and something happens to it
- *   dex     where you swap
- *   infra   marketplaces and the tools everything else runs on
+ *   infra   where all of that happens — the venues and the rails
+ *
+ * Four, and it was five until dex was folded into infra. A dex is a venue: you
+ * do not take a position in it, you pass through it, and that is equally true of
+ * a marketplace, of a toll and of the chain itself. Splitting the venues across
+ * two sectors is what made infra a grab bag — "marketplaces and the tools
+ * everything else runs on" described no single thing. Together they describe one:
+ * the other three sectors are things you hold, and this is where you hold them.
+ *
+ * VVS says it on its own card, which is how the merge was settled: "The front
+ * door of the chain, whether or not it meant to be."
  *
  * This replaced meme/memetility/lunar/machine, which were the tags the first
  * version of this game put on its own factions. Two of those named exactly one
@@ -155,16 +164,16 @@ export const WASTE_PENALTY = 1;
  * they were not sectors at all, and the moment projects arrived that were
  * neither, there was nowhere to put them.
  *
- * Five, and not four, because nineteen families over four sectors leaves one of
- * them holding seven and another holding three. Every sector here carries at
- * least three families, which is twenty-four project cards — enough that
- * building around one is a decision rather than a wish.
+ * The old note here said five and not four, "because nineteen families over four
+ * sectors leaves one of them holding seven and another holding three". That was
+ * a nineteen-family problem. The set is heading for thirty-four, and four sectors
+ * now hold nine, ten, seven and eight — the evenest this list has ever been.
  *
  * TCG's set runs on eight (it added ai, politics, depin and gaming, and has no
  * dex). Those are its projects, not this game's, so the list stays at five and
  * anything ported from there has to be read against these names.
  */
-export const SECTORS = ["meme", "nft", "defi", "dex", "infra"] as const;
+export const SECTORS = ["meme", "nft", "defi", "infra"] as const;
 export type Sector = (typeof SECTORS)[number];
 
 export const PLAYERS = ["you", "opponent"] as const;

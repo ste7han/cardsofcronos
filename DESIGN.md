@@ -202,14 +202,22 @@ for two things, which is the trap `CLAUDE.md` opens with.
 meme    the joke is the product
 nft     you hold a picture, and there is a floor under it
 defi    money goes in and something happens to it
-dex     where you swap
-infra   marketplaces and the tools everything else runs on
+infra   where all of that happens — the venues and the rails
 ```
 
-Five, not four. Nineteen families over four sectors leaves one holding seven and
-another holding three; every sector here carries at least three families, which
-is twenty-four project cards — enough that building around one is a decision
-rather than a wish.
+Four, and it was five until `dex` was folded into `infra`. A dex is a venue: you
+do not take a position in it, you pass through it, and the same is true of a
+marketplace, of a toll and of the chain itself. Having the venues split across
+two sectors is what made `infra` a grab bag — "marketplaces and the tools
+everything else runs on" described no single thing. Together they describe one:
+the other three are things you hold, and this is where you hold them. VVS says it
+on its own card, which is how the merge was settled: "The front door of the
+chain, whether or not it meant to be."
+
+This note used to say five and not four, "because nineteen families over four
+sectors leaves one holding seven and another holding three". That was a
+nineteen-family problem. The set is heading for thirty-four and the four now hold
+nine, ten, seven and eight — the evenest this list has been.
 
 These replaced `meme / memetility / lunar / machine`, the tags the first version
 of this game put on its own factions. Two of those named exactly one faction:
@@ -272,7 +280,7 @@ enforced in PvP yet, because collections are still browser-local.
 ### Presets
 
 Three ready-made decks, one per sector that can carry one: **MEME LORD**,
-**FLOOR SWEEP**, **THE VAULT** (defi and dex together, since each alone is thin).
+**FLOOR SWEEP**, **THE VAULT** (defi, which holds ten families on its own).
 `infra` has none — three families is enough to build one by hand and not enough
 to beat the field.
 

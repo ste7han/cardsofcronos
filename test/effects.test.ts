@@ -66,15 +66,17 @@ describe("unknown values fail loudly", () => {
       name: "Pointless Influencer",
       ticker: "NOTHING",
       rarity: "common",
-      aura: { kind: "pumpSector", sector: "dex", bonus: 5_000 },
+      aura: { kind: "pumpSector", sector: "infra", bonus: 5_000 },
       flavour: "Pumps a sector with nothing in it.",
     };
 
-    // DEX does exist in the real set, so we test against a set with every
-    // dex project stripped out — otherwise the test would prove nothing.
-    const withoutDex = CARDS.filter((c) => c.type !== "project" || c.sector !== "dex");
-    expect(withoutDex.length).toBeLessThan(CARDS.length);
-    expect(() => validateSet([...withoutDex, pointless])).toThrowError(/This card does nothing/);
+    // Every sector in the list has projects in it, so an aura pointing at one is
+    // never pointless on the real set. The set to test against is one with that
+    // sector's projects taken out — otherwise this would prove nothing. It was
+    // dex until dex became part of infra.
+    const withoutInfra = CARDS.filter((c) => c.type !== "project" || c.sector !== "infra");
+    expect(withoutInfra.length).toBeLessThan(CARDS.length);
+    expect(() => validateSet([...withoutInfra, pointless])).toThrowError(/This card does nothing/);
   });
 });
 

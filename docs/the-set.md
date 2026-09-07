@@ -24,16 +24,23 @@ one is somebody's favourite" says more than a label would.
 | meme | the joke is the product; you hold it for the chart and the chat |
 | nft | you hold a picture, and there is a floor under it |
 | defi | money goes in and something happens to it |
-| dex | where you swap |
-| infra | marketplaces and the tools everything else runs on |
+| infra | where all of that happens — the venues and the rails |
 
-`infra` is the weak one and it is known to be. The definition is a grab bag, the
-sector holds three families where defi holds ten, and `data/preset-decks.ts`
-already says out loud that three is "enough to build one by hand and not enough
-to beat the field". Removing it was decided and then reversed within the hour;
-what it needs is a sharper line — the places and rails the rest runs on: venues,
-launchpads, bridges, explorers, the chain itself — and then the projects that
-belong in it become obvious.
+**It was five and `dex` was folded into `infra`.** A dex is a venue: you do not
+take a position in it, you pass through it, and that is equally true of a
+marketplace, of a toll and of the chain itself. Having the venues split across
+two sectors is what made infra a grab bag — "marketplaces and the tools
+everything else runs on" described no single thing. Together they describe one:
+the other three are things you hold, and this is where you hold them.
+
+VVS settled it on its own card: "The front door of the chain, whether or not it
+meant to be."
+
+Removing infra altogether was decided first and reversed within the hour, which
+is why the merge is the answer rather than the deletion. The old note argued for
+five over four "because nineteen families over four sectors leaves one holding
+seven and another holding three" — a nineteen-family problem, and the set is
+heading for thirty-four.
 
 ---
 
@@ -47,45 +54,43 @@ numbered I to VIII.
 | sector | families |
 |---|---|
 | meme | Clove · FFS · CAW777 · DAK |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro |
-| dex | Obsidian Finance · VVS Finance · Mad Meerkat Finance |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club |
-| infra | Nova · Cr00ts · Minted |
+| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro |
+| infra | Nova · Cr00ts · Minted · Obsidian Finance · VVS Finance · Mad Meerkat Finance |
 
 Three moved on 2026-09-07 and their founders' auras moved with them: Wolfswap
 from dex to defi because it is a swap aggregator and not a venue, Obsidian
-Finance from defi to dex, Crazzzy Monsters from meme to defi.
+Finance from defi to dex, Crazzzy Monsters from meme to defi. The dex three then
+became infra with the merge.
 
 ### Agreed, not built — 14 families, 112 cards
 
 | sector | families |
 |---|---|
 | meme | CAW · Mery · Capybara Nation · Loaf · Ballz |
-| defi | Cronus · Fulcrom · Single Finance · Corgi · Puush |
-| dex | Ebisusbay |
 | nft | Ryoshi · Bob's Adventures · Sloth Gang |
+| defi | Cronus · Fulcrom · Single Finance · Corgi · Puush |
+| infra | Ebisusbay · CRO |
+
+CRO is the chain itself. TCG carries SOLANA the same way — "the chain itself,
+everything on it moves together" — and it is the one project in this set every
+player already knows.
 
 ### Still open
 
 - **CRO Army** — a token, an NFT and a game. Which of the three it is best known
   for decides the sector, and that is the maker's call.
-- **What else goes in infra**, if it stays at five sectors. One candidate needs
-  no research: the chain itself. TCG carries SOLANA as a project card — "the
-  chain itself, everything on it moves together" — and CRO would be the one
-  project in this set every player recognises.
 
-That would put the set at 33 or 34 families, so 264 to 272 project cards against
-152 today.
+### The sector spread
 
-### The sector spread, and why it matters
-
-With everything above and infra unchanged: meme 9, defi 10, dex 4, nft 7,
-infra 3. That is 80 defi cards against 24 infra ones.
+With everything above: meme 9, nft 7, defi 10, infra 8. Thirty-four families,
+272 project cards against 152 today.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
-a `pumpBySector` card is worth what your board holds of it. A player leaning
-infra picks from three families; a player leaning defi picks from ten.
+a `pumpBySector` card is worth what your board holds of it. Before the merge it
+was 9 / 7 / 10 / 4 / 3, so a player leaning infra picked from three families and
+one leaning defi from ten. Now the thinnest sector has seven.
 
 ---
 
