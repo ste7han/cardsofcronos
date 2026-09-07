@@ -126,6 +126,38 @@ and fifteen without, which is uneven by accident rather than on purpose: they ar
 the families that happened to be in the set first, not the ones with the
 best-known founders. Worth a pass at some point, and not urgent.
 
+### Agreed, not built — 7 by name
+
+| name | who |
+|---|---|
+| Haten | founder of Obsidian |
+| JkcryptoXYZ | founder of Crazzzy Monsters |
+| Alex | founder of Wolfswap, and now owns Ebisusbay |
+| Schwiz | founder of Ebisusbay |
+| Kris | CEO of Crypto.com and CRO |
+| Artik | known through X; knows the Cronos projects, and probably a dev |
+| Ryan Wyatt | CEO of Cronos |
+
+Alex is the argument for the new rule in one card: he founded one project and now
+owns another, so "the founder of X" was never going to hold him. Artik is the
+other half of it — no project attached, and on a card because of what he knows.
+
+**Three of these are the real names of cards already in the set.** Obsidian,
+Crazzzy Monsters and Wolfswap each have a nameless founder, and those cards carry
+flavour written when nobody was named:
+
+- The Obsidian Finance Founder — "Three years of the same avatar and the same
+  two-line updates."
+- The Crazzzy Monsters Founder — "Drew all ten thousand by hand and has the wrist
+  to prove it."
+- The Wolfswap Founder — "Shipped the fork on a Sunday and told the other team on
+  Monday."
+
+Whether those cards take the names or the names get cards of their own is open.
+Either way the flavour stops being a sketch of somebody and becomes a sentence
+about a named person, and this repository has a rule for that: sourced or not
+written. Nobody here can check whether Haten kept the same avatar for three years.
+
 ### Still open
 
 **The Validator and The Node Runner** carry an aura that pumps infra, so whatever
