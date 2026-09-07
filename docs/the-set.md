@@ -10,10 +10,9 @@ are still open. When the two disagree, the data is right and this is behind.
 
 ---
 
-## The five sectors
+## The four sectors
 
-They stay at five. A project's sector is **what it is best known for**, not
-everything it is. Several Cronos projects are a token and an NFT and a game at
+A project's sector is **what it is best known for**, not everything it is. Several Cronos projects are a token and an NFT and a game at
 once — CRO Army, Crazzzy Monsters, Crooks Finance — and a sixth `gaming` sector
 was considered for exactly them and turned down. What a project also is belongs
 in the flavour on its eight cards, where "ten thousand of them and every single
