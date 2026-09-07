@@ -56,7 +56,8 @@ const CLOVE: ProjectCard[] = [
     pumpMC: 8_000,
     holders: 3,
     // a ticker, a chart and a group chat — the chat is the whole of it
-    effect: { kind: "drawCards", amount: 1 },
+    // a ticker, a chart and a group chat, and that was the whole of it
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "A ticker, a chart and a group chat. That was the whole of it.",
   },
   {
@@ -71,7 +72,8 @@ const CLOVE: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 9_000,
     holders: 3,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // no team to rug you, and also no team to fix anything
+    effect: { kind: "extraBudget", target: "self", mc: 42_000 },
     flavour: "No team to rug you. Also no team to fix anything.",
   },
   {
@@ -110,7 +112,8 @@ const CLOVE: ProjectCard[] = [
     // one exchange nobody had heard of, and everybody screenshotted it — later
     payoff: { when: { kind: "turnAtLeast", turn: 5 }, effect: { kind: "directMC", target: "self", mc: 70_000 } },
     // everybody screenshotted it, so everybody found it
-    effect: { kind: "drawCards", amount: 2 },
+    // one exchange nobody had heard of, and everybody screenshotted it
+    effect: { kind: "directMC", target: "self", mc: 81_000 },
     flavour: "One exchange nobody had heard of, and everybody screenshotted it.",
   },
   {
@@ -126,7 +129,8 @@ const CLOVE: ProjectCard[] = [
     pumpMC: 23_000,
     holders: 4,
     // for about nine days it was the only chart anybody had open
-    effect: { kind: "drawCards", amount: 2 },
+    // for about nine days it was the only chart anybody had open
+    effect: { kind: "scaleMC", target: "self", percentage: 20 },
     flavour: "For about nine days it was the only chart anybody had open.",
   },
   {
@@ -143,7 +147,8 @@ const CLOVE: ProjectCard[] = [
     holders: 4,
     // everyone who was early stayed early, and that was the trick
     loyalty: 34,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // everyone who was early stayed early, and it pays for every one of them
+    effect: { kind: "directMC", target: "self", mc: 30_000, per: "spent" },
     flavour: "Everyone who was early stayed early. That was the trick.",
   },
   {
@@ -159,7 +164,8 @@ const CLOVE: ProjectCard[] = [
     pumpMC: 40_000,
     holders: 5,
     // there was never a roadmap; there was a group chat that never slept
-    effect: { kind: "recoverCard", amount: 1 },
+    // there was never a roadmap; there was a group chat that never slept
+    effect: { kind: "scaleMC", target: "self", percentage: 21 },
     flavour: "There was never a roadmap. There was a group chat that never slept.",
   },
   {
@@ -177,7 +183,8 @@ const CLOVE: ProjectCard[] = [
     // two cycles later the chat is still open, and it still keeps people in
     standing: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
     // two cycles later the chat is still open and still arguing
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
+    // two cycles later the chat is still open and still arguing
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
     flavour: "Two cycles later the chat is still open and still arguing.",
   },
 ];
@@ -204,7 +211,8 @@ const CROOKS: ProjectCard[] = [
     pumpMC: 8_000,
     holders: 4,
     // no influencer would touch it, so whoever found it found it themselves
-    effect: { kind: "drawCards", amount: 1 },
+    // no influencer would touch it, which turned out to be the point
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "No influencer would touch it, which turned out to be the point.",
   },
   {
@@ -219,7 +227,8 @@ const CROOKS: ProjectCard[] = [
     launchMC: 17_000,
     pumpMC: 9_000,
     holders: 4,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // the contract did exactly what it said, and nobody wrote a thread
+    effect: { kind: "extraBudget", target: "self", mc: 42_000 },
     flavour: "The contract did exactly what it said. Nobody wrote a thread about it.",
   },
   {
@@ -235,7 +244,8 @@ const CROOKS: ProjectCard[] = [
     pumpMC: 14_000,
     holders: 4,
     // a vault, then a router, then a thing nobody could explain quickly
-    effect: { kind: "drawCards", amount: 2 },
+    // a vault, then a router, then a thing nobody could explain quickly
+    effect: { kind: "extraBudget", target: "self", mc: 86_000 },
     flavour: "A vault, then a router, then a thing nobody could explain quickly.",
   },
   {
@@ -250,7 +260,8 @@ const CROOKS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 5,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
+    // down forty percent in an hour and the deposits went up
+    effect: { kind: "comebackMC", percentage: 20 },
     // The old COC_CF_R2 gained MC when one of your projects was debuffed. The
     // engine has no "when attacked" hook, and inventing one for a single card is
     // how the last engine grew to eighty branches — so the card pays out for
@@ -275,7 +286,8 @@ const CROOKS: ProjectCard[] = [
     holders: 5,
     // whatever came for you, it came for the whole book at once
     payoff: { when: { kind: "holdersLostAtLeast", holders: 3 }, effect: { kind: "directMC", target: "self", mc: 120_000 } },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // whatever came for you, it came for the whole book at once
+    effect: { kind: "mcPerHolderLost", mc: 12_000 },
     flavour: "Whatever came for you, it came for the whole book at once.",
   },
   {
@@ -293,7 +305,8 @@ const CROOKS: ProjectCard[] = [
     // two weeks of silence, then a PDF, then the deposits doubled
     onTheirPlay: { cardType: "project", mc: 34_000 },
     // two weeks of silence, then a PDF, then the deposits doubled
-    effect: { kind: "drawCards", amount: 2 },
+    // two weeks of silence, then a PDF, then the deposits doubled
+    effect: { kind: "scaleMC", target: "self", percentage: 20 },
     flavour: "Two weeks of silence, then a PDF, then the deposits doubled.",
   },
   {
@@ -311,7 +324,8 @@ const CROOKS: ProjectCard[] = [
     // everything routed through it eventually, whether it meant to or not
     standing: { kind: "directMC", target: "self", mc: 105_000 },
     // everything routed through it eventually, whether it meant to or not
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
+    // everything routed through it eventually, whether it meant to or not
+    effect: { kind: "directMC", target: "self", mc: 45_000, per: "any" },
     flavour: "Everything routed through it eventually, whether it meant to or not.",
   },
   {
@@ -331,7 +345,8 @@ const CROOKS: ProjectCard[] = [
     // is the shape a lock has to have to be fair.
     restriction: { kind: "banType", cardType: "tactic" },
     // outlived three exchanges, two bear markets and everyone who called it
-    effect: { kind: "recoverCard", amount: 2 },
+    // outlived three exchanges, two bear markets and everyone who called it
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
     flavour: "Outlived three exchanges, two bear markets and everyone who called it.",
   },
 ];
@@ -643,7 +658,8 @@ const HOWLERS: ProjectCard[] = [
     pumpMC: 8_000,
     holders: 3,
     // two in the morning is when the pack is awake, and the pack turns up
-    effect: { kind: "drawCards", amount: 1 },
+    // minted at two in the morning, because that is when the pack is awake
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Minted at two in the morning because that is when the pack is awake.",
   },
   {
@@ -679,7 +695,8 @@ const HOWLERS: ProjectCard[] = [
     // once a month the floor moved and nobody had a reason for it
     payoff: { when: { kind: "turnAtLeast", turn: 6 }, effect: { kind: "directMC", target: "self", mc: 55_000 } },
     // once a month the floor moved and nobody had a reason for it
-    effect: { kind: "drawCards", amount: 2 },
+    // once a month the floor moved and nobody had a reason for it
+    effect: { kind: "directMC", target: "self", mc: 81_000 },
     flavour: "Once a month the floor moved and nobody had a reason for it.",
   },
   {
@@ -695,7 +712,8 @@ const HOWLERS: ProjectCard[] = [
     pumpMC: 15_000,
     holders: 3,
     // whatever the other side did, it turned up in the pack a week later
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // whatever the other side did, it turned up in the pack a week later
+    effect: { kind: "scaleMC", target: "self", percentage: 11 },
     flavour: "Whatever the other side did, it turned up in the pack a week later.",
   },
   {
@@ -712,7 +730,8 @@ const HOWLERS: ProjectCard[] = [
     holders: 4,
     // the pack moves at the speed of its slowest, which is the whole idea
     standing: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // the pack moves at the speed of its slowest, so every one of them counts
+    effect: { kind: "directMC", target: "self", mc: 30_000, per: "holders" },
     flavour: "The pack moves at the speed of its slowest, which is the whole idea.",
   },
   {
@@ -728,7 +747,8 @@ const HOWLERS: ProjectCard[] = [
     pumpMC: 25_000,
     holders: 4,
     // eight months of nothing and the group chat never went quiet once
-    effect: { kind: "drawCards", amount: 2 },
+    // eight months of nothing and the group chat never went quiet once
+    effect: { kind: "scaleMC", target: "self", percentage: 20 },
     flavour: "Eight months of nothing and the group chat never went quiet once.",
   },
   {
@@ -746,7 +766,8 @@ const HOWLERS: ProjectCard[] = [
     // they stopped counting holders and started counting who showed up
     morePositions: 3,
     // they stopped counting holders and started counting who showed up
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
+    // they stopped counting holders and started counting who showed up
+    effect: { kind: "directMC", target: "self", mc: 55_000, per: "any" },
     flavour: "They stopped counting holders and started counting who showed up.",
   },
   {
@@ -766,7 +787,8 @@ const HOWLERS: ProjectCard[] = [
     // scale on both sides: it widens whoever is ahead and narrows whoever is
     // not, so it is a decision rather than a wash.
     // the chart flipped, and for one evening every loser was a genius
-    effect: { kind: "recoverCard", amount: 2 },
+    // the chart flipped, and for one evening every loser was a genius
+    effect: { kind: "comebackMC", percentage: 45 },
     payoff: {
       when: { kind: "behindBy", mc: 600_000 },
       effect: { kind: "directMC", target: "self", mc: 320_000 },
@@ -797,7 +819,8 @@ const FFS: ProjectCard[] = [
     pumpMC: 9_000,
     holders: 2,
     // named at four in the morning by somebody who was still there
-    effect: { kind: "drawCards", amount: 1 },
+    // named in frustration at four in the morning and never renamed
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Named in frustration at four in the morning and never renamed.",
   },
   {
@@ -813,7 +836,8 @@ const FFS: ProjectCard[] = [
     pumpMC: 7_000,
     holders: 2,
     // sold its own bag to fund a marketing wallet for everyone else
-    effect: { kind: "drawCards", amount: 1 },
+    // sold its own bag to fund a marketing wallet for everyone else
+    effect: { kind: "extraBudget", target: "both", mc: 42_000 },
     flavour: "Sold its own bag to fund a marketing wallet for everyone else.",
   },
   {
@@ -829,7 +853,8 @@ const FFS: ProjectCard[] = [
     pumpMC: 12_000,
     holders: 2,
     // down eighty percent and still funding the others, on purpose
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // down eighty percent and still funding the others, on purpose
+    effect: { kind: "comebackMC", percentage: 22 },
     flavour: "Down eighty percent and still funding the others. On purpose.",
   },
   {
@@ -864,7 +889,8 @@ const FFS: ProjectCard[] = [
     holders: 5,
     // whatever came in, it stood in front of it, every single time
     payoff: { when: { kind: "holdersLostAtLeast", holders: 2 }, effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 } },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // whatever came in, it stood in front of it, every single time
+    effect: { kind: "mcPerHolderLost", mc: 14_000 },
     flavour: "Whatever came in, it stood in front of it. Every single time.",
   },
   {
@@ -900,7 +926,8 @@ const FFS: ProjectCard[] = [
     // the wallet hit zero and the token did its best week ever — it pays for yours
     freePlays: 2,
     // the wallet hit zero and the token did its best week ever
-    effect: { kind: "drawCards", amount: 4 },
+    // the wallet hit zero and the token did its best week ever
+    effect: { kind: "budgetToMC", percentage: 60 },
     flavour: "The wallet hit zero and the token did its best week ever.",
   },
   {
@@ -915,7 +942,8 @@ const FFS: ProjectCard[] = [
     launchMC: 96_000,
     pumpMC: 60_000,
     holders: 5,
-    effect: { kind: "healHolders", target: "allProjects", amount: 2 },
+    // everybody who laughed at the name owned some by the end
+    effect: { kind: "comebackMC", percentage: 45 },
     // Heals both sides, and is still a mythic. Everything it ever did was for
     // other people, and a mythic that finally does it for the whole table is the
     // only ending that card has.
@@ -2577,7 +2605,8 @@ const CHIMPS: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 9_000,
     holders: 3,
-    effect: { kind: "drawCards", amount: 1 },
+    // early enough that being early was the whole story
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Early enough that being early was the whole story.",
   },
   {
@@ -2593,7 +2622,8 @@ const CHIMPS: ProjectCard[] = [
     pumpMC: 9_000,
     holders: 3,
     // the Discord was busy before the mint and busier after it
-    effect: { kind: "drawCards", amount: 1 },
+    // the Discord was busy before the mint and busier after it
+    effect: { kind: "extraBudget", target: "self", mc: 42_000 },
     flavour: "The Discord was busy before the mint and busier after it.",
   },
   {
@@ -2610,7 +2640,8 @@ const CHIMPS: ProjectCard[] = [
     holders: 3,
     // somebody in there knew somebody who knew about everything
     payoff: { when: { kind: "yourHandAtLeast", cards: 4 }, effect: { kind: "drawCards", amount: 2 } },
-    effect: { kind: "drawCards", amount: 2 },
+    // somebody in there knew somebody who knew about everything
+    effect: { kind: "directMC", target: "self", mc: 81_000 },
     flavour: "Somebody in there knew somebody who knew about everything.",
   },
   {
@@ -2626,7 +2657,8 @@ const CHIMPS: ProjectCard[] = [
     pumpMC: 14_000,
     holders: 4,
     // half the projects on this chain started in somebody's chimp chat
-    effect: { kind: "drawCards", amount: 2 },
+    // half the projects on this chain started in somebody's chimp chat
+    effect: { kind: "extraBudget", target: "self", mc: 86_000 },
     flavour: "Half the projects on this chain started in somebody's chimp chat.",
   },
   {
@@ -2641,7 +2673,8 @@ const CHIMPS: ProjectCard[] = [
     launchMC: 37_000,
     pumpMC: 25_000,
     holders: 4,
-    effect: { kind: "drawCards", amount: 2 },
+    // a club is only worth anything when there are people in the room
+    effect: { kind: "scaleMC", target: "self", percentage: 20 },
     payoff: {
       when: { kind: "ownProjectCount", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 90_000 },
@@ -2661,7 +2694,8 @@ const CHIMPS: ProjectCard[] = [
     pumpMC: 24_000,
     holders: 5,
     // nobody who was in it early ever quite left it
-    effect: { kind: "recoverCard", amount: 1 },
+    // nobody who was in it early ever quite left it
+    effect: { kind: "directMC", target: "self", mc: 35_000, per: "spent" },
     flavour: "Nobody who was in it early ever quite left it.",
   },
   {
@@ -2677,7 +2711,8 @@ const CHIMPS: ProjectCard[] = [
     pumpMC: 42_000,
     holders: 5,
     // the oldest group chat on the chain, and it still moves markets
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
+    // the oldest group chat on the chain, and it still moves markets
+    effect: { kind: "scaleMC", target: "self", percentage: 21 },
     flavour: "The oldest group chat on the chain and it still moves markets.",
   },
   {
@@ -2694,7 +2729,8 @@ const CHIMPS: ProjectCard[] = [
     holders: 6,
     // everybody who is anybody here was in that room in the first month
     morePositions: 3,
-    effect: { kind: "drawCards", amount: 3 },
+    // everybody who is anybody here was in that room in the first month
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
     payoff: {
       when: { kind: "ownProjectCount", atLeast: 5 },
       effect: { kind: "directMC", target: "self", mc: 260_000 },
