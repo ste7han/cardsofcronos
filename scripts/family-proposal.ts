@@ -19,10 +19,9 @@
 //   npx tsx scripts/family-proposal.ts
 
 import { CARDS } from "../data/cards";
-import { restrictionOf } from "../engine/rules-text";
-import type { Card, Effect, ProjectCard } from "../engine/types";
+import type { ProjectCard } from "../engine/types";
+import { type Intent, intentOf } from "./intent";
 
-type Intent = "takes" | "momentum" | "money" | "community" | "locks";
 
 /** Why each family plays the way it is proposed to. One line, from its flavour. */
 const PROPOSAL: Record<string, { intent: Intent; because: string }> = {
@@ -52,24 +51,6 @@ const PROPOSAL: Record<string, { intent: Intent; because: string }> = {
   minted: { intent: "money", because: "fees on both sides of every sale, quietly, forever" },
 };
 
-function intentOf(card: Card): Intent | "none" {
-  if (restrictionOf(card)) return "locks";
-  const e = (card as any).effect as Effect | undefined;
-  if (!e) return "none";
-  switch (e.kind) {
-    case "stealMC": case "damageHolders": case "rug":
-    case "cancel": case "takeOver": case "discardCards":
-      return "takes";
-    case "directMC": case "scaleMC": case "extraBudget":
-      return e.target === "opponent" ? "takes" : "money";
-    case "pumpProject": case "pumpBySector":
-      return "momentum";
-    case "drawCards": case "healHolders":
-      return "community";
-    default:
-      return "none";
-  }
-}
 
 const projects = CARDS.filter((c): c is ProjectCard => c.type === "project");
 const fams = new Map<string, ProjectCard[]>();

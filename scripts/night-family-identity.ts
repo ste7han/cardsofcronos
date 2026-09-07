@@ -18,44 +18,15 @@
 //   npx tsx scripts/night-family-identity.ts [minimum family size]
 
 import { CARDS } from "../data/cards";
-import { restrictionOf } from "../engine/rules-text";
-import type { Card, Effect, ProjectCard } from "../engine/types";
+import type { ProjectCard } from "../engine/types";
+import { type Intent, intentOf } from "./intent";
 
 const MIN = Number(process.argv[2] ?? 4);
 
 /** The intents DESIGN.md already talks in. */
-type Intent = "community" | "money" | "momentum" | "takes" | "locks" | "none";
 
 const INTENTS: Intent[] = ["takes", "momentum", "money", "community", "locks"];
 
-function intentOf(card: Card): Intent {
-  if (restrictionOf(card)) return "locks";
-  const e = (card as any).effect as Effect | undefined;
-  if (!e) return "none";
-  switch (e.kind) {
-    case "stealMC":
-    case "damageHolders":
-    case "rug":
-    case "cancel":
-    case "takeOver":
-    case "discardCards":
-      return "takes";
-    case "directMC":
-      return e.target === "opponent" ? "takes" : "money";
-    case "scaleMC":
-      return e.target === "opponent" ? "takes" : "money";
-    case "extraBudget":
-      return e.target === "opponent" ? "takes" : "money";
-    case "pumpProject":
-    case "pumpBySector":
-      return "momentum";
-    case "drawCards":
-    case "healHolders":
-      return "community";
-    default:
-      return "none";
-  }
-}
 
 const projects = CARDS.filter((c): c is ProjectCard => c.type === "project");
 const families = new Map<string, ProjectCard[]>();
@@ -149,17 +120,12 @@ for (const i of INTENTS) {
 }
 console.log(`  ${pad("(no effect)", 12)}${num(totals.get("none") ?? 0, 5)} cards`);
 
-console.log("\n### THE FOUR THE DESIGN NOTE NAMES");
-for (const want of ["BONK", "WIF", "POPCAT", "PNUT"]) {
-  const r = rows.find((x) => x.name === want);
-  if (!r) {
-    console.log(`  ${pad(want, 10)} not found`);
-    continue;
-  }
-  console.log(
-    `  ${pad(want, 10)} written as ${pad(
-      { BONK: "community", WIF: "money", POPCAT: "momentum", PNUT: "takes" }[want]!,
-      11,
-    )} plays as ${pad(r.leading, 11)} at ${(r.share * 100).toFixed(0)}%`,
-  );
-}
+// TCG ends here by checking the four families its design note names by hand —
+// BONK community, WIF money, POPCAT momentum, PNUT takes — against what they
+// actually play as. None of those are on this chain, so the block printed "not
+// found" four times: a check that cannot fail is not a check, and four lines of
+// it at the bottom of every run teaches the reader to stop reading the bottom.
+//
+// The same check belongs here once DESIGN.md names families of its own. It does
+// not name any yet, and inventing four to have something to compare against
+// would be writing the answer and the question in one go.

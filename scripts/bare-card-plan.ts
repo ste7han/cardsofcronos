@@ -39,7 +39,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { CARDS } from "../data/cards";
-import type { ProjectCard } from "../engine/types";
+import type { Effect, ProjectCard } from "../engine/types";
 
 type Intent = "community" | "momentum" | "money" | "takes" | "locks";
 
@@ -66,48 +66,56 @@ const INTENT: Record<string, Intent> = {
   minted: "money",
 };
 
-/** The plan, card by card. `null` means left bare, with the reason beside it. */
-const PLAN: Record<string, { effect: string | null; why: string }> = {
+/**
+ * The plan, card by card. `null` means left bare, with the reason beside it.
+ *
+ * Typed rather than written as source text. It was strings once and the check
+ * further down had to `eval` them to compare what was planned against what is in
+ * the set — a plan that can only be verified by running it is not much of a
+ * plan, and a typo in one would have surfaced as a runtime error rather than a
+ * red squiggle. `render` below turns these back into the line that goes in.
+ */
+const PLAN: Record<string, { effect: Effect | null; why: string }> = {
   // ---- meme -------------------------------------------------------------
   "clove-first": {
-    effect: '{ kind: "drawCards", amount: 1 }',
+    effect: { kind: "drawCards", amount: 1 },
     why: "a ticker, a chart and a group chat — the chat is the whole of it",
   },
   "clove-listing": {
-    effect: '{ kind: "drawCards", amount: 2 }',
+    effect: { kind: "drawCards", amount: 2 },
     why: "everybody screenshotted it, so everybody found it",
   },
   "ffs-sigh": {
-    effect: '{ kind: "drawCards", amount: 1 }',
+    effect: { kind: "drawCards", amount: 1 },
     why: "named at four in the morning by somebody who was still there",
   },
   "monsters-hatch": {
-    effect: '{ kind: "damageHolders", target: "allEnemyProjects", amount: 1 }',
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     why: "three z's, and it never checked whose side anybody was on",
   },
   "caw-first": {
-    effect: '{ kind: "pumpProject", target: "allOwnProjects", mc: 2_000 }',
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     why: "somebody checked the address and there they were — the count starts",
   },
   "caw-triple": {
-    effect: '{ kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 14_000 } }',
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 14_000 } },
     why: "seven in a row, and nobody could get the count to move past it",
   },
   "dak-first": {
-    effect: '{ kind: "damageHolders", target: "allEnemyProjects", amount: 1 }',
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     why: "the first one still sets the floor, and a floor is set by taking",
   },
   // ---- defi -------------------------------------------------------------
   "crooks-alone": {
-    effect: '{ kind: "drawCards", amount: 1 }',
+    effect: { kind: "drawCards", amount: 1 },
     why: "no influencer would touch it, so whoever found it found it themselves",
   },
   "crooks-stack": {
-    effect: '{ kind: "drawCards", amount: 2 }',
+    effect: { kind: "drawCards", amount: 2 },
     why: "a vault, then a router, then a thing nobody could explain quickly",
   },
   "obsidian-quiet": {
-    effect: '{ kind: "directMC", target: "self", mc: 7_000 }',
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     why: "no thread, no space, no partnership — just a contract that kept paying",
   },
   "tectonic-i": {
@@ -115,65 +123,85 @@ const PLAN: Record<string, { effect: string | null; why: string }> = {
     why: "Tectonic locks, and a restriction does not scale down to a common",
   },
   "ferro-i": {
-    effect: '{ kind: "directMC", target: "self", mc: 7_000 }',
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     why: "swapped for almost nothing, and almost nothing is still something",
   },
   "ferro-iii": {
-    effect: '{ kind: "extraBudget", target: "self", mc: 45_000 }',
+    effect: { kind: "extraBudget", target: "self", mc: 45_000 },
     why: "the pool nobody watched, quietly funding the next thing",
   },
   "ferro-v": {
-    effect: '{ kind: "extraBudget", target: "self", mc: 95_000 }',
+    effect: { kind: "extraBudget", target: "self", mc: 95_000 },
     why: "steady is a strategy — it pays, it just never trends",
   },
   "ferro-viii": {
-    effect: '{ kind: "extraBudget", target: "self", mc: 200_000 }',
+    effect: { kind: "extraBudget", target: "self", mc: 200_000 },
     why: "nothing dramatic ever happened to it, which is the achievement",
   },
   // ---- dex --------------------------------------------------------------
   "wolfswap-pool": {
-    effect: '{ kind: "stealMC", percentage: 5 }',
+    effect: { kind: "stealMC", percentage: 5 },
     why: "eleven percent of slippage, and somebody was on the other side of it",
   },
   "vvs-i": {
-    effect: '{ kind: "pumpProject", target: "allOwnProjects", mc: 2_000 }',
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     why: "very, very simple, and volume begets volume from there",
   },
   "mmf-i": {
-    effect: '{ kind: "directMC", target: "self", mc: 7_000 }',
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     why: "one meerkat on a rock, and it took a cut of everything from the start",
   },
   // ---- nft --------------------------------------------------------------
   "robots-bolt": {
-    effect: '{ kind: "pumpProject", target: "allOwnProjects", mc: 2_000 }',
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     why: "shipped with a bug and shipped anyway, which is how momentum starts",
   },
   "robots-overclock": {
-    effect: '{ kind: "pumpProject", target: "allOwnProjects", mc: 8_000 }',
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 8_000 },
     why: "twice as hot for half as long, and everybody knew",
   },
   "howlers-first": {
-    effect: '{ kind: "drawCards", amount: 1 }',
+    effect: { kind: "drawCards", amount: 1 },
     why: "two in the morning is when the pack is awake, and the pack turns up",
   },
   "lions-i": {
-    effect: '{ kind: "directMC", target: "self", mc: 7_000 }',
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     why: "a mane tells you which one you got, and which one you got is the money",
   },
   "chimps-ii": {
-    effect: '{ kind: "drawCards", amount: 1 }',
+    effect: { kind: "drawCards", amount: 1 },
     why: "the Discord was busy before the mint and busier after it",
   },
   // ---- infra ------------------------------------------------------------
   "nova-spark": {
-    effect: '{ kind: "pumpProject", target: "allOwnProjects", mc: 2_000 }',
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     why: "launched quietly on a Sunday, and everything it touched moved after",
   },
   "cr00ts-survive": {
-    effect: '{ kind: "stealMC", percentage: 5 }',
+    effect: { kind: "stealMC", percentage: 5 },
     why: "two percent nobody notices, still quoting a spread this morning",
   },
 };
+
+/**
+ * An effect as it is written in data/cards.ts.
+ *
+ * JSON.stringify would do everything except the two things that matter: keys go
+ * unquoted and thousands carry an underscore, because that is how every other
+ * card in the file is written and a diff that does not look like its neighbours
+ * is a diff nobody reads properly.
+ */
+function render(value: unknown): string {
+  if (typeof value === "number") {
+    return Math.abs(value) >= 1000 ? value.toLocaleString("en-US").replace(/,/g, "_") : String(value);
+  }
+  if (typeof value === "string") return `"${value}"`;
+  if (Array.isArray(value)) return `[${value.map(render).join(", ")}]`;
+  if (value && typeof value === "object") {
+    return `{ ${Object.entries(value).map(([k, v]) => `${k}: ${render(v)}`).join(", ")} }`;
+  }
+  return String(value);
+}
 
 const projects = CARDS.filter((c): c is ProjectCard => c.type === "project");
 const byId = new Map(projects.map((c) => [c.id, c]));
@@ -186,11 +214,46 @@ const bare = projects.filter(
 );
 const planned = new Set(Object.keys(PLAN));
 const missing = bare.filter((c) => !planned.has(c.id)).map((c) => c.id);
-const extra = [...planned].filter((id) => !bare.some((c) => c.id === id));
 if (missing.length) throw new Error(`Bare cards with no plan: ${missing.join(", ")}`);
-if (extra.length) throw new Error(`Planned cards that are not bare: ${extra.join(", ")}`);
+
+// A planned card that is no longer bare is either done or somebody else's now.
+// Told apart rather than lumped together: this ran once and the set has the
+// effects in it, so "not bare any more" is the ordinary state from here on and
+// reading it as a failure would make the guard something to route around. What
+// is NOT ordinary is a planned card carrying an effect this plan did not write,
+// and that is the one that has to stop everything.
+const done: string[] = [];
+const contested: string[] = [];
+for (const id of planned) {
+  if (bare.some((c) => c.id === id)) continue;
+  const card = byId.get(id);
+  const want = PLAN[id]!.effect;
+  if (card === undefined) {
+    contested.push(`${id} (no longer in the set)`);
+  } else if (want === null) {
+    contested.push(`${id} (planned to stay bare and does not)`);
+  } else if (JSON.stringify(card.effect) === JSON.stringify(want)) {
+    done.push(id);
+  } else {
+    contested.push(`${id} (carries something this plan did not write)`);
+  }
+}
+if (contested.length) {
+  throw new Error(`Planned cards that are not bare and not what was planned: ${contested.join(", ")}`);
+}
 
 const apply = process.argv.includes("--apply");
+
+if (done.length === planned.size - 1) {
+  // Minus one for tectonic-i, which is planned to stay bare and therefore stays
+  // in `bare` for ever. Everything else is written.
+  console.log(
+    `This plan has been applied: all ${done.length} effects are in data/cards.ts,\n` +
+      `and tectonic-i is bare on purpose. The file is the record of what was done.\n` +
+      `Nothing to do.`,
+  );
+  process.exit(0);
+}
 
 if (!apply) {
   const pad = (s: string, n: number) => s.padEnd(n);
@@ -209,7 +272,7 @@ if (!apply) {
     const { effect, why } = PLAN[card.id]!;
     console.log(
       `${pad(card.id, 18)}${pad(card.rarity, 10)}${pad(INTENT[card.project] ?? "?", 11)}` +
-        `${effect === null ? "LEFT BARE" : effect}\n${" ".repeat(18)}${why}`,
+        `${effect === null ? "LEFT BARE" : render(effect)}\n${" ".repeat(18)}${why}`,
     );
   }
   console.log(`\nRun again with --apply to write it into data/cards.ts.`);
@@ -239,7 +302,7 @@ for (const card of bare) {
   const after = holdersAt + holdersLine.length;
   source =
     source.slice(0, after) +
-    `    // ${why}\n    effect: ${effect},\n` +
+    `    // ${why}\n    effect: ${render(effect)},\n` +
     source.slice(after);
   written++;
 }
