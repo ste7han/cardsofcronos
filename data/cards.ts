@@ -330,7 +330,8 @@ const CROOKS: ProjectCard[] = [
     // real wall, and the answer to it is the cheapest attack in the game — which
     // is the shape a lock has to have to be fair.
     restriction: { kind: "banType", cardType: "tactic" },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // outlived three exchanges, two bear markets and everyone who called it
+    effect: { kind: "recoverCard", amount: 2 },
     flavour: "Outlived three exchanges, two bear markets and everyone who called it.",
   },
 ];
@@ -967,7 +968,8 @@ const MONSTERS: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 9_000,
     holders: 2,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
+    // the first holder to complain got a monster named after him
+    effect: { kind: "directMC", target: "opponent", mc: -7_000 },
     flavour: "The first holder to complain got a monster named after him.",
   },
   {
@@ -1036,7 +1038,8 @@ const MONSTERS: ProjectCard[] = [
     // traits nobody drew started showing up in the metadata
     standing: { kind: "damageHolders", target: "enemyBest", amount: 1 },
     // traits nobody drew started showing up in the metadata
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
+    // traits nobody drew started showing up in the metadata
+    effect: { kind: "scalePump", target: "allEnemyProjects", percentage: -30 },
     flavour: "Traits nobody drew started showing up in the metadata.",
   },
   {
@@ -1068,7 +1071,8 @@ const MONSTERS: ProjectCard[] = [
     launchMC: 118_000,
     pumpMC: 58_000,
     holders: 5,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 3 },
+    // it ate the thing that was eating everything else
+    effect: { kind: "takeOver" },
     flavour: "It ate the thing that was eating everything else.",
   },
 ];
@@ -1270,7 +1274,8 @@ const CR00TS: ProjectCard[] = [
     pumpMC: 9_000,
     holders: 4,
     // two percent nobody notices, still quoting a spread this morning
-    effect: { kind: "stealMC", percentage: 5 },
+    // written off four times, still quoting a spread this morning
+    effect: { kind: "directMC", target: "opponent", mc: -7_000 },
     flavour: "Written off four times. Still quoting a spread this morning.",
   },
   {
@@ -1352,7 +1357,8 @@ const CR00TS: ProjectCard[] = [
     launchMC: 66_000,
     pumpMC: 42_000,
     holders: 5,
-    effect: { kind: "stealMC", percentage: 16 },
+    // somebody had been writing all of it down since the start
+    effect: { kind: "peekAndBurn", look: 4 },
     flavour: "Turned out somebody had been writing all of it down since the start.",
   },
   {
@@ -2678,7 +2684,8 @@ const CHIMPS: ProjectCard[] = [
     launchMC: 42_000,
     pumpMC: 24_000,
     holders: 5,
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    // nobody who was in it early ever quite left it
+    effect: { kind: "recoverCard", amount: 1 },
     flavour: "Nobody who was in it early ever quite left it.",
   },
   {
@@ -2693,7 +2700,8 @@ const CHIMPS: ProjectCard[] = [
     launchMC: 64_000,
     pumpMC: 42_000,
     holders: 5,
-    effect: { kind: "drawCards", amount: 3 },
+    // the oldest group chat on the chain, and it still moves markets
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     flavour: "The oldest group chat on the chain and it still moves markets.",
   },
   {

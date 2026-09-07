@@ -466,7 +466,12 @@ export function applyEffect(
           state,
           player,
           touched > 0
-            ? `${cardLabel(source)}: ${plural(touched, "project", "projects")} get ${plural(healed, "holder", "holders")} back between them.`
+            ? // "gets" when it is one, and it can be one: this branch runs for
+              // every multi-target heal, and a board with a single position left
+              // takes it. Came over from TCG reading "1 project get 1 holder back
+              // between them" — plural() picks the noun and the verb was written
+              // beside it as though it always would be more than one.
+              `${cardLabel(source)}: ${plural(touched, "project", "projects")} ${touched === 1 ? "gets" : "get"} ${plural(healed, "holder", "holders")} back${touched === 1 ? "" : " between them"}.`
             : `${cardLabel(source)}: everything was already at full holders.`,
           touched > 0 ? "pump" : "neutral",
         );
@@ -945,7 +950,8 @@ export function applyEffect(
           ? `${cardLabel(source)}: nothing left to move.`
           : targets.length === 1
             ? `${cardLabel(source)}: ${last} pumps ${Math.abs(effect.percentage)}% ${up ? "more" : "less"} per turn.`
-            : `${cardLabel(source)}: ${plural(moved, "project", "projects")} pump ${Math.abs(effect.percentage)}% ${up ? "more" : "less"} per turn.`,
+            : // Same as the heal above: one project pumps, several pump.
+              `${cardLabel(source)}: ${plural(moved, "project", "projects")} ${moved === 1 ? "pumps" : "pump"} ${Math.abs(effect.percentage)}% ${up ? "more" : "less"} per turn.`,
         up ? "pump" : "dump",
       );
       return;
