@@ -102,24 +102,34 @@ group as a whole is the Cronos community.
 
 ### In the set — 32 cards
 
-- **19 founders**, one per project family. Each carries an aura that pumps its own
-  project's sector.
+- **19 founders**, one for each of the nineteen families that were here first.
+  Each carries an aura that pumps its own project's sector.
 - **5 by name**: Pampa · 21Million · Francis · Curry · Vinz. Curry and Vinz are
   community rather than influencers, which is part of why the type was renamed.
 - **8 archetypes**, nameless, ported from TCG: The Caller · The Copy Target · The
   Floor Sweeper · The Whitelist Hunter · The Validator · The Airdrop Farmer ·
   The Node Runner · The Mint Bot.
 
+### One founder per project is not the rule any more
+
+The fifteen new families do not each get a founder, and that is a decision rather
+than something left undone. At nineteen families the rule gave nineteen founders
+out of thirty-two people; at thirty-four it would have given thirty-four out of
+forty-seven, and nearly three quarters of the people in this game would have been
+founders. That is not what a chain looks like from the inside.
+
+So the people are whoever is worth a card — founders, devs, community — and which
+project they belong to stops being what puts them there.
+
+The nineteen that exist stay. What that leaves is nineteen families with a founder
+and fifteen without, which is uneven by accident rather than on purpose: they are
+the families that happened to be in the set first, not the ones with the
+best-known founders. Worth a pass at some point, and not urgent.
+
 ### Still open
 
-**One founder per project was the rule and it may not survive the set growing.**
-At 19 families it gives 19 founders out of 32 people. At 33 it would give 33 out
-of 46, and two thirds of the people in this game would be founders — which is not
-what a chain looks like from the inside. Devs and community figures are meant to
-be in here too.
-
-**The Validator and The Node Runner are infra people.** Both carry an aura that
-pumps infra, so whatever happens to that sector happens to them.
+**The Validator and The Node Runner** carry an aura that pumps infra, so whatever
+happens to that sector happens to them. Both survived the dex merge unchanged.
 
 ---
 
