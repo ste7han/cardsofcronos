@@ -55,6 +55,8 @@ const CLOVE: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 8_000,
     holders: 3,
+    // a ticker, a chart and a group chat — the chat is the whole of it
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "A ticker, a chart and a group chat. That was the whole of it.",
   },
   {
@@ -105,6 +107,8 @@ const CLOVE: ProjectCard[] = [
     launchMC: 27_000,
     pumpMC: 16_000,
     holders: 3,
+    // everybody screenshotted it, so everybody found it
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "One exchange nobody had heard of, and everybody screenshotted it.",
   },
   {
@@ -202,6 +206,8 @@ const CROOKS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 8_000,
     holders: 4,
+    // no influencer would touch it, so whoever found it found it themselves
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "No influencer would touch it, which turned out to be the point.",
   },
   {
@@ -231,6 +237,8 @@ const CROOKS: ProjectCard[] = [
     launchMC: 25_000,
     pumpMC: 14_000,
     holders: 4,
+    // a vault, then a router, then a thing nobody could explain quickly
+    effect: { kind: "drawCards", amount: 2 },
     flavour: "A vault, then a router, then a thing nobody could explain quickly.",
   },
   {
@@ -350,6 +358,8 @@ const WOLFSWAP: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 2,
+    // eleven percent of slippage, and somebody was on the other side of it
+    effect: { kind: "stealMC", percentage: 5 },
     flavour: "Slippage of eleven percent and everybody used it anyway.",
   },
   {
@@ -481,6 +491,8 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 13_000,
     pumpMC: 8_000,
     holders: 2,
+    // shipped with a bug and shipped anyway, which is how momentum starts
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     flavour: "Shipped with a bug in the mint and shipped anyway.",
   },
   {
@@ -548,6 +560,8 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 36_000,
     pumpMC: 28_000,
     holders: 2,
+    // twice as hot for half as long, and everybody knew
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 8_000 },
     flavour: "Ran twice as hot for half as long. Everybody knew and nobody left.",
   },
   {
@@ -619,6 +633,8 @@ const HOWLERS: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 8_000,
     holders: 3,
+    // two in the morning is when the pack is awake, and the pack turns up
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Minted at two in the morning because that is when the pack is awake.",
   },
   {
@@ -768,6 +784,8 @@ const FFS: ProjectCard[] = [
     launchMC: 12_000,
     pumpMC: 9_000,
     holders: 2,
+    // named at four in the morning by somebody who was still there
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Named in frustration at four in the morning and never renamed.",
   },
   {
@@ -919,6 +937,8 @@ const MONSTERS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 8_000,
     holders: 2,
+    // three z's, and it never checked whose side anybody was on
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     flavour: "Three z's, because two did not look unhinged enough.",
   },
   {
@@ -1051,6 +1071,8 @@ const NOVA: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // launched quietly on a Sunday, and everything it touched moved after
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     flavour: "Launched quietly on a Sunday, which is not how anybody does it.",
   },
   {
@@ -1217,6 +1239,8 @@ const CR00TS: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 9_000,
     holders: 4,
+    // two percent nobody notices, still quoting a spread this morning
+    effect: { kind: "stealMC", percentage: 5 },
     flavour: "Written off four times. Still quoting a spread this morning.",
   },
   {
@@ -1345,6 +1369,8 @@ const OBSIDIAN: ProjectCard[] = [
     launchMC: 13_000,
     pumpMC: 9_000,
     holders: 4,
+    // no thread, no space, no partnership — just a contract that kept paying
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     flavour: "No thread, no space, no partnership. Just a contract that kept working.",
   },
   {
@@ -1489,6 +1515,8 @@ const CAW: ProjectCard[] = [
     launchMC: 17_000,
     pumpMC: 7_000,
     holders: 2,
+    // somebody checked the address and there they were — the count starts
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     flavour: "Somebody checked the contract address and there they were.",
   },
   {
@@ -1585,6 +1613,8 @@ const CAW: ProjectCard[] = [
     launchMC: 77_000,
     pumpMC: 47_000,
     holders: 7,
+    // seven in a row, and nobody could get the count to move past it
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 14_000 } },
     flavour: "It stopped there. Nobody could get the count to move past it.",
   },
   {
@@ -1629,6 +1659,8 @@ const DAK: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 2,
+    // the first one still sets the floor, and a floor is set by taking
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     flavour: "Ten thousand of them, and the first one still sets the floor.",
   },
   {
@@ -1768,6 +1800,8 @@ const VVS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // very, very simple, and volume begets volume from there
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     flavour: "Very, very simple. That was the entire pitch and it worked.",
   },
   {
@@ -1906,6 +1940,8 @@ const MMF: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 9_000,
     holders: 2,
+    // one meerkat on a rock, and it took a cut of everything from the start
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     flavour: "One meerkat standing on a rock, shouting. It caught on.",
   },
   {
@@ -2182,6 +2218,8 @@ const FERRO: ProjectCard[] = [
     launchMC: 13_000,
     pumpMC: 10_000,
     holders: 4,
+    // swapped for almost nothing, and almost nothing is still something
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     flavour: "Two things worth the same, swapped for almost nothing. Boring.",
   },
   {
@@ -2211,6 +2249,8 @@ const FERRO: ProjectCard[] = [
     launchMC: 24_000,
     pumpMC: 17_000,
     holders: 4,
+    // the pool nobody watched, quietly funding the next thing
+    effect: { kind: "extraBudget", target: "self", mc: 45_000 },
     flavour: "The pool nobody watched because it never did anything.",
   },
   {
@@ -2244,6 +2284,8 @@ const FERRO: ProjectCard[] = [
     launchMC: 36_000,
     pumpMC: 27_000,
     holders: 5,
+    // steady is a strategy — it pays, it just never trends
+    effect: { kind: "extraBudget", target: "self", mc: 95_000 },
     flavour: "Steady is a strategy. It just never trends anywhere.",
   },
   {
@@ -2292,6 +2334,8 @@ const FERRO: ProjectCard[] = [
     launchMC: 102_000,
     pumpMC: 58_000,
     holders: 8,
+    // nothing dramatic ever happened to it, which is the achievement
+    effect: { kind: "extraBudget", target: "self", mc: 200_000 },
     flavour: "Nothing dramatic ever happened to it, which is the achievement.",
   },
 ];
@@ -2317,6 +2361,8 @@ const LIONS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 4,
+    // a mane tells you which one you got, and which one you got is the money
+    effect: { kind: "directMC", target: "self", mc: 7_000 },
     flavour: "Ten thousand lions and a mane that tells you which one you got.",
   },
   {
@@ -2484,6 +2530,8 @@ const CHIMPS: ProjectCard[] = [
     launchMC: 16_000,
     pumpMC: 9_000,
     holders: 3,
+    // the Discord was busy before the mint and busier after it
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "The Discord was busy before the mint and busier after it.",
   },
   {

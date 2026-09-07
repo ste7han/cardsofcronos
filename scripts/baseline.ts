@@ -9,8 +9,20 @@
 // A win rate tells you something is wrong and never what. This tells you which
 // matches moved, and — with --touched — which of them moved without any of the
 // cards you actually changed being anywhere near them. That second group is the
-// whole point: a match that changed and never saw the card you edited is a
-// regression, and it is invisible to every other measurement in this repo.
+// whole point: a match that changed and never saw the card you edited is very
+// probably a regression, and it is invisible to every other measurement here.
+//
+// "Never saw" means never PLAYED, and that is not the same as never present. A
+// touched card sitting in a hand is scored by the bot every turn it is held, so
+// changing it changes what the bot plays instead — and this reports that match
+// as having moved without the card being near it. Measured rather than
+// supposed: filling twenty-four bare project cards moved 2847 of 3000 matches,
+// one of them with no touched card played, and seed 1412 turns out to have held
+// ffs-sigh in hand from turn three and never played it.
+//
+// So the second group is a list to read, not a verdict. One or two out of three
+// thousand is what a hand does; a dozen is something else. Recording the hands
+// as well was considered and is a bigger record for a rarer question.
 //
 // Deliberately not a test. It takes minutes, it is run against a change rather
 // than on every save, and its answer is a list to read rather than a pass or a
