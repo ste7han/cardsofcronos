@@ -86,8 +86,24 @@
 // preset read 62.9% — a nineteen-point gap decided before a player knows
 // anything about the game.
 
+import { CARDS } from "@/data/cards";
+import { auraSectors } from "@/engine/helpers";
 import { auraOf } from "@/engine/types";
-import type { Card } from "@/engine/types";
+import type { Card, Sector } from "@/engine/types";
+
+/**
+ * Does this card's aura help a sector?
+ *
+ * Was `auraOf(c)?.sector === "meme"` at three call sites, which stopped
+ * compiling the day a second aura kind arrived — and would have quietly answered
+ * "no" for every champion aura in the game if the field had merely been optional
+ * rather than absent. One function now, and it asks the set, because a champion
+ * names project families and a family's sector is on the cards.
+ */
+function helpsSector(card: Card, sector: Sector): boolean {
+  const aura = auraOf(card);
+  return aura !== null && auraSectors(aura, CARDS).includes(sector);
+}
 
 export interface PresetDeck {
   id: string;
@@ -105,14 +121,14 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
     blurb: "The jokes that outlived their own cycle, and the people who posted them.",
     seed: 8_233,
     prefer: (c) =>
-      (c.type === "project" && c.sector === "meme") || auraOf(c)?.sector === "meme",
+      (c.type === "project" && c.sector === "meme") || helpsSector(c, "meme"),
   },
   {
     id: "jpegs",
     name: "FLOOR SWEEP",
     blurb: "Pictures with a floor under them. Slower, and it holds.",
     seed: 8_233,
-    prefer: (c) => (c.type === "project" && c.sector === "nft") || auraOf(c)?.sector === "nft",
+    prefer: (c) => (c.type === "project" && c.sector === "nft") || helpsSector(c, "nft"),
   },
   {
     id: "yield",
@@ -121,6 +137,7 @@ export const PRESET_DECKS: readonly PresetDeck[] = [
     seed: 8_233,
     prefer: (c) =>
       (c.type === "project" && (c.sector === "defi" || c.sector === "dex")) ||
-      ["defi", "dex"].includes(auraOf(c)?.sector ?? ""),
+      helpsSector(c, "defi") ||
+      helpsSector(c, "dex"),
   },
 ];

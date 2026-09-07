@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CARDS } from "@/data/cards";
 import { AURA_BIGGEST, FAMILY_CARDS, SOLO, SOLO_A, SOLO_B, SOLO_C } from "./one-per-project";
 import { cardById } from "@/engine/helpers";
+import { auraSectors } from "@/engine/helpers";
 import { applyMove, buildIndex, needsPortfolioSlot, newMatch, playable } from "@/engine/match";
 import { mcDeltaOf, previewOf } from "@/engine/preview";
 import type { ProjectCard, Sector, State } from "@/engine/types";
@@ -127,10 +128,15 @@ describe("the hover preview", () => {
     expect(biggest, "the biggest aura is in the set").toBeDefined();
     const aura = auraOf(biggest!);
     expect(aura, "it carries an aura").toBeDefined();
+    // Which slots light up is a question only a sector aura answers. Since the
+    // aura became a union the others point at nothing on the board, so this test
+    // says which kind it is about rather than reading a field half of them lack.
+    expect(aura!.kind, "the biggest aura pumps a sector").toBe("pumpSector");
+    const sector = auraSectors(aura!, CARDS)[0]!;
 
     const { slots } = previewOf(state, biggest!, "you", index);
     const lit = slots.filter((s) => s.owner === "you").map((s) => s.slot);
-    const expected = sectorOf.flatMap((sector, i) => (sector === aura!.sector ? [i] : []));
+    const expected = sectorOf.flatMap((s, i) => (s === sector ? [i] : []));
 
     expect(lit.sort()).toEqual(expected.sort());
     expect(lit.length, "the board has something in the aura's sector").toBeGreaterThan(0);
@@ -147,7 +153,12 @@ describe("the hover preview", () => {
     // A board entirely of the aura's own sector, so there is always something to
     // point at. A card whose preview is empty here is invisible to the player.
     for (const card of withAura) {
-      const sector = auraOf(card)!.sector;
+      // auraSectors rather than `.sector`: an aura that helps no sector at all —
+      // budget, draw, more positions — has nothing to build a themed board out
+      // of, and skipping it is the true answer rather than a field lookup that
+      // would not compile.
+      const sector = auraSectors(auraOf(card)!, CARDS)[0];
+      if (!sector) continue;
       const match = CARDS.find(
         (c): c is ProjectCard => c.type === "project" && c.sector === sector,
       );

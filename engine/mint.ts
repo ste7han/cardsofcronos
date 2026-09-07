@@ -13,8 +13,8 @@
 // Three rules, and only two of them bind:
 //
 //   sixty cards        the product
-//   twenty projects    a floor, and it never fires — 539 of the 655 cards are
-//                      projects, so a draw of sixty already holds about 52. It
+//   twenty projects    a floor, and it never fires — 610 of the 775 cards are
+//                      projects, so a draw of sixty already holds about 49. It
 //                      stays because a set that changes shape could make it fire,
 //                      and a floor that costs nothing is worth keeping
 //   two per project    this one fires, and it is the cheaper of the two levers.

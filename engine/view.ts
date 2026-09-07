@@ -16,18 +16,22 @@
 
 import type { BoardProject, BoardSupport, LogEntry, Player, State } from "./types";
 import type { CardIndex } from "./types";
+import { MARKETING_COST } from "./types";
 import { otherPlayer } from "./helpers";
 import {
-  canDiscard,
-  canTakeProfit,
   needsPortfolioSlot,
+  priceFor,
   playable,
   pumpOf,
   targetRequirementOf,
   upgradesAPosition,
+  whyNoDiscard,
+  whyNoProfit,
   whyNot,
 } from "./match";
+import type { Refusal } from "./match";
 import { cardById } from "./helpers";
+import { budgetDeltaOf, mcDeltaOf } from "./preview";
 import type { ChoiceTarget } from "./types";
 
 /**
@@ -58,6 +62,41 @@ export interface HandCardView {
   canPlay: boolean;
   /** Why not, in the engine's own words, or the portfolio note when it is full. */
   reason: string | null;
+  /**
+   * What playing this would do to both market caps, or null when it is refused.
+   *
+   * The one thing on this table that genuinely cannot be worked out from a
+   * view: mcDeltaOf answers by playing the move and looking at the difference,
+   * so it needs the deck to draw from and the PRNG to draw with. Both are
+   * secrets. It is answered here, where they exist, for the same reason
+   * everything else on this type is.
+   *
+   * Which side is which is in engine terms, `you` and `opponent`, not the
+   * holder's. PlayerView.me says which of the two the holder is.
+   */
+  mcDelta: { you: number; opponent: number } | null;
+  /**
+   * What this card costs to play, right now, for the player holding it.
+   *
+   * On the view rather than worked out from the card's rarity, for exactly the
+   * reason freePlays is: a table that prices cards for itself is a second
+   * implementation of the price. It was worked out from the rarity, and every
+   * rule that moves a price — the discount a position grants, the tax the other
+   * side charges, half off a card that came back out of the discard — was
+   * invisible on the card face until the moment you played it.
+   */
+  price: number;
+  /**
+   * What playing this card does to the budget you have left this turn.
+   *
+   * `price` says what comes out; this says where you end up, and a card can do
+   * both — Retardio costs $280K and leaves the budget $140K higher than it
+   * found it. A table that subtracts `price` from the budget bar gets that card
+   * exactly backwards, so the answer is worked out by playing the move.
+   */
+  budgetDelta: { spendable: number; price: number } | null;
+  /** The printed price, so a table can show that a rule has moved it. */
+  printedPrice: number;
   /** Which board this card asks you to point at, if any. */
   needsTarget: ChoiceTarget | null;
   /** A full portfolio does not block a project — it asks you to close one. */
@@ -80,6 +119,16 @@ export interface HandCardView {
 export interface OwnView {
   mc: number;
   hand: string[];
+  /**
+   * Cards you may still play without paying for them.
+   *
+   * One at the start of the match if you move first, none if you do not, and
+   * that is the whole of what the two seats differ by — see
+   * RULES.firstMoveFreeCard. On the view rather than worked out by the table,
+   * because a table that decides for itself when a card is free is a second
+   * implementation of the price, and the price is the rule that fires most.
+   */
+  freePlays: number;
   /** The same cards, with what the engine says about each. Aligned by index. */
   playable: HandCardView[];
   /**
@@ -92,13 +141,26 @@ export interface OwnView {
    * have refused it. That is the whole argument for these two fields.
    */
   canDiscard: boolean;
+  /** Why not. Beside the boolean for the same reason noProfit is — see below. */
+  noDiscard: Refusal | null;
   canTakeProfit: boolean;
+  /**
+   * Why not, and which position is the reason.
+   *
+   * Beside the boolean rather than instead of it, because the two answer
+   * different questions: canTakeProfit decides whether the button works,
+   * noProfit decides what it says when it does not. Both come out of the same
+   * call in the engine, so they cannot disagree.
+   */
+  noProfit: Refusal | null;
   discard: string[];
   projects: ViewProject[];
   support: BoardSupport[];
   pendingBudget: number;
   /** How many are left to draw, never which. */
   deckCount: number;
+  /** Cards finished with. Two families are paid off it, so it has to be on the table. */
+  finishedCount: number;
 }
 
 /** The opponent, as much of them as you are allowed to know. */
@@ -114,11 +176,18 @@ export interface OpponentView {
   handCount: number;
   /** How many are left to draw, never which. */
   deckCount: number;
+  /** Cards finished with. Two families are paid off it, so it has to be on the table. */
+  finishedCount: number;
 }
 
 export interface PlayerView {
   /** Which side this view belongs to. A client should never have to guess. */
   me: Player;
+  /**
+   * Free plays the opponent has left. Public: which seat moves first is on the
+   * screen, and so is what that seat is owed for it.
+   */
+  theirFreePlays: number;
   turn: number;
   toMove: Player;
   budgetThisTurn: number;
@@ -139,7 +208,7 @@ export interface PlayerView {
  */
 export function viewFor(state: State, player: Player, index: CardIndex): PlayerView {
   const handOf = (side: Player): HandCardView[] =>
-    state.players[side].hand.map((id) => {
+    state.players[side].hand.map((id, handIndex) => {
       const card = cardById(index, id);
       const needsSlot = needsPortfolioSlot(state, card, side, index);
 
@@ -165,6 +234,21 @@ export function viewFor(state: State, player: Player, index: CardIndex): PlayerV
         id,
         canPlay: playable(state, card, side, index),
         reason,
+        // The loop index, not indexOf(id). A deck holds one of each card so a
+        // hand cannot repeat one today, and indexOf would have been right for
+        // exactly as long as that stayed true — then quietly reported the first
+        // copy's number for the second.
+        //
+        // Only for the side being asked about: running the opponent's hand
+        // through applyMove answers a question nobody may ask.
+        mcDelta: side === player ? mcDeltaOf(state, handIndex, index) : null,
+        // Same rule as mcDelta: only for the side being asked. `price` above is
+        // what the card takes; this is where the budget lands once whatever the
+        // card hands back has landed too, which is not the same number and
+        // cannot be worked out from the card face.
+        budgetDelta: side === player ? budgetDeltaOf(state, handIndex, index) : null,
+        price: priceFor(state, card, side, index),
+        printedPrice: MARKETING_COST[card.rarity],
         needsTarget: targetRequirementOf(card),
         needsSlot,
         upgrades: upgradesAPosition(state, card, side, index),
@@ -180,6 +264,8 @@ export function viewFor(state: State, player: Player, index: CardIndex): PlayerV
   const them = otherPlayer(player);
   const theirs = state.players[them];
   const yours = state.players[player];
+  const noProfit = whyNoProfit(state, player, index);
+  const noDiscard = whyNoDiscard(state, player);
 
   return structuredClone({
     me: player,
@@ -190,17 +276,26 @@ export function viewFor(state: State, player: Player, index: CardIndex): PlayerV
     finished: state.finished,
     winner: state.winner,
     log: state.log,
+    theirFreePlays: state.freePlays[them] ?? 0,
     you: {
       mc: yours.mc,
       hand: yours.hand,
+      freePlays: state.freePlays[player] ?? 0,
       playable: handOf(player),
-      canDiscard: canDiscard(state, player),
-      canTakeProfit: canTakeProfit(state, player, index),
+      canDiscard: noDiscard === null,
+      noDiscard,
+      // One call, two fields. canTakeProfit(state, ...) is whyNoProfit === null
+      // in the engine, so asking twice would cost a second walk of the board and
+      // buy nothing; asking once and deriving both is the only arrangement in
+      // which the button's enabled state and its explanation cannot disagree.
+      canTakeProfit: noProfit === null,
+      noProfit,
       discard: yours.discard,
       projects: withPump(player),
       support: yours.support,
       pendingBudget: yours.pendingBudget,
       deckCount: yours.deck.length,
+      finishedCount: yours.discard.length,
     },
     them: {
       mc: theirs.mc,
@@ -210,6 +305,7 @@ export function viewFor(state: State, player: Player, index: CardIndex): PlayerV
       pendingBudget: theirs.pendingBudget,
       handCount: theirs.hand.length,
       deckCount: theirs.deck.length,
+      finishedCount: theirs.discard.length,
     },
   });
 }

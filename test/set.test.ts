@@ -6,6 +6,7 @@ import { CARDS, EXPECTED_DISTRIBUTION } from "@/data/cards";
 import { SOLO_A, SOLO_B, SOLO_C } from "./one-per-project";
 import { applyMove, buildIndex, budgetForTurn, newMatch } from "@/engine/match";
 import { cardLabel, searchText } from "@/engine/format";
+import { auraSectors } from "@/engine/helpers";
 import { rulesText } from "@/engine/rules-text";
 import type { Card, Sector, State } from "@/engine/types";
 import { RULES } from "@/engine/types";
@@ -62,8 +63,12 @@ describe("the card set", () => {
     const DELIBERATELY_WITHOUT_AURA = new Set<string>([]);
 
     const sectors = new Set(CARDS.filter((c) => c.type === "project").map((c) => c.sector));
+    // Through auraSectors, not `c.aura.sector`. A champion aura names project
+    // families rather than a sector, so reading the field would have counted it
+    // as covering nothing — and this test would then have gone on passing while
+    // quietly measuring less than it says it does.
     const covered = new Set(
-      CARDS.flatMap((c) => (c.type === "influencer" && c.aura ? [c.aura.sector] : [])),
+      CARDS.flatMap((c) => (c.type === "influencer" && c.aura ? auraSectors(c.aura, CARDS) : [])),
     );
     for (const sector of sectors) {
       if (DELIBERATELY_WITHOUT_AURA.has(sector)) {
@@ -259,18 +264,18 @@ describe("cards named outside the set file", () => {
 });
 
 describe("finding a card", () => {
-  it("finds a card by its edition, which is what tells a family apart", () => {
+  it("finds a card by its moment, which is what tells a family apart", () => {
     // Eight cards are called Obsidian Finance and the numeral is the only thing
     // that separates them, so it has to be searchable. It was left out of
     // searchText once already, when it held the project's history instead.
     const family = CARDS.filter(
-      (c): c is Extract<Card, { type: "project" }> => c.type === "project" && Boolean(c.edition),
+      (c): c is Extract<Card, { type: "project" }> => c.type === "project" && Boolean(c.moment),
     );
     expect(family.length).toBeGreaterThan(0);
 
     for (const card of family) {
-      const hits = CARDS.filter((c) => searchText(c).includes(card.edition!.toLowerCase()));
-      expect(hits, `nothing matches the edition "${card.edition}"`).toContainEqual(card);
+      const hits = CARDS.filter((c) => searchText(c).includes(card.moment!.toLowerCase()));
+      expect(hits, `nothing matches the moment "${card.moment}"`).toContainEqual(card);
     }
   });
 

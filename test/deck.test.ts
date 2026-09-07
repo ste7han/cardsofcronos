@@ -164,20 +164,31 @@ describe("decking cards you own", () => {
     expect(deckProblems(legal, index, new Set(legal))).toEqual([]);
   });
 
-  it("names every card the player does not own", () => {
+  it("names the cards the player does not own, in one line", () => {
+    // One line rather than one per card. It used to be one per card, and a deck
+    // built from the whole set and then checked against a collection produced
+    // thirty-three sentences run together into a paragraph nobody could read.
+    // They all said the same thing.
     const owned = new Set(legal.slice(2));
     const problems = deckProblems(legal, index, owned);
-    expect(problems).toHaveLength(2);
+    expect(problems).toHaveLength(1);
     for (const id of legal.slice(0, 2)) {
-      const name = index.get(id)!.name;
-      expect(problems.some((p) => p.includes(name))).toBe(true);
+      expect(problems[0]).toContain(index.get(id)!.name);
     }
+  });
+
+  it("counts them when there are more than it will name", () => {
+    // The count is what makes it actionable: "two" is a tidy-up and "forty" is a
+    // deck that belongs to a different wallet.
+    const problems = deckProblems(legal, index, new Set());
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(String(RULES.deckSize));
   });
 
   it("refuses a deck of cards owned by nobody", () => {
     // The failure that matters: a deck posted straight at the storage layer,
     // bypassing the builder entirely. It must not go quiet.
-    expect(deckProblems(legal, index, new Set())).toHaveLength(RULES.deckSize);
+    expect(deckProblems(legal, index, new Set()).length).toBeGreaterThan(0);
   });
 
   it("still reports the other rules alongside it", () => {

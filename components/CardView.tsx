@@ -174,10 +174,10 @@ export function CardView({ card, compact = false, className }: Props) {
         <h3 className={cx("display leading-none", compact ? "text-[10px]" : "text-[13px]")}>
           {card.name}
         </h3>
-        {/* The edition, under the project it belongs to. Eight cards called
+        {/* The moment, under the project it belongs to. Eight cards called
             Obsidian Finance with a numeral beneath is what makes them read as
             one family at a glance and still be nameable one at a time. */}
-        {card.type === "project" && card.edition && (
+        {card.type === "project" && card.moment && (
           <p
             className={cx(
               "mt-0.5 leading-none text-fg/70",
@@ -187,7 +187,7 @@ export function CardView({ card, compact = false, className }: Props) {
               compact ? "truncate text-[7.5px]" : "text-[9px]",
             )}
           >
-            {card.edition}
+            {card.moment}
           </p>
         )}
         <p

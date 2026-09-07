@@ -103,14 +103,18 @@ function attributesOf(card: (typeof CARDS)[number]) {
   if (card.type === "project") {
     traits.push({ trait_type: "Project", value: card.name });
     traits.push({ trait_type: "Sector", value: card.sector });
-    if (card.edition) traits.push({ trait_type: "Edition", value: card.edition });
+    if (card.moment) traits.push({ trait_type: "Edition", value: card.moment });
     traits.push({ trait_type: "Launch MC", value: card.launchMC });
     traits.push({ trait_type: "Pump MC", value: card.pumpMC });
     traits.push({ trait_type: "Holders", value: card.holders });
   }
 
+  // Only a pumpSector aura has a sector and a bonus to print. TCG's aura became
+  // a union — budgetEachTurn, drawEachTurn, morePositions and the rest measure
+  // something else entirely — and a trait called "Pumps sector" has to mean what
+  // it says, so the others print nothing rather than something near enough.
   const aura = auraOf(card);
-  if (aura) {
+  if (aura?.kind === "pumpSector") {
     traits.push({ trait_type: "Pumps sector", value: aura.sector });
     traits.push({ trait_type: "Aura bonus", value: aura.bonus });
   }

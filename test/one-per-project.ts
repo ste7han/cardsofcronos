@@ -14,7 +14,8 @@
 // So: one card per project, whatever the set looks like. This cannot go stale
 // the way the last three did.
 
-import type { Card, ProjectCard } from "@/engine/types";
+import type { Aura, Card, ProjectCard } from "@/engine/types";
+import { auraOf } from "@/engine/types";
 
 import { CARDS } from "@/data/cards";
 
@@ -145,10 +146,18 @@ export const UPGRADE_HIGH: ProjectCard =
  * `cancel` takes the largest aura first, which is the thing being tested, and
  * naming two cards to prove it is how the last three fixtures went stale.
  */
-const auras = CARDS.filter(
-  (c): c is Extract<Card, { aura: { bonus: number } }> =>
-    "aura" in c && c.aura !== undefined,
-).sort((a, b) => a.aura.bonus - b.aura.bonus);
+// "Biggest" has to mean something, and only some aura kinds carry a size. Since
+// TCG's aura became a union — budgetEachTurn, drawEachTurn, morePositions and
+// the rest have no bonus at all — asking every aura for its `bonus` is asking a
+// question half of them cannot answer. The ones that can are the ones this
+// fixture is about.
+type SizedAura = Extract<Aura, { bonus: number }>;
+
+const auras = CARDS.flatMap((c) => {
+  const aura = auraOf(c);
+  if (aura === null || !("bonus" in aura)) return [];
+  return [{ id: c.id, aura: aura as SizedAura }];
+}).sort((a, b) => a.aura.bonus - b.aura.bonus);
 
 if (auras.length < 2 || auras[0]!.aura.bonus === auras.at(-1)!.aura.bonus) {
   throw new Error("Test fixtures need two cards with auras of different sizes.");

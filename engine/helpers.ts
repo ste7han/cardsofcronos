@@ -1,7 +1,7 @@
 // Small shared operations on the state. Kept separate so effects.ts and match.ts
 // don't have to import each other.
 
-import type { Card, CardIndex, LogTone, Player, ProjectCard, State } from "./types";
+import type { Aura, Card, CardIndex, LogTone, Player, ProjectCard, Sector, State } from "./types";
 import { RULES } from "./types";
 
 export function otherPlayer(player: Player): Player {
@@ -54,7 +54,46 @@ export function draw(state: State, player: Player, amount: number): void {
 }
 
 /** Draws until the hand is full. */
-export function drawToFull(state: State, player: Player): void {
-  const missing = RULES.handSize - state.players[player].hand.length;
+/**
+ * Refills a hand to its size.
+ *
+ * The size is passed in rather than read from RULES, because an aura can raise
+ * it and this file cannot see the support row without importing match.ts back.
+ * Callers use handSizeFor, which is the one place that adds it up.
+ */
+export function drawToFull(state: State, player: Player, handSize: number): void {
+  const missing = handSize - state.players[player].hand.length;
   if (missing > 0) draw(state, player, missing);
+}
+
+/**
+ * Which sectors an aura helps.
+ *
+ * A pumpSector aura answers this by itself; a champion aura does not, because it
+ * names project families and a family's sector lives on the cards. So this takes
+ * the set — and it is the reason the deck presets and the coverage test both call
+ * one function instead of each reaching for `aura.sector` and quietly missing
+ * every champion in the game.
+ *
+ * Takes cards rather than a CardIndex because both callers hold the set as a
+ * list and neither is in a hot path.
+ */
+export function auraSectors(aura: Aura, cards: readonly Card[]): Sector[] {
+  if (aura.kind === "pumpSector") return [aura.sector];
+  // Budget, hand and healing are not about a sector at all — they help whatever
+  // you happen to be holding. An empty list is the true answer and the callers
+  // are built for it: the coverage test asks which sectors have an aura behind
+  // them, and these have none to give.
+  if (aura.kind === "healEachTurn" || aura.kind === "bankPays") return [aura.sector];
+  if (aura.kind !== "championProjects") return [];
+  // A champion has its own sector for the flat half, and its families sit in
+  // one too. Nearly always the same sector — but "nearly always" is not a thing
+  // to build a coverage check on.
+  const found = new Set<Sector>([aura.sector]);
+  for (const ticker of aura.tickers) {
+    for (const card of cards) {
+      if (card.type === "project" && card.ticker === ticker) found.add(card.sector);
+    }
+  }
+  return [...found];
 }

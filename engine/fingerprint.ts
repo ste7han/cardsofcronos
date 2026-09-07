@@ -24,7 +24,7 @@ export function setFingerprint(cards: readonly Card[]): string {
   const parts = cards.map((card) => {
     const stats =
       card.type === "project"
-        ? `${card.sector}|${card.launchMC}|${card.pumpMC}|${card.holders}|${card.edition ?? ""}`
+        ? `${card.sector}|${card.launchMC}|${card.pumpMC}|${card.holders}|${card.moment ?? ""}`
         : "";
     return [
       card.id,

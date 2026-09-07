@@ -423,7 +423,15 @@ export function Game() {
     if (aiming.reason === "profit") {
       doMove({ kind: "takeProfit", slot });
     } else if (aiming.handIndex !== null) {
-      doMove({ kind: "playCard", handIndex: aiming.handIndex, targetIndex: slot });
+      // closeIndex, not targetIndex, when the click is choosing a position to
+      // close. TCG split the two the day a card both closed a position and hit
+      // one: a single number cannot be counted against two different lists, and
+      // while they shared a field the engine read the wrong board.
+      doMove({
+        kind: "playCard",
+        handIndex: aiming.handIndex,
+        ...(aiming.reason === "close" ? { closeIndex: slot } : { targetIndex: slot }),
+      });
     }
     setAiming(null);
   }

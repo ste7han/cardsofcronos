@@ -78,10 +78,19 @@ interface Row {
   value: number;
 }
 
+const skipped: string[] = [];
 const rows: Row[] = [];
 for (const card of CARDS) {
   const aura = auraOf(card);
   if (!aura) continue;
+  // Champion auras are skipped rather than guessed at. This report prices an
+  // aura as bonus-times-positions-held, which has no meaning for one that
+  // multiplies — and a made-up number in a balance table is worse than a gap,
+  // because the gap is visible and the number is not.
+  if (aura.kind !== "pumpSector") {
+    skipped.push(`${card.name} (${aura.kind})`);
+    continue;
+  }
   const per = held.get(aura.sector) ?? 0;
   rows.push({
     id: card.id,
@@ -92,6 +101,11 @@ for (const card of CARDS) {
     hasEffect: Boolean(card.effect),
     value: aura.bonus * per,
   });
+}
+if (skipped.length > 0) {
+  console.log(`not priced here — this table only understands flat sector auras:`);
+  for (const name of skipped) console.log(`  ${name}`);
+  console.log();
 }
 
 // A card that also carries a one-off effect has part of its rarity paid for by

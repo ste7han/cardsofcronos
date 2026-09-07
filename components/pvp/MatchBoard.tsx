@@ -197,7 +197,15 @@ export function MatchBoard({ id }: { id: string }) {
     if (!aiming || aimingAt !== side) return;
     if (aiming.reason === "profit") void send({ kind: "takeProfit", slot });
     else if (aiming.handIndex !== null)
-      void send({ kind: "playCard", handIndex: aiming.handIndex, targetIndex: slot });
+      // closeIndex, not targetIndex, when the click is choosing a position to
+      // close. TCG split the two the day a card both closed a position and hit
+      // one: a single number cannot be counted against two different lists, and
+      // while they shared a field the engine read the wrong board.
+      void send({
+        kind: "playCard",
+        handIndex: aiming.handIndex,
+        ...(aiming.reason === "close" ? { closeIndex: slot } : { targetIndex: slot }),
+      });
   }
 
   const Side = ({ side, projects, mc, label }: {

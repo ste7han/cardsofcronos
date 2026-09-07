@@ -179,7 +179,9 @@ describe("the portfolio cap", () => {
     const before = fullPortfolio();
     before.players.you.mc = 500_000;
 
-    const after = applyMove(before, { kind: "playCard", handIndex: 0, targetIndex: 2 }, index);
+    // closeIndex, not targetIndex. TCG split the two so one number could not be
+    // counted against two different lists; closing a position is its own field.
+    const after = applyMove(before, { kind: "playCard", handIndex: 0, closeIndex: 2 }, index);
 
     expect(after.players.you.projects).toHaveLength(RULES.portfolioSize);
     // Slot 2 is gone and the card from hand took the free slot.
@@ -370,6 +372,13 @@ describe("tools", () => {
     const tool = CARDS.find((c) => c.id === AURA_TOOL)!;
     const aura = auraOf(tool);
     if (!aura) throw new Error("The fixture tool is supposed to carry an aura.");
+    // The test measures a flat sector bonus against a bare pump, which is a
+    // question only a pumpSector aura answers. Since the aura became a union the
+    // fixture has to say so out loud rather than reach for a field that is not
+    // there on half the kinds.
+    if (aura.kind !== "pumpSector") {
+      throw new Error(`The fixture tool carries a ${aura.kind} aura; this test is about pumpSector.`);
+    }
 
     // The position gets the holders the card prints, not a number picked here.
     // pumpOf scales what a position pays by holders/printed, so a fixture that
@@ -426,8 +435,14 @@ describe("cancelling an influencer", () => {
 
   it("takes the biggest name first, not the first one played", () => {
     const before = withNames();
+    // AURA_BIGGEST and AURA_SMALLEST are picked out of the set by their bonus, so
+    // both carry one — but the union does not know that, and a cast would be a
+    // promise nothing checks. Asking is a line and it fails with a name.
     const biggest = auraOf(CARDS.find((c) => c.id === AURA_BIGGEST)!)!;
     const smallest = auraOf(CARDS.find((c) => c.id === AURA_SMALLEST)!)!;
+    if (!("bonus" in biggest) || !("bonus" in smallest)) {
+      throw new Error("The aura fixtures are supposed to be the kind that has a bonus.");
+    }
     expect(biggest.bonus).toBeGreaterThan(smallest.bonus);
 
     const after = applyMove(before, { kind: "playCard", handIndex: 0 }, index);
@@ -588,6 +603,9 @@ describe("upgrading a position", () => {
     // any count built on it was wrong. Whatever playable() blocks, whyNot() says.
     let state = boardWith(cheapest.id);
     state.budgetSpentThisTurn = state.budgetThisTurn;
+    // The free first card would answer before the budget did, and this test is
+    // about the budget.
+    state.freePlays.you = 0;
 
     const reason = whyNot(state, cheapest, "you", index);
     expect(reason).not.toBeNull();

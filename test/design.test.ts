@@ -57,11 +57,21 @@ describe("the design document still describes this game", () => {
     expect(DESIGN).toContain(`at least ${RULES.minProjects} projects`);
   });
 
-  it("quotes the first-move compensation as it stands", () => {
-    // The one number in the engine that has already been retuned once, and the
-    // one most likely to move again — its own docstring says to re-fit it
-    // whenever the set changes shape.
-    expect(DESIGN).toContain(`**${short(RULES.firstMoveSeedMC)}**`);
+  it("describes the first-move compensation the engine actually pays", () => {
+    // The rule with the most history behind it: a seed round, then a budget, then
+    // a card played for nothing, and the document was left behind by the last
+    // change. So the check is on the shape and not on one number — a document
+    // describing a seed round while the engine hands over a card is exactly the
+    // drift this file exists to catch, and no assertion about $400K would have
+    // noticed it.
+    if (RULES.firstMoveFreeCard) {
+      expect(DESIGN).toContain("**one card for nothing**");
+      expect(DESIGN, "no seed round while the free card is the rule").not.toContain(
+        "seed round of **",
+      );
+    } else {
+      expect(DESIGN).toContain(`**${short(RULES.firstMoveSeedMC)}**`);
+    }
   });
 
   it("describes the packs the code opens", () => {

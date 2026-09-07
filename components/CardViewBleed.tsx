@@ -76,8 +76,8 @@ export function CardViewBleed({ card, className }: { card: Card; className?: str
 
       <div className="relative mt-auto px-3 pb-3">
         <h3 className="display text-[17px] leading-none">{card.name}</h3>
-        {card.type === "project" && card.edition && (
-          <p className="mt-1 text-[10px] leading-none text-fg/75">{card.edition}</p>
+        {card.type === "project" && card.moment && (
+          <p className="mt-1 text-[10px] leading-none text-fg/75">{card.moment}</p>
         )}
         <p className="mt-1.5 text-[7px] tracking-[0.2em] text-faint">
           {TYPE_LABEL[card.type]}

@@ -91,6 +91,10 @@ describe("illegal moves throw instead of being ignored", () => {
     state = structuredClone(state);
     // Everything is spent, so nothing is affordable however cheap it is.
     state.budgetSpentThisTurn = state.budgetThisTurn;
+    // And the free first card is gone, or the price rule is not what answers.
+    // The seat that moves first may play one card for nothing whatever it costs,
+    // which is the whole point of the rule and would hide this one.
+    state.freePlays[state.toMove] = 0;
     expect(() => applyMove(state, { kind: "playCard", handIndex: 0 }, index)).toThrowError(
       /is left this turn/,
     );
@@ -227,7 +231,10 @@ describe("rug", () => {
     const played = CARDS.find((c) => c.id === SOLO[RULES.portfolioSize])!;
     state.players.you.hand = [played.id, "ape-in"];
 
-    const after = applyMove(state, { kind: "playCard", handIndex: 0, targetIndex: 0 }, index);
+    // closeIndex, not targetIndex. TCG split the two so one number could not be
+    // counted against two different lists; choosing a position to close is its
+    // own field, and targetIndex is counted against the board being attacked.
+    const after = applyMove(state, { kind: "playCard", handIndex: 0, closeIndex: 0 }, index);
 
     // Closing banked the 60K; only the new card's launch was added. Nothing lost.
     expect(played.type).toBe("project");
