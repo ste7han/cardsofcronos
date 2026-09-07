@@ -157,8 +157,9 @@ describe("what the view answers about your own hand", () => {
     // is the thing Cards of Cronos was wrecked by: the card check was a UI
     // filter and a direct call could play anything.
     const state = structuredClone(newMatch(SET, 7)) as State;
-    // The free first card is spent. While it is in hand the seat that moves
-    // first may play anything whatever it costs, and the price never answers.
+    // No free play, whatever the first-move rule is paying today. While a seat
+    // holds one it may play anything whatever it costs, and then the price never
+    // answers — which is what this test is here to see.
     state.freePlays.you = 0;
     const view = viewFor(state, "you", INDEX);
 
@@ -172,9 +173,7 @@ describe("what the view answers about your own hand", () => {
     });
 
     // On turn one the budget is one card's worth, so something must be refused
-    // for the price — the reason that fires most. Only once the free first card
-    // has been spent: while it is in hand every card in the hand is affordable,
-    // which is the rule working rather than the view failing.
+    // for the price — the reason that fires most.
     expect(view.you.playable.some((says) => !says.canPlay)).toBe(true);
   });
 

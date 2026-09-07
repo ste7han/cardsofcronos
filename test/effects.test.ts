@@ -91,9 +91,10 @@ describe("illegal moves throw instead of being ignored", () => {
     state = structuredClone(state);
     // Everything is spent, so nothing is affordable however cheap it is.
     state.budgetSpentThisTurn = state.budgetThisTurn;
-    // And the free first card is gone, or the price rule is not what answers.
-    // The seat that moves first may play one card for nothing whatever it costs,
-    // which is the whole point of the rule and would hide this one.
+    // And no free play, whatever the first-move rule is paying today. A card
+    // played for nothing is affordable however empty the budget is, so leaving
+    // this in the fixture's hands would let a rule change quietly answer the
+    // question this test is asking about the price.
     state.freePlays[state.toMove] = 0;
     expect(() => applyMove(state, { kind: "playCard", handIndex: 0 }, index)).toThrowError(
       /is left this turn/,

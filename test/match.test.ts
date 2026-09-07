@@ -603,8 +603,9 @@ describe("upgrading a position", () => {
     // any count built on it was wrong. Whatever playable() blocks, whyNot() says.
     let state = boardWith(cheapest.id);
     state.budgetSpentThisTurn = state.budgetThisTurn;
-    // The free first card would answer before the budget did, and this test is
-    // about the budget.
+    // No free play, whatever the first-move rule is paying today: a card played
+    // for nothing would answer before the budget did, and this is about the
+    // budget.
     state.freePlays.you = 0;
 
     const reason = whyNot(state, cheapest, "you", index);

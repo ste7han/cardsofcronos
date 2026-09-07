@@ -66,11 +66,12 @@ describe("the design document still describes this game", () => {
     // noticed it.
     if (RULES.firstMoveFreeCard) {
       expect(DESIGN).toContain("**one card for nothing**");
-      expect(DESIGN, "no seed round while the free card is the rule").not.toContain(
-        "seed round of **",
-      );
+    } else if (RULES.firstMoveSeedMC > 0) {
+      expect(DESIGN).toContain(`seed round of **${short(RULES.firstMoveSeedMC)}**`);
     } else {
-      expect(DESIGN).toContain(`**${short(RULES.firstMoveSeedMC)}**`);
+      // Paying nothing is the loudest of the three, because it is the one that
+      // looks like nobody decided. The document has to say it was decided.
+      expect(DESIGN).toContain("compensated with **nothing**");
     }
   });
 

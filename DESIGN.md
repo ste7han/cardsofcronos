@@ -123,42 +123,37 @@ moments and never both at once.
 The second player has a structural advantage: they pick their targets against a
 board one turn newer.
 
-The first player is compensated by playing **one card for nothing** — whatever it
-costs, including a mythic on turn one, which no marketing budget reaches before
-turn seven. It is spent on the first card played and needs no decision from
-anybody.
+The first player is compensated with **nothing**, and that is a decision rather
+than an oversight.
 
-This replaced a seed round of $400K on the scoreboard, which came over from TCG
-along with the rest of the engine and was one of eight shapes measured there. The
-maker turned down every shape that is a standing difference — money on the
-scoreboard, a fuller budget bar, an opponent holding more cards — because what
-the other player sees matters as much as the number. A free card is a moment. A
-thing that happened is easier to accept than a thing that is.
+A seed round of $400K used to sit here. It came over from TCG with the rest of
+the engine and was one of eight shapes measured there; TCG has since switched off
+every one of them, because rebuilding seventeen project families in two days made
+building early worth more and lifted its first seat to 47.1% unaided. This game
+runs the same rules rather than keeping a rule the game it is built on retired.
 
-Measured on this set with `npx tsx scripts/turn-order.ts 2000`, two ranges of two
-thousand matches on drawn decks:
+What that costs, measured on this set with `npx tsx scripts/turn-order.ts 2000`,
+two ranges of two thousand matches on drawn decks:
 
 | shape | first seat wins | what the other player sees |
 |---|---|---|
-| nothing | 42.9% | a game that is not fair |
-| **one free card** | **48.0% / 46.3%** | **one card, once** |
+| **nothing** | **42.9%** | **nothing, and it pays nothing** |
+| one free card | 48.0% / 46.3% | one card, once |
 | seed round of $400K | 52.1% / 51.6% | $400K on the scoreboard, from nowhere |
 
-Both compensations land inside the 46.9–53.1% band a fair game sits in. The seed
-is the marginally tighter fit and it is not the one chosen, for the reason above
-and for one more: a seed is market cap before anybody has played a card, so it
-opens every `aheadBy` gate at or below it on turn one for free. That trap has
-already caught this engine once, and it only grows now that `aheadBy` conditions
-exist in the set's vocabulary.
+A fair game sits in 46.9–53.1%, so the first seat is **7.1 points light**. Both
+compensations close that and neither is on. The bet is that the cards close it
+here the way they closed it there — this set is 246 cards and has not been
+through the rebuild TCG's 725 went through.
 
-**It has no dial.** Unlike the seed it replaced, there is no number to nudge: it
-is worth what the set deals into an opening hand — a mythic 38% of the time, a
-rare or a common 8% of the time. If turn order drifts, the thing that moved is
-the rarity mix or the card costs, and that is where to look.
+This is the first number to look at if the game ever feels lopsided, and the
+cheapest thing in the engine to change: one line in `RULES`, and the table above
+says what each line buys. Of the two, the free card is the one to reach for — a
+seed is market cap before anybody has played a card, so it opens every `aheadBy`
+gate at or below it on turn one for free, and those conditions now exist in the
+set's vocabulary.
 
-Re-measure whenever the set changes shape. TCG turned this rule *off* after
-rebuilding seventeen project families in two days made building early worth more
-and lifted its first seat to 47.1% unaided. The same could happen here.
+Re-measure with `turn-order.ts` whenever the set changes shape.
 
 ---
 

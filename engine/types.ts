@@ -2337,32 +2337,29 @@ export const RULES = {
    *
    * ---
    *
-   * IN CARDS OF CRONOS IT IS ON, and everything above is why that is not a
-   * contradiction. The whole block down to here is TCG's reasoning about TCG's
-   * set, and the rule turned off there because that set stopped needing it: 725
-   * cards rebuilt over two days made building early worth more, and the first
-   * seat climbed to 47.1% on its own.
+   * IN CARDS OF CRONOS IT IS ALSO OFF, and unlike over there the debt has not
+   * been paid off — it is being carried on purpose, by the maker, knowingly.
    *
-   * This set is 246 cards and has not moved. Measured with
+   * Everything above is TCG's reasoning about TCG's set, where the rule could be
+   * switched off because the set stopped needing it: 725 cards rebuilt over two
+   * days made building early worth more and the first seat climbed to 47.1% on
+   * its own. This set is 246 cards and has not been through that. Measured with
    * `npx tsx scripts/turn-order.ts 2000`, two ranges of two thousand:
    *
-   *   nothing at all            42.9%
+   *   nothing at all            42.9%          <- what is built
    *   one free card             48.0% / 46.3%
    *   a seed round of $400K     52.1% / 51.6%
    *
-   * Both compensations land inside the band; the seed is the marginally tighter
-   * fit and it is not the one chosen. A seed is money on the scoreboard before
-   * anybody has played a card, and it opens every aheadBy gate at or below it on
-   * turn one for free — a trap this engine has already been caught by once, and
-   * one that only grows now that aheadBy conditions have arrived with the ported
-   * card vocabulary. A free card is a moment instead of a standing difference,
-   * and what the other player sees is one card arriving early, once.
+   * So the first seat is 7.1 points light, against a band of 46.9 to 53.1. Both
+   * compensations close it and neither is switched on: the game runs the same
+   * rules as TCG rather than carrying a rule TCG has retired, and the cards are
+   * expected to close the gap the way they closed it there.
    *
-   * Re-measure whenever the set changes shape. If this set is ever rebuilt the
-   * way TCG's was, the answer here may become `false` for the same reason it did
-   * there.
+   * This is the first number to look at if the game ever feels lopsided, and the
+   * cheapest thing in the engine to change — one line here, and the measurements
+   * above say what it buys. Re-measure with turn-order.ts whenever the set moves.
    */
-  firstMoveFreeCard: true,
+  firstMoveFreeCard: false,
   /**
    * The dearest card the free play may be spent on.
    *
