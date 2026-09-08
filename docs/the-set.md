@@ -53,8 +53,8 @@ numbered I to VIII.
 | sector | families |
 |---|---|
 | meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz · Corgi · Puush |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang · Boomer Squad |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · CRO Army |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang · Boomer Squad · CRO Army |
+| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
@@ -74,8 +74,20 @@ CAW777 had to give up its name to make room. It held both the project key `caw`
 and the ticker `CAW`, and one of the new families is a project actually called
 CAW; it is `caw777` with `CAW777` on it now, which is its own name either way.
 
-CRO Army has the ticker `ARMY` for the same reason: the chain itself took `CRO`,
-and two projects on one ticker is the lesson `validateSet` was written for.
+CRO Army has the ticker `CA`, which is its own. `ARMY` was a guess made while the
+skeleton was written and it lasted until somebody looked the project up.
+
+### Three projects were filed under defi and none of them were defi
+
+Corgi, Puush and CRO Army all went in as defi and all three moved once they were
+looked up — Corgi and Puush to meme, CRO Army to nft. CorgiAI is a community token
+with a dog on it, $PUUSH is Boomer Squad's meme token with a launchpad attached,
+and CRO Army is a strategy game with AI soldiers in it.
+
+None of that is a mistake in the list so much as what the list is for. A project
+that stakes, or has a platform, or has a token reads like defi from outside and is
+not. The rule holds: the sector is what a project is best known for, and finding
+that out is what these passes are.
 
 Corgi and Puush both went from defi to meme on 2026-09-08, once looking them up
 said what they are. CorgiAI is a community token with a dog on it that happens to
@@ -118,7 +130,7 @@ this states a fact. Worth a pass by somebody who knows.
 
 ### The sector spread
 
-meme 11, nft 8, defi 9, infra 8 — thirty-six families and 288 project cards.
+meme 11, nft 9, defi 8, infra 8 — thirty-six families and 288 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and

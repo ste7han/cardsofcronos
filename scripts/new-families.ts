@@ -70,9 +70,9 @@ const FAMILIES: Family[] = [
   { key: "single", name: "Single Finance", ticker: "SINGLE", sector: "defi" },
   { key: "corgi", name: "Corgi", ticker: "CORGI", sector: "defi" },
   { key: "puush", name: "Puush", ticker: "PUUSH", sector: "defi" },
-  // ARMY and not CRO: the chain itself took that one, and two projects sharing a
-  // ticker is the Cards of Cronos lesson that validateSet exists to catch.
-  { key: "croarmy", name: "CRO Army", ticker: "ARMY", sector: "defi" },
+  // CA is its own ticker, not the ARMY this file first guessed at, and it is a
+  // game with NFT soldiers rather than anything to do with defi.
+  { key: "croarmy", name: "CRO Army", ticker: "CA", sector: "nft" },
 
   // ---- infra -------------------------------------------------------------
   { key: "ebisusbay", name: "Ebisusbay", ticker: "EBISUS", sector: "infra" },
