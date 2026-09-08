@@ -68,6 +68,9 @@ const FAMILIES: Family[] = [
   { key: "single", name: "Single Finance", ticker: "SINGLE", sector: "defi" },
   { key: "corgi", name: "Corgi", ticker: "CORGI", sector: "defi" },
   { key: "puush", name: "Puush", ticker: "PUUSH", sector: "defi" },
+  // ARMY and not CRO: the chain itself took that one, and two projects sharing a
+  // ticker is the Cards of Cronos lesson that validateSet exists to catch.
+  { key: "croarmy", name: "CRO Army", ticker: "ARMY", sector: "defi" },
 
   // ---- infra -------------------------------------------------------------
   { key: "ebisusbay", name: "Ebisusbay", ticker: "EBISUS", sector: "infra" },
@@ -111,29 +114,30 @@ function render(f: Family): string {
   return `const ${f.key.toUpperCase()}: ProjectCard[] = [\n${cards}\n];\n`;
 }
 
+// Only what is not in the set yet. This refused to run at all once any family
+// was present, which was right for one batch and wrong the moment a sixteenth
+// was named — the list grows, and a script that only works once is a script
+// somebody copies instead of extends.
 const existing = new Set(CARDS.flatMap((c) => (c.type === "project" ? [c.project] : [])));
-const already = FAMILIES.filter((f) => existing.has(f.key)).map((f) => f.key);
+const TODO = FAMILIES.filter((f) => !existing.has(f.key));
 
-if (already.length === FAMILIES.length) {
+if (TODO.length === 0) {
   console.log(`All ${FAMILIES.length} families are in the set. Nothing to do.`);
   process.exit(0);
-}
-if (already.length > 0) {
-  throw new Error(`Half applied — these families exist already: ${already.join(", ")}`);
 }
 
 // Tickers are the one field here that has to be unique across the set, and
 // validateSet says so after the fact. Saying it before the fact names the
 // culprit instead of the symptom.
 const taken = new Map(CARDS.map((c) => [c.ticker, c.name]));
-const clashes = FAMILIES.filter((f) => taken.has(f.ticker)).map(
+const clashes = TODO.filter((f) => taken.has(f.ticker)).map(
   (f) => `${f.name} wants ${f.ticker}, which ${taken.get(f.ticker)} already has`,
 );
 if (clashes.length) throw new Error(clashes.join("; "));
 
 if (!process.argv.includes("--apply")) {
-  console.log(`${FAMILIES.length} families, ${FAMILIES.length * LADDER.length} cards.\n`);
-  for (const f of FAMILIES) {
+  console.log(`${TODO.length} families to write, ${TODO.length * LADDER.length} cards.\n`);
+  for (const f of TODO) {
     console.log(`  ${f.name.padEnd(18)}${f.ticker.padEnd(9)}${f.sector.padEnd(7)}${f.key}-i … ${f.key}-viii`);
   }
   console.log(`\nEvery card: name, ticker, sector, rarity and the set's own median`);
@@ -150,7 +154,7 @@ const anchor = source.indexOf("// ----------------------------------------------
 if (anchor < 0) throw new Error("Could not find where the projects end.");
 
 const header = `// ---------------------------------------------------------------------------
-// THE FIFTEEN ADDED ON 2026-09-08
+// ADDED BY scripts/new-families.ts
 //
 // Written by scripts/new-families.ts, which is also where the list lives.
 //
@@ -165,14 +169,14 @@ const header = `// -------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
 `;
-const block = header + FAMILIES.map(render).join("\n");
+const block = header + TODO.map(render).join("\n");
 source = source.slice(0, anchor) + block + source.slice(anchor);
 
 // And into the export, after the nineteen that were here first.
 source = source.replace(
   "  ...MINTED,\n",
-  "  ...MINTED,\n" + FAMILIES.map((f) => `  ...${f.key.toUpperCase()},\n`).join(""),
+  "  ...MINTED,\n" + TODO.map((f) => `  ...${f.key.toUpperCase()},\n`).join(""),
 );
 
 writeFileSync(path, source);
-console.log(`Wrote ${FAMILIES.length} families — ${FAMILIES.length * LADDER.length} cards — into ${path}.`);
+console.log(`Wrote ${TODO.length} families — ${TODO.length * LADDER.length} cards — into ${path}.`);

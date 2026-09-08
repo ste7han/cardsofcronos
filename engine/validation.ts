@@ -75,6 +75,7 @@ export const AWAITING_FLAVOUR_FAMILIES: ReadonlySet<string> = new Set([
   "puush",
   "ebisusbay",
   "cro",
+  "croarmy",
 ]);
 
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;

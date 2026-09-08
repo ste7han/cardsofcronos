@@ -4628,6 +4628,135 @@ const CRO: ProjectCard[] = [
   },
 ];
 // ---------------------------------------------------------------------------
+// ADDED BY scripts/new-families.ts
+//
+// Written by scripts/new-families.ts, which is also where the list lives.
+//
+// Name, ticker, sector, rarity and the set's own median numbers per rung. No
+// flavour and no effect: the line on a project card says something about a real
+// project and this repository does not write those unsourced, and what a card
+// does is the pass after this one.
+//
+// An empty flavour is allowed here by AWAITING_FLAVOUR_FAMILIES in
+// engine/validation.ts, which lists these fifteen by name. A sixteenth family
+// with an empty line still fails.
+// ---------------------------------------------------------------------------
+
+const CROARMY: ProjectCard[] = [
+  {
+    id: "croarmy-i",
+    type: "project",
+    project: "croarmy",
+    moment: "I",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "common",
+    sector: "defi",
+    launchMC: 15_000,
+    pumpMC: 9_000,
+    holders: 3,
+    flavour: "",
+  },
+  {
+    id: "croarmy-ii",
+    type: "project",
+    project: "croarmy",
+    moment: "II",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "common",
+    sector: "defi",
+    launchMC: 15_000,
+    pumpMC: 9_000,
+    holders: 3,
+    flavour: "",
+  },
+  {
+    id: "croarmy-iii",
+    type: "project",
+    project: "croarmy",
+    moment: "III",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "rare",
+    sector: "defi",
+    launchMC: 26_000,
+    pumpMC: 15_000,
+    holders: 3,
+    flavour: "",
+  },
+  {
+    id: "croarmy-iv",
+    type: "project",
+    project: "croarmy",
+    moment: "IV",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "rare",
+    sector: "defi",
+    launchMC: 26_000,
+    pumpMC: 15_000,
+    holders: 3,
+    flavour: "",
+  },
+  {
+    id: "croarmy-v",
+    type: "project",
+    project: "croarmy",
+    moment: "V",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "epic",
+    sector: "defi",
+    launchMC: 40_000,
+    pumpMC: 25_000,
+    holders: 4,
+    flavour: "",
+  },
+  {
+    id: "croarmy-vi",
+    type: "project",
+    project: "croarmy",
+    moment: "VI",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "epic",
+    sector: "defi",
+    launchMC: 40_000,
+    pumpMC: 25_000,
+    holders: 4,
+    flavour: "",
+  },
+  {
+    id: "croarmy-vii",
+    type: "project",
+    project: "croarmy",
+    moment: "VII",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "legendary",
+    sector: "defi",
+    launchMC: 67_000,
+    pumpMC: 42_000,
+    holders: 5,
+    flavour: "",
+  },
+  {
+    id: "croarmy-viii",
+    type: "project",
+    project: "croarmy",
+    moment: "VIII",
+    name: "CRO Army",
+    ticker: "ARMY",
+    rarity: "mythic",
+    sector: "defi",
+    launchMC: 110_000,
+    pumpMC: 56_000,
+    holders: 6,
+    flavour: "",
+  },
+];
+// ---------------------------------------------------------------------------
 // NAMES
 //
 // The people who are on cards because of who they are, not because of what they
@@ -6009,6 +6138,7 @@ export const CARDS: readonly Card[] = [
   ...LIONS,
   ...CHIMPS,
   ...MINTED,
+  ...CROARMY,
   ...CAW,
   ...MERY,
   ...CAPYBARA,
@@ -6034,9 +6164,9 @@ export const CARDS: readonly Card[] = [
 
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
-  common: 90,
-  rare: 93,
-  epic: 86,
-  legendary: 49,
-  mythic: 36,
+  common: 92,
+  rare: 95,
+  epic: 88,
+  legendary: 50,
+  mythic: 37,
 } as const;

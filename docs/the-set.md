@@ -48,17 +48,18 @@ heading for thirty-four.
 Eight cards each: two commons, two rares, two epics, a legendary and a mythic,
 numbered I to VIII.
 
-### In the set — 34 families, 272 cards
+### In the set — 35 families, 280 cards
 
 | sector | families |
 |---|---|
 | meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · Corgi · Puush |
+| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · Corgi · Puush · CRO Army |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
-The fifteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
-where the list of them lives. Each carries a name, a ticker, a sector, a rarity
+The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
+where the list of them lives — fifteen in one go and CRO Army after it, which is
+why that script writes only what is missing rather than refusing to run twice. Each carries a name, a ticker, a sector, a rarity
 and the set's own median numbers for its rung — 15/9/3 at common through
 110/56/6 at mythic, the same for every new family. A family's numbers should move
 when its character is decided; a spread invented now would be precision that
@@ -73,13 +74,16 @@ CAW777 had to give up its name to make room. It held both the project key `caw`
 and the ticker `CAW`, and one of the new families is a project actually called
 CAW; it is `caw777` with `CAW777` on it now, which is its own name either way.
 
-### None of the fifteen has flavour or an effect
+CRO Army has the ticker `ARMY` for the same reason: the chain itself took `CRO`,
+and two projects on one ticker is the lesson `validateSet` was written for.
+
+### None of the sixteen has flavour or an effect
 
 The line on a project card says something about a real project on this chain, and
 nobody writing the file knows what Ballz or Puush or Loaf is known for. The same
 rule as the people: sourced or it is not written.
 
-`validateSet` still refuses a card with no flavour. The fifteen are listed by
+`validateSet` still refuses a card with no flavour. The sixteen are listed by
 family name in `AWAITING_FLAVOUR_FAMILIES` in `engine/validation.ts` — by family
 rather than by card, because 120 ids would be a wall nobody reads and the point of
 the list is that somebody reads it. A sixteenth family still fails.
@@ -89,19 +93,13 @@ empty card: it opens a position and it pays every turn.
 
 ### The tickers are the one guess in there
 
-`CAPY`, `FUL`, `BOB`, `EBISUS` and the rest are the name shortened, not the
+`CAPY`, `FUL`, `BOB`, `EBISUS`, `ARMY` and the rest are the name shortened, not the
 project's real ticker looked up. Everything else on these cards is structure;
 this states a fact. Worth a pass by somebody who knows.
 
-### Still open
-
-- **CRO Army** — a token, an NFT and a game. Which of the three it is best known
-  for decides the sector, and that is the maker's call. The only project named so
-  far that is not in the set.
-
 ### The sector spread
 
-meme 9, nft 7, defi 10, infra 8 — thirty-four families and 272 project cards.
+meme 9, nft 7, defi 11, infra 8 — thirty-five families and 280 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
