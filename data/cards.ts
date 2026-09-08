@@ -3951,7 +3951,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Perpetual trading, and all of it on-chain.",
   },
   {
     id: "fulcrom-ii",
@@ -3965,7 +3965,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Low fees, no price impact. That was the pitch and it was enough.",
   },
   {
     id: "fulcrom-iii",
@@ -3979,7 +3979,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Seventy-five times your money, if you are very sure.",
   },
   {
     id: "fulcrom-iv",
@@ -3993,7 +3993,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Every trade on-chain, including the ones you would rather nobody saw.",
   },
   {
     id: "fulcrom-v",
@@ -4007,7 +4007,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "It launched through VVS, the way most things here did.",
   },
   {
     id: "fulcrom-vi",
@@ -4021,7 +4021,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Leverage is a loan against how sure you feel.",
   },
   {
     id: "fulcrom-vii",
@@ -4035,7 +4035,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "It went to other chains and kept the name it was born with.",
   },
   {
     id: "fulcrom-viii",
@@ -4049,7 +4049,7 @@ const FULCROM: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "The liquidation price is the only number on the screen that matters.",
   },
 ];
 
