@@ -2916,7 +2916,7 @@ const CAW: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "A crow in Vancouver stole a knife from a crime scene.",
   },
   {
     id: "caw-ii",
@@ -2930,7 +2930,7 @@ const CAW: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "That was 2016. The token came eight years later.",
   },
   {
     id: "caw-iii",
@@ -2944,7 +2944,7 @@ const CAW: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Seven hundred and seventy-seven trillion of them, out on the first day.",
   },
   {
     id: "caw-iv",
@@ -2958,7 +2958,7 @@ const CAW: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "No inflation, because there was nothing left to release.",
   },
   {
     id: "caw-v",
@@ -2972,7 +2972,7 @@ const CAW: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Two and a half thousand percent in its first month.",
   },
   {
     id: "caw-vi",
@@ -2986,7 +2986,7 @@ const CAW: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "It went to other chains and the crow went with it.",
   },
   {
     id: "caw-vii",
@@ -3000,7 +3000,7 @@ const CAW: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "Nobody runs it. That is the arrangement, not the slogan.",
   },
   {
     id: "caw-viii",
@@ -3014,7 +3014,7 @@ const CAW: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "A real bird stole a real knife, and this is what happened next.",
   },
 ];
 
