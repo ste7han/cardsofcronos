@@ -109,6 +109,29 @@ one leaning defi from ten. Now the thinnest sector has seven.
 
 ---
 
+## The rule for a line on a card
+
+**Nothing that moves.** A card is minted and then it is somebody's for good, so
+whatever is printed on it has to stay true for as long as the card exists. A price,
+a monthly figure, a volume, a holder count — all of those are true on the day they
+are written and a lie afterwards, sitting in metadata nobody can edit.
+
+Two ways round it, and both are allowed:
+
+- **Say it in the past.** CRO's high was $0.9889 on 24 November 2021 and that never
+  changes. Its price today does, so the card says "a dollar, once" and leaves the
+  number off.
+- **Say the durable thing.** Ebisu's Bay opened on the day the chain did, and that
+  is permanent. How many wallets used it last month is not, so the card says "half
+  the people logged in are not there to buy anything" instead.
+
+**And everything is checked.** What goes on a card gets looked up, not assumed —
+the maker asked for that and the first family proved why: the note that CRO was
+"near its all-time low" was wrong by a factor of five, and the burn story turned
+out to have a third act nobody had mentioned.
+
+---
+
 ## People
 
 `type: "person"` since 2026-09-07 — it was `influencer`, which stopped being true

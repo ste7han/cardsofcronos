@@ -115,7 +115,7 @@ describe("what the table sounds like", () => {
     expect(endCue("opponent", "opponent")).toBe("match-won");
   });
 
-  it("never returns a cue with no sound, over a whole match", () => {
+  it("never returns a cue with no sound, over a whole match", { timeout: 60_000 }, () => {
     // The safety net. Every cue that comes out of a real match has to be one
     // sfx.ts handles — and sfx.ts does not compile with a cue it does not
     // handle, so the pair of them closes the loop.

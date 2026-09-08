@@ -76,6 +76,12 @@ describe("a match", () => {
   // started failing on a five-second default the day two more test files were
   // added — nothing to do with the engine and everything to do with the machine.
   // A timeout is a claim about hardware, so it gets set where the work is.
+  //
+  // Three tests got one on 2026-09-08 that did not have one before, and the set
+  // growing is why: it went from 246 cards to 362 the same day, and anything that
+  // plays a few hundred matches got half again as slow with it. They ran at four
+  // to six seconds against a five-second default and fell over whenever the
+  // machine was busy with something else. Nothing about what they assert moved.
   it("produces a market cap that makes sense", { timeout: 60_000 }, () => {
     // Two players putting projects down for ten turns should land somewhere
     // between a few hundred thousand and a few million. Outside that band,
@@ -487,7 +493,7 @@ describe("the bot", () => {
     expect(played).toBeGreaterThan(5);
   });
 
-  it("doesn't always win with the same player across many seeds", () => {
+  it("doesn't always win with the same player across many seeds", { timeout: 60_000 }, () => {
     const winners = Array.from({ length: 30 }, (_, i) => playOut(1000 + i).winner);
     const unique = new Set(winners);
     expect(unique.size).toBeGreaterThan(1);
@@ -702,7 +708,7 @@ describe("the final figures", () => {
     expect(["you", "opponent", null]).toContain(state.winner);
   });
 
-  it("never prints the same figure for both players when one of them won", () => {
+  it("never prints the same figure for both players when one of them won", { timeout: 60_000 }, () => {
     // The property, not the formatting. A closing line naming a winner while
     // showing two identical numbers is the thing that got reported, and it can
     // come back through any change to how numbers are written.

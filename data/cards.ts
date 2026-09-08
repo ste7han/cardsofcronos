@@ -4411,7 +4411,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Open on the day the chain was, with nothing yet to list.",
   },
   {
     id: "ebisusbay-ii",
@@ -4425,7 +4425,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "You went there because there was nowhere else to go.",
   },
   {
     id: "ebisusbay-iii",
@@ -4439,7 +4439,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Every collection on this chain has a page here, visited or not.",
   },
   {
     id: "ebisusbay-iv",
@@ -4453,7 +4453,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "A marketplace that got bored and built a game on top of itself.",
   },
   {
     id: "ebisusbay-v",
@@ -4467,7 +4467,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Factions, territory and a treasury — none of which a marketplace needs.",
   },
   {
     id: "ebisusbay-vi",
@@ -4481,7 +4481,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Half the people logged in are not there to buy anything.",
   },
   {
     id: "ebisusbay-vii",
@@ -4495,7 +4495,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "Older than almost everything it sells, and still open.",
   },
   {
     id: "ebisusbay-viii",
@@ -4509,7 +4509,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "Whatever this chain minted, it passed through here first.",
   },
 ];
 
