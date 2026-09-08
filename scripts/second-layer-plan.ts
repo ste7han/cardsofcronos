@@ -236,17 +236,17 @@ const PLAN: Record<string, Addition> = {
   },
 
   // ---- caw — momentum ----------------------------------------------------
-  "caw-seventh": {
+  "caw777-seventh": {
     field: "payoff",
     value: pay({ kind: "turnAtLeast", turn: 7 }, { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 }),
     why: "a week to the hour, and it did the whole thing again",
   },
-  "caw-streak": {
+  "caw777-streak": {
     field: "onYourPlay",
     value: { mc: 30_000 },
     why: "seven in a row — every one of them counted",
   },
-  "caw-triple": {
+  "caw777-triple": {
     field: "standing",
     value: { kind: "directMC", target: "self", mc: 105_000 } as Effect,
     why: "it stopped there, and nobody could get the count to move past it",

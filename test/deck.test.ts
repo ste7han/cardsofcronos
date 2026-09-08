@@ -104,19 +104,14 @@ describe("the ready-made decks", () => {
 
 
 
-  // SKIPPED WHILE THE SET IS BEING REBUILT, and not weakened.
-  //
-  // MEME LORD reaches 13 of 40 on theme and this asks for more than 14. That is
-  // not the preset failing, it is arithmetic: a generated deck takes at most two
-  // cards of any one project, meme has four families, and there are five cards in
-  // the set whose aura pumps meme. Two times four plus five is thirteen, and no
-  // seed reaches fourteen.
-  //
-  // It was 9 families' worth before the nineteen founder cards came out, and the
-  // five meme projects already agreed — CAW, Mery, Capybara Nation, Loaf, Ballz —
-  // take it to nine families and 23. Turn this back on then. If it still fails,
-  // something is actually wrong.
-  it.skip("every preset actually leans on its theme", () => {
+  // This was off for a few hours on 2026-09-08 and the note is worth keeping.
+  // MEME LORD reached 13 of 40 on theme against this floor, and that was
+  // arithmetic rather than a bad seed: a generated deck takes at most two cards
+  // of one project, meme had four families after the founders came out, and five
+  // cards in the set pumped meme. Two times four plus five is thirteen. The five
+  // meme projects that were already agreed took it to nine families, and it
+  // passes again without the threshold moving.
+  it("every preset actually leans on its theme", () => {
     // Otherwise a preset is a themed name on a deck that is nothing of the sort,
     // which is worse than having no presets at all.
     for (const { preset, deck } of built) {
@@ -125,11 +120,11 @@ describe("the ready-made decks", () => {
     }
   });
 
-  // Skipped for the same reason and it comes back with the same cards. FLOOR
-  // SWEEP and THE VAULT share 33 of 40 against a limit of 31, because nft has
-  // four families and defi five: both decks fill most of a forty out of the same
-  // pool because there is not enough of either to fill it separately.
-  it.skip("the presets are different decks from each other", () => {
+  // Off for the same few hours, and back with the same cards: FLOOR SWEEP and THE
+  // VAULT shared 33 of 40 against a limit of 31 while nft had four families and
+  // defi five, because neither could fill a forty without reaching into the same
+  // pool as the other.
+  it("the presets are different decks from each other", () => {
     for (let i = 0; i < built.length; i++) {
       for (let j = i + 1; j < built.length; j++) {
         const a = new Set(built[i]!.deck);

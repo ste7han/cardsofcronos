@@ -48,6 +48,35 @@ export const AWAITING_FLAVOUR: ReadonlySet<string> = new Set([
   "artik",
 ]);
 
+/**
+ * Project families whose eight cards ship without a line, for the same reason.
+ *
+ * By family and not by card, because listing 120 ids would be a wall nobody
+ * reads and the point of the list is that somebody reads it. A family named here
+ * is a family waiting for what it is known for; a card outside one still fails.
+ *
+ * These fifteen went in on 2026-09-08 with a name, a ticker, a sector, a rarity
+ * and the set's own median numbers. What each project is actually known for is
+ * the maker's to write, and until then the line is empty rather than invented.
+ */
+export const AWAITING_FLAVOUR_FAMILIES: ReadonlySet<string> = new Set([
+  "caw",
+  "mery",
+  "capybara",
+  "loaf",
+  "ballz",
+  "ryoshi",
+  "bobs",
+  "sloth",
+  "cronus",
+  "fulcrom",
+  "single",
+  "corgi",
+  "puush",
+  "ebisusbay",
+  "cro",
+]);
+
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 export class SetError extends Error {
@@ -261,9 +290,10 @@ export function validateSet(cards: readonly Card[]): void {
     }
     if (!card.name.trim()) problems.push(`${where}: no name.`);
     if (!card.ticker.trim()) problems.push(`${where}: no ticker.`);
-    if (!card.flavour.trim() && !AWAITING_FLAVOUR.has(card.id)) {
-      problems.push(`${where}: no flavour text.`);
-    }
+    const waiting =
+      AWAITING_FLAVOUR.has(card.id) ||
+      (card.type === "project" && AWAITING_FLAVOUR_FAMILIES.has(card.project));
+    if (!card.flavour.trim() && !waiting) problems.push(`${where}: no flavour text.`);
     // The card is a fixed 5:7, so there is a real bottom to it. Past this the
     // flavour pushes itself off the card, and a card quietly missing its last
     // line is exactly the kind of thing nobody notices for a year. Measured: 83

@@ -93,11 +93,11 @@ const PLAN: Record<string, { effect: Effect | null; why: string }> = {
     effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     why: "three z's, and it never checked whose side anybody was on",
   },
-  "caw-first": {
+  "caw777-first": {
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 2_000 },
     why: "somebody checked the address and there they were — the count starts",
   },
-  "caw-triple": {
+  "caw777-triple": {
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 14_000 } },
     why: "seven in a row, and nobody could get the count to move past it",
   },

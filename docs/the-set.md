@@ -48,42 +48,60 @@ heading for thirty-four.
 Eight cards each: two commons, two rares, two epics, a legendary and a mythic,
 numbered I to VIII.
 
-### In the set — 19 families, 152 cards
+### In the set — 34 families, 272 cards
 
 | sector | families |
 |---|---|
-| meme | Clove · FFS · CAW777 · DAK |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro |
-| infra | Nova · Cr00ts · Minted · Obsidian Finance · VVS Finance · Mad Meerkat Finance |
+| meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang |
+| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · Corgi · Puush |
+| infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
-Three moved on 2026-09-07 and their founders' auras moved with them: Wolfswap
-from dex to defi because it is a swap aggregator and not a venue, Obsidian
-Finance from defi to dex, Crazzzy Monsters from meme to defi. The dex three then
-became infra with the merge.
+The fifteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
+where the list of them lives. Each carries a name, a ticker, a sector, a rarity
+and the set's own median numbers for its rung — 15/9/3 at common through
+110/56/6 at mythic, the same for every new family. A family's numbers should move
+when its character is decided; a spread invented now would be precision that
+later work has to unpick.
 
-### Agreed, not built — 14 families, 112 cards
+Three moved earlier the same day and their founders' auras moved with them:
+Wolfswap from dex to defi because it is a swap aggregator and not a venue,
+Obsidian Finance from defi to dex, Crazzzy Monsters from meme to defi. The dex
+three then became infra with the merge.
 
-| sector | families |
-|---|---|
-| meme | CAW · Mery · Capybara Nation · Loaf · Ballz |
-| nft | Ryoshi · Bob's Adventures · Sloth Gang |
-| defi | Cronus · Fulcrom · Single Finance · Corgi · Puush |
-| infra | Ebisusbay · CRO |
+CAW777 had to give up its name to make room. It held both the project key `caw`
+and the ticker `CAW`, and one of the new families is a project actually called
+CAW; it is `caw777` with `CAW777` on it now, which is its own name either way.
 
-CRO is the chain itself. TCG carries SOLANA the same way — "the chain itself,
-everything on it moves together" — and it is the one project in this set every
-player already knows.
+### None of the fifteen has flavour or an effect
+
+The line on a project card says something about a real project on this chain, and
+nobody writing the file knows what Ballz or Puush or Loaf is known for. The same
+rule as the people: sourced or it is not written.
+
+`validateSet` still refuses a card with no flavour. The fifteen are listed by
+family name in `AWAITING_FLAVOUR_FAMILIES` in `engine/validation.ts` — by family
+rather than by card, because 120 ids would be a wall nobody reads and the point of
+the list is that somebody reads it. A sixteenth family still fails.
+
+Effects are the pass after this one. A project with a launch and a pump is not an
+empty card: it opens a position and it pays every turn.
+
+### The tickers are the one guess in there
+
+`CAPY`, `FUL`, `BOB`, `EBISUS` and the rest are the name shortened, not the
+project's real ticker looked up. Everything else on these cards is structure;
+this states a fact. Worth a pass by somebody who knows.
 
 ### Still open
 
 - **CRO Army** — a token, an NFT and a game. Which of the three it is best known
-  for decides the sector, and that is the maker's call.
+  for decides the sector, and that is the maker's call. The only project named so
+  far that is not in the set.
 
 ### The sector spread
 
-With everything above: meme 9, nft 7, defi 10, infra 8. Thirty-four families,
-272 project cards against 152 today.
+meme 9, nft 7, defi 10, infra 8 — thirty-four families and 272 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
@@ -136,25 +154,23 @@ fine above a real name. `CLAUDE.md` has the rule: sourced or it is not written.
 seven are listed by id in `AWAITING_FLAVOUR` in `engine/validation.ts`, so an
 eighth card without a line still fails. The list is meant to shrink to nothing.
 
-### What the removal cost
+### What the removal cost, and what gave it back
 
-Auras per sector: meme 5, nft 4, defi 3, infra 8 — it was 9 / 8 / 6 / 10 with the
-founders in. Two tests in `test/deck.test.ts` are skipped because of it and the
-skip says so:
+Auras per sector went to meme 5, nft 4, defi 3, infra 8, from 9 / 8 / 6 / 10 with
+the founders in. Two tests in `test/deck.test.ts` went off for a few hours
+because of it: MEME LORD reached 13 of 40 on theme against a floor of 15, and
+FLOOR SWEEP and THE VAULT shared 33 of 40 against a limit of 31.
 
-- **MEME LORD reaches 13 of 40 on theme against a floor of 15.** Not a bad seed:
-  a generated deck takes at most two cards of one project, meme has four families,
-  and five cards in the set pump meme. Two times four plus five is thirteen.
-- **FLOOR SWEEP and THE VAULT share 33 of 40** against a limit of 31, because nft
-  has four families and defi five and neither can fill a forty on its own.
-
-Both come back with the projects already agreed. Nine meme families gives 23 on
-theme. If they still fail then, something is actually wrong.
+Neither was a bad seed. A generated deck takes at most two cards of one project,
+and meme had four families and five meme auras — two times four plus five is
+thirteen. The fifteen new families put meme on nine, and both tests pass again
+without either threshold moving.
 
 ### Still open
 
-The list is "voor nu" — more devs, influencers and community are expected, and
-defi at three aura cards for ten project families is the thinnest spot.
+The list is "voor nu" — more devs, influencers and community are expected. With
+the projects in, twenty people carry the aura layer for thirty-four families, and
+defi is the thinnest: three aura cards for ten families.
 
 ## What comes after the list
 

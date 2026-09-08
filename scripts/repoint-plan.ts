@@ -192,19 +192,19 @@ const PLAN: Record<string, { effect: Effect; why: string }> = {
   },
 
   // ---- caw — momentum ----------------------------------------------------
-  "caw-lucky": {
+  "caw777-lucky": {
     effect: { kind: "pumpProject", target: "ownProject", mc: 12_000 },
     why: "block seven-seven-seven-seven, and the screenshot did numbers",
   },
-  "caw-seventh": {
+  "caw777-seventh": {
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
     why: "a week to the hour, and it did the whole thing again",
   },
-  "caw-counting": {
+  "caw777-counting": {
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 8_000 } },
     why: "the chat found sevens in the supply, the fee and the founder's age",
   },
-  "caw-sevens": {
+  "caw777-sevens": {
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
     why: "seven sevens on one screen; two people printed it and framed it",
   },
