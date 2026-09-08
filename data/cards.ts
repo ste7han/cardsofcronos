@@ -2035,7 +2035,7 @@ const MMF: ProjectCard[] = [
     holders: 2,
     // it took a cut of everything and told you it was taking it
     effect: { kind: "extraBudget", target: "self", mc: 42_000 },
-    flavour: "It took a cut of everything and told you it was taking it.",
+    flavour: "The NFTs came out two days before the token did.",
   },
   {
     id: "mmf-iii",
@@ -2051,7 +2051,7 @@ const MMF: ProjectCard[] = [
     holders: 3,
     // the mob arrived at whatever was moving and left with the spread
     effect: { kind: "directMC", target: "self", mc: 80_000 },
-    flavour: "The mob arrived at whatever was moving and left with the spread.",
+    flavour: "It charged 0.17% and made that the whole argument.",
   },
   {
     id: "mmf-iv",
@@ -2067,7 +2067,7 @@ const MMF: ProjectCard[] = [
     holders: 3,
     // a DEX, a launchpad, an NFT line and a burn — all at once, loudly
     effect: { kind: "extraBudget", target: "self", mc: 85_000 },
-    flavour: "A DEX, a launchpad, an NFT line and a burn. All at once, loudly.",
+    flavour: "A DEX, a yield optimiser, an NFT line and an algorithmic stablecoin.",
   },
   {
     id: "mmf-v",
@@ -2085,7 +2085,7 @@ const MMF: ProjectCard[] = [
     payoff: { when: { kind: "discardAtLeast", count: 4 }, effect: { kind: "directMC", target: "self", mc: 80_000 } },
     // somebody worked out the buyback was bigger than the emissions
     effect: { kind: "budgetToMC", percentage: 40 },
-    flavour: "Somebody worked out the buyback was bigger than the emissions.",
+    flavour: "First on this chain to own its liquidity instead of renting it.",
   },
   {
     id: "mmf-vi",
@@ -2119,7 +2119,7 @@ const MMF: ProjectCard[] = [
     toll: { percentage: 12 },
     // the buyback ran on a timer and the chart knew what time it was
     effect: { kind: "directMC", target: "self", mc: 65_000, per: "turn" },
-    flavour: "The buyback ran on a timer and the chart knew what time it was.",
+    flavour: "A mob is what you call a group of meerkats. They used it correctly.",
   },
   {
     id: "mmf-viii",

@@ -215,6 +215,38 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Mad Meerkat Finance, and a claim the project makes about itself
+
+Three of eight kept, ticker `MMF` right — the third correct one in a row, which is
+what the defi and infra half of the list looks like once you get past the two
+aggregators.
+
+The facts that were missing are good ones. The MMF token was created on 7 December
+2021 and the Mad Meerkat NFTs launched on the 5th — the pictures came out two days
+before the token. A $1m ecosystem fund followed on 31 December. The fee is 0.17%,
+and it was the first on Cronos to run Protocol Owned Liquidity, owning its liquidity
+rather than renting it. The ecosystem is a DEX, a yield optimiser, an NFT line and an
+algorithmic stablecoin.
+
+Card IV is a correction rather than a replacement: it said "A DEX, a launchpad, an
+NFT line and a burn". The launchpad could not be confirmed anywhere; the optimiser
+and the algorithmic stablecoin could, and they are stranger.
+
+**And one claim was caught coming from the project itself.** MM Finance's own
+documentation calls it "the 1st AMM & DEX on Cronos Chain". VVS launched in November
+2021; the MMF token is dated 7 December. A project's own marketing is a source like
+any other and gets checked like any other — this walk has been correcting invented
+claims, and this is the first one that arrived pre-written by the subject. What went
+on the card is "first on this chain to own its liquidity instead of renting it",
+because that one holds.
+
+Removed: two invented buyback lines, "Somebody worked out the buyback was bigger than
+the emissions" and "The buyback ran on a timer and the chart knew what time it was".
+Both read like research and neither is anywhere.
+
+Card VII is simply true — a group of meerkats is a mob. The old cards were already
+using the word correctly, so somebody had looked that up back then.
+
 ### Ferro, and the first line that was not wrong but impossible
 
 Four of eight survived, the most of any family so far, because Ferro's cards were
