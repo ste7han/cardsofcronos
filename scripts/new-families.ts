@@ -61,6 +61,8 @@ const FAMILIES: Family[] = [
   { key: "ryoshi", name: "Ryoshi", ticker: "RYOSHI", sector: "nft" },
   { key: "bobs", name: "Bob's Adventures", ticker: "BOB", sector: "nft" },
   { key: "sloth", name: "Sloth Gang", ticker: "SLOTH", sector: "nft" },
+  // The collection behind puush.fun, which is already in the set as a meme.
+  { key: "boomer", name: "Boomer Squad", ticker: "BOOMER", sector: "nft" },
 
   // ---- defi --------------------------------------------------------------
   { key: "cronus", name: "Cronus", ticker: "CRONUS", sector: "defi" },

@@ -159,7 +159,7 @@ Re-measure with `turn-order.ts` whenever the set changes shape.
 
 ## The cards
 
-**362 cards**: 152 projects, 32 influencers, 34 tactics, 20 events, 8 tools.
+**370 cards**: 152 projects, 32 influencers, 34 tactics, 20 events, 8 tools.
 Rarity spread 60 / 67 / 62 / 36 / 21, guarded by a test.
 
 ### Five types, and why they are five

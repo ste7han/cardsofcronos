@@ -48,13 +48,13 @@ heading for thirty-four.
 Eight cards each: two commons, two rares, two epics, a legendary and a mythic,
 numbered I to VIII.
 
-### In the set — 35 families, 280 cards
+### In the set — 36 families, 288 cards
 
 | sector | families |
 |---|---|
-| meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz · Corgi |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · Puush · CRO Army |
+| meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz · Corgi · Puush |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang · Boomer Squad |
+| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · CRO Army |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
@@ -77,11 +77,17 @@ CAW; it is `caw777` with `CAW777` on it now, which is its own name either way.
 CRO Army has the ticker `ARMY` for the same reason: the chain itself took `CRO`,
 and two projects on one ticker is the lesson `validateSet` was written for.
 
-Corgi went from defi to meme on 2026-09-08, once looking it up said what it is: a
-community token with a dog on it that happens to stake and happens to have been
-the first thing on this chain to use AI. Staking does not make a project defi —
-under this set's own rule the sector is what a project is best known for, and
-nobody knows CorgiAI for its yield.
+Corgi and Puush both went from defi to meme on 2026-09-08, once looking them up
+said what they are. CorgiAI is a community token with a dog on it that happens to
+stake and happens to have been the first thing on this chain to use AI; $PUUSH is
+Boomer Squad's meme token with a launchpad attached. Staking does not make a
+project defi, and neither does having a platform — under this set's own rule the
+sector is what a project is best known for, and nobody knows either of them for
+their yield.
+
+Boomer Squad came in as an nft family at the same time. It is the collection
+behind puush.fun, so those two cards know about each other the way Fulcrom's card
+knows about VVS.
 
 ### VVS keeps turning up
 
@@ -112,7 +118,7 @@ this states a fact. Worth a pass by somebody who knows.
 
 ### The sector spread
 
-meme 10, nft 7, defi 10, infra 8 — thirty-five families and 280 project cards.
+meme 11, nft 8, defi 9, infra 8 — thirty-six families and 288 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
