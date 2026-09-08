@@ -52,7 +52,9 @@ interface Family {
 const FAMILIES: Family[] = [
   // ---- meme --------------------------------------------------------------
   { key: "caw", name: "CAW", ticker: "CAW", sector: "meme" },
-  { key: "mery", name: "Mery", ticker: "MERY", sector: "meme" },
+  // "Mistery on CRO" is its name; Mery is its NFT collection, and the key and
+  // ticker follow the collection because the ticker does.
+  { key: "mery", name: "Mistery", ticker: "MERY", sector: "meme" },
   { key: "capybara", name: "Capybara Nation", ticker: "CAPY", sector: "meme" },
   { key: "loaf", name: "Loaf", ticker: "LOAF", sector: "meme" },
   { key: "ballz", name: "Ballz", ticker: "BALLZ", sector: "meme" },
