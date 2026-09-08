@@ -168,10 +168,15 @@ empty card: it opens a position and it pays every turn.
 They went in as the name shortened rather than the project's real ticker looked
 up. Everything else on those cards is structure; a ticker states a fact.
 
-The flavour pass looked all of them up on the way past. Two were wrong: CRO Army
-is `CA`, not the `ARMY` that was guessed, and Capybara Nation is `BARA`, not
-`CAPY`. The rest were guesses that happened to be right. Nothing in the set is a
-guessed ticker any more.
+The flavour pass looked all of them up on the way past. Two of the sixteen were
+wrong: CRO Army is `CA`, not the `ARMY` that was guessed, and Capybara Nation is
+`BARA`, not `CAPY`. The rest were guesses that happened to be right.
+
+Walking the nineteen older families is finding more of them, and for a different
+reason — those tickers were not guesses, they were right once. Cr00ts is `CR00TS`
+on-chain and the set had `CR00`. Wolfswap is `PACK` now, after two migrations, and
+the set had `WOLF` — which still exists as something else, which is what made it
+look correct.
 
 ### The sector spread
 
@@ -209,6 +214,27 @@ Reading all 152 lines at once found four things rather than one:
 And two families nobody can identify: **DAK** and **Nova**. Neither is findable by
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
+
+### Wolfswap had the right sector and the wrong everything else
+
+Its cards gave an aggregator its own order book — "Anything thinner than its own
+book got quoted out of existence" — and a slippage figure of eleven percent that
+came from nowhere. Wolfswap is a gamified DEX aggregator: swaps over $10 earn
+points toward seasonal leaderboards, there are mystery boxes and trading contests,
+and 50% of all revenue buys back its own token. Wolfies are 5,212 NFTs each backed
+by an on-chain reserve in the PACK-CRO pair, and burning one claims its share —
+the most distinctive mechanic anything in this set has.
+
+**Third ticker corrected: `WOLF` to `PACK`.** The chain of migrations is FRTN to
+MOON when Ebisu's Bay was acquired, then MOON to PACK one-for-one. `WOLF` still
+exists as a separate ERC-404 leaderboard reward, which is exactly why the old
+ticker looked right and was not the platform's token.
+
+Obsidian and Wolfswap are both aggregators, so their eight lines were deliberately
+pointed away from each other. Obsidian's mythic is about routing, Wolfswap's about
+buying. Two families that do the same thing need to say different things, or the
+set has one idea printed twice at two prices — which is the trap `CLAUDE.md`
+records as "one name, two meanings", arriving from the other direction.
 
 ### Obsidian kept one line out of eight
 
