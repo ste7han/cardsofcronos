@@ -215,6 +215,31 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Reckless Robots, and why the chain alone is not enough either
+
+Its card said "One is a toy. Four hundred is an argument." It is 2,100, hand-drawn,
+symbol `RECK` on-chain against the `RR` the set had — the fourth ticker corrected.
+
+The mechanic is the reason this family is worth its cards. Staking runs a weekly
+elimination: whoever stakes with the lowest bid loses their robot, and the
+elimination wallet buys it off the floor and burns it. Fewer robots left means a
+larger share for everyone still in. Reckless Robots Legends followed, 3,000 in
+three classes — the Commander, the Void, the Beast.
+
+**And here the on-chain read was not enough.** `totalSupply()` still returns 2,100.
+Ebisu's Bay shows 1,811 items. The burned ones went to a burn address rather than
+being destroyed, and this contract counts what was minted, not what is held. Read
+only the chain, as Sloth Gang was read, and the whole elimination mechanic is
+invisible. Read only the marketplace and the original 2,100 is.
+
+Card VI says exactly that difference — "The number minted has not changed. The
+number that exists has" — and stays true however many more are burned. The 1,811
+itself is nowhere on a card, because it moves every week by design.
+
+Left off although true: `recklessrobotsnft.com` no longer resolves, nor do the two
+Cronos news sites that covered it, and the art no longer loads on Ebisu's Bay. That
+tells a story, but a dead domain can come back and a card cannot.
+
 ### Wolfswap had the right sector and the wrong everything else
 
 Its cards gave an aggregator its own order book — "Anything thinner than its own

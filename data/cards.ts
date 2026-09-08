@@ -505,7 +505,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "I",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "common",
     sector: "nft",
     launchMC: 13_000,
@@ -513,7 +513,7 @@ const ROBOTS: ProjectCard[] = [
     holders: 2,
     // shipped with a bug and shipped anyway, which is how momentum starts
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
-    flavour: "Shipped with a bug in the mint and shipped anyway.",
+    flavour: "Two thousand one hundred robots, and every one drawn by hand.",
   },
   {
     id: "robots-coinflip",
@@ -521,7 +521,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "II",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "common",
     sector: "nft",
     launchMC: 18_000,
@@ -533,7 +533,7 @@ const ROBOTS: ProjectCard[] = [
     // itself something and gains more instead — the same trade, said honestly.
     // heads it works, tails it also sort of works
     effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
-    flavour: "Heads it works. Tails it also sort of works.",
+    flavour: "Armour, background, eyes, gear, scarf. Five things and that is all.",
   },
   {
     id: "robots-fleet",
@@ -541,7 +541,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "III",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "rare",
     sector: "nft",
     launchMC: 24_000,
@@ -550,7 +550,7 @@ const ROBOTS: ProjectCard[] = [
     // one is a toy, four hundred is an argument
     payoff: { when: { kind: "ownProjectCount", atLeast: 4 }, effect: { kind: "directMC", target: "self", mc: 60_000 } },
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 14_000 } },
-    flavour: "One is a toy. Four hundred is an argument.",
+    flavour: "Stake it, and every week the lowest bid loses its robot.",
   },
   {
     id: "robots-scrap",
@@ -558,14 +558,14 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "IV",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "rare",
     sector: "nft",
     launchMC: 28_000,
     pumpMC: 14_000,
     holders: 3,
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
-    flavour: "They took one apart on stream and the floor went up.",
+    flavour: "The loser gets bought off the floor and burned. Every week.",
   },
   {
     id: "robots-overclock",
@@ -573,7 +573,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "V",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "epic",
     sector: "nft",
     launchMC: 36_000,
@@ -581,7 +581,7 @@ const ROBOTS: ProjectCard[] = [
     holders: 2,
     // twice as hot for half as long, and everybody knew
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 12_000 },
-    flavour: "Ran twice as hot for half as long. Everybody knew and nobody left.",
+    flavour: "Fewer robots means a bigger share for everyone still standing.",
   },
   {
     id: "robots-recall",
@@ -589,7 +589,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "VI",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "epic",
     sector: "nft",
     launchMC: 44_000,
@@ -597,7 +597,7 @@ const ROBOTS: ProjectCard[] = [
     holders: 4,
     // every unit, both sides of the table, back to the workshop
     effect: { kind: "benchmark", target: "ownProject", plus: 15_000 },
-    flavour: "Every unit, both sides of the table, back to the workshop.",
+    flavour: "The number minted has not changed. The number that exists has.",
   },
   {
     id: "robots-selfrepair",
@@ -605,7 +605,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "VII",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "legendary",
     sector: "nft",
     launchMC: 64_000,
@@ -615,7 +615,7 @@ const ROBOTS: ProjectCard[] = [
     shield: 38,
     // came back online with a different serial number and the same wallet
     effect: { kind: "attach", target: "ownProject", every: { kind: "scalePump", target: "ownProject", percentage: 25 } },
-    flavour: "Came back online with a different serial number and the same wallet.",
+    flavour: "Three thousand Legends after it: the Commander, the Void, the Beast.",
   },
   {
     id: "robots-detonate",
@@ -623,7 +623,7 @@ const ROBOTS: ProjectCard[] = [
     project: "robots",
     name: "Reckless Robots",
     moment: "VIII",
-    ticker: "RR",
+    ticker: "RECK",
     rarity: "mythic",
     sector: "nft",
     launchMC: 120_000,
@@ -631,7 +631,7 @@ const ROBOTS: ProjectCard[] = [
     holders: 4,
     // ten percent chance, they said — and everything ends up in one place
     effect: { kind: "merge" },
-    flavour: "Ten percent chance, they said. It was a Tuesday.",
+    flavour: "A staking contest where losing means your robot stops existing.",
   },
 ];
 
