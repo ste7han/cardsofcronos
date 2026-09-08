@@ -159,8 +159,8 @@ Re-measure with `turn-order.ts` whenever the set changes shape.
 
 ## The cards
 
-**370 cards**: 152 projects, 32 influencers, 34 tactics, 20 events, 8 tools.
-Rarity spread 60 / 67 / 62 / 36 / 21, guarded by a test.
+**362 cards**: 280 projects, 20 people, 34 tactics, 20 events, 8 tools.
+Rarity spread 92 / 95 / 88 / 50 / 37, guarded by a test.
 
 ### Five types, and why they are five
 
@@ -181,7 +181,7 @@ The same argument applies to restrictions.
 
 ### A project is eight cards
 
-Nineteen families, eight cards each: **two commons, two rares, two epics, a
+Thirty-five families, eight cards each: **two commons, two rares, two epics, a
 legendary and a mythic.**
 
 They are numbered `I` to `VIII` and the tier does the talking. The field used to
@@ -279,10 +279,11 @@ enforced in PvP yet, because collections are still browser-local.
 
 ### Presets
 
-Three ready-made decks, one per sector that can carry one: **MEME LORD**,
-**FLOOR SWEEP**, **THE VAULT** (defi, which holds ten families on its own).
-`infra` has none — three families is enough to build one by hand and not enough
-to beat the field.
+Three ready-made decks: **MEME LORD**, **FLOOR SWEEP**, **THE VAULT** (defi).
+`infra` has none, and that is now a gap rather than a reason. It had three
+families when this was written, which was not enough to build a deck out of; the
+sixteen that went in on 2026-09-08 and the merge of `dex` into it left it holding
+eight, the same as defi and nft. A fourth preset is owed.
 
 Measured at 1200 matches per pairing, sides swapped
 (`npx tsx scripts/preset-duel.ts`):

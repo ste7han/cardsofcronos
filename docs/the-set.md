@@ -48,12 +48,12 @@ heading for thirty-four.
 Eight cards each: two commons, two rares, two epics, a legendary and a mythic,
 numbered I to VIII.
 
-### In the set — 36 families, 288 cards
+### In the set — 35 families, 280 cards
 
 | sector | families |
 |---|---|
 | meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang · Boomer Squad · CRO Army |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
 | defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
@@ -119,19 +119,29 @@ listed by name in `AWAITING_FLAVOUR_FAMILIES` in `engine/validation.ts` — by f
 rather than by card, because 120 ids would be a wall nobody reads and the point of
 the list is that somebody reads it. A family not on the list still fails.
 
-**Fifteen of the sixteen are done.** One family per pass, every claim looked up
-and read back to the maker before it was written. Only Sloth Gang is left, and it
-is stuck on which collection it is: searching finds an Ethereum set of ten
-thousand and a separate Cronos "Cronos Slothty" of 250 hand-drawn, and nothing
-goes on a card until somebody says which.
+**Fifteen of the sixteen are done, and the sixteenth was removed.** One family
+per pass, every claim looked up and read back to the maker before it was written.
+
+Sloth Gang is the one that came back out. Finding it took reading the contract
+rather than searching: three other sloth collections share the name or nearly do,
+and the one on this chain has no website at all. On-chain it is real enough —
+5,000 CRC-721 at `0x4817f242...2f87`, symbol `SLOTH`, six trait layers, five
+one-of-ones at the end, art generated 9 July 2026 and the contract deployed on the
+12th. That last fact is why it is gone: it is two months old, which makes it the
+newest thing in the set by years, and eight cards of flavour would have had
+nothing to describe but its own metadata. Removed rather than written thin.
+
+Which is the first time this pass has taken a family out, and worth saying plainly:
+the walk is not only for writing lines. It is for finding out whether a name on a
+list has anything behind it.
 
 The pass keeps finding things the list had wrong, which is the argument for doing
 it this way rather than in one sweep. Three sectors moved. Two tickers were wrong
 — CRO Army is `CA` and Capybara Nation is `BARA`. Two families had the wrong name:
 Mistery on CRO was down as "Mery", which is its NFT collection, and Ballz of Steel
-as "Ballz". And two searches returned the wrong project outright — CAW is Crow
-with Knife on Cronos and not the Ethereum token of the same ticker, BALLZ is not
-Solana's WolfWifBallz.
+as "Ballz". Two searches returned the wrong project outright — CAW is Crow with
+Knife on Cronos and not the Ethereum token of the same ticker, BALLZ is not
+Solana's WolfWifBallz. And one family had nothing behind it worth eight cards.
 
 Three of the sixteen turned out to be tap-to-earn games in Telegram: Capybara
 Nation, Loaf's Toastoff and Ballz of Steel's Plinko. Their lines take different
@@ -152,20 +162,20 @@ empty card: it opens a position and it pays every turn.
 They went in as the name shortened rather than the project's real ticker looked
 up. Everything else on those cards is structure; a ticker states a fact.
 
-The flavour pass looked them up on the way past. Two were wrong: CRO Army is `CA`,
-not the `ARMY` that was guessed, and Capybara Nation is `BARA`, not `CAPY`. `LOAF`
-and `BALLZ` were guesses that happened to be right. `SLOTH` is the last one
-unchecked, because its family is still waiting.
+The flavour pass looked all of them up on the way past. Two were wrong: CRO Army
+is `CA`, not the `ARMY` that was guessed, and Capybara Nation is `BARA`, not
+`CAPY`. The rest were guesses that happened to be right. Nothing in the set is a
+guessed ticker any more.
 
 ### The sector spread
 
-meme 11, nft 9, defi 8, infra 8 — thirty-six families and 288 project cards.
+meme 11, nft 8, defi 8, infra 8 — thirty-five families and 280 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
 a `pumpBySector` card is worth what your board holds of it. Before the merge it
 was 9 / 7 / 10 / 4 / 3, so a player leaning infra picked from three families and
-one leaning defi from ten. Now the thinnest sector has seven.
+one leaning defi from ten. Now three of the four hold eight and meme holds eleven.
 
 ---
 

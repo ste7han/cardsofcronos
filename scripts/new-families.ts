@@ -66,7 +66,11 @@ const FAMILIES: Family[] = [
   // ---- nft ---------------------------------------------------------------
   { key: "ryoshi", name: "Ryoshi", ticker: "RYOSHI", sector: "nft" },
   { key: "bobs", name: "Bob's Adventures", ticker: "BOB", sector: "nft" },
-  { key: "sloth", name: "Sloth Gang", ticker: "SLOTH", sector: "nft" },
+  // Sloth Gang is deliberately NOT here. It went in with the other fifteen and
+  // came back out on 2026-09-08: 5,000 CRC-721 at 0x4817f242...2f87, deployed
+  // 12 July 2026, which made it the newest thing in the set by years and left
+  // it with no history to put on eight cards. Removed rather than written.
+  // This file is additive, so a line here would simply put it back.
   // The collection behind puush.fun, which is already in the set as a meme.
   { key: "boomer", name: "Boomer Squad", ticker: "BOOMER", sector: "nft" },
 

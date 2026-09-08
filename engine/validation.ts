@@ -55,13 +55,17 @@ export const AWAITING_FLAVOUR: ReadonlySet<string> = new Set([
  * reads and the point of the list is that somebody reads it. A family named here
  * is a family waiting for what it is known for; a card outside one still fails.
  *
- * These fifteen went in on 2026-09-08 with a name, a ticker, a sector, a rarity
- * and the set's own median numbers. What each project is actually known for is
- * the maker's to write, and until then the line is empty rather than invented.
+ * Sixteen families went in on 2026-09-08 with a name, a ticker, a sector, a
+ * rarity and the set's own median numbers, and an empty line. Fifteen of them
+ * have since been walked one at a time and written. The sixteenth, Sloth Gang,
+ * was taken out of the set instead.
+ *
+ * So this is empty, and empty is the state it was built to reach. It stays
+ * rather than being deleted: the next batch of families will need it, and a set
+ * with no entries still makes every card without a line fail, which is the
+ * behaviour that matters.
  */
-export const AWAITING_FLAVOUR_FAMILIES: ReadonlySet<string> = new Set([
-  "sloth",
-]);
+export const AWAITING_FLAVOUR_FAMILIES: ReadonlySet<string> = new Set<string>([]);
 
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
