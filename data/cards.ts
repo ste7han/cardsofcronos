@@ -2754,7 +2754,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "I",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "common",
     sector: "infra",
     launchMC: 15_000,
@@ -2770,14 +2770,14 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "II",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "common",
     sector: "infra",
     launchMC: 13_000,
     pumpMC: 10_000,
     holders: 3,
     effect: { kind: "extraBudget", target: "self", mc: 42_000 },
-    flavour: "Fees on both sides of every sale, quietly, forever.",
+    flavour: "August 2022, and it opened on two chains at once.",
   },
   {
     id: "minted-iii",
@@ -2785,7 +2785,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "III",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "rare",
     sector: "infra",
     launchMC: 27_000,
@@ -2793,7 +2793,7 @@ const MINTED: ProjectCard[] = [
     holders: 3,
     // delisted is not destroyed; it is worse — nobody can find it
     effect: { kind: "extraBudget", target: "self", mc: 85_000 },
-    flavour: "Delisted is not destroyed. It is worse: nobody can find it.",
+    flavour: "Its token launched on VVS at nine in the morning, UTC.",
   },
   {
     id: "minted-iv",
@@ -2801,7 +2801,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "IV",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "rare",
     sector: "infra",
     launchMC: 25_000,
@@ -2811,7 +2811,7 @@ const MINTED: ProjectCard[] = [
     payoff: { when: { kind: "ownProjectCount", atLeast: 4 }, effect: { kind: "directMC", target: "self", mc: 70_000 } },
     // every collection needed it and none of them owned it
     effect: { kind: "directMC", target: "self", mc: 27_000, per: "any" },
-    flavour: "Every collection needed it and none of them owned it.",
+    flavour: "A billion of them, shared out by the overflow method.",
   },
   {
     id: "minted-v",
@@ -2819,7 +2819,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "V",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "epic",
     sector: "infra",
     launchMC: 39_000,
@@ -2829,7 +2829,7 @@ const MINTED: ProjectCard[] = [
     standing: { kind: "directMC", target: "self", mc: 74_000 },
     // the front page decided what a good week looked like
     effect: { kind: "directMC", target: "self", mc: 36_000, per: "plays" },
-    flavour: "The front page decided what a good week looked like.",
+    flavour: "Accelerated by Cronos Labs, and Crypto.com signed on at launch.",
   },
   {
     id: "minted-vi",
@@ -2837,7 +2837,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "VI",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "epic",
     sector: "infra",
     launchMC: 41_000,
@@ -2846,7 +2846,7 @@ const MINTED: ProjectCard[] = [
     // royalties were optional and it kept collecting them anyway
     severance: { percentage: 26, from: "both" },
     effect: { kind: "extraBudget", target: "self", mc: 170_000 },
-    flavour: "Royalties were optional and it kept collecting them anyway.",
+    flavour: "If you bought an NFT on Crypto.com, this is where it went next.",
   },
   {
     id: "minted-vii",
@@ -2854,7 +2854,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "VII",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "legendary",
     sector: "infra",
     launchMC: 67_000,
@@ -2866,7 +2866,7 @@ const MINTED: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "infra", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 150_000 },
     },
-    flavour: "The venue outlasts everything it lists. That is always true.",
+    flavour: "Moonbirds and Otherdeeds, listed next to Cronos collections.",
   },
   {
     id: "minted-viii",
@@ -2874,7 +2874,7 @@ const MINTED: ProjectCard[] = [
     project: "minted",
     moment: "VIII",
     name: "Minted",
-    ticker: "MINTED",
+    ticker: "MTD",
     rarity: "mythic",
     sector: "infra",
     launchMC: 115_000,
@@ -2884,7 +2884,7 @@ const MINTED: ProjectCard[] = [
     restriction: { kind: "banType", cardType: "tool" },
     // two names off the front page and a market that forgets by Friday
     effect: { kind: "directMC", target: "self", mc: 60_000, per: "theirs" },
-    flavour: "Two names off the front page and a market that forgets by Friday.",
+    flavour: "The venue outlasts everything it lists. That is always true.",
   },
 ];
 

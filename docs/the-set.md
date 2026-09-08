@@ -215,6 +215,36 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Minted, and the one line that had to go
+
+"Royalties were optional and it kept collecting them anyway" was an accusation
+against a real business with nothing under it. It is gone, and nothing resembling
+it replaced it. Nothing in this set accuses anybody of anything it cannot show.
+
+Ticker `MINTED` to `MTD` — the sixth correction of the walk.
+
+The real story was better and none of it was on the cards: accelerated by Cronos
+Labs, launched August 2022 with a Crypto.com partnership from the start, multi-chain
+across Ethereum and Cronos from day one. $MTD launched on VVS Finance on 2 August
+2022 at 9AM UTC, a billion of them, distributed by the overflow method. It carries
+Moonbirds and Otherdeeds beside Cronos collections, and it is where an NFT bought on
+Crypto.com goes to be resold.
+
+**Two lines survived, and both survived for the same reason as Obsidian's.** "A
+list, a filter and a buy button. Somebody has to make one" describes what any
+marketplace is. "The venue outlasts everything it lists. That is always true" is a
+fact about venues rather than about this one — and it was promoted from legendary to
+mythic, because it is the strongest of the eight and it cannot age.
+
+That is now the rule the walk keeps finding: **a line survives when it claims
+nothing.** Wordplay on a name, a description of a category, an aphorism about how
+markets work. Every line replaced so far reached for a specific it did not have.
+
+VVS appears here for the fifth time — Fulcrom, Cronus, CorgiAI and Loaf traded
+there, Minted launched its token there. Five projects is not a coincidence about
+five projects. It is what VVS was, and it makes its own card's "The front door of
+the chain, whether or not it meant to be" read as understatement.
+
 ### Reckless Robots, and why the chain alone is not enough either
 
 Its card said "One is a toy. Four hundred is an argument." It is 2,100, hand-drawn,
