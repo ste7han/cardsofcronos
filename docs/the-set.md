@@ -215,6 +215,36 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Crooks Finance, and four families that turn out to hold each other
+
+Around since 2022. `CRKS` is the token — the set had `CF`, the ninth ticker
+corrected — and `CRKL` is a collection of 10,000 NFTs, with 5,555 Crooks Empire
+weapons alongside. Its swap routes through the Obsidian aggregator rather than its
+own, every swap burns CRKS, and the burn pool empties itself at 500 CRO.
+
+**Every week the CRKL holders are paid in PACK.** PACK is Wolfswap's token, and
+Wolfswap owns Ebisu's Bay. So Crooks routes through Obsidian and pays in Wolfswap's
+currency, and none of the eight cards on any of them said so. That is four families in
+this set holding each other up, which is what a chain small enough to fit in one set
+looks like from the inside.
+
+Sector `defi` was uncertain when it was set and is now settled: it is a yield protocol
+with a swap, a vault and a treasury.
+
+**Two things came from the maker, not from research.** That `CRKL` is the NFT
+collection rather than a rank token — the site shows a CRKL balance beside a rank, and
+reading that as a points token was wrong; the rank follows from how many NFTs you
+hold. And that the Arena is switched off, so it is not on any card. A first draft had
+it listed beside Legends and Empire.
+
+**And one line was cut for not being any good.** "A vault, then a router, then a thing
+nobody could explain quickly" had been kept because it was written as invention and
+turned out accurate — the site now has exactly a vault, a router and more than one
+sentence can cover. But accidental accuracy is a story about the walk, not a reason for
+a card to exist, and the maker was right that it is vague and unfunny. What replaced it
+is what the weapons are for. The mythic moved off raiding and onto building and
+holding, so the family does not make the same point twice.
+
 ### Howlers is 638, not 1,312, and the artist describes his own method
 
 On-chain: `The Howlers`, symbol `HOWLERS`, totalSupply 638, contract

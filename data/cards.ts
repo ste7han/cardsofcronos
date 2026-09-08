@@ -204,7 +204,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "I",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "common",
     sector: "defi",
     launchMC: 15_000,
@@ -213,7 +213,7 @@ const CROOKS: ProjectCard[] = [
     // no influencer would touch it, so whoever found it found it themselves
     // no influencer would touch it, which turned out to be the point
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "No influencer would touch it, which turned out to be the point.",
+    flavour: "Around since 2022, and it has been several things since.",
   },
   {
     id: "crooks-holds",
@@ -221,7 +221,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "II",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "common",
     sector: "defi",
     launchMC: 17_000,
@@ -229,7 +229,7 @@ const CROOKS: ProjectCard[] = [
     holders: 4,
     // the contract did exactly what it said, and nobody wrote a thread
     effect: { kind: "extraBudget", target: "self", mc: 42_000 },
-    flavour: "The contract did exactly what it said. Nobody wrote a thread about it.",
+    flavour: "CRKS is the token. CRKL is ten thousand NFTs.",
   },
   {
     id: "crooks-stack",
@@ -237,7 +237,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "III",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "rare",
     sector: "defi",
     launchMC: 25_000,
@@ -246,7 +246,7 @@ const CROOKS: ProjectCard[] = [
     // a vault, then a router, then a thing nobody could explain quickly
     // a vault, then a router, then a thing nobody could explain quickly
     effect: { kind: "extraBudget", target: "self", mc: 86_000 },
-    flavour: "A vault, then a router, then a thing nobody could explain quickly.",
+    flavour: "Five thousand five hundred and fifty-five weapons for the empire.",
   },
   {
     id: "crooks-hit",
@@ -254,7 +254,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "IV",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "rare",
     sector: "defi",
     launchMC: 26_000,
@@ -270,7 +270,7 @@ const CROOKS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 400_000 },
       effect: { kind: "directMC", target: "self", mc: 200_000 },
     },
-    flavour: "Down forty percent in an hour and the deposits went up.",
+    flavour: "Its swap routes through Obsidian. It did not build its own.",
   },
   {
     id: "crooks-cover",
@@ -278,7 +278,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "V",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "epic",
     sector: "defi",
     launchMC: 39_000,
@@ -288,7 +288,7 @@ const CROOKS: ProjectCard[] = [
     payoff: { when: { kind: "holdersLostAtLeast", holders: 3 }, effect: { kind: "directMC", target: "self", mc: 120_000 } },
     // whatever came for you, it came for the whole book at once
     effect: { kind: "mcPerHolderLost", mc: 12_000 },
-    flavour: "Whatever came for you, it came for the whole book at once.",
+    flavour: "Every swap burns CRKS, and the pool empties itself at five hundred CRO.",
   },
   {
     id: "crooks-audit",
@@ -296,7 +296,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "VI",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "epic",
     sector: "defi",
     launchMC: 42_000,
@@ -307,7 +307,7 @@ const CROOKS: ProjectCard[] = [
     // two weeks of silence, then a PDF, then the deposits doubled
     // two weeks of silence, then a PDF, then the deposits doubled
     effect: { kind: "scaleMC", target: "self", percentage: 20 },
-    flavour: "Two weeks of silence, then a PDF, then the deposits doubled.",
+    flavour: "Every week the CRKL holders get paid, and they get paid in PACK.",
   },
   {
     id: "crooks-book",
@@ -315,7 +315,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "VII",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "legendary",
     sector: "defi",
     launchMC: 70_000,
@@ -326,7 +326,7 @@ const CROOKS: ProjectCard[] = [
     // everything routed through it eventually, whether it meant to or not
     // everything routed through it eventually, whether it meant to or not
     effect: { kind: "directMC", target: "self", mc: 45_000, per: "any" },
-    flavour: "Everything routed through it eventually, whether it meant to or not.",
+    flavour: "The weapons are not decoration. You point them at other players.",
   },
   {
     id: "crooks-standing",
@@ -334,7 +334,7 @@ const CROOKS: ProjectCard[] = [
     project: "crooks",
     name: "Crooks Finance",
     moment: "VIII",
-    ticker: "CF",
+    ticker: "CRKS",
     rarity: "mythic",
     sector: "defi",
     launchMC: 112_000,
@@ -347,7 +347,7 @@ const CROOKS: ProjectCard[] = [
     // outlived three exchanges, two bear markets and everyone who called it
     // outlived three exchanges, two bear markets and everyone who called it
     effect: { kind: "scaleMC", target: "self", percentage: 27 },
-    flavour: "Outlived three exchanges, two bear markets and everyone who called it.",
+    flavour: "Build an empire and hope it is still standing in the morning.",
   },
 ];
 
