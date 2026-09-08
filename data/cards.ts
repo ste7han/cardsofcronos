@@ -3606,7 +3606,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Six hundred and sixty-six of them, drawn by hand.",
   },
   {
     id: "bobs-ii",
@@ -3620,7 +3620,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Humans, cyborgs and reptiles, and one legendary each.",
   },
   {
     id: "bobs-iii",
@@ -3634,7 +3634,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Every royalty from every resale goes back to the people holding.",
   },
   {
     id: "bobs-iv",
@@ -3648,7 +3648,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Claims daily, raffles nightly, airdrops on the weekend.",
   },
   {
     id: "bobs-v",
@@ -3662,7 +3662,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "A second generation, and the first one walked in free.",
   },
   {
     id: "bobs-vi",
@@ -3676,7 +3676,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Battlegrounds every day, because a community needs something to do.",
   },
   {
     id: "bobs-vii",
@@ -3690,7 +3690,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "It stopped being a collection and became an income.",
   },
   {
     id: "bobs-viii",
@@ -3704,7 +3704,7 @@ const BOBS: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "The whole point was never the picture.",
   },
 ];
 
