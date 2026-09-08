@@ -210,6 +210,33 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Obsidian kept one line out of eight
+
+Its cards described a lending protocol: "Nine figures locked and the outflow chart
+is a flat line", "Three years, four bear markets, and the floor never once broke".
+Obsidian is a smart DEX aggregator with its own pools, on Cronos and Cronos zkEVM,
+and its X account dates from July 2024 — so the three years were wrong as well as
+the shape.
+
+What it actually is: SmartRouter picks the best route across several liquidity
+sources; a 0.5% aggregator fee splits evenly, half back to the partner project and
+half into $OBS buybacks for rewards and burns; the Puush launchpad is integrated,
+so a token can launch and trade without leaving. Ticker `OBS` was already right.
+
+**The line that survived is the one that makes no claim.** "Volcanic, and it takes
+an edge nothing else on the chain can hold" is wordplay on the name — obsidian is
+volcanic glass and an obsidian blade does hold a finer edge than steel. Nothing in
+it can go out of date. The seven that were replaced all made claims, and all seven
+were about a different kind of business. That is the pattern worth keeping: the
+lines that aged badly are the ones that reached for specifics they never had.
+
+Two of the new lines carry the 0.5% fee, which is a protocol design rather than a
+price — but a fee can be changed, and then a card is wrong. Raised, and the maker
+chose to keep it. It is the one line in this family with a shelf life.
+
+Puush turns up here as well as behind Boomer Squad. That is the fourth pair of
+families in this set that know about each other.
+
 ### Cr00ts was in the wrong sector, with eight lines about the wrong business
 
 It was `infra`, with cards about a venue skimming a spread: "Two percent nobody

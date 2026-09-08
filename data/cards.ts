@@ -1430,7 +1430,7 @@ const OBSIDIAN: ProjectCard[] = [
     holders: 4,
     // no thread, no space, no partnership — just a contract that kept paying
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "No thread, no space, no partnership. Just a contract that kept working.",
+    flavour: "One box, and it checks every venue on the chain before it answers.",
   },
   {
     id: "obsidian-guard",
@@ -1446,7 +1446,7 @@ const OBSIDIAN: ProjectCard[] = [
     holders: 4,
     // whatever came for the small deposits had to come through it first
     effect: { kind: "mcPerHolderLost", mc: 3_000 },
-    flavour: "Whatever came for the small deposits had to come through it first.",
+    flavour: "It never held the liquidity. It always knew where it was.",
   },
   {
     id: "obsidian-ninth",
@@ -1464,7 +1464,7 @@ const OBSIDIAN: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 6 },
       effect: { kind: "directMC", target: "self", mc: 100_000 },
     },
-    flavour: "The others got faster. It got older, which turned out to be better.",
+    flavour: "Half a percent on a swap, and half of that goes back to the project.",
   },
   {
     id: "obsidian-nobody",
@@ -1482,7 +1482,7 @@ const OBSIDIAN: ProjectCard[] = [
     payoff: { when: { kind: "bankedAtMost", count: 1 }, effect: { kind: "directMC", target: "self", mc: 90_000 } },
     // nine figures locked and the outflow chart is a flat line, proudly
     effect: { kind: "unbankedMC", percentage: 20 },
-    flavour: "Nine figures locked and the outflow chart is a flat line. Proudly.",
+    flavour: "The other half buys its own token and burns it.",
   },
   {
     id: "obsidian-standing",
@@ -1500,7 +1500,7 @@ const OBSIDIAN: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 4 },
       effect: { kind: "directMC", target: "self", mc: 170_000 },
     },
-    flavour: "Half the protocols on this chain were gone by then. This half was not.",
+    flavour: "A token can launch on Puush and start trading here without leaving.",
   },
   {
     id: "obsidian-glass",
@@ -1536,7 +1536,7 @@ const OBSIDIAN: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 8 },
       effect: { kind: "scaleMC", target: "self", percentage: 30 },
     },
-    flavour: "Everybody counts at the end. It had been counting the whole time.",
+    flavour: "Deployed on both of this chain's chains, mainnet and zkEVM.",
   },
   {
     id: "obsidian-unbroken",
@@ -1554,7 +1554,7 @@ const OBSIDIAN: ProjectCard[] = [
     shield: 50,
     // three years, four bear markets, and the floor never once broke
     effect: { kind: "scaleMC", target: "self", percentage: 24 },
-    flavour: "Three years, four bear markets, and the floor never once broke.",
+    flavour: "It does not compete with the venues. It decides which one you used.",
   },
 ];
 
