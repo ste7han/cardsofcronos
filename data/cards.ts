@@ -4526,7 +4526,7 @@ const CRO: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "The gas. Every transaction on this chain is paid in it, noticed or not.",
   },
   {
     id: "cro-ii",
@@ -4540,7 +4540,7 @@ const CRO: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Held by everyone here and chosen by almost nobody.",
   },
   {
     id: "cro-iii",
@@ -4554,7 +4554,7 @@ const CRO: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Seventy billion burned, and they called it the largest there had ever been.",
   },
   {
     id: "cro-iv",
@@ -4568,7 +4568,7 @@ const CRO: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Four years later a vote brought all seventy billion back.",
   },
   {
     id: "cro-v",
@@ -4582,7 +4582,7 @@ const CRO: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "The validators who carried the vote were the ones who called it.",
   },
   {
     id: "cro-vi",
@@ -4596,7 +4596,7 @@ const CRO: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "A dollar, once. Everybody still here can tell you the exact number.",
   },
   {
     id: "cro-vii",
@@ -4610,7 +4610,7 @@ const CRO: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "Nothing moves on this chain without it, which is a floor and a ceiling at once.",
   },
   {
     id: "cro-viii",
@@ -4624,7 +4624,7 @@ const CRO: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "The chain itself. Everything on it moves together, up or down.",
   },
 ];
 // ---------------------------------------------------------------------------

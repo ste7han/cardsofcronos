@@ -74,7 +74,6 @@ export const AWAITING_FLAVOUR_FAMILIES: ReadonlySet<string> = new Set([
   "corgi",
   "puush",
   "ebisusbay",
-  "cro",
   "croarmy",
 ]);
 
