@@ -59,7 +59,9 @@ const FAMILIES: Family[] = [
   // a capybara tap-game is the joke itself, which is what the sector asks.
   { key: "capybara", name: "Capybara Nation", ticker: "BARA", sector: "meme" },
   { key: "loaf", name: "Loaf", ticker: "LOAF", sector: "meme" },
-  { key: "ballz", name: "Ballz", ticker: "BALLZ", sector: "meme" },
+  // "Ballz of Steel" on Cronos, which is not the WolfWifBallz that shares its
+  // ticker on Solana. Two projects, one BALLZ, and only one of them is here.
+  { key: "ballz", name: "Ballz of Steel", ticker: "BALLZ", sector: "meme" },
 
   // ---- nft ---------------------------------------------------------------
   { key: "ryoshi", name: "Ryoshi", ticker: "RYOSHI", sector: "nft" },

@@ -60,7 +60,6 @@ export const AWAITING_FLAVOUR: ReadonlySet<string> = new Set([
  * the maker's to write, and until then the line is empty rather than invented.
  */
 export const AWAITING_FLAVOUR_FAMILIES: ReadonlySet<string> = new Set([
-  "ballz",
   "sloth",
 ]);
 

@@ -52,7 +52,7 @@ numbered I to VIII.
 
 | sector | families |
 |---|---|
-| meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz · Corgi · Puush |
+| meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang · Boomer Squad · CRO Army |
 | defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
@@ -119,15 +119,30 @@ listed by name in `AWAITING_FLAVOUR_FAMILIES` in `engine/validation.ts` — by f
 rather than by card, because 120 ids would be a wall nobody reads and the point of
 the list is that somebody reads it. A family not on the list still fails.
 
-**Thirteen of the sixteen are done.** CRO, Ebisusbay, Fulcrom, Single Finance,
-Cronus, Corgi, Puush, CRO Army, Ryoshi, Bob's Adventures, Boomer Squad, CAW and
-Mistery, one family per pass, every claim looked up and read back before it was
-written. Three are left: Capybara Nation, Loaf, Ballz — and Sloth Gang, which is
-stuck on which collection it is.
+**Fifteen of the sixteen are done.** One family per pass, every claim looked up
+and read back to the maker before it was written. Only Sloth Gang is left, and it
+is stuck on which collection it is: searching finds an Ethereum set of ten
+thousand and a separate Cronos "Cronos Slothty" of 250 hand-drawn, and nothing
+goes on a card until somebody says which.
 
 The pass keeps finding things the list had wrong, which is the argument for doing
-it this way rather than in one sweep. Three sectors moved. Two tickers were wrong.
-One family had the wrong name. And searching for CAW returned a different CAW.
+it this way rather than in one sweep. Three sectors moved. Two tickers were wrong
+— CRO Army is `CA` and Capybara Nation is `BARA`. Two families had the wrong name:
+Mistery on CRO was down as "Mery", which is its NFT collection, and Ballz of Steel
+as "Ballz". And two searches returned the wrong project outright — CAW is Crow
+with Knife on Cronos and not the Ethereum token of the same ticker, BALLZ is not
+Solana's WolfWifBallz.
+
+Three of the sixteen turned out to be tap-to-earn games in Telegram: Capybara
+Nation, Loaf's Toastoff and Ballz of Steel's Plinko. Their lines take different
+angles on purpose, but the repetition is not a failure of the writing. It is what
+this chain was doing in 2024.
+
+Projects in this set keep turning out to know each other. Ballz of Steel seeded
+liquidity against MERY and PUUSH as well as CRO; Boomer Squad is the collection
+behind puush.fun; Fulcrom, Cronus and CorgiAI all launched through VVS. Nothing
+was arranged for that — it is what a chain small enough to fit in one set looks
+like.
 
 Effects are the pass after this one. A project with a launch and a pump is not an
 empty card: it opens a position and it pays every turn.
@@ -137,10 +152,10 @@ empty card: it opens a position and it pays every turn.
 They went in as the name shortened rather than the project's real ticker looked
 up. Everything else on those cards is structure; a ticker states a fact.
 
-The flavour pass looks them up on the way past, and so far: CRO Army is `CA`, not
-the `ARMY` that was guessed, and Capybara Nation is `BARA`, not `CAPY`. Still
-unchecked, because their families are still waiting for flavour: `LOAF`, `BALLZ`,
-`SLOTH`.
+The flavour pass looked them up on the way past. Two were wrong: CRO Army is `CA`,
+not the `ARMY` that was guessed, and Capybara Nation is `BARA`, not `CAPY`. `LOAF`
+and `BALLZ` were guesses that happened to be right. `SLOTH` is the last one
+unchecked, because its family is still waiting.
 
 ### The sector spread
 
