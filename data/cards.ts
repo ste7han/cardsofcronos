@@ -4845,7 +4845,7 @@ const NAMES: PersonCard[] = [
     ticker: "HATEN",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
-    flavour: "",
+    flavour: "Main stakeholder in Obsidian, and an ambassador for the chain itself.",
   },
   {
     id: "schwiz",
@@ -4863,7 +4863,7 @@ const NAMES: PersonCard[] = [
     ticker: "JKC",
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "defi", bonus: 8_000 },
-    flavour: "",
+    flavour: "He founded Crazzzy Monsters, and the chain made him an ambassador.",
   },
   {
     // The only one here with no project behind him, and the first card in this
@@ -4875,7 +4875,7 @@ const NAMES: PersonCard[] = [
     ticker: "ARTIK",
     rarity: "epic",
     aura: { kind: "drawEachTurn", cards: 1 },
-    flavour: "",
+    flavour: "He built a dashboard for the whole chain. He says he draws random lines.",
   },
 ];
 

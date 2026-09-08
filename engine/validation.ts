@@ -28,13 +28,13 @@ import { RARITIES, RULES, SECTORS, auraOf, needsChoice } from "./types";
  * named by the maker, and the line under their name is a sentence about somebody
  * who can read it.
  *
- * Seven went on the list on 2026-09-08. Four came off it the same week — Kris,
- * Ryan Wyatt, Alex and Schwiz — because what they are known for is on the public
- * record and could be read back before it was written. The three left are the
- * ones where it is not: nothing found ties Haten to Obsidian Finance, nothing
- * found says JkcryptoXYZ founded Crazzzy Monsters, and "Artik" is too common a
- * word to search on without a handle. All three are almost certainly true. None
- * of them is checked, and a card is minted once.
+ * Seven went on the list on 2026-09-08 and all seven came off it the same week.
+ * Four were on the public record. The other three were not findable by search at
+ * all — nothing tied Haten to Obsidian, nothing said JkcryptoXYZ founded Crazzzy
+ * Monsters, and "Artik" is too common a word to look up. Their own X bios said
+ * all of it plainly, and reading those needed a browser rather than a search
+ * engine. Worth remembering the next time a name here comes up empty: not found
+ * meant not looked in the right place.
  *
  * The cards they replaced were nameless — "The Obsidian Finance Founder" — and
  * carried invented lines like "Three years of the same avatar and the same
@@ -46,11 +46,7 @@ import { RARITIES, RULES, SECTORS, auraOf, needsChoice } from "./types";
  * silently. This one has to be edited by hand, it is read out by the test in
  * test/set.test.ts, and it is meant to shrink to nothing.
  */
-export const AWAITING_FLAVOUR: ReadonlySet<string> = new Set([
-  "haten",
-  "jkcrypto",
-  "artik",
-]);
+export const AWAITING_FLAVOUR: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Project families whose eight cards ship without a line, for the same reason.

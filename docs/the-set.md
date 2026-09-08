@@ -249,7 +249,7 @@ shipped under these names and people hold them.
 Floor Sweeper · The Whitelist Hunter · The Validator · The Airdrop Farmer · The
 Node Runner · The Mint Bot.
 
-### Four of the seven have their line, and three are stuck
+### All seven have their line
 
 The cards they replace carried invented lines — "Three years of the same avatar
 and the same two-line updates" — which was fine above a placeholder and is not
@@ -258,13 +258,24 @@ A project card that overreaches is wrong about a project. A person card that
 overreaches is wrong about somebody who can read it, so the bar is higher here
 and the line is one sentence of at most 85 characters.
 
-**Written:** Kris, Ryan Wyatt, Alex, Schwiz. All four are on the public record.
+Kris, Ryan Wyatt, Alex and Schwiz were on the public record and went first.
 
-**Still empty:** Haten, JkcryptoXYZ, Artik. Nothing found ties Haten to Obsidian
-Finance, nothing found says JkcryptoXYZ founded Crazzzy Monsters, and "Artik" is
-too common a word to search on without a handle. The maker named all three, so
-all three are very likely true — but likely is not checked, and a card is minted
-once. Waiting on an X handle each.
+Haten, JkcryptoXYZ and Artik were not findable at all. Every search came back
+with the project and never the person. What settled all three was their own X
+bios, read in a browser — search engines do not index those pages and the
+scrapers that mirror them answer 403. **Not found meant not looked in the right
+place**, which is worth remembering the next time a name here comes back empty.
+
+Reading them corrected one thing the list had wrong. Haten is not the founder of
+Obsidian Finance; his bio says "Main Stakeholder of @ObsidianSwap", and he is an
+ambassador for Cronos itself. JkcryptoXYZ's claim held exactly as given —
+"Founder of @CrazzzyMonsters" — and he is an ambassador too. Artik turned out to
+have built `cronosdash`, a dashboard for the whole chain, which is the best
+possible reason for the one aura in this set that draws a card instead of pumping
+a sector.
+
+Nothing was taken from those pages except what the person wrote about themselves
+in their own bio. No follower counts, no locations, no real names.
 
 Two things were left off on purpose. Kris's card does not mention the 70% burn or
 its reversal: that story is already on the CRO card, where it belongs as a fact
@@ -272,9 +283,10 @@ about a token, and on a person's card it reads as an accusation — with the vot
 manipulation part being an allegation rather than a finding. And no card carries a
 follower count or a net worth, for the same reason no project card carries a price.
 
-`validateSet` refuses a card with no flavour, and that guard is untouched. The
-three are listed by id in `AWAITING_FLAVOUR` in `engine/validation.ts`, so a
-fourth card without a line still fails. The list is meant to shrink to nothing.
+`validateSet` refuses a card with no flavour, and that guard is untouched.
+`AWAITING_FLAVOUR` is now empty, which is what it was built to become. It stays
+rather than being deleted, for the same reason as the family list: an empty set
+still fails every card without a line.
 
 ### What the removal cost, and what gave it back
 
