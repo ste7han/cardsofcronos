@@ -215,6 +215,35 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Cronos Chimp Club stored its metadata somewhere that lasts
+
+On-chain: `CronosChimp`, symbol `CHIMP`, 10,000. The ticker was right. Minted 9
+November 2021, seven trait layers — background, body, clothes, headgear, eyes, mouth,
+earrings — with values like silverback, geisha kimono, unicorn suit, cymbal chimp
+stare, caveman bone and disco smirk.
+
+**Its metadata is on Arweave, and eighty consecutive files came back.** Set that
+against Sloth Gang, whose metadata lives on Ebisu's Bay's CDN, and Reckless Robots,
+whose art no longer loads and whose website no longer resolves. Permanent storage is
+a real, checkable, permanent difference between this collection and most of the set,
+and it is exactly the kind of fact a card can carry forever.
+
+Only one line survived, and it is the only one that claimed nothing: "A club is only
+worth anything when there are people in the room" (moved from card V to VI). The
+other seven were social history nobody can check — "Half the projects on this chain
+started in somebody's chimp chat", "Everybody who is anybody here was in that room in
+the first month", "The oldest group chat on the chain and it still moves markets".
+Written down, that reads like a record. It is atmosphere.
+
+**The mythic rests on secondary sources and that was said out loud before it was
+written.** Several aggregators call it the first NFT collection on Cronos, and the
+dates support it — 9 November 2021, against Loaded Lions on 23 November and on
+Crypto.org Chain at that. No Cronos or Crypto.com source states it directly. After Mad
+Meerkat's self-declared first, a claim of primacy gets flagged rather than assumed.
+
+Card VII links two families on checkable dates: Minted opened in August 2022 and lists
+a collection from November 2021.
+
 ### Loaded Lions is older than the chain this set is about
 
 10,000 algorithmically generated lions, minted 23 November 2021 at 13:00 UTC at $200

@@ -2607,7 +2607,7 @@ const CHIMPS: ProjectCard[] = [
     holders: 3,
     // early enough that being early was the whole story
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "Early enough that being early was the whole story.",
+    flavour: "Ten thousand chimps, and every trait nods at the chain itself.",
   },
   {
     id: "chimps-ii",
@@ -2624,7 +2624,7 @@ const CHIMPS: ProjectCard[] = [
     // the Discord was busy before the mint and busier after it
     // the Discord was busy before the mint and busier after it
     effect: { kind: "extraBudget", target: "self", mc: 42_000 },
-    flavour: "The Discord was busy before the mint and busier after it.",
+    flavour: "Background, body, clothes, headgear, eyes, mouth, earrings.",
   },
   {
     id: "chimps-iii",
@@ -2642,7 +2642,7 @@ const CHIMPS: ProjectCard[] = [
     payoff: { when: { kind: "yourHandAtLeast", cards: 4 }, effect: { kind: "drawCards", amount: 2 } },
     // somebody in there knew somebody who knew about everything
     effect: { kind: "directMC", target: "self", mc: 81_000 },
-    flavour: "Somebody in there knew somebody who knew about everything.",
+    flavour: "One of the bodies is a silverback. One of the suits is a unicorn.",
   },
   {
     id: "chimps-iv",
@@ -2659,7 +2659,7 @@ const CHIMPS: ProjectCard[] = [
     // half the projects on this chain started in somebody's chimp chat
     // half the projects on this chain started in somebody's chimp chat
     effect: { kind: "extraBudget", target: "self", mc: 86_000 },
-    flavour: "Half the projects on this chain started in somebody's chimp chat.",
+    flavour: "Minted in November 2021, before there was much else here to buy.",
   },
   {
     id: "chimps-v",
@@ -2679,7 +2679,7 @@ const CHIMPS: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 90_000 },
     },
-    flavour: "A club is only worth anything when there are people in the room.",
+    flavour: "Its metadata sits on Arweave, which does not take things down.",
   },
   {
     id: "chimps-vi",
@@ -2696,7 +2696,7 @@ const CHIMPS: ProjectCard[] = [
     // nobody who was in it early ever quite left it
     // nobody who was in it early ever quite left it
     effect: { kind: "directMC", target: "self", mc: 35_000, per: "spent" },
-    flavour: "Nobody who was in it early ever quite left it.",
+    flavour: "A club is only worth anything when there are people in the room.",
   },
   {
     id: "chimps-vii",
@@ -2713,7 +2713,7 @@ const CHIMPS: ProjectCard[] = [
     // the oldest group chat on the chain, and it still moves markets
     // the oldest group chat on the chain, and it still moves markets
     effect: { kind: "scaleMC", target: "self", percentage: 21 },
-    flavour: "The oldest group chat on the chain and it still moves markets.",
+    flavour: "Minted lists it now. Minted did not exist when it launched.",
   },
   {
     id: "chimps-viii",
@@ -2735,7 +2735,7 @@ const CHIMPS: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 5 },
       effect: { kind: "directMC", target: "self", mc: 260_000 },
     },
-    flavour: "Everybody who is anybody here was in that room in the first month.",
+    flavour: "The first NFT collection this chain ever had.",
   },
 ];
 
