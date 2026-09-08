@@ -53,9 +53,9 @@ numbered I to VIII.
 | sector | families |
 |---|---|
 | meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
 | defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
-| infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
+| infra | Nova · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
 where the list of them lives — fifteen in one go and CRO Army after it, which is
@@ -175,13 +175,63 @@ guessed ticker any more.
 
 ### The sector spread
 
-meme 11, nft 8, defi 8, infra 8 — thirty-five families and 280 project cards.
+meme 11, nft 9, defi 8, infra 7 — thirty-five families and 280 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
 a `pumpBySector` card is worth what your board holds of it. Before the merge it
 was 9 / 7 / 10 / 4 / 3, so a player leaning infra picked from three families and
 one leaning defi from ten. Now three of the four hold eight and meme holds eleven.
+
+---
+
+## The nineteen older families are being walked too
+
+The sixteen that went in on 2026-09-08 went in empty and were written under the
+rule. The nineteen that were here before them already had lines — some inherited
+from the first version, some written before "sourced or it is not written" was
+the rule — and none of it had ever been checked.
+
+Reading all 152 lines at once found four things rather than one:
+
+1. **Invented precision.** 53 of the 152 carry a number, a duration or a count.
+   Some are right: Crazzzy Monsters really is ten thousand across twenty families,
+   and VVS really does stand for Very Very Simple. Others are not: Reckless Robots
+   is 2,100 and its card said four hundred.
+2. **Lines describing the wrong kind of business.** Obsidian is a DEX and its cards
+   gave it "nine figures locked" and a floor that never broke, which is lending and
+   NFT language. Wolfswap is an aggregator and its cards gave it its own order book.
+3. **A whole family in the wrong sector** — Cr00ts, below.
+4. **One line that should not be on a card at all.** Minted VI said royalties were
+   optional and it collected them anyway. That is an accusation against a real
+   business with nothing under it.
+
+And two families nobody can identify: **DAK** and **Nova**. Neither is findable by
+search. Their cards are eight lines each about projects whose nature is unknown —
+DAK's read like an NFT collection while it is filed as a meme.
+
+### Cr00ts was in the wrong sector, with eight lines about the wrong business
+
+It was `infra`, with cards about a venue skimming a spread: "Two percent nobody
+notices", "four percent worse. For eleven months", "a third of the chain's float".
+Cr00ts is an NFT collection. 2,525 of them, confirmed on-chain at
+`0xca00aba7...87734`, symbol `CR00TS` — the set had the ticker as `CR00`.
+
+The real story is better than the invented one. Cronos Y00ts was abandoned by its
+founder. Dream QC, its largest holder, had been made a moderator; when two days
+went by with no answer he and Atlas, Puffins and Kahuna went to the marketplaces
+and had the royalties redirected to a new team wallet, "until the founder
+reappeared, if he ever did". They put 100% of the Y00ts ROI back into staking and
+gave every OG holder a Cr00ts one-for-one. Launched 15 February 2023 with seven
+artists on it, sold out in three days, and half of every secondary royalty is paid
+out to holders weekly.
+
+Left off because it moves: the floor, the CRO distributed to date, the volume.
+
+**Its effects now contradict its cards.** Four of the eight are `stealMC`, built on
+the reading that this was a venue taking a percentage — and it is a collection that
+pays half of every resale back. That is close to the opposite. Not touched here;
+written down for the effects pass.
 
 ---
 
