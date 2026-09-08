@@ -20,6 +20,34 @@ import type {
 } from "./types";
 import { RARITIES, RULES, SECTORS, auraOf, needsChoice } from "./types";
 
+/**
+ * Cards that ship without a flavour line, on purpose, and are allowed to.
+ *
+ * A card with nothing written on it is normally a card somebody forgot, which is
+ * why validateSet refuses one. These seven are not forgotten: they are real
+ * people, named by the maker, and the line under their name would be a sentence
+ * about somebody who can read it.
+ *
+ * The cards they replaced were nameless — "The Obsidian Finance Founder" — and
+ * carried invented lines like "Three years of the same avatar and the same
+ * two-line updates." That was fine above a placeholder and is not fine above a
+ * name. CLAUDE.md has the rule already: sourced or it is not written.
+ *
+ * A list rather than a flag on the card, and a list here rather than a `?` on
+ * the type, because both of those would let the eighth card slip through
+ * silently. This one has to be edited by hand, it is read out by the test in
+ * test/set.test.ts, and it is meant to shrink to nothing.
+ */
+export const AWAITING_FLAVOUR: ReadonlySet<string> = new Set([
+  "kris",
+  "ryan-wyatt",
+  "alex",
+  "haten",
+  "schwiz",
+  "jkcrypto",
+  "artik",
+]);
+
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 export class SetError extends Error {
@@ -233,7 +261,9 @@ export function validateSet(cards: readonly Card[]): void {
     }
     if (!card.name.trim()) problems.push(`${where}: no name.`);
     if (!card.ticker.trim()) problems.push(`${where}: no ticker.`);
-    if (!card.flavour.trim()) problems.push(`${where}: no flavour text.`);
+    if (!card.flavour.trim() && !AWAITING_FLAVOUR.has(card.id)) {
+      problems.push(`${where}: no flavour text.`);
+    }
     // The card is a fixed 5:7, so there is a real bottom to it. Past this the
     // flavour pushes itself off the card, and a card quietly missing its last
     // line is exactly the kind of thing nobody notices for a year. Measured: 83

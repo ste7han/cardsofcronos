@@ -34,7 +34,7 @@ export const SHOWCASE = [
   "howlers-moon",
   "crooks-cover",
   "rug-pull",
-  "founder-dak",
+  "kris",
 ];
 
 export default function Landing() {

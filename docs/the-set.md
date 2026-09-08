@@ -100,70 +100,61 @@ the moment devs and community figures were going on cards. A dev is not an
 influencer and The Floor Sweeper is neither. The type says what one card is; the
 group as a whole is the Cronos community.
 
-### In the set — 32 cards
+**The nineteen founder cards are gone.** They were named "The Clove Founder" and
+"The Ferro Founder" because the first version never wrote the names down, and the
+rule that made them — every project gets a founder — would have given thirty-four
+of them against thirteen other people. Three quarters of the people in this game
+would have been somebody's founder, which is not what a chain looks like from the
+inside. Founding something is no longer what puts you on a card.
 
-- **19 founders**, one for each of the nineteen families that were here first.
-  Each carries an aura that pumps its own project's sector.
-- **5 by name**: Pampa · 21Million · Francis · Curry · Vinz. Curry and Vinz are
-  community rather than influencers, which is part of why the type was renamed.
-- **8 archetypes**, nameless, ported from TCG: The Caller · The Copy Target · The
-  Floor Sweeper · The Whitelist Hunter · The Validator · The Airdrop Farmer ·
-  The Node Runner · The Mint Bot.
+### In the set — 20 cards
 
-### One founder per project is not the rule any more
+**7 named**, added 2026-09-08. Kris (mythic, infra) · Ryan Wyatt (legendary,
+infra) · Alex (legendary, defi) · Haten (legendary, infra) · Schwiz (epic, infra)
+· JkcryptoXYZ (rare, defi) · Artik (epic, draws a card every turn).
 
-The fifteen new families do not each get a founder, and that is a decision rather
-than something left undone. At nineteen families the rule gave nineteen founders
-out of thirty-two people; at thirty-four it would have given thirty-four out of
-forty-seven, and nearly three quarters of the people in this game would have been
-founders. That is not what a chain looks like from the inside.
+Alex founded Wolfswap and now owns Ebisusbay, so he is the case the old rule
+could never have held. He pumps defi — the thing he built rather than the thing
+he bought, and the sector this set has least aura for. Artik has no project at
+all and carries the first aura in the set that names no sector: he is here for
+knowing what is going on, so he draws.
 
-So the people are whoever is worth a card — founders, devs, community — and which
-project they belong to stops being what puts them there.
+**5 from the first version**: Pampa · 21Million · Francis · Curry · Vinz. These
+shipped under these names and people hold them.
 
-The nineteen that exist stay. What that leaves is nineteen families with a founder
-and fifteen without, which is uneven by accident rather than on purpose: they are
-the families that happened to be in the set first, not the ones with the
-best-known founders. Worth a pass at some point, and not urgent.
+**8 archetypes**, nameless, ported from TCG: The Caller · The Copy Target · The
+Floor Sweeper · The Whitelist Hunter · The Validator · The Airdrop Farmer · The
+Node Runner · The Mint Bot.
 
-### Agreed, not built — 7 by name
+### None of the seven has a flavour line, on purpose
 
-| name | who |
-|---|---|
-| Haten | founder of Obsidian |
-| JkcryptoXYZ | founder of Crazzzy Monsters |
-| Alex | founder of Wolfswap, and now owns Ebisusbay |
-| Schwiz | founder of Ebisusbay |
-| Kris | CEO of Crypto.com and CRO |
-| Artik | known through X; knows the Cronos projects, and probably a dev |
-| Ryan Wyatt | CEO of Cronos |
+The cards they replace carried invented lines — "Three years of the same avatar
+and the same two-line updates" — which was fine above a placeholder and is not
+fine above a real name. `CLAUDE.md` has the rule: sourced or it is not written.
 
-Alex is the argument for the new rule in one card: he founded one project and now
-owns another, so "the founder of X" was never going to hold him. Artik is the
-other half of it — no project attached, and on a card because of what he knows.
+`validateSet` refuses a card with no flavour, and that guard is untouched. The
+seven are listed by id in `AWAITING_FLAVOUR` in `engine/validation.ts`, so an
+eighth card without a line still fails. The list is meant to shrink to nothing.
 
-**Three of these are the real names of cards already in the set.** Obsidian,
-Crazzzy Monsters and Wolfswap each have a nameless founder, and those cards carry
-flavour written when nobody was named:
+### What the removal cost
 
-- The Obsidian Finance Founder — "Three years of the same avatar and the same
-  two-line updates."
-- The Crazzzy Monsters Founder — "Drew all ten thousand by hand and has the wrist
-  to prove it."
-- The Wolfswap Founder — "Shipped the fork on a Sunday and told the other team on
-  Monday."
+Auras per sector: meme 5, nft 4, defi 3, infra 8 — it was 9 / 8 / 6 / 10 with the
+founders in. Two tests in `test/deck.test.ts` are skipped because of it and the
+skip says so:
 
-Whether those cards take the names or the names get cards of their own is open.
-Either way the flavour stops being a sketch of somebody and becomes a sentence
-about a named person, and this repository has a rule for that: sourced or not
-written. Nobody here can check whether Haten kept the same avatar for three years.
+- **MEME LORD reaches 13 of 40 on theme against a floor of 15.** Not a bad seed:
+  a generated deck takes at most two cards of one project, meme has four families,
+  and five cards in the set pump meme. Two times four plus five is thirteen.
+- **FLOOR SWEEP and THE VAULT share 33 of 40** against a limit of 31, because nft
+  has four families and defi five and neither can fill a forty on its own.
+
+Both come back with the projects already agreed. Nine meme families gives 23 on
+theme. If they still fail then, something is actually wrong.
 
 ### Still open
 
-**The Validator and The Node Runner** carry an aura that pumps infra, so whatever
-happens to that sector happens to them. Both survived the dex merge unchanged.
-
----
+The list is "voor nu" — more devs, influencers and community are expected, and
+defi at three aura cards for ten project families is the thinnest spot.
 
 ## What comes after the list
 

@@ -426,8 +426,14 @@ describe("cancelling an influencer", () => {
     const state = structuredClone(newMatch(CARDS, 44)) as State;
     state.budgetThisTurn = RULES.budgetPerTurn * RULES.turns;
     state.players.opponent.support = [{ cardId: AURA_SMALLEST }, { cardId: AURA_BIGGEST }];
+    // A project of the biggest aura's own sector, not a fixed one. This board
+    // held SOLO_A whatever the aura pumped, so "cancelling stops the aura" only
+    // held while the two happened to match — and they stopped matching the day
+    // the founders left the set and the biggest aura became an infra one.
+    const biggest = auraOf(CARDS.find((c) => c.id === AURA_BIGGEST)!)!;
+    const paying = "sector" in biggest ? soloOfSector(biggest.sector) : SOLO_A;
     state.players.opponent.projects = [
-      { cardId: SOLO_A, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
+      { cardId: paying, holders: 3, extraPump: 0, earned: 0, playedOnTurn: 1 },
     ];
     state.players.you.hand = ["cancelled"];
     return state;

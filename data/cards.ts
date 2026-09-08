@@ -2889,230 +2889,112 @@ const MINTED: ProjectCard[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// THE FOUNDERS
+// NAMES
 //
-// One card each, and not five. In the first version a founder was a ladder —
-// the same person at common, rare, epic, legendary and mythic — which is how a
-// project's moments work but not how a person does. Sixty founder cards for
-// twelve people is fifty-eight cards of the same face.
+// The people who are on cards because of who they are, not because of what they
+// founded.
 //
-// An influencer must carry an aura, and a founder's aura is their own sector.
-// That is the whole of what a founder was in the old engine anyway: a standing
-// bonus to your side for as long as they were at the table.
+// There were nineteen founder cards here, one for every project family, called
+// "The Clove Founder" and "The Ferro Founder" because the first version never
+// wrote their names down. They are gone. The rule that made them — every project
+// gets a founder — would have produced thirty-four of them against thirteen
+// other people, and three quarters of the people in this game would have been
+// somebody's founder. That is not what a chain looks like from the inside.
 //
-// ── ON THE NAMES ────────────────────────────────────────────────────────────
-// These are called "The <project> Founder" because the first version never wrote
-// their names down — the cards were ids like COC_Clove_Founder_M1 and nothing
-// else. The maker knows who each of them is; an outsider inventing a handle for
-// a real person is the one thing that is worse than a placeholder. Renaming one
-// is two fields and no mechanics.
+// What is left is people who exist, named by the maker. A founder can be one of
+// them — most of these are — but founding something is no longer what puts you
+// on a card. Alex is the case that makes it plain: he founded Wolfswap and now
+// owns Ebisusbay, so "the founder of X" was never going to hold him.
+//
+// ── NO FLAVOUR YET, ON PURPOSE ──────────────────────────────────────────────
+// The nineteen cards these replace carried lines like "Three years of the same
+// avatar and the same two-line updates." That was fine while nobody was named.
+// It is not fine above a real person's name, and this repository has the rule
+// already: sourced or it is not written. Nobody here can check whether Haten
+// kept the same avatar for three years.
+//
+// So these ship with a name, a rarity and an aura, and `flavour` is the empty
+// string until the maker writes it. Empty rather than absent because the field is
+// required on every card in the set, and that requirement is worth keeping: a gap
+// somebody can see beats an invented line that reads as true.
+//
+// ── THE SIZES ───────────────────────────────────────────────────────────────
+// Read off the cards they replace, so nothing moved that did not have to: a rare
+// aura pumps 7-8K, an epic 12-16K, a legendary 20-22K, a mythic 38K.
 // ---------------------------------------------------------------------------
 
-const FOUNDERS: PersonCard[] = [
+const NAMES: PersonCard[] = [
   {
-    id: "founder-clove",
+    // The chain's own name, and the biggest one in the set.
+    id: "kris",
     type: "person",
-    name: "The Clove Founder",
-    ticker: "CLOVEDEV",
-    rarity: "epic",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 12_000 },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
-    flavour: "Handed the keys to the chat and never asked for them back.",
+    name: "Kris",
+    ticker: "KRIS",
+    rarity: "mythic",
+    aura: { kind: "pumpSector", sector: "infra", bonus: 38_000 },
+    flavour: "",
   },
   {
-    id: "founder-crooks",
+    id: "ryan-wyatt",
     type: "person",
-    name: "The Crooks Founder",
-    ticker: "CFDEV",
+    name: "Ryan Wyatt",
+    ticker: "RYAN",
     rarity: "legendary",
-    aura: { kind: "pumpSector", sector: "defi", bonus: 22_000 },
-    flavour: "Answered every accusation with a commit and nothing else.",
+    aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
+    flavour: "",
   },
   {
-    id: "founder-wolfswap",
+    // Founded Wolfswap, which is defi, and owns Ebisusbay, which is infra. He
+    // pumps defi: it is the thing he built rather than the thing he bought, and
+    // defi is the sector this set has least aura for.
+    id: "alex",
     type: "person",
-    name: "The Wolfswap Founder",
-    ticker: "WOLFDEV",
+    name: "Alex",
+    ticker: "ALEX",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "defi", bonus: 20_000 },
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
-    flavour: "Shipped the fork on a Sunday and told the other team on Monday.",
+    flavour: "",
   },
   {
-    id: "founder-robots",
+    id: "haten",
     type: "person",
-    name: "The Reckless Robots Founder",
-    ticker: "RRDEV",
+    name: "Haten",
+    ticker: "HATEN",
+    rarity: "legendary",
+    aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
+    flavour: "",
+  },
+  {
+    id: "schwiz",
+    type: "person",
+    name: "Schwiz",
+    ticker: "SCHWIZ",
     rarity: "epic",
-    aura: { kind: "pumpSector", sector: "nft", bonus: 15_000 },
-    flavour: "Builds the thing, then finds out what it does. In that order.",
+    aura: { kind: "pumpSector", sector: "infra", bonus: 14_000 },
+    flavour: "",
   },
   {
-    id: "founder-howlers",
+    id: "jkcrypto",
     type: "person",
-    name: "The Howlers Founder",
-    ticker: "HOWLDEV",
-    rarity: "epic",
-    aura: { kind: "pumpSector", sector: "nft", bonus: 16_000 },
-    flavour: "Posts at three in the morning and the whole pack is awake for it.",
-  },
-  {
-    id: "founder-ffs",
-    type: "person",
-    name: "The FFS Founder",
-    ticker: "FFSDEV",
-    rarity: "rare",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 7_000 },
-    effect: { kind: "directMC", target: "self", mc: -8_000 },
-    flavour: "Funded four other projects and never once mentioned his own.",
-  },
-  {
-    id: "founder-monsters",
-    type: "person",
-    name: "The Crazzzy Monsters Founder",
-    ticker: "CRZYDEV",
+    name: "JkcryptoXYZ",
+    ticker: "JKC",
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "defi", bonus: 8_000 },
-    // The enemy board and not the whole table. Crazzzy Monsters projects hurt
-    // everybody and that is their character, but an influencer that damages the
-    // side that played it is a drawback nobody can see coming — engine/types.ts
-    // says drawbacks belong in the numbers, not in a hidden rule. The preview
-    // caught this: it painted the founder's own board red, correctly.
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
-    flavour: "Drew all ten thousand by hand and has the wrist to prove it.",
+    flavour: "",
   },
   {
-    id: "founder-nova",
+    // The only one here with no project behind him, and the first card in this
+    // set whose aura names no sector at all. He is on a card for knowing what is
+    // going on, so he draws: one more card every turn, whatever you are holding.
+    id: "artik",
     type: "person",
-    name: "The Nova Founder",
-    ticker: "NOVADEV",
+    name: "Artik",
+    ticker: "ARTIK",
     rarity: "epic",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 13_000 },
-    effect: { kind: "drawCards", amount: 1 },
-    flavour: "Shipped six things nobody asked for. Four of them are load-bearing.",
-  },
-  {
-    id: "founder-cr00ts",
-    type: "person",
-    name: "The Cr00ts Founder",
-    ticker: "CR00DEV",
-    rarity: "epic",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 14_000 },
-    effect: { kind: "stealMC", percentage: 7 },
-    flavour: "Has never announced anything. The volume announces it for him.",
-  },
-  {
-    id: "founder-obsidian",
-    type: "person",
-    name: "The Obsidian Finance Founder",
-    ticker: "OBSDEV",
-    rarity: "legendary",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
-    flavour: "Three years of the same avatar and the same two-line updates.",
-  },
-  {
-    id: "founder-caw",
-    type: "person",
-    name: "The CAW777 Founder",
-    ticker: "CAWDEV",
-    rarity: "rare",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 7_000 },
-    effect: { kind: "directMC", target: "self", mc: 77_000 },
-    flavour: "Will not ship anything on a day whose digits do not add up.",
-  },
-  {
-    id: "founder-dak",
-    type: "person",
-    name: "The DAK Founder",
-    ticker: "DAKDEV",
-    rarity: "mythic",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 38_000 },
-    effect: { kind: "rug", target: "enemyProject" },
-    flavour: "Swept a rival floor to zero and posted the receipt, nothing else.",
-  },
-  {
-    id: "founder-vvs",
-    type: "person",
-    name: "The VVS Founder",
-    ticker: "VVSDEV",
-    rarity: "legendary",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
-    effect: { kind: "extraBudget", target: "self", mc: 60_000 },
-    flavour: "Shipped the simplest possible thing and never complicated it.",
-  },
-  {
-    id: "founder-mmf",
-    type: "person",
-    name: "The Mad Meerkat Founder",
-    ticker: "MMFDEV",
-    rarity: "epic",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 14_000 },
-    effect: { kind: "stealMC", percentage: 8 },
-    flavour: "Announces everything at once and ships most of it.",
-  },
-  {
-    id: "founder-tectonic",
-    type: "person",
-    name: "The Tectonic Founder",
-    ticker: "TONICDEV",
-    rarity: "epic",
-    aura: { kind: "pumpSector", sector: "defi", bonus: 15_000 },
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
-    flavour: "Talks about risk parameters at parties. Nobody has ever minded.",
-  },
-  {
-    id: "founder-ferro",
-    type: "person",
-    name: "The Ferro Founder",
-    ticker: "FERDEV",
-    rarity: "rare",
-    aura: { kind: "pumpSector", sector: "defi", bonus: 7_000 },
-    flavour: "Has never posted a chart. There would be nothing on it.",
-  },
-  {
-    id: "founder-lions",
-    type: "person",
-    name: "The Loaded Lions Founder",
-    ticker: "LIONDEV",
-    rarity: "legendary",
-    aura: { kind: "pumpSector", sector: "nft", bonus: 22_000 },
-    flavour: "Built the room first and sold the tickets afterwards.",
-  },
-  {
-    id: "founder-chimps",
-    type: "person",
-    name: "The Chimp Club Founder",
-    ticker: "CHIMPDEV",
-    rarity: "epic",
-    aura: { kind: "pumpSector", sector: "nft", bonus: 13_000 },
-    effect: { kind: "drawCards", amount: 2 },
-    flavour: "Knows everybody, which on this chain is the only real moat.",
-  },
-  {
-    id: "founder-minted",
-    type: "person",
-    name: "The Minted Founder",
-    ticker: "MINTEDDEV",
-    rarity: "rare",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 8_000 },
-    effect: { kind: "cancel", target: "opponent", count: 1 },
-    flavour: "Decides what the front page says and never says who asked.",
+    aura: { kind: "drawEachTurn", cards: 1 },
+    flavour: "",
   },
 ];
-
-// ---------------------------------------------------------------------------
-// THE VOICES
-//
-// Five people the first version already named, kept under the names it gave
-// them. Where the founders are a placeholder, these are not: these cards shipped
-// with these names on them and people hold them.
-//
-// The two the old set filed under "Community" are here too. Community was a
-// separate card type over there because a founder had its own deck slot; under
-// this engine there is no slot to protect, and a person who pumps your side by
-// being present is an influencer whatever the old file called them.
-// ---------------------------------------------------------------------------
 
 const VOICES: PersonCard[] = [
   {
@@ -4388,7 +4270,7 @@ export const CARDS: readonly Card[] = [
   ...LIONS,
   ...CHIMPS,
   ...MINTED,
-  ...FOUNDERS,
+  ...NAMES,
   ...VOICES,
   ...ARCHETYPES,
   ...TOOLS,
@@ -4399,8 +4281,8 @@ export const CARDS: readonly Card[] = [
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
   common: 60,
-  rare: 67,
-  epic: 62,
-  legendary: 36,
+  rare: 63,
+  epic: 56,
+  legendary: 34,
   mythic: 21,
 } as const;
