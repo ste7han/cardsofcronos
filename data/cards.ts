@@ -2196,7 +2196,7 @@ const TECTONIC: ProjectCard[] = [
     holders: 4,
     // somebody's collateral goes first when the whole market moves
     effect: { kind: "scaleMC", target: "self", percentage: 11 },
-    flavour: "Somebody's collateral goes first when the whole market moves.",
+    flavour: "It came out of the Cronos Labs incubator in December 2021.",
   },
   {
     id: "tectonic-iv",
@@ -2212,7 +2212,7 @@ const TECTONIC: ProjectCard[] = [
     holders: 5,
     // top it up before it tops you up — that is the whole discipline
     effect: { kind: "directMC", target: "self", mc: 80_000 },
-    flavour: "Top it up before it tops you up. That is the whole discipline.",
+    flavour: "The first place on this chain where you could borrow at all.",
   },
   {
     id: "tectonic-v",
@@ -2230,7 +2230,7 @@ const TECTONIC: ProjectCard[] = [
     standing: { kind: "directMC", target: "self", mc: 74_000 },
     // everything on the chain ended up posted here as collateral
     effect: { kind: "directMC", target: "self", mc: 36_000, per: "holders" },
-    flavour: "Everything on the chain ended up posted here as collateral.",
+    flavour: "A cascade does not ask which position it liked best.",
   },
   {
     id: "tectonic-vi",
@@ -2248,7 +2248,7 @@ const TECTONIC: ProjectCard[] = [
     leverage: 24,
     // a cascade does not ask which position it liked best
     effect: { kind: "mcPerPositionGone", mc: 34_000 },
-    flavour: "A cascade does not ask which position it liked best.",
+    flavour: "Its own token was collateral, at twenty cents on the dollar.",
   },
   {
     id: "tectonic-vii",
@@ -2268,7 +2268,7 @@ const TECTONIC: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "defi", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 180_000 },
     },
-    flavour: "The biggest book on the chain, and the quietest one about it.",
+    flavour: "Twenty minutes of a thin market, and TONIC was worth a hundred times more.",
   },
   {
     id: "tectonic-viii",
@@ -2286,7 +2286,7 @@ const TECTONIC: ProjectCard[] = [
     restriction: { kind: "banTakeProfit" },
     // solvent through every drawdown anybody on this chain remembers
     effect: { kind: "scaleMC", target: "self", percentage: 30 },
-    flavour: "Solvent through every drawdown anybody on this chain remembers.",
+    flavour: "The chain rewound almost eleven thousand blocks to undo one transaction.",
   },
 ];
 
@@ -4510,7 +4510,7 @@ const CRO: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "The chain itself. Everything on it moves together, up or down.",
+    flavour: "The same validators once stopped the chain and erased two hours of it.",
   },
 ];
 // ---------------------------------------------------------------------------

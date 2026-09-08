@@ -215,6 +215,47 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Tectonic carried the worst line in the set
+
+Its mythic said "Solvent through every drawdown anybody on this chain remembers."
+Nine days before it was read, Tectonic was drained of $120.4 million and Cronos
+halted and rewound the chain to undo it.
+
+30 August 2026. At 12:38:56 UTC an attacker began lifting the price of TONIC —
+Tectonic's own governance token, with roughly $1.34m of liquidity and about $11,000
+of daily volume — around 100x in twenty minutes. Tectonic accepted TONIC as
+collateral at a 20% collateral factor. At 12:49:39 the attacker borrowed about
+$120.4m across nine markets in a single transaction: USDC, USDT, wrapped BTC,
+wrapped ETH. At 14:32:47 validators halted the network at block 90,907,150 and
+restored it to 90,896,188, erasing 10,961 blocks and 1 hour 54 minutes. That
+reversed roughly $111.2m; about $9.19m had already left the chain. Blocks resumed at
+23:49:01.
+
+Ticker `TONIC` and sector `defi` were both already right.
+
+**Putting it on the cards was the maker's call and was put to them as one.** The
+argument for: this set's whole discipline is sourced or it is not written, and
+omitting the largest exploit in the chain's history from eight cards about a lending
+protocol is the same failure as an invented number, arriving by omission. The
+argument against: it is nine days old, it is still unfolding, and people hold TONIC.
+The lines describe a mechanism and accuse nobody, and every figure on them — the
+date, the 20%, the 10,961 blocks — is permanent.
+
+Three of the eight survived, all three claiming nothing: what supplying and
+borrowing feels like, what a health factor is, what a cascade does.
+
+### And it changed CRO's mythic
+
+A chain that erases 10,961 blocks to undo one transaction has said something
+permanent about itself, so a line went to CRO as well. A family is eight cards, so
+one had to go: "The chain itself. Everything on it moves together, up or down" — the
+only one of CRO's eight with nothing specific behind it.
+
+What replaced it closes an arc the family already had. Card V says the validators
+who carried the vote to re-mint seventy billion CRO were the ones who called it.
+Card VIII now says "The same validators once stopped the chain and erased two hours
+of it." Two facts, four years apart, about the same power being used twice.
+
 ### VVS had the only ticker in nineteen that was already right
 
 Six families walked, six tickers corrected, and then VVS. `VVS` is `VVS`.
