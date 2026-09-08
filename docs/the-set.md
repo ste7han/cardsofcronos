@@ -53,8 +53,8 @@ numbered I to VIII.
 | sector | families |
 |---|---|
 | meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
+| defi | Crooks Finance · Wolfswap · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
 | infra | Nova · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
@@ -180,7 +180,7 @@ look correct.
 
 ### The sector spread
 
-meme 11, nft 9, defi 8, infra 7 — thirty-five families and 280 project cards.
+meme 11, nft 10, defi 7, infra 7 — thirty-five families and 280 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
@@ -214,6 +214,33 @@ Reading all 152 lines at once found four things rather than one:
 And two families nobody can identify: **DAK** and **Nova**. Neither is findable by
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
+
+### Crazzzy Monsters is not defi, and its ticker was neither of its symbols
+
+It moved from meme to defi on 2026-09-08, with a note that the call was uncertain.
+Looking it up settles it the other way: CM OG is 10,000 NFTs in twenty families,
+Arcane Creatures is 10,000 more drawn from horror and sci-fi, there is an RPG, and
+the DeFi layer is in testnet. Under this set's own rule — what it is best known for —
+that is `nft`. The same call as CRO Army. Sectors are now meme 11, nft 10, defi 7,
+infra 7.
+
+**Ticker `CRZY` to `CRY`**, the seventh correction. On-chain the NFT's symbol is
+`CMOG`; the ecosystem token is $CRY. Every other family with a token of its own
+carries the token — PACK, MTD, TONIC, FER, OBS — so this one does too.
+
+Three lines kept, all three claiming nothing: the three z's, ten thousand of them
+each somebody's favourite, and it ate the thing that was eating everything else.
+Removed: "The first holder to complain got a monster named after him", "Both floors
+halved in a night", and "Traits nobody drew started showing up in the metadata" —
+which does not merely invent, it implies the contract misbehaved.
+
+**And something uncomfortable that is deliberately not on a card.** The project's own
+site says it is transitioning from Cronos to ApeChain, with new collections and
+products launching there. One of the twelve factions this game started with is
+leaving the chain the game is about. It is not on a card because a move in progress
+can change, and card VII says only that Spectral runs across three chains, which is
+true either way. It is written here because the maker should know, and because if the
+move completes, this family needs revisiting.
 
 ### Cronos Chimp Club stored its metadata somewhere that lasts
 
