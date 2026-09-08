@@ -52,9 +52,9 @@ numbered I to VIII.
 
 | sector | families |
 |---|---|
-| meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz |
+| meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz · Corgi |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang |
-| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · Corgi · Puush · CRO Army |
+| defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance · Puush · CRO Army |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
@@ -76,6 +76,19 @@ CAW; it is `caw777` with `CAW777` on it now, which is its own name either way.
 
 CRO Army has the ticker `ARMY` for the same reason: the chain itself took `CRO`,
 and two projects on one ticker is the lesson `validateSet` was written for.
+
+Corgi went from defi to meme on 2026-09-08, once looking it up said what it is: a
+community token with a dog on it that happens to stake and happens to have been
+the first thing on this chain to use AI. Staking does not make a project defi —
+under this set's own rule the sector is what a project is best known for, and
+nobody knows CorgiAI for its yield.
+
+### VVS keeps turning up
+
+Fulcrom, Cronus and CorgiAI all launched through VVS Finance, and that is not a
+coincidence about three projects — it is what VVS was on this chain. Whatever a
+project's own cards end up saying, the ones that started there say so, and it
+makes VVS read like the front door its own card already calls it.
 
 ### None of the sixteen has flavour or an effect
 
@@ -99,7 +112,7 @@ this states a fact. Worth a pass by somebody who knows.
 
 ### The sector spread
 
-meme 9, nft 7, defi 11, infra 8 — thirty-five families and 280 project cards.
+meme 10, nft 7, defi 10, infra 8 — thirty-five families and 280 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
