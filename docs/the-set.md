@@ -52,7 +52,7 @@ numbered I to VIII.
 
 | sector | families |
 |---|---|
-| meme | Clove · FFS · CAW777 · DAK · CAW · Mery · Capybara Nation · Loaf · Ballz · Corgi · Puush |
+| meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz · Corgi · Puush |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Ryoshi · Bob's Adventures · Sloth Gang · Boomer Squad · CRO Army |
 | defi | Crooks Finance · Wolfswap · Crazzzy Monsters · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
 | infra | Nova · Cr00ts · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
@@ -108,25 +108,39 @@ coincidence about three projects — it is what VVS was on this chain. Whatever 
 project's own cards end up saying, the ones that started there say so, and it
 makes VVS read like the front door its own card already calls it.
 
-### None of the sixteen has flavour or an effect
+### The sixteen went in without flavour, and are getting it back one at a time
 
 The line on a project card says something about a real project on this chain, and
-nobody writing the file knows what Ballz or Puush or Loaf is known for. The same
+nobody writing the file knew what Ballz or Puush or Loaf was known for. The same
 rule as the people: sourced or it is not written.
 
-`validateSet` still refuses a card with no flavour. The sixteen are listed by
-family name in `AWAITING_FLAVOUR_FAMILIES` in `engine/validation.ts` — by family
+`validateSet` still refuses a card with no flavour. The families still waiting are
+listed by name in `AWAITING_FLAVOUR_FAMILIES` in `engine/validation.ts` — by family
 rather than by card, because 120 ids would be a wall nobody reads and the point of
-the list is that somebody reads it. A sixteenth family still fails.
+the list is that somebody reads it. A family not on the list still fails.
+
+**Thirteen of the sixteen are done.** CRO, Ebisusbay, Fulcrom, Single Finance,
+Cronus, Corgi, Puush, CRO Army, Ryoshi, Bob's Adventures, Boomer Squad, CAW and
+Mistery, one family per pass, every claim looked up and read back before it was
+written. Three are left: Capybara Nation, Loaf, Ballz — and Sloth Gang, which is
+stuck on which collection it is.
+
+The pass keeps finding things the list had wrong, which is the argument for doing
+it this way rather than in one sweep. Three sectors moved. Two tickers were wrong.
+One family had the wrong name. And searching for CAW returned a different CAW.
 
 Effects are the pass after this one. A project with a launch and a pump is not an
 empty card: it opens a position and it pays every turn.
 
-### The tickers are the one guess in there
+### The tickers were the one guess in there, and two of them were wrong
 
-`CAPY`, `FUL`, `BOB`, `EBISUS`, `ARMY` and the rest are the name shortened, not the
-project's real ticker looked up. Everything else on these cards is structure;
-this states a fact. Worth a pass by somebody who knows.
+They went in as the name shortened rather than the project's real ticker looked
+up. Everything else on those cards is structure; a ticker states a fact.
+
+The flavour pass looks them up on the way past, and so far: CRO Army is `CA`, not
+the `ARMY` that was guessed, and Capybara Nation is `BARA`, not `CAPY`. Still
+unchecked, because their families are still waiting for flavour: `LOAF`, `BALLZ`,
+`SLOTH`.
 
 ### The sector spread
 

@@ -55,7 +55,9 @@ const FAMILIES: Family[] = [
   // "Mistery on CRO" is its name; Mery is its NFT collection, and the key and
   // ticker follow the collection because the ticker does.
   { key: "mery", name: "Mistery", ticker: "MERY", sector: "meme" },
-  { key: "capybara", name: "Capybara Nation", ticker: "CAPY", sector: "meme" },
+  // BARA, not the CAPY this file guessed at. It stays a meme rather than a game:
+  // a capybara tap-game is the joke itself, which is what the sector asks.
+  { key: "capybara", name: "Capybara Nation", ticker: "BARA", sector: "meme" },
   { key: "loaf", name: "Loaf", ticker: "LOAF", sector: "meme" },
   { key: "ballz", name: "Ballz", ticker: "BALLZ", sector: "meme" },
 
