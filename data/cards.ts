@@ -3491,7 +3491,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Pick a faction. That is the whole of the onboarding.",
   },
   {
     id: "ryoshi-ii",
@@ -3505,7 +3505,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Land, and somebody who wants your land.",
   },
   {
     id: "ryoshi-iii",
@@ -3519,7 +3519,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "A bank, a barracks and an alliance hall, all inside a marketplace.",
   },
   {
     id: "ryoshi-iv",
@@ -3533,7 +3533,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Crafting, because a war needs something to be made of.",
   },
   {
     id: "ryoshi-v",
@@ -3547,7 +3547,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "The factions fight over the market itself, not over a map.",
   },
   {
     id: "ryoshi-vi",
@@ -3561,7 +3561,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "An alliance is a group chat with a treasury attached.",
   },
   {
     id: "ryoshi-vii",
@@ -3575,7 +3575,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "It grew out of a shop and then outgrew the shop.",
   },
   {
     id: "ryoshi-viii",
@@ -3589,7 +3589,7 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "Whoever holds the territory holds what moves across it.",
   },
 ];
 
@@ -4453,7 +4453,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "A marketplace that got bored and built a game on top of itself.",
+    flavour: "It kept a swap window open beside the listings, since everyone was already here.",
   },
   {
     id: "ebisusbay-v",
@@ -4467,7 +4467,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "Factions, territory and a treasury — none of which a marketplace needs.",
+    flavour: "A token of its own, so the venue paid you for using it.",
   },
   {
     id: "ebisusbay-vi",
@@ -4481,7 +4481,7 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "Half the people logged in are not there to buy anything.",
+    flavour: "Drops, launches, and money raised for things that were not its own.",
   },
   {
     id: "ebisusbay-vii",
