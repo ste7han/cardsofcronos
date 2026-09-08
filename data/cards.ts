@@ -3836,7 +3836,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "A bot in a chat window, and that was the whole product.",
   },
   {
     id: "cronus-ii",
@@ -3850,7 +3850,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Buy, sell, or set a price and go to bed.",
   },
   {
     id: "cronus-iii",
@@ -3864,7 +3864,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "It never had a venue of its own. Everything went through VVS.",
   },
   {
     id: "cronus-iv",
@@ -3878,7 +3878,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Dollar-cost averaging, automated, for people who kept forgetting.",
   },
   {
     id: "cronus-v",
@@ -3892,7 +3892,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Every fee it takes goes back to whoever is holding it.",
   },
   {
     id: "cronus-vi",
@@ -3906,7 +3906,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "A trading desk that fits inside a message.",
   },
   {
     id: "cronus-vii",
@@ -3920,7 +3920,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "Nobody opened a website to use it, and that was the point.",
   },
   {
     id: "cronus-viii",
@@ -3934,7 +3934,7 @@ const CRONUS: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "The whole chain, reachable from a chat you were already in.",
   },
 ];
 
