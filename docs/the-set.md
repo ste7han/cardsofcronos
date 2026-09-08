@@ -70,6 +70,12 @@ Wolfswap from dex to defi because it is a swap aggregator and not a venue,
 Obsidian Finance from defi to dex, Crazzzy Monsters from meme to defi. The dex
 three then became infra with the merge.
 
+Obsidian looked like an inconsistency in that and is not. Its own posts call it
+"Cronos' first full hybrid DEX aggregator", aggregating liquidity from H2 Finance
+and Ebisu's Bay — which is the exact description that moved Wolfswap out of dex.
+Raised, and answered by the maker: Obsidian runs its own DEX now. A venue, so
+infra. The rule did not bend; the project changed.
+
 CAW777 had to give up its name to make room. It held both the project key `caw`
 and the ticker `CAW`, and one of the new families is a project actually called
 CAW; it is `caw777` with `CAW777` on it now, which is its own name either way.
@@ -223,7 +229,15 @@ infra) · Alex (legendary, defi) · Haten (legendary, infra) · Schwiz (epic, in
 · JkcryptoXYZ (rare, defi) · Artik (epic, draws a card every turn).
 
 Alex founded Wolfswap and now owns Ebisusbay, so he is the case the old rule
-could never have held. He pumps defi — the thing he built rather than the thing
+could never have held. That claim was checked and nearly did not survive: the
+acquisition was announced on 1 April 2025, in a post that read like a joke —
+"NFTs should bark back", #Web3PowerMoves. It is real. Wolfswap's own 2026 recap
+says "We acquired Ebisu's Bay", the FRTN-to-MOON conversion happened, and the
+marketplace was rebuilt from scratch and relaunched on 26 June.
+
+Which means two families in this set are not independent of each other: Wolfswap
+owns Ebisusbay. That is nothing yet, and it is something once effects are being
+written. He pumps defi — the thing he built rather than the thing
 he bought, and the sector this set has least aura for. Artik has no project at
 all and carries the first aura in the set that names no sector: he is here for
 knowing what is going on, so he draws.
@@ -235,15 +249,32 @@ shipped under these names and people hold them.
 Floor Sweeper · The Whitelist Hunter · The Validator · The Airdrop Farmer · The
 Node Runner · The Mint Bot.
 
-### None of the seven has a flavour line, on purpose
+### Four of the seven have their line, and three are stuck
 
 The cards they replace carried invented lines — "Three years of the same avatar
 and the same two-line updates" — which was fine above a placeholder and is not
 fine above a real name. `CLAUDE.md` has the rule: sourced or it is not written.
+A project card that overreaches is wrong about a project. A person card that
+overreaches is wrong about somebody who can read it, so the bar is higher here
+and the line is one sentence of at most 85 characters.
+
+**Written:** Kris, Ryan Wyatt, Alex, Schwiz. All four are on the public record.
+
+**Still empty:** Haten, JkcryptoXYZ, Artik. Nothing found ties Haten to Obsidian
+Finance, nothing found says JkcryptoXYZ founded Crazzzy Monsters, and "Artik" is
+too common a word to search on without a handle. The maker named all three, so
+all three are very likely true — but likely is not checked, and a card is minted
+once. Waiting on an X handle each.
+
+Two things were left off on purpose. Kris's card does not mention the 70% burn or
+its reversal: that story is already on the CRO card, where it belongs as a fact
+about a token, and on a person's card it reads as an accusation — with the vote
+manipulation part being an allegation rather than a finding. And no card carries a
+follower count or a net worth, for the same reason no project card carries a price.
 
 `validateSet` refuses a card with no flavour, and that guard is untouched. The
-seven are listed by id in `AWAITING_FLAVOUR` in `engine/validation.ts`, so an
-eighth card without a line still fails. The list is meant to shrink to nothing.
+three are listed by id in `AWAITING_FLAVOUR` in `engine/validation.ts`, so a
+fourth card without a line still fails. The list is meant to shrink to nothing.
 
 ### What the removal cost, and what gave it back
 

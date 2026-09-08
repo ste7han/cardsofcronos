@@ -4815,7 +4815,7 @@ const NAMES: PersonCard[] = [
     ticker: "KRIS",
     rarity: "mythic",
     aura: { kind: "pumpSector", sector: "infra", bonus: 38_000 },
-    flavour: "",
+    flavour: "In 2016 it was a card you topped up with bitcoin. Then it was a chain.",
   },
   {
     id: "ryan-wyatt",
@@ -4824,7 +4824,7 @@ const NAMES: PersonCard[] = [
     ticker: "RYAN",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
-    flavour: "",
+    flavour: "Seven years making YouTube Gaming, then three chains. This is the third.",
   },
   {
     // Founded Wolfswap, which is defi, and owns Ebisusbay, which is infra. He
@@ -4836,7 +4836,7 @@ const NAMES: PersonCard[] = [
     ticker: "ALEX",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "defi", bonus: 20_000 },
-    flavour: "",
+    flavour: "He built Wolfswap. Then Wolfswap bought Ebisu's Bay.",
   },
   {
     id: "haten",
@@ -4854,7 +4854,7 @@ const NAMES: PersonCard[] = [
     ticker: "SCHWIZ",
     rarity: "epic",
     aura: { kind: "pumpSector", sector: "infra", bonus: 14_000 },
-    flavour: "",
+    flavour: "He opened this chain's first NFT marketplace, in November 2021.",
   },
   {
     id: "jkcrypto",
