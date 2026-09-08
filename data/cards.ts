@@ -3261,7 +3261,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "A cat, folded up, in the shape of a loaf of bread.",
   },
   {
     id: "loaf-ii",
@@ -3275,7 +3275,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Forty percent to the presale, forty to the pool, fifteen to the fire.",
   },
   {
     id: "loaf-iii",
@@ -3289,7 +3289,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Five percent held back for whoever turned up.",
   },
   {
     id: "loaf-iv",
@@ -3303,7 +3303,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "The more people arrive, the more of it burns. That was written down first.",
   },
   {
     id: "loaf-v",
@@ -3317,7 +3317,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Toastoff. You click, and the bread earns.",
   },
   {
     id: "loaf-vi",
@@ -3331,7 +3331,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "The chain's own app listed it, which is not nothing for a cat.",
   },
   {
     id: "loaf-vii",
@@ -3345,7 +3345,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "Its own website calls it useless. Nothing here is more honest than that.",
   },
   {
     id: "loaf-viii",
@@ -3359,7 +3359,7 @@ const LOAF: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "Every cat on earth does this and none of them were taught. That is the asset.",
   },
 ];
 
