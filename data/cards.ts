@@ -1878,7 +1878,7 @@ const VVS: ProjectCard[] = [
     holders: 3,
     // very, very simple, and volume begets volume from there
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
-    flavour: "Very, very simple. That was the entire pitch and it worked.",
+    flavour: "Very Very Simple DeFi for Everyone. That was the whole pitch.",
   },
   {
     id: "vvs-ii",
@@ -1894,7 +1894,7 @@ const VVS: ProjectCard[] = [
     holders: 3,
     // emissions on everything; for a while the yield was the product
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
-    flavour: "Emissions on everything. For a while the yield was the product.",
+    flavour: "Bling Swap, Crystal Farms, Glitter Mine. Everything is a jewel.",
   },
   {
     id: "vvs-iii",
@@ -1910,7 +1910,7 @@ const VVS: ProjectCard[] = [
     holders: 3,
     // every pair anybody wanted, and a few nobody did
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 12_000 } },
-    flavour: "Every pair anybody wanted, and a few nobody did.",
+    flavour: "VVS is a diamond grade. Almost flawless, and you need a loupe.",
   },
   {
     id: "vvs-iv",
@@ -1928,7 +1928,7 @@ const VVS: ProjectCard[] = [
     payoff: { when: { kind: "turnAtMost", turn: 4 }, effect: { kind: "extraBudget", target: "self", mc: 60_000 } },
     // the fees were the moat; nobody undercut it for two years
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
-    flavour: "The fees were the moat. Nobody undercut it for two years.",
+    flavour: "Half the token went to the community, and that was written in first.",
   },
   {
     id: "vvs-v",
@@ -1943,7 +1943,7 @@ const VVS: ProjectCard[] = [
     pumpMC: 24_000,
     holders: 4,
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 14_000, defi: 8_000 } },
-    flavour: "If it did not route through here it probably did not route.",
+    flavour: "November 2021, and within months it was where the chain traded.",
   },
   {
     id: "vvs-vi",
@@ -1976,7 +1976,7 @@ const VVS: ProjectCard[] = [
     // the front door of the chain, whether or not it meant to be
     discount: 32,
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 23_000, defi: 12_000 } },
-    flavour: "The front door of the chain, whether or not it meant to be.",
+    flavour: "Project after project launched its token here first.",
   },
   {
     id: "vvs-viii",
@@ -1992,7 +1992,7 @@ const VVS: ProjectCard[] = [
     holders: 6,
     // deep enough that size stopped mattering
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 50 },
-    flavour: "Deep enough that size stopped mattering. That is rare anywhere.",
+    flavour: "The front door of the chain, whether or not it meant to be.",
   },
 ];
 

@@ -215,6 +215,32 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### VVS had the only ticker in nineteen that was already right
+
+Six families walked, six tickers corrected, and then VVS. `VVS` is `VVS`.
+
+Its old card had the name half right: "Very, very simple" is the pitch, and the
+full one is "Very Very Simple DeFi for Everyone". Launched on Cronos in November
+2021. Half the token went to the community by design — 30% to farms and mines,
+2.5% to traders and referrers, 2.5% to market makers, 15% to a community wallet —
+against 23% to the team.
+
+**The second meaning of the name was nowhere on the cards.** VVS is a diamond
+clarity grade: Very Very Slightly included, near-flawless, needing a loupe to see
+anything in it. That is why the products are Bling Swap, Crystal Farms, Glitter
+Mine and Gem Mining. The whole product line is one sustained jeweller's joke, and a
+grading scale does not change.
+
+"The front door of the chain, whether or not it meant to be" moves from legendary
+to mythic, as Minted's aphorism did. This walk has confirmed it five times over —
+Fulcrom, Cronus, CorgiAI and Loaf traded there, Minted launched its token there —
+so it has earned the family's most expensive card.
+
+Left off: the $1.4 billion TVL peak reached within three months. Historical and
+tempting, and still a record that can be broken, at which point the card is wrong.
+The same call as Capybara Nation's all-time high. Removed outright: "The fees were
+the moat. Nobody undercut it for two years", where the two years came from nowhere.
+
 ### Minted, and the one line that had to go
 
 "Royalties were optional and it kept collecting them anyway" was an accusation
