@@ -4066,7 +4066,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Yield without a view on the price. That is the whole idea.",
   },
   {
     id: "single-ii",
@@ -4080,7 +4080,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "One click, and the position stops caring which way the chart goes.",
   },
   {
     id: "single-iii",
@@ -4094,7 +4094,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "Leveraged farming, with a bot watching the part that can end you.",
   },
   {
     id: "single-iv",
@@ -4108,7 +4108,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "The first here to lend against a farm, and the first to guard what it lent.",
   },
   {
     id: "single-v",
@@ -4122,7 +4122,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Paid for being present rather than for being right.",
   },
   {
     id: "single-vi",
@@ -4136,7 +4136,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "The rebalance bot works nights so nobody has to.",
   },
   {
     id: "single-vii",
@@ -4150,7 +4150,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "It went to other chains and the strategy travelled unchanged.",
   },
   {
     id: "single-viii",
@@ -4164,7 +4164,7 @@ const SINGLE: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "Neither direction is your problem any more, and that took some doing.",
   },
 ];
 
