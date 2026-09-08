@@ -4596,7 +4596,7 @@ const CRO: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "A dollar, once. Everybody still here can tell you the exact number.",
+    flavour: "Trump Media promised six and a half billion dollars of it.",
   },
   {
     id: "cro-vii",
@@ -4610,7 +4610,7 @@ const CRO: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "Nothing moves on this chain without it, which is a floor and a ceiling at once.",
+    flavour: "A year later Trump Media walked away, and it fell eight percent by morning.",
   },
   {
     id: "cro-viii",
