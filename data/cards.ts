@@ -2476,7 +2476,7 @@ const LIONS: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "nft", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 40_000 },
     },
-    flavour: "A pride is a group noun. The collection took that literally.",
+    flavour: "November 2021, two hundred dollars a pack, five packs each.",
   },
   {
     id: "lions-iii",
@@ -2492,7 +2492,7 @@ const LIONS: ProjectCard[] = [
     holders: 4,
     // holding one got you into rooms, and that was most of the point
     effect: { kind: "scaleMC", target: "self", percentage: 11 },
-    flavour: "Holding one got you into rooms. That was most of the point.",
+    flavour: "Every one of them is a membership. They called it the Mane Net.",
   },
   {
     id: "lions-iv",
@@ -2510,7 +2510,7 @@ const LIONS: ProjectCard[] = [
     payoff: { when: { kind: "bankedAtMost", count: 1 }, effect: { kind: "directMC", target: "self", mc: 65_000 } },
     // the floor moved slowly in both directions, which suited everybody
     effect: { kind: "extraBudget", target: "self", mc: 85_000 },
-    flavour: "The floor moved slowly in both directions, which suited everybody.",
+    flavour: "It was minted on the other chain, the one that came first.",
   },
   {
     id: "lions-v",
@@ -2528,7 +2528,7 @@ const LIONS: ProjectCard[] = [
     standing: { kind: "directMC", target: "self", mc: 74_000 },
     // the one collection everybody could name without checking
     effect: { kind: "peakMC", percentage: 12 },
-    flavour: "The one collection everybody could name without checking.",
+    flavour: "Holding one got you into rooms. That was most of the point.",
   },
   {
     id: "lions-vi",
@@ -2546,7 +2546,7 @@ const LIONS: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "nft", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 175_000 },
     },
-    flavour: "Three on the wall and the wall was the flex, not any of them.",
+    flavour: "It got a game of its own, Mane City, powered by Cronos Labs.",
   },
   {
     id: "lions-vii",
@@ -2564,7 +2564,7 @@ const LIONS: ProjectCard[] = [
     loyalty: 40,
     // blue chip is a thing people call you; nobody applies for it
     effect: { kind: "scaleMC", target: "self", percentage: 21 },
-    flavour: "Blue chip is a thing people call you. Nobody applies for it.",
+    flavour: "The flagship of Crypto.com's own NFT platform.",
   },
   {
     id: "lions-viii",
@@ -2580,7 +2580,7 @@ const LIONS: ProjectCard[] = [
     holders: 7,
     // two cycles in and the floor is still where the floor was
     effect: { kind: "scaleMC", target: "self", percentage: 27 },
-    flavour: "Two cycles in and the floor is still where the floor was.",
+    flavour: "Blue chip is a thing people call you. Nobody applies for it.",
   },
 ];
 

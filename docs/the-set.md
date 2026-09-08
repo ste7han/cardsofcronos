@@ -215,6 +215,34 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Loaded Lions is older than the chain this set is about
+
+10,000 algorithmically generated lions, minted 23 November 2021 at 13:00 UTC at $200
+a pack, five packs maximum. Every one is a membership called The Mane Net. It is the
+flagship of Crypto.com's own NFT platform and it got a game, Loaded Lions: Mane City,
+powered by Cronos Labs. Ticker `LION` was right.
+
+**And it was minted on Crypto.org Chain, not Cronos EVM.** Crypto.org went live in
+March 2021 and Cronos EVM in November. The collection predates the chain this whole
+set is about, which is the sort of thing eight cards should say and none of them did.
+
+Three lines kept, and the strongest promoted again: "Blue chip is a thing people call
+you. Nobody applies for it" moves from legendary to mythic. That is the third family
+in a row — after Minted and VVS — whose best card turned out to be an aphorism that
+asserts nothing. The pattern is now firm enough to plan around.
+
+Removed: "Two cycles in and the floor is still where the floor was." A floor moves,
+and a cycle is not a unit anybody can check.
+
+**One line was deliberately not written.** "A pride is what you call a group of lions"
+is true, and it is the exact shape of the mob line written for Mad Meerkat Finance one
+family earlier. Two families making the same collective-noun joke is one idea printed
+twice, which is why Obsidian and Wolfswap were pulled apart as well. Checking the set
+for what it already says is now part of writing a family, not just checking the world.
+
+The Mane Net turns up on a person card too: JkcryptoXYZ's X bio gives his location as
+"The Mane Net". Neither card mentions the other and both are true.
+
 ### Mad Meerkat Finance, and a claim the project makes about itself
 
 Three of eight kept, ticker `MMF` right — the third correct one in a row, which is
