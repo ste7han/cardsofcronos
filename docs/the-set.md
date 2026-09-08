@@ -215,6 +215,34 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Ferro, and the first line that was not wrong but impossible
+
+Four of eight survived, the most of any family so far, because Ferro's cards were
+the only ones already describing the right kind of business. Ticker `FER` was right
+too — the second in a row after VVS.
+
+Two had to go, and the first is a new category of error. "It held its peg through
+the week everything else did not" points at the week UST collapsed, May 2022. Ferro
+launched in June 2022. It did not exist that week. Every other bad line in this walk
+was inaccurate; this one was chronologically impossible.
+
+The second was "Nothing dramatic ever happened to it, which is the achievement."
+Searching found no exploit and no depeg, and that is still not the same as proving a
+negative — a claim that nothing has ever happened can only ever be falsified. Nine
+days after Tectonic, that sentence does not belong on any DeFi card on this chain.
+
+What replaced it is a promotion rather than a rewrite. "The pool nobody watched,
+because it never did anything" was on card III and says exactly what the old mythic
+wanted to say, as a description of character instead of an unprovable claim about
+history. For a stableswap, being invisible is the achievement.
+
+The facts that were missing: $FER launched through an Initial Gem Offering on VVS
+Finance in early June 2022, mainnet opened with the 3FER base pool of USDT, USDC and
+DAI, and Crypto.com listed it on the main app and the exchange within a month. VVS
+for the sixth time — and card III makes the joke out loud, that it is called a *Gem*
+Offering because VVS names everything after jewellery, which is the layer uncovered
+on VVS's own cards one family earlier.
+
 ### Tectonic carried the worst line in the set
 
 Its mythic said "Solvent through every drawdown anybody on this chain remembers."

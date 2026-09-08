@@ -2329,7 +2329,7 @@ const FERRO: ProjectCard[] = [
     holders: 4,
     // slippage measured in basis points, and it stayed there
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "Slippage measured in basis points, and it stayed there.",
+    flavour: "USDT, USDC and DAI in one pool. That was the whole opening move.",
   },
   {
     id: "ferro-iii",
@@ -2345,7 +2345,7 @@ const FERRO: ProjectCard[] = [
     holders: 4,
     // the pool nobody watched, quietly funding the next thing
     effect: { kind: "extraBudget", target: "self", mc: 85_000 },
-    flavour: "The pool nobody watched because it never did anything.",
+    flavour: "It launched through an Initial Gem Offering. VVS names things that way.",
   },
   {
     id: "ferro-iv",
@@ -2379,7 +2379,7 @@ const FERRO: ProjectCard[] = [
     holders: 5,
     // steady is a strategy — it pays, it just never trends
     effect: { kind: "extraBudget", target: "self", mc: 180_000 },
-    flavour: "Steady is a strategy. It just never trends anywhere.",
+    flavour: "June 2022, and Crypto.com listed it inside a month.",
   },
   {
     id: "ferro-vi",
@@ -2397,7 +2397,7 @@ const FERRO: ProjectCard[] = [
     standing: { kind: "directMC", target: "self", mc: 74_000 },
     // it held its peg through the week everything else did not
     effect: { kind: "refundMC", percentage: 30 },
-    flavour: "It held its peg through the week everything else did not.",
+    flavour: "Steady is a strategy. It just never trends anywhere.",
   },
   {
     id: "ferro-vii",
@@ -2415,7 +2415,7 @@ const FERRO: ProjectCard[] = [
     uptime: true,
     // every route that mattered had one of its pools in the middle
     effect: { kind: "directMC", target: "self", mc: 60_000, per: "table" },
-    flavour: "Every route that mattered had one of its pools in the middle.",
+    flavour: "Correlated assets only. It never pretended to price a surprise.",
   },
   {
     id: "ferro-viii",
@@ -2431,7 +2431,7 @@ const FERRO: ProjectCard[] = [
     holders: 8,
     // nothing dramatic ever happened to it, which is the achievement
     effect: { kind: "extraBudget", target: "self", mc: 380_000 },
-    flavour: "Nothing dramatic ever happened to it, which is the achievement.",
+    flavour: "The pool nobody watched, because it never did anything.",
   },
 ];
 
