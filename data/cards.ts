@@ -4784,7 +4784,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "A profile picture, and a team that kept going after the mint.",
   },
   {
     id: "boomer-ii",
@@ -4798,7 +4798,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    flavour: "",
+    flavour: "Utility-focused — a phrase every collection uses and few mean.",
   },
   {
     id: "boomer-iii",
@@ -4812,7 +4812,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "They built a token launcher, which is not what a PFP collection does.",
   },
   {
     id: "boomer-iv",
@@ -4826,7 +4826,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    flavour: "",
+    flavour: "$PUUSH came out of here, and it still points back.",
   },
   {
     id: "boomer-v",
@@ -4840,7 +4840,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "A pioneer partner on zkCRO, from a collection of pictures.",
   },
   {
     id: "boomer-vi",
@@ -4854,7 +4854,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    flavour: "",
+    flavour: "Swaps, games and tools, all hung off a Discord.",
   },
   {
     id: "boomer-vii",
@@ -4868,7 +4868,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
-    flavour: "",
+    flavour: "The collection stopped being the product some time ago.",
   },
   {
     id: "boomer-viii",
@@ -4882,7 +4882,7 @@ const BOOMER: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    flavour: "",
+    flavour: "Not a collection with a company attached. A company with a collection attached.",
   },
 ];
 // ---------------------------------------------------------------------------
