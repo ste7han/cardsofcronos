@@ -215,6 +215,31 @@ And two families nobody can identify: **DAK** and **Nova**. Neither is findable 
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
 
+### Howlers is 638, not 1,312, and the artist describes his own method
+
+On-chain: `The Howlers`, symbol `HOWLERS`, totalSupply 638, contract
+`0x43c9ffaf...89fe`, verified on Ebisu's Bay at 8% creator royalty. Ticker `HOWL` to
+`HOWLERS` is the eighth correction.
+
+One listing gave the supply as 1,312. The contract and the marketplace both say 638,
+so 638 it is — and that makes this by far the smallest collection in the set, against
+10,000, 5,212, 2,525 and 2,100 elsewhere. Two sources disagreeing is now routine
+enough that the contract simply settles it.
+
+**Card VII was put to the maker as a choice rather than written.** The collection's
+own About text reads "AngelusBoB. Master Ai and Digital artist" — so how the art was
+made is the project's own description, not an allegation, and no other family in this
+set says anything about its method at all. The safe version named only that one
+artist made all 638. The chosen version says he calls himself a master of AI. It is
+equally sourced and more interesting, and it was the maker's call to make because the
+subject is a living artist with an account, and "AI artist" does not land neutrally in
+this corner of the world however it was meant.
+
+Two lines kept, both claiming nothing: "Nobody howls on the way up. That is not what
+howling is for" and "The pack moves at the speed of its slowest, which is the whole
+idea." The other six were invented — a mint at two in the morning, a floor that moved
+monthly, eight months of silence.
+
 ### Crazzzy Monsters is not defi, and its ticker was neither of its symbols
 
 It moved from meme to defi on 2026-09-08, with a note that the call was uncertain.

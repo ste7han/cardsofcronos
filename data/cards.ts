@@ -651,7 +651,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "I",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "common",
     sector: "nft",
     launchMC: 14_000,
@@ -660,7 +660,7 @@ const HOWLERS: ProjectCard[] = [
     // two in the morning is when the pack is awake, and the pack turns up
     // minted at two in the morning, because that is when the pack is awake
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "Minted at two in the morning because that is when the pack is awake.",
+    flavour: "Six hundred and thirty-eight wolves. That is the whole pack.",
   },
   {
     id: "howlers-behind",
@@ -668,7 +668,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "II",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "common",
     sector: "nft",
     launchMC: 15_000,
@@ -678,7 +678,7 @@ const HOWLERS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 250_000 },
       effect: { kind: "directMC", target: "self", mc: 90_000 },
     },
-    flavour: "Nobody howls on the way up. That is not what howling is for.",
+    flavour: "Dire wolves in streetwear, which somebody had to try eventually.",
   },
   {
     id: "howlers-moon",
@@ -686,7 +686,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "III",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "rare",
     sector: "nft",
     launchMC: 25_000,
@@ -697,7 +697,7 @@ const HOWLERS: ProjectCard[] = [
     // once a month the floor moved and nobody had a reason for it
     // once a month the floor moved and nobody had a reason for it
     effect: { kind: "directMC", target: "self", mc: 81_000 },
-    flavour: "Once a month the floor moved and nobody had a reason for it.",
+    flavour: "Pop culture, streetwear and mythology, all on the same animal.",
   },
   {
     id: "howlers-mirror",
@@ -705,7 +705,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "IV",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "rare",
     sector: "nft",
     launchMC: 26_000,
@@ -714,7 +714,7 @@ const HOWLERS: ProjectCard[] = [
     // whatever the other side did, it turned up in the pack a week later
     // whatever the other side did, it turned up in the pack a week later
     effect: { kind: "scaleMC", target: "self", percentage: 11 },
-    flavour: "Whatever the other side did, it turned up in the pack a week later.",
+    flavour: "Eight percent of every resale goes back to the artist.",
   },
   {
     id: "howlers-lowest",
@@ -722,7 +722,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "V",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "epic",
     sector: "nft",
     launchMC: 37_000,
@@ -732,7 +732,7 @@ const HOWLERS: ProjectCard[] = [
     standing: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
     // the pack moves at the speed of its slowest, so every one of them counts
     effect: { kind: "directMC", target: "self", mc: 30_000, per: "holders" },
-    flavour: "The pack moves at the speed of its slowest, which is the whole idea.",
+    flavour: "Glowing eyes, vibrant fur, futuristic armour. Subtlety was not the brief.",
   },
   {
     id: "howlers-night",
@@ -740,7 +740,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "VI",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "epic",
     sector: "nft",
     launchMC: 43_000,
@@ -749,7 +749,7 @@ const HOWLERS: ProjectCard[] = [
     // eight months of nothing and the group chat never went quiet once
     // eight months of nothing and the group chat never went quiet once
     effect: { kind: "scaleMC", target: "self", percentage: 20 },
-    flavour: "Eight months of nothing and the group chat never went quiet once.",
+    flavour: "Nobody howls on the way up. That is not what howling is for.",
   },
   {
     id: "howlers-pack",
@@ -757,7 +757,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "VII",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "legendary",
     sector: "nft",
     launchMC: 67_000,
@@ -768,7 +768,7 @@ const HOWLERS: ProjectCard[] = [
     // they stopped counting holders and started counting who showed up
     // they stopped counting holders and started counting who showed up
     effect: { kind: "directMC", target: "self", mc: 55_000, per: "any" },
-    flavour: "They stopped counting holders and started counting who showed up.",
+    flavour: "The artist calls himself a master of AI. The wolves came out fierce.",
   },
   {
     id: "howlers-inversion",
@@ -776,7 +776,7 @@ const HOWLERS: ProjectCard[] = [
     project: "howlers",
     name: "Howlers",
     moment: "VIII",
-    ticker: "HOWL",
+    ticker: "HOWLERS",
     rarity: "mythic",
     sector: "nft",
     launchMC: 106_000,
@@ -793,7 +793,7 @@ const HOWLERS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 600_000 },
       effect: { kind: "directMC", target: "self", mc: 320_000 },
     },
-    flavour: "The chart flipped, and for one evening every loser was a genius.",
+    flavour: "The pack moves at the speed of its slowest, which is the whole idea.",
   },
 ];
 
