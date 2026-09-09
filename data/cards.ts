@@ -47,7 +47,7 @@ const CLOVE: ProjectCard[] = [
     id: "clove-first",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "I",
     ticker: "CLOVE",
     rarity: "common",
@@ -58,13 +58,13 @@ const CLOVE: ProjectCard[] = [
     // a ticker, a chart and a group chat — the chat is the whole of it
     // a ticker, a chart and a group chat, and that was the whole of it
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "A ticker, a chart and a group chat. That was the whole of it.",
+    flavour: "Clove is a pig. A KuneKune, which is a real breed.",
   },
   {
     id: "clove-nobody",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "II",
     ticker: "CLOVE",
     rarity: "common",
@@ -74,13 +74,13 @@ const CLOVE: ProjectCard[] = [
     holders: 3,
     // no team to rug you, and also no team to fix anything
     effect: { kind: "extraBudget", target: "self", mc: 42_000 },
-    flavour: "No team to rug you. Also no team to fix anything.",
+    flavour: "She, not it. The bio is very clear about that.",
   },
   {
     id: "clove-voted",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "III",
     ticker: "CLOVE",
     rarity: "rare",
@@ -95,13 +95,13 @@ const CLOVE: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 70_000 },
     },
-    flavour: "Turnout was four people and a bot. It still counted.",
+    flavour: "Her stated mission is to spread joy and munch her way up.",
   },
   {
     id: "clove-listing",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "IV",
     ticker: "CLOVE",
     rarity: "rare",
@@ -114,13 +114,13 @@ const CLOVE: ProjectCard[] = [
     // everybody screenshotted it, so everybody found it
     // one exchange nobody had heard of, and everybody screenshotted it
     effect: { kind: "directMC", target: "self", mc: 81_000 },
-    flavour: "One exchange nobody had heard of, and everybody screenshotted it.",
+    flavour: "A billion of them, and a website called clovethepig.fun.",
   },
   {
     id: "clove-season",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "V",
     ticker: "CLOVE",
     rarity: "epic",
@@ -131,13 +131,13 @@ const CLOVE: ProjectCard[] = [
     // for about nine days it was the only chart anybody had open
     // for about nine days it was the only chart anybody had open
     effect: { kind: "scaleMC", target: "self", percentage: 20 },
-    flavour: "For about nine days it was the only chart anybody had open.",
+    flavour: "November 2024, and she has been eating ever since.",
   },
   {
     id: "clove-carried",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "VI",
     ticker: "CLOVE",
     rarity: "epic",
@@ -149,13 +149,13 @@ const CLOVE: ProjectCard[] = [
     loyalty: 34,
     // everyone who was early stayed early, and it pays for every one of them
     effect: { kind: "directMC", target: "self", mc: 30_000, per: "spent" },
-    flavour: "Everyone who was early stayed early. That was the trick.",
+    flavour: "The pet pig of Cronos, a title nobody else had claimed.",
   },
   {
     id: "clove-product",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "VII",
     ticker: "CLOVE",
     rarity: "legendary",
@@ -166,13 +166,13 @@ const CLOVE: ProjectCard[] = [
     // there was never a roadmap; there was a group chat that never slept
     // there was never a roadmap; there was a group chat that never slept
     effect: { kind: "scaleMC", target: "self", percentage: 21 },
-    flavour: "There was never a roadmap. There was a group chat that never slept.",
+    flavour: "KuneKune pigs come from New Zealand and are famously calm.",
   },
   {
     id: "clove-still",
     type: "project",
     project: "clove",
-    name: "Clove",
+    name: "Clove the Pig",
     moment: "VIII",
     ticker: "CLOVE",
     rarity: "mythic",
@@ -185,7 +185,7 @@ const CLOVE: ProjectCard[] = [
     // two cycles later the chat is still open and still arguing
     // two cycles later the chat is still open and still arguing
     effect: { kind: "scaleMC", target: "self", percentage: 27 },
-    flavour: "Two cycles later the chat is still open and still arguing.",
+    flavour: "A ticker, a chart and a group chat. That was the whole of it.",
   },
 ];
 
@@ -810,7 +810,7 @@ const FFS: ProjectCard[] = [
     id: "ffs-sigh",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "I",
     ticker: "FFS",
     rarity: "common",
@@ -821,13 +821,13 @@ const FFS: ProjectCard[] = [
     // named at four in the morning by somebody who was still there
     // named in frustration at four in the morning and never renamed
     effect: { kind: "directMC", target: "self", mc: 21_000 },
-    flavour: "Named in frustration at four in the morning and never renamed.",
+    flavour: "For Fox Sake. Say it out loud and the joke arrives.",
   },
   {
     id: "ffs-tithe",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "II",
     ticker: "FFS",
     rarity: "common",
@@ -838,13 +838,13 @@ const FFS: ProjectCard[] = [
     // sold its own bag to fund a marketing wallet for everyone else
     // sold its own bag to fund a marketing wallet for everyone else
     effect: { kind: "extraBudget", target: "both", mc: 42_000 },
-    flavour: "Sold its own bag to fund a marketing wallet for everyone else.",
+    flavour: "The fox is drunk and the fox has a name. It is Finchy.",
   },
   {
     id: "ffs-bleed",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "III",
     ticker: "FFS",
     rarity: "rare",
@@ -855,13 +855,13 @@ const FFS: ProjectCard[] = [
     // down eighty percent and still funding the others, on purpose
     // down eighty percent and still funding the others, on purpose
     effect: { kind: "comebackMC", percentage: 22 },
-    flavour: "Down eighty percent and still funding the others. On purpose.",
+    flavour: "Sake is a drink and half a swear word. The name uses both.",
   },
   {
     id: "ffs-behind",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "IV",
     ticker: "FFS",
     rarity: "rare",
@@ -873,13 +873,13 @@ const FFS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 350_000 },
       effect: { kind: "directMC", target: "self", mc: 180_000 },
     },
-    flavour: "Bought the top, held the bottom, told everybody about both.",
+    flavour: "A billion of them, and it started in January 2025.",
   },
   {
     id: "ffs-damage",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "V",
     ticker: "FFS",
     rarity: "epic",
@@ -891,13 +891,13 @@ const FFS: ProjectCard[] = [
     payoff: { when: { kind: "holdersLostAtLeast", holders: 2 }, effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 } },
     // whatever came in, it stood in front of it, every single time
     effect: { kind: "mcPerHolderLost", mc: 14_000 },
-    flavour: "Whatever came in, it stood in front of it. Every single time.",
+    flavour: "It made its home on Wolfswap rather than building one.",
   },
   {
     id: "ffs-payoff",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "VI",
     ticker: "FFS",
     rarity: "epic",
@@ -909,13 +909,13 @@ const FFS: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 4 },
       effect: { kind: "directMC", target: "self", mc: 130_000 },
     },
-    flavour: "Everything it gave away came back wearing somebody else's ticker.",
+    flavour: "There is a vault of twenty-five million PACK behind it.",
   },
   {
     id: "ffs-martyr",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "VII",
     ticker: "FFS",
     rarity: "legendary",
@@ -928,13 +928,13 @@ const FFS: ProjectCard[] = [
     // the wallet hit zero and the token did its best week ever
     // the wallet hit zero and the token did its best week ever
     effect: { kind: "budgetToMC", percentage: 60 },
-    flavour: "The wallet hit zero and the token did its best week ever.",
+    flavour: "Its founder lists himself as a sommelier. Of sake, obviously.",
   },
   {
     id: "ffs-comeback",
     type: "project",
     project: "ffs",
-    name: "FFS",
+    name: "For Fox Sake!",
     moment: "VIII",
     ticker: "FFS",
     rarity: "mythic",
@@ -951,7 +951,7 @@ const FFS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 500_000 },
       effect: { kind: "scaleMC", target: "self", percentage: 45 },
     },
-    flavour: "Everybody who laughed at the name owned some by the end.",
+    flavour: "A memecoin whose whole thesis is a pun that works three ways.",
   },
 ];
 
@@ -1574,7 +1574,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "I",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "common",
     sector: "meme",
     launchMC: 17_000,
@@ -1582,7 +1582,7 @@ const CAW777: ProjectCard[] = [
     holders: 2,
     // somebody checked the address and there they were — the count starts
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
-    flavour: "Somebody checked the contract address and there they were.",
+    flavour: "A CAW derivative, made out of CAW that had been burned.",
   },
   {
     id: "caw777-lucky",
@@ -1590,7 +1590,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "II",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "common",
     sector: "meme",
     launchMC: 17_000,
@@ -1598,7 +1598,7 @@ const CAW777: ProjectCard[] = [
     holders: 3,
     // block seven-seven-seven-seven, and the screenshot did numbers
     effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
-    flavour: "Block seven-seven-seven-seven. The screenshot did numbers.",
+    flavour: "The token is called CAW777. The ticker is only 777.",
   },
   {
     id: "caw777-seventh",
@@ -1606,7 +1606,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "III",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "rare",
     sector: "meme",
     launchMC: 27_000,
@@ -1616,7 +1616,7 @@ const CAW777: ProjectCard[] = [
     payoff: { when: { kind: "turnAtLeast", turn: 7 }, effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 } },
     // a week to the hour, and it did the whole thing again
     effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
-    flavour: "A week to the hour, and it did the whole thing again.",
+    flavour: "February 2025, and the sevens were the entire brief.",
   },
   {
     id: "caw777-counting",
@@ -1624,7 +1624,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "IV",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "rare",
     sector: "meme",
     launchMC: 27_000,
@@ -1632,7 +1632,7 @@ const CAW777: ProjectCard[] = [
     holders: 3,
     // the chat found sevens in the supply, the fee and the founder's age
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
-    flavour: "The chat found sevens in the supply, the fee and the founder's age.",
+    flavour: "A billion of them, which is the one number here without a seven.",
   },
   {
     id: "caw777-streak",
@@ -1640,7 +1640,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "V",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "epic",
     sector: "meme",
     launchMC: 37_000,
@@ -1649,7 +1649,7 @@ const CAW777: ProjectCard[] = [
     // seven in a row — every one of them counted
     onYourPlay: { mc: 30_000 },
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 11_000 } },
-    flavour: "Seven in a row. On the eighth everybody was watching, so it stopped.",
+    flavour: "It exists to celebrate a bridge, and burning things across one.",
   },
   {
     id: "caw777-jackpot",
@@ -1657,7 +1657,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "VI",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "epic",
     sector: "meme",
     launchMC: 47_000,
@@ -1667,7 +1667,7 @@ const CAW777: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 7 },
       effect: { kind: "directMC", target: "self", mc: 177_000 },
     },
-    flavour: "Three reels, one number, and a chart that agreed with it.",
+    flavour: "Born from the ashes of a burn, which is a lot to ask of a crow.",
   },
   {
     id: "caw777-triple",
@@ -1675,7 +1675,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "VII",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "legendary",
     sector: "meme",
     launchMC: 77_000,
@@ -1685,7 +1685,7 @@ const CAW777: ProjectCard[] = [
     standing: { kind: "directMC", target: "self", mc: 105_000 },
     // seven in a row, and nobody could get the count to move past it
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 21_000 } },
-    flavour: "It stopped there. Nobody could get the count to move past it.",
+    flavour: "Scarcity meets utility in flight. That is how it describes itself.",
   },
   {
     id: "caw777-sevens",
@@ -1693,7 +1693,7 @@ const CAW777: ProjectCard[] = [
     project: "caw777",
     name: "CAW777",
     moment: "VIII",
-    ticker: "CAW777",
+    ticker: "777",
     rarity: "mythic",
     sector: "meme",
     launchMC: 107_000,
@@ -1705,7 +1705,7 @@ const CAW777: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "meme", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 277_000 },
     },
-    flavour: "Seven sevens on one screen. Two people printed it and framed it.",
+    flavour: "The other crow got the knife. This one got the sevens.",
   },
 ];
 

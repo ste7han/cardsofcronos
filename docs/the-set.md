@@ -52,7 +52,7 @@ numbered I to VIII.
 
 | sector | families |
 |---|---|
-| meme | Clove · FFS · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
+| meme | Clove the Pig · For Fox Sake! · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
 | defi | Crooks Finance · Wolfswap · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
 | infra | Nova · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
@@ -214,6 +214,43 @@ Reading all 152 lines at once found four things rather than one:
 And two families nobody can identify: **DAK** and **Nova**. Neither is findable by
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
+
+### The last three memes had eight cards each that never named the subject
+
+None of these three could be found by search. All three took one contract address and
+one X handle from the maker, and then everything was there in a minute — the same
+lesson as the three people, arriving again at the end of the walk. **Not found means
+not looked in the right place.**
+
+**Clove is a pig and For Fox Sake is a fox, and neither appeared on any of their
+sixteen cards.** Clove is a KuneKune, a real New Zealand breed known for being placid,
+and the bio says "she". FFS is a drunken fox called Finchy, and the name is a pun that
+works three ways at once — the expletive, the animal, and sake the drink, which is why
+its founder lists himself as a sake sommelier. Sixteen cards of atmosphere about
+group chats and marketing wallets, and not one of them mentioned an animal.
+
+**CAW777 is real, and it is a CAW derivative.** Its bio: "a @crow_with_knife
+derivative, born from the ashes of burned $CAW. Forged to celebrate the LayerZero
+Bridge & Burn Protocol." February 2025. So both readings were right — the maker's, that
+it is a different project, and the doubt raised when CAW's own cards were written, that
+the sevens were connected. The two families can now say so without repeating each
+other: CAW's cards are about a bird and a knife, CAW777's about what was burned to make
+it.
+
+Its ticker is `777`, which is what the contract says, against the `CAW777` the set
+carried. That is the tenth ticker corrected in nineteen families. `FFS` and `CLOVE`
+were both already right.
+
+All three have exactly one billion tokens, which is what a shared launch template looks
+like from outside.
+
+PACK turns up a third time — Wolfswap's token, paid out by Crooks, and here a
+twenty-five million PACK vault behind FFS, which lives on Wolfswap rather than building
+anywhere of its own.
+
+One line survived across all three families: Clove's old opening, "A ticker, a chart and
+a group chat. That was the whole of it", promoted to its mythic. Twenty-three lines
+replaced.
 
 ### Crooks Finance, and four families that turn out to hold each other
 
