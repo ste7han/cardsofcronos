@@ -52,10 +52,10 @@ numbered I to VIII.
 
 | sector | families |
 |---|---|
-| meme | Clove the Pig · For Fox Sake! · CAW777 · DAK · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
+| meme | Clove the Pig · For Fox Sake! · CAW777 · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · DeFi Ape Kings · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
 | defi | Crooks Finance · Wolfswap · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
-| infra | Nova · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
+| infra | Nova Labs · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
 where the list of them lives — fifteen in one go and CRO Army after it, which is
@@ -180,7 +180,7 @@ look correct.
 
 ### The sector spread
 
-meme 11, nft 10, defi 7, infra 7 — thirty-five families and 280 project cards.
+meme 10, nft 11, defi 7, infra 7 — thirty-five families and 280 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
@@ -214,6 +214,39 @@ Reading all 152 lines at once found four things rather than one:
 And two families nobody can identify: **DAK** and **Nova**. Neither is findable by
 search. Their cards are eight lines each about projects whose nature is unknown —
 DAK's read like an NFT collection while it is filed as a meme.
+
+### The last two, and the walk is finished
+
+DAK and Nova were the two nobody could identify. Both took one contract address from
+the maker and came apart in a minute, like the three memes and the three people before
+them.
+
+**DAK is DeFi Ape Kings, and there are 249 of them.** Its cards said "Ten thousand of
+them, and the first one still sets the floor", and all eight were about floor sweeps
+and listings on a collection forty times bigger than the real one. It is the smallest
+family in the set — smaller than Howlers at 638. It was filed as `meme` and it is `nft`,
+which is the third sector corrected in this walk. Ticker `DAK` was right.
+
+Its model is the reason it earns its cards: the collection holds a treasury, puts it to
+work, and pays the interest out to holders in CRO every week, with raffles, Discord
+roles and a streamer community around it. An ape with a balance sheet. Card VII reports
+its "first of its kind" claim as a claim, the way Mad Meerkat's was — unconfirmable, and
+nothing contradicts it.
+
+**Nova is Nova Labs**: a cross-chain launchpad and GameFi ecosystem, CertiK audited,
+December 2024, with a game called Clash of Galaxies. Its token is Nova Fox, which is
+where `NFX` comes from — the eleventh and last ticker corrected, against the `NOVA` the
+set carried. Sector `infra` was right: a launchpad is a venue.
+
+One of Nova's eight survived — "Whatever you were building, there was a Nova thing that
+plugged in" — which turns out to be a fair description of a launchpad. And one had to go
+for being actively wrong rather than merely invented: "Nobody voted for it. Everybody
+integrated it." Nova's own pitch is "launch, stake, govern".
+
+Two foxes in this set now, arrived independently: Finchy of For Fox Sake, and Nova Fox.
+
+**Every card in the set has a line, and every line has been checked.** 362 cards, 35
+families, 20 people. Sectors finished at meme 10, nft 11, defi 7, infra 7.
 
 ### The last three memes had eight cards each that never named the subject
 
