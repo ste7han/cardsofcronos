@@ -387,11 +387,24 @@ started in somebody's chimp chat", "Everybody who is anybody here was in that ro
 the first month", "The oldest group chat on the chain and it still moves markets".
 Written down, that reads like a record. It is atmosphere.
 
-**The mythic rests on secondary sources and that was said out loud before it was
-written.** Several aggregators call it the first NFT collection on Cronos, and the
-dates support it — 9 November 2021, against Loaded Lions on 23 November and on
-Crypto.org Chain at that. No Cronos or Crypto.com source states it directly. After Mad
-Meerkat's self-declared first, a claim of primacy gets flagged rather than assumed.
+**The mythic claimed a first, it was flagged as resting on secondary sources, and it
+was wrong.** Several aggregators call Chimp Club the first NFT collection on Cronos.
+CRO CROW is older: edition #1 was minted at block 946, one hour and twenty-seven
+minutes after Cronos launched, a day before Chimp Club's mint on 9 November 2021.
+
+Checking Chimp Club's own account settled it for good — **the project makes no claim
+of primacy at all**. Its bio says only "Owning a Cronos Chimp grants commercial rights
+and exclusive access to the Cronos Chimp Club." The first belonged to the aggregators,
+not to the project, which is exactly what the flag was for.
+
+The mythic is now that line: own one and you own the picture, commercial rights
+included. It is what the project leads with, it is the heaviest utility an NFT can
+carry, and it cannot go out of date. The other seven cards were untouched.
+
+CRO CROW itself stays out of the set. It was offered as a thirty-sixth family — the
+first NFT on this chain, the launcher of CAW, art by Alemf, staked in The Forest for
+CAWCAW — and the maker declined. Worth recording that it was a real option and a
+deliberate no, so nobody rediscovers it and assumes it was missed.
 
 Card VII links two families on checkable dates: Minted opened in August 2022 and lists
 a collection from November 2021.

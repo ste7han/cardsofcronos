@@ -2735,7 +2735,7 @@ const CHIMPS: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 5 },
       effect: { kind: "directMC", target: "self", mc: 260_000 },
     },
-    flavour: "The first NFT collection this chain ever had.",
+    flavour: "Own one and you own the picture. The commercial rights come with it.",
   },
 ];
 
