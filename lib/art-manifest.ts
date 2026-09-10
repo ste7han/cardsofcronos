@@ -28,6 +28,7 @@ export const ART_FILES: Record<string, string> = {
   "cto": "/art/communitytakeover.webp?v=40e76e17",
   "coordinated-dump": "/art/coordinateddump.webp?v=2fc79b5a",
   "copy-trade": "/art/copy-trade.webp?v=8b9ce4a8",
+  "crooks": "/art/crooks.webp?v=15d16caf",
   "dev-sells": "/art/devsell.webp?v=bbe71854",
   "dexscreener": "/art/dexscreener.webp?v=b1c70d26",
   "diamond-hands": "/art/diamondhands.webp?v=81eb8bb5",
