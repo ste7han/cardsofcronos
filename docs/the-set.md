@@ -692,6 +692,21 @@ written down for the effects pass.
 
 ---
 
+## Cronoscan is Cronos Explorer now
+
+The tool card was named after Cronoscan, the Etherscan-style explorer this chain was
+known by. The chain's own explorer took over; `explorer.cronos.org` redirects to
+`explorer.cronos.com`. Card renamed, ticker `CRONOSCAN` to `EXPLORER`, and the id
+left alone — an id is a key, not a label, and changing it would break nothing usefully.
+
+**And it was not only a card.** `lib/units.ts` held `EXPLORER = "https://cronoscan.com"`,
+which is the link under every transaction and address in the burn view. cronoscan.com
+still resolves and still serves those paths, which is exactly why this stayed wrong
+without anybody noticing: a link that works is not a link that is right. Now
+`https://explorer.cronos.com`, where the `/tx/` and `/address/` paths are the same shape.
+
+---
+
 ## The rule for a line on a card
 
 **Nothing that moves.** A card is minted and then it is somebody's for good, so
@@ -752,9 +767,15 @@ knowing what is going on, so he draws.
 **5 from the first version**: Pampa · 21Million · Francis · Curry · Vinz. These
 shipped under these names and people hold them.
 
-**8 archetypes**, nameless, ported from TCG: The Caller · The Copy Target · The
+**7 archetypes**, nameless, ported from TCG: The Caller · The Copy Target · The
 Floor Sweeper · The Whitelist Hunter · The Validator · The Airdrop Farmer · The
-Node Runner · The Mint Bot.
+Node Runner.
+
+The Mint Bot was an eighth, added here rather than ported — TCG has seventeen
+archetypes and no mint bot. It came out on 2026-09-10 along with the tool card The
+Gas Tracker, both at the maker's request. They were also the only two cards in the
+set that existed in neither TCG's art folder nor anybody's plans to draw, which is
+the sort of thing that shows up when you go looking for pictures.
 
 ### All seven have their line
 

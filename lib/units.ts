@@ -24,5 +24,12 @@ export function toCro(wei: bigint | string): number {
   return toTokens(wei, 18, 4);
 }
 
-/** Where a person goes to check any of this. */
-export const EXPLORER = "https://cronoscan.com";
+/**
+ * Where a person goes to check any of this.
+ *
+ * Cronoscan was the Etherscan-style explorer this chain used and the name it was
+ * known by. The chain's own explorer is the one now, and explorer.cronos.org
+ * redirects here. cronoscan.com still resolves, which is exactly why this was
+ * easy to leave wrong: a link that works is not a link that is right.
+ */
+export const EXPLORER = "https://explorer.cronos.com";

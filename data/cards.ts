@@ -5008,15 +5008,6 @@ const ARCHETYPES: PersonCard[] = [
     aura: { kind: "pumpSector", sector: "infra", bonus: 7_000 },
     flavour: "Six boxes on the roof and a spreadsheet of what each one earns.",
   },
-  {
-    id: "mintbot",
-    type: "person",
-    name: "The Mint Bot",
-    ticker: "MINTBOT",
-    rarity: "common",
-    aura: { kind: "pumpSector", sector: "nft", bonus: 4_000 },
-    flavour: "Sat on the contract for eleven hours and took forty of them.",
-  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -5034,8 +5025,8 @@ const TOOLS: ToolCard[] = [
   {
     id: "cronoscan",
     type: "tool",
-    name: "Cronoscan",
-    ticker: "CRONOSCAN",
+    name: "Cronos Explorer",
+    ticker: "EXPLORER",
     rarity: "common",
     effect: { kind: "drawCards", amount: 1 },
     flavour: "Every answer is already in there. Nobody wants to read it.",
@@ -5085,15 +5076,6 @@ const TOOLS: ToolCard[] = [
     rarity: "epic",
     effect: { kind: "cancel", target: "opponent", count: 1 },
     flavour: "Eleven wallets, one cluster, and a founder with nothing to say.",
-  },
-  {
-    id: "gas-tracker",
-    type: "tool",
-    name: "The Gas Tracker",
-    ticker: "GASTRACKER",
-    rarity: "epic",
-    effect: { kind: "extraBudget", target: "self", mc: 90_000 },
-    flavour: "Cheap at four in the morning, which is when everything gets minted.",
   },
   {
     id: "ledger",
@@ -6179,9 +6161,9 @@ export const CARDS: readonly Card[] = [
 
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
-  common: 92,
+  common: 91,
   rare: 95,
-  epic: 88,
+  epic: 87,
   legendary: 50,
   mythic: 37,
 } as const;
