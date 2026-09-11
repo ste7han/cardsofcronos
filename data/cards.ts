@@ -773,7 +773,7 @@ const HOWLERS: ProjectCard[] = [
     // they stopped counting holders and started counting who showed up
     // they stopped counting holders and started counting who showed up
     effect: { kind: "directMC", target: "self", mc: 55_000, per: "any" },
-    flavour: "The artist calls himself a master of AI. The wolves came out fierce.",
+    flavour: "The artist's own title is master of AI. The wolves came out fierce.",
   },
   {
     id: "howlers-inversion",
@@ -5893,8 +5893,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     ticker: "ANGELUS",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "nft", bonus: 20_000 },
-    // Howlers is a family in this set; its own page credits him and the supply is on-chain
-    flavour: "He drew all six hundred and thirty-eight Howlers himself.",
+    // Howlers is a family in this set and it credits him; not "drew", because that card says he calls himself a master of AI
+    flavour: "The Howlers, all six hundred and thirty-eight of them, are this artist's.",
   },
   {
     id: "snakeape",
@@ -5924,7 +5924,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "epic",
     aura: { kind: "drawEachTurn", cards: 1 },
     // his own description: spreading knowledge on this chain in the form of tutorials
-    flavour: "Kaan the Tutorialist. He explains it until somebody gets it.",
+    flavour: "Kaan the Tutorialist, who explains it until somebody gets it.",
   },
   {
     id: "zwangtun",
@@ -5944,7 +5944,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "epic",
     aura: { kind: "pumpSector", sector: "defi", bonus: 12_000 },
     // "Please create your own description and artwork for me" — the only honest answer
-    flavour: "He asked us to write his line for him. So this is it.",
+    flavour: "This line was written to order, because that is what the order asked for.",
   },
   {
     id: "chubz",
@@ -5974,7 +5974,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "nft", bonus: 8_000 },
     // his own description. He ordered this card twice; it is one card
-    flavour: "Prophet of Cr00ts. Luck, he says, is a skill.",
+    flavour: "Prophet of Cr00ts, where luck is filed as a skill.",
   },
   {
     id: "feedle",
@@ -5984,7 +5984,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "defi", bonus: 8_000 },
     // his own words, and he is listed on the Timmy Finance team page
-    flavour: "Web3 wonderer, degen farmer. He also admins Scrap Monsters.",
+    flavour: "Web3 wonderer, degen farmer, and an admin at Scrap Monsters.",
   },
   {
     id: "pieterl",
@@ -5994,7 +5994,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "defi", bonus: 7_000 },
     // his own description, in his own order
-    flavour: "Invest, support, achieve. He put it in that order.",
+    flavour: "Invest, support, achieve. Written in that order.",
   },
   {
     id: "darklion",
@@ -6004,7 +6004,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "nft", bonus: 7_000 },
     // his entire description was those four words
-    flavour: "Lions never back down. Four words, and he paid for all four.",
+    flavour: "Lions never back down. That was the whole brief.",
   },
   {
     id: "spookypapi",
@@ -6014,7 +6014,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "nft", bonus: 7_000 },
     // his entire description
-    flavour: "Brick by brick. He did not need more words than that.",
+    flavour: "Brick by brick. No more words were needed.",
   },
   {
     id: "covertplate",
@@ -6034,7 +6034,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "meme", bonus: 7_000 },
     // "Just arrived here in time to make cronos great again"
-    flavour: "He turned up late and said he was here to fix it.",
+    flavour: "Turned up late, and said it was to make Cronos great again.",
   },
   {
     id: "betrazen",
@@ -6044,7 +6044,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "common",
     aura: { kind: "pumpSector", sector: "meme", bonus: 4_000 },
     // his entire description was the first half of that
-    flavour: "The age of freedom begins. He did not say when.",
+    flavour: "The age of freedom begins. No date was given.",
   },
   {
     id: "crofamcard",
@@ -6064,7 +6064,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "common",
     aura: { kind: "pumpSector", sector: "nft", bonus: 4_000 },
     // it was
-    flavour: "His entire description was: 500 Cro?",
+    flavour: "500 Cro? That was the offer, and the whole of it.",
   },
   {
     id: "dragonsong",
@@ -6074,7 +6074,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "common",
     aura: { kind: "pumpSector", sector: "meme", bonus: 3_000 },
     // his own description, and the second half was the part he insisted on
-    flavour: "Gotta go fast. Even in death, he specified.",
+    flavour: "Gotta go fast. Even in death, which was specified.",
   },
   {
     id: "jersae",
@@ -6084,7 +6084,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "common",
     aura: { kind: "pumpSector", sector: "nft", bonus: 3_000 },
     // he was asked why he chose CroFam and that was the answer
-    flavour: "A smooth sea never made a skilled sailor. His reason for being here.",
+    flavour: "A smooth sea never made a skilled sailor. That was the reason given.",
   },
   {
     id: "blacksea",
@@ -6094,7 +6094,7 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "common",
     aura: { kind: "pumpSector", sector: "meme", bonus: 4_000 },
     // filed as a parody, and it is: he wrote the roast and then bought it
-    flavour: "Fuds CRO, claims CroFam. He ordered this card about himself.",
+    flavour: "Fuds CRO, claims CroFam. This roast was ordered by its subject.",
   },
 ];
 
@@ -6189,7 +6189,7 @@ const NAMES: PersonCard[] = [
     ticker: "ALEX",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "defi", bonus: 20_000 },
-    flavour: "He built Wolfswap. Then Wolfswap bought Ebisu's Bay.",
+    flavour: "Built Wolfswap. Then Wolfswap bought Ebisu's Bay.",
   },
   {
     id: "haten",
@@ -6207,7 +6207,7 @@ const NAMES: PersonCard[] = [
     ticker: "SCHWIZ",
     rarity: "epic",
     aura: { kind: "pumpSector", sector: "infra", bonus: 14_000 },
-    flavour: "He opened this chain's first NFT marketplace, in November 2021.",
+    flavour: "Opened this chain's first NFT marketplace, in November 2021.",
   },
   {
     id: "jkcrypto",
@@ -6216,7 +6216,7 @@ const NAMES: PersonCard[] = [
     ticker: "JKC",
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "defi", bonus: 8_000 },
-    flavour: "He founded Crazzzy Monsters, and the chain made him an ambassador.",
+    flavour: "Founder of Crazzzy Monsters, and an ambassador for the chain.",
   },
   {
     // The only one here with no project behind him, and the first card in this
@@ -6228,7 +6228,7 @@ const NAMES: PersonCard[] = [
     ticker: "ARTIK",
     rarity: "epic",
     aura: { kind: "drawEachTurn", cards: 1 },
-    flavour: "He built a dashboard for the whole chain. He says he draws random lines.",
+    flavour: "Built a dashboard for the whole chain, and calls it drawing random lines.",
   },
 ];
 

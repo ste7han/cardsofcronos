@@ -55,8 +55,8 @@ const PEOPLE: Person[] = [
   {
     id: "angelusbob", name: "AngelusBoB", ticker: "ANGELUS", rarity: "legendary",
     aura: sector("nft", 20_000),
-    flavour: "He drew all six hundred and thirty-eight Howlers himself.",
-    why: "Howlers is a family in this set; its own page credits him and the supply is on-chain",
+    flavour: "The Howlers, all six hundred and thirty-eight of them, are this artist's.",
+    why: "Howlers is a family in this set and credits the artist. Not \"drew\": that card gives the artist\'s own title as master of AI",
   },
   {
     id: "snakeape", name: "SnakeApe", ticker: "SNAKEAPE", rarity: "legendary",
@@ -75,7 +75,7 @@ const PEOPLE: Person[] = [
   {
     id: "kaancronos", name: "KaanCronos", ticker: "KAAN", rarity: "epic",
     aura: { kind: "drawEachTurn", cards: 1 },
-    flavour: "Kaan the Tutorialist. He explains it until somebody gets it.",
+    flavour: "Kaan the Tutorialist, who explains it until somebody gets it.",
     why: "his own description: spreading knowledge on this chain in the form of tutorials",
   },
   {
@@ -87,7 +87,7 @@ const PEOPLE: Person[] = [
   {
     id: "elderkarl", name: "ElderKarl", ticker: "ELDER", rarity: "epic",
     aura: sector("defi", 12_000),
-    flavour: "He asked us to write his line for him. So this is it.",
+    flavour: "This line was written to order, because that is what the order asked for.",
     why: "\"Please create your own description and artwork for me\" — the only honest answer",
   },
   {
@@ -107,31 +107,31 @@ const PEOPLE: Person[] = [
   {
     id: "thaxt", name: "Thaxt", ticker: "THAXT", rarity: "rare",
     aura: sector("nft", 8_000),
-    flavour: "Prophet of Cr00ts. Luck, he says, is a skill.",
+    flavour: "Prophet of Cr00ts, where luck is filed as a skill.",
     why: "his own description. He ordered this card twice; it is one card",
   },
   {
     id: "feedle", name: "Feedle", ticker: "FEEDLE", rarity: "rare",
     aura: sector("defi", 8_000),
-    flavour: "Web3 wonderer, degen farmer. He also admins Scrap Monsters.",
+    flavour: "Web3 wonderer, degen farmer, and an admin at Scrap Monsters.",
     why: "his own words, and he is listed on the Timmy Finance team page",
   },
   {
     id: "pieterl", name: "Pieter L", ticker: "PIETER", rarity: "rare",
     aura: sector("defi", 7_000),
-    flavour: "Invest, support, achieve. He put it in that order.",
+    flavour: "Invest, support, achieve. Written in that order.",
     why: "his own description, in his own order",
   },
   {
     id: "darklion", name: "Dark Lion", ticker: "DARKLION", rarity: "rare",
     aura: sector("nft", 7_000),
-    flavour: "Lions never back down. Four words, and he paid for all four.",
+    flavour: "Lions never back down. That was the whole brief.",
     why: "his entire description was those four words",
   },
   {
     id: "spookypapi", name: "SpookyPapi", ticker: "SPOOKY", rarity: "rare",
     aura: sector("nft", 7_000),
-    flavour: "Brick by brick. He did not need more words than that.",
+    flavour: "Brick by brick. No more words were needed.",
     why: "his entire description",
   },
   {
@@ -143,7 +143,7 @@ const PEOPLE: Person[] = [
   {
     id: "mirko", name: "Mirko", ticker: "MIRKO", rarity: "rare",
     aura: sector("meme", 7_000),
-    flavour: "He turned up late and said he was here to fix it.",
+    flavour: "Turned up late, and said it was to make Cronos great again.",
     why: "\"Just arrived here in time to make cronos great again\"",
   },
 
@@ -151,7 +151,7 @@ const PEOPLE: Person[] = [
   {
     id: "betrazen", name: "Betrazen", ticker: "BETRA", rarity: "common",
     aura: sector("meme", 4_000),
-    flavour: "The age of freedom begins. He did not say when.",
+    flavour: "The age of freedom begins. No date was given.",
     why: "his entire description was the first half of that",
   },
   {
@@ -163,25 +163,25 @@ const PEOPLE: Person[] = [
   {
     id: "cryptik", name: "Cryptik", ticker: "CRYPTIK", rarity: "common",
     aura: sector("nft", 4_000),
-    flavour: "His entire description was: 500 Cro?",
+    flavour: "500 Cro? That was the offer, and the whole of it.",
     why: "it was",
   },
   {
     id: "dragonsong", name: "DragonSong", ticker: "DRAGON", rarity: "common",
     aura: sector("meme", 3_000),
-    flavour: "Gotta go fast. Even in death, he specified.",
+    flavour: "Gotta go fast. Even in death, which was specified.",
     why: "his own description, and the second half was the part he insisted on",
   },
   {
     id: "jersae", name: "Jersae", ticker: "JERSAE", rarity: "common",
     aura: sector("nft", 3_000),
-    flavour: "A smooth sea never made a skilled sailor. His reason for being here.",
+    flavour: "A smooth sea never made a skilled sailor. That was the reason given.",
     why: "he was asked why he chose CroFam and that was the answer",
   },
   {
     id: "blacksea", name: "Blacksea", ticker: "BLACKSEA", rarity: "common",
     aura: sector("meme", 4_000),
-    flavour: "Fuds CRO, claims CroFam. He ordered this card about himself.",
+    flavour: "Fuds CRO, claims CroFam. This roast was ordered by its subject.",
     why: "filed as a parody, and it is: he wrote the roast and then bought it",
   },
 ];
