@@ -3047,6 +3047,8 @@ const MERY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // Sydney, nine in the evening, March 2024
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Sydney, nine in the evening, the twenty-seventh of March 2024.",
   },
   {
@@ -3061,6 +3063,8 @@ const MERY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // the presale wanted 690,000 CRO and had it in two hours
+    effect: { kind: "extraBudget", target: "self", mc: 24_000 },
     flavour: "The presale wanted 690,000 CRO. It had it inside two hours.",
   },
   {
@@ -3075,6 +3079,8 @@ const MERY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // four hundred and twenty billion, and nobody had to explain it
+    effect: { kind: "directMC", target: "self", mc: 85_000 },
     flavour: "Four hundred and twenty billion of them. Nobody had to explain the number.",
   },
   {
@@ -3089,6 +3095,8 @@ const MERY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // the liquidity went to a dead wallet and stayed there
+    effect: { kind: "refundMC", percentage: 35 },
     flavour: "The liquidity went to a dead wallet and stayed there.",
   },
   {
@@ -3103,6 +3111,8 @@ const MERY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // a staking contract, a marketplace and a game attached
+    effect: { kind: "directMC", target: "self", mc: 42_000, per: "holders" },
     flavour: "A meme coin with a staking contract, a marketplace and a game attached.",
   },
   {
@@ -3117,6 +3127,8 @@ const MERY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // first the token, then the pictures, then somewhere to play
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "First the token, then the pictures, then somewhere to play with them.",
   },
   {
@@ -3131,6 +3143,8 @@ const MERY: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // its founder was a name the chain already knew
+    effect: { kind: "scaleMC", target: "self", percentage: 22 },
     flavour: "Its founder was a name the chain already knew. That is why it took two hours.",
   },
   {
@@ -3145,6 +3159,8 @@ const MERY: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // it handed over the keys and never asked for them back
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
     flavour: "It handed over the keys on the first day and never asked for them back.",
   },
 ];
@@ -3162,6 +3178,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // a nation run from inside a chat app
+    effect: { kind: "directMC", target: "self", mc: 7_000, per: "holders" },
     flavour: "A nation of capybaras, run from inside a chat app.",
   },
   {
@@ -3176,6 +3194,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // you tapped, and the nation grew
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "November 2024. You tapped, and the nation grew.",
   },
   {
@@ -3190,6 +3210,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // a hundred trillion, and all of it in circulation
+    effect: { kind: "directMC", target: "self", mc: 27_000, per: "any" },
     flavour: "A hundred trillion of them, and all of it in circulation.",
   },
   {
@@ -3204,6 +3226,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // quest cards, daily combos, and a friend you talked into it
+    effect: { kind: "directMC", target: "self", mc: 85_000 },
     flavour: "Quest cards, daily combos, and a friend you had to talk into it.",
   },
   {
@@ -3218,6 +3242,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // the Capydrop went to whoever was already there
+    effect: { kind: "budgetToMC", percentage: 60 },
     flavour: "The Capydrop went to whoever was already there on day one.",
   },
   {
@@ -3232,6 +3258,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // it went looking for players where the players already were
+    effect: { kind: "directMC", target: "self", mc: 36_000, per: "plays" },
     flavour: "It went looking for players where the players already were.",
   },
   {
@@ -3246,6 +3274,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // every other animal gets along with a capybara
+    effect: { kind: "scaleMC", target: "self", percentage: 21 },
     flavour: "Every other animal gets along with a capybara. That was the whole pitch.",
   },
   {
@@ -3260,6 +3290,8 @@ const CAPYBARA: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // a nation with no land and no borders
+    effect: { kind: "comebackMC", percentage: 45 },
     flavour: "A nation with no land and no borders, run out of a chat window.",
   },
 ];
@@ -3410,6 +3442,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // drop a ball, watch it bounce
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Drop a ball. Watch it bounce. That is the entire game.",
   },
   {
@@ -3424,6 +3458,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // free, in Telegram, and the points came first
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "Free, in Telegram, and the points came before anyone said what for.",
   },
   {
@@ -3438,6 +3474,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // thirty to the presale, thirty to the pool
+    effect: { kind: "directMC", target: "self", mc: 85_000 },
     flavour: "A billion of them. Thirty to the presale, thirty to the pool.",
   },
   {
@@ -3452,6 +3490,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // fifty dollars was the smallest you could come in at
+    effect: { kind: "extraBudget", target: "self", mc: 86_000 },
     flavour: "Fifty dollars was the smallest you could come in at.",
   },
   {
@@ -3466,6 +3506,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // forty-eight hours, then the door shut and stayed shut
+    effect: { kind: "refundMC", percentage: 40 },
     flavour: "Forty-eight hours of presale, then the door shut and stayed shut.",
   },
   {
@@ -3480,6 +3522,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // it paired itself with MERY, PUUSH and MOON
+    effect: { kind: "directMC", target: "self", mc: 42_000, per: "holders" },
     flavour: "It paired itself with MERY, PUUSH and MOON on the way in.",
   },
   {
@@ -3494,6 +3538,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // it went out on both of this chain\u2019s chains at once
+    effect: { kind: "extraBudget", target: "self", mc: 200_000 },
     flavour: "It went out on both of this chain's chains at once.",
   },
   {
@@ -3508,6 +3554,8 @@ const BALLZ: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // a game of pure chance, sold to people who think they are picking
+    effect: { kind: "peakMC", percentage: 30 },
     flavour: "A game of pure chance, sold to people who believe they are picking.",
   },
 ];
@@ -4186,6 +4234,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // a button, and you pushed it
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "A button. You pushed it.",
   },
   {
@@ -4200,6 +4250,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // eight trillion, and eight more, because somebody found that funny
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Eight trillion of them, and eight more, because somebody thought that was funny.",
   },
   {
@@ -4214,6 +4266,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // a launcher for meme coins, built by people who had made one
+    effect: { kind: "directMC", target: "self", mc: 27_000, per: "plays" },
     flavour: "A launcher for meme coins, built by people who had made one.",
   },
   {
@@ -4228,6 +4282,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // every fee the platform takes buys some back and burns it
+    effect: { kind: "refundMC", percentage: 45 },
     flavour: "Every fee the platform takes buys some back and burns it.",
   },
   {
@@ -4242,6 +4298,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // tools, rewards and games bolted onto a joke that kept working
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "Tools, rewards and games bolted onto a joke that kept working.",
   },
   {
@@ -4256,6 +4314,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // swap a token for a picture and back again
+    effect: { kind: "budgetToMC", percentage: 55 },
     flavour: "Swap a token for a picture and back again, if that is your evening.",
   },
   {
@@ -4270,6 +4330,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // Boomer Squad built it, and the squad came with it
+    effect: { kind: "directMC", target: "self", mc: 110_000 },
     flavour: "Boomer Squad built it, and the squad came with it.",
   },
   {
@@ -4284,6 +4346,8 @@ const PUUSH: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // the only number here that never goes up is the supply
+    effect: { kind: "extraBudget", target: "self", mc: 380_000 },
     flavour: "The only number here that never goes up is the supply.",
   },
 ];
@@ -4581,6 +4645,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // free to play, and you did not need a wallet
+    effect: { kind: "directMC", target: "opponent", mc: -7_000 },
     flavour: "Free to play, and you did not need a wallet to start.",
   },
   {
@@ -4595,6 +4661,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // a soldier with traits and a memory of what it has done
+    effect: { kind: "stealMC", percentage: 4 },
     flavour: "A soldier with traits, and a memory of what it has done.",
   },
   {
@@ -4609,6 +4677,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // they train, they fight, and they come back different
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     flavour: "They train, they fight, and they come back different.",
   },
   {
@@ -4623,6 +4693,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // territory, gear, and somebody else who wants both
+    effect: { kind: "stealMC", percentage: 7 },
     flavour: "Territory, gear, and somebody else who wants both.",
   },
   {
@@ -4637,6 +4709,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // no team allocation and the liquidity burned
+    effect: { kind: "burnForDamage", target: "ownProject", keep: 130 },
     flavour: "No team allocation and the liquidity burned. It says so in the open.",
   },
   {
@@ -4651,6 +4725,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // the soldiers remember, and that is the part nobody expected
+    effect: { kind: "stealMC", percentage: 15 },
     flavour: "The soldiers remember. That is the part nobody expected.",
   },
   {
@@ -4665,6 +4741,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // a war that does not stop when you log off
+    effect: { kind: "discardCards", target: "opponent", amount: 2 },
     flavour: "A war that does not stop when you log off.",
   },
   {
@@ -4679,6 +4757,8 @@ const CROARMY: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // a game first and a token second, which almost never happens
+    effect: { kind: "stealMC", percentage: 22 },
     flavour: "It set out to be a game first and a token second, which almost never happens.",
   },
 ];
@@ -4710,6 +4790,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // a profile picture, and a team that kept going after the mint
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "A profile picture, and a team that kept going after the mint.",
   },
   {
@@ -4724,6 +4806,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // utility-focused, a phrase every collection uses
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "Utility-focused — a phrase every collection uses and few mean.",
   },
   {
@@ -4738,6 +4822,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // they built a token launcher, which is not what a PFP does
+    effect: { kind: "directMC", target: "self", mc: 28_000, per: "table" },
     flavour: "They built a token launcher, which is not what a PFP collection does.",
   },
   {
@@ -4752,6 +4838,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // $PUUSH came out of here and it still points back
+    effect: { kind: "directMC", target: "self", mc: 85_000 },
     flavour: "$PUUSH came out of here, and it still points back.",
   },
   {
@@ -4766,6 +4854,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // a pioneer partner on zkCRO, from a collection of pictures
+    effect: { kind: "scaleMC", target: "self", percentage: 14 },
     flavour: "A pioneer partner on zkCRO, from a collection of pictures.",
   },
   {
@@ -4780,6 +4870,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // swaps, games and tools, all hung off a Discord
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "Swaps, games and tools, all hung off a Discord.",
   },
   {
@@ -4794,6 +4886,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // the collection stopped being the product some time ago
+    effect: { kind: "unbankedMC", percentage: 28 },
     flavour: "The collection stopped being the product some time ago.",
   },
   {
@@ -4808,6 +4902,8 @@ const BOOMER: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // a company with a collection attached, not the other way round
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
     flavour: "Not a collection with a company attached. A company with a collection attached.",
   },
 ];
