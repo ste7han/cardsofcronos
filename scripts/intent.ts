@@ -202,19 +202,41 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * did not recover it either — 36.9% against 36.4%, so it is not that this set's
  * money numbers are small.
  *
- * What the measurement found instead is one intent ahead of the field rather
- * than one behind it. Row wins against column, every family against every other:
+ * MEASURED AGAIN ON 2026-09-11, and the table this replaced was wrong.
+ *
+ * That table said takes beat everything and community lost to everything
+ * including itself. It could not be reproduced — nothing in the repository
+ * produced it — and its diagonal gave it away: a style against itself has the
+ * same cards on both sides and has to land near 50%, and it had takes at 35% and
+ * momentum at 65%. It was measuring a seat, not a style.
+ *
+ * scripts/intent-duel.ts now produces this, sides swapped every match, forty
+ * deck seeds per style, and the diagonal printed as the check on the rest.
+ * 1200 matches per pairing, row wins against column:
  *
  *              takes  moment   money  commun   locks
- *   takes        35%     69%     62%     51%     67%
- *   momentum     26%     65%     58%     45%     54%
- *   money        32%     55%     54%     43%     43%
- *   community    26%     44%     40%     31%     37%
- *   locks        46%     25%     43%     33%       -
+ *   takes       50.9%   71.1%   36.3%   39.5%   39.3%
+ *   momentum    29.5%   51.2%   39.5%   29.2%   23.8%
+ *   money       65.1%   63.3%   49.7%   48.7%   46.2%
+ *   community   61.2%   72.6%   54.3%   52.0%   48.8%
+ *   locks       62.0%   75.3%   53.8%   54.0%   50.7%
  *
- * Takes beats everything and community loses to everything including itself.
- * Changing what community is made of does not touch that, and this returns the
- * intent unchanged until somebody decides what to do about the column that wins.
+ * Every style is within two points of even against itself, which is what makes
+ * the rest of it readable.
+ *
+ * Against the whole field: locks 59.1%, community 57.8%, money 54.6%,
+ * takes 47.4%, momentum 34.6%.
+ *
+ * So community is not the problem and takes is not dominant. MOMENTUM IS THE
+ * PROBLEM: eight families, the second-largest group in the set, losing to
+ * everything and losing badly — 23.8% against locks and 29% against both takes
+ * and community. Nothing has been done about it yet.
+ *
+ * Two things changed between the tables and both matter. The old one was taken
+ * when 136 of the 272 project cards did nothing and locks was a single card
+ * carrying the one restriction the engine measures at minus fifteen thousand;
+ * that game no longer exists. And it was measured in a way that cannot be
+ * checked, which is the part worth remembering.
  */
 /**
  * Families that have not been given an intent yet, listed by name on purpose.

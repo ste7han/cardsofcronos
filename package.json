@@ -12,6 +12,7 @@
     "match": "tsx scripts/play-match.ts",
     "balance": "tsx scripts/balance.ts",
     "duel": "tsx scripts/duel.ts",
+    "intents": "tsx scripts/intent-duel.ts",
     "archetypes": "tsx scripts/archetypes.ts",
     "render-cards": "tsx scripts/render-cards.ts",
     "art": "tsx scripts/art.ts",
