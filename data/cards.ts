@@ -5310,7 +5310,7 @@ const ELMO: ProjectCard[] = [
     holders: 4,
     // one person, two families in this set
     effect: { kind: "extraBudget", target: "self", mc: 170_000 },
-    flavour: "Same founder as Bored Catz. He does this more than once.",
+    flavour: "Same founder as Bored Catz. Twice is a habit.",
   },
   {
     id: "elmo-vii",

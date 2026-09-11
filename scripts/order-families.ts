@@ -230,7 +230,7 @@ const FAMILIES: Family[] = [
       },
       {
         moment: "VI", rarity: "epic", launch: 40_000, pump: 25_000, holders: 4,
-        flavour: "Same founder as Bored Catz. He does this more than once.",
+        flavour: "Same founder as Bored Catz. Twice is a habit.",
         effect: { kind: "extraBudget", target: "self", mc: 170_000 },
         why: "one person, two families in this set",
       },
