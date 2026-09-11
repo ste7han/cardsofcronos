@@ -283,6 +283,8 @@ function slotsFor(
     case "scalePump":
       return collect(state, effect.target, player, effect.percentage > 0 ? "helps" : "hurts");
 
+    case "pumpToMC":
+    case "pumpToMC":
     case "budgetToMC":
     case "peekAndBurn":
       return [];
@@ -385,6 +387,7 @@ function playersFor(
     case "refundMC":
       return [{ player, impact: "helps" }];
 
+    case "pumpToMC":
     case "budgetToMC":
     case "merge":
     case "fork":

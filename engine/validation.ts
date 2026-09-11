@@ -889,6 +889,14 @@ export function validateEffect(
       // Neither carries a number. What they are worth is whatever is on the
       // table, which is the point of both of them.
       return [];
+    case "pumpToMC":
+      // A board yielding 150K at 4x is 600K on one card, which is mythic money.
+      // Above that it stops being a payoff for building and becomes the only
+      // card a momentum deck wants to draw.
+      return effect.times > 0 && effect.times <= 4
+        ? []
+        : [`${where}: pumpToMC must be between 1 and 4 times, is ${effect.times}.`];
+
     case "budgetToMC":
       // A hundred percent is a card that hands back everything you did not spend
       // and turns budget into a savings account, which is the rule it exists to

@@ -60,6 +60,12 @@ export function intentOfEffect(e: Effect): Intent {
     case "extraBudget":
       return e.target === "opponent" ? "takes" : "money";
 
+    // Pays you, and reads as momentum anyway. It is worth exactly nothing on an
+    // empty board: it does not pay you, it pays what you built. A momentum family
+    // carrying it is still a momentum family, which is the point of adding it.
+    case "pumpToMC":
+      return "momentum";
+
     // --- money: it pays you ------------------------------------------------
     case "budgetToMC":
     case "refundMC":
@@ -227,10 +233,24 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * Against the whole field: locks 59.1%, community 57.8%, money 54.6%,
  * takes 47.4%, momentum 34.6%.
  *
- * So community is not the problem and takes is not dominant. MOMENTUM IS THE
- * PROBLEM: eight families, the second-largest group in the set, losing to
- * everything and losing badly — 23.8% against locks and 29% against both takes
- * and community. Nothing has been done about it yet.
+ * So community is not the problem and takes is not dominant. Momentum was, and
+ * has since been answered — see pumpToMC in engine/types.ts. After it, 1200
+ * matches per pairing:
+ *
+ *              takes  moment   money  commun   locks
+ *   takes       51.5%   60.2%   37.0%   37.5%   37.8%
+ *   momentum    41.3%   49.3%   52.8%   39.8%   37.1%
+ *   money       64.4%   49.7%   49.7%   46.4%   43.2%
+ *   community   63.7%   62.8%   57.0%   51.8%   48.3%
+ *   locks       63.6%   63.2%   56.4%   54.9%   51.7%
+ *
+ * Against the field: locks 58.0%, community 56.7%, money 50.7%, takes 44.7%,
+ * momentum 44.0%. Momentum went from 34.6% to 44.0% on one card per family, and
+ * the spread across all five closed from 24.5 points to 14.0.
+ *
+ * WHAT IS LEFT is a different shape from what was here before. Nothing is far
+ * behind any more; locks and community are ahead. That is a smaller problem than
+ * one style at 34.6%, and nothing has been done about it.
  *
  * Two things changed between the tables and both matter. The old one was taken
  * when 136 of the 272 project cards did nothing and locks was a single card

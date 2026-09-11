@@ -87,6 +87,7 @@ function moodOfEffect(effect: Effect): Mood {
       return "pump";
     case "mcPerHolderLost":
       return "pump";
+    case "pumpToMC":
     case "budgetToMC":
       return "pump";
     case "merge":

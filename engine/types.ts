@@ -535,6 +535,27 @@ export type Effect =
    */
   | { kind: "budgetToMC"; percentage: number }
   /**
+   * Turns the pump your board yields this turn into market cap, at once.
+   *
+   * MOMENTUM'S MISSING PAYOFF, and it is missing for a measurable reason. A pump
+   * is worth its rate times the turns the position survives, and a position
+   * survives 3.05 turns on average — so a pump played on turn eight is worth
+   * almost nothing, and a momentum deck's whole income arrives late, slowly and
+   * only through positions somebody else can damage. Measured over 120 matches a
+   * side: momentum ends on $2.17M against money's $4.36M, while its positions
+   * earn more each than anybody else's ($243K against $143K). The cards are not
+   * small. The income is thin, and it is thin at the end.
+   *
+   * This is the one thing that converts the build into score on the turn you
+   * choose. It pays nothing on an empty board, which is what makes it a momentum
+   * card rather than another way to be paid: it is worth what you built.
+   *
+   * Reads the same pump the turn phase reads, auras and damage included, so a
+   * board somebody has been hitting cashes out for less — the position damage was
+   * always meant to be worth something and against momentum it now is.
+   */
+  | { kind: "pumpToMC"; times: number }
+  /**
    * Pays a share of every dollar of marketing budget you have spent this match.
    *
    * budgetToMC's mirror, and a different card rather than a larger one: that

@@ -815,6 +815,28 @@ export function applyEffect(
       return;
     }
 
+    case "pumpToMC": {
+      const board = state.players[player].projects;
+      if (board.length === 0) {
+        log(state, player, `${cardLabel(source)}: no positions to cash out.`, "neutral");
+        return;
+      }
+      // pumpOf and not the printed pumpMC: this reads the same number the turn
+      // phase reads, so built-up pump counts, auras count, and a board somebody
+      // has been damaging cashes out for less.
+      let perTurn = 0;
+      for (let slot = 0; slot < board.length; slot++) perTurn += pumpOf(state, player, slot, index);
+      const gained = Math.round(perTurn * effect.times);
+      changeMC(state, player, gained, index);
+      log(
+        state,
+        player,
+        `${cardLabel(source)}: ${formatMC(perTurn)} of pump cashed at ${effect.times}x — ${formatMC(gained)} MC.`,
+        "pump",
+      );
+      return;
+    }
+
     case "budgetToMC": {
       const left = state.budgetThisTurn - state.budgetSpentThisTurn;
       if (left <= 0) {

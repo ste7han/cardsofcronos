@@ -695,6 +695,8 @@ export function describeEffect(
       return "Closes every other project you hold and folds what they pay into this one.";
     case "fork":
       return "Copies the opponent's strongest project onto your board. They keep theirs.";
+    case "pumpToMC":
+      return `Cashes ${effect.times}x what your projects pump this turn, as MC.`;
     case "budgetToMC":
       return `Turns ${effect.percentage}% of your unspent marketing budget into MC.`;
     case "burnForDamage": {

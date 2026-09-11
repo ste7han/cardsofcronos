@@ -1043,6 +1043,16 @@ function effectValue(
       // this has — see scripts/night-denial-price.ts.
       return 16_700;
 
+    case "pumpToMC": {
+      // Worth what the board yields, times the rate. Nothing on an empty board,
+      // which is the whole point of the card and has to be the whole point here
+      // too — a bot that overvalues it plays it on turn one and wastes it.
+      const board = state.players[player].projects;
+      let perTurn = 0;
+      for (let slot = 0; slot < board.length; slot++) perTurn += pumpOf(state, player, slot, index);
+      return perTurn * effect.times;
+    }
+
     case "budgetToMC": {
       const left = state.budgetThisTurn - state.budgetSpentThisTurn;
       // What it converts, plus the penalty it saves. Both halves are real and

@@ -597,8 +597,8 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 44_000,
     pumpMC: 22_000,
     holders: 4,
-    // every unit, both sides of the table, back to the workshop
-    effect: { kind: "benchmark", target: "ownProject", plus: 15_000 },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "The number minted has not changed. The number that exists has.",
   },
   {
@@ -1226,8 +1226,8 @@ const NOVA: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "infra", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 160_000 },
     },
-    // whatever you were building, a Nova thing plugged into it
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 14_000 } },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "Whatever you were building, there was a Nova thing that plugged in.",
   },
   {
@@ -1689,8 +1689,8 @@ const CAW777: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 7 },
       effect: { kind: "directMC", target: "self", mc: 177_000 },
     },
-    // it burned the same share of itself that the bridge takes
-    effect: { kind: "scalePump", target: "ownProject", percentage: 28 },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "It burned the same share of itself that the bridge takes. Exactly.",
   },
   {
@@ -1983,8 +1983,8 @@ const VVS: ProjectCard[] = [
     launchMC: 42_000,
     pumpMC: 25_000,
     holders: 4,
-    // volume begets volume — that is the whole business and it is enough
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 23_000 },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "Volume begets volume. That is the whole business and it is enough.",
   },
   {
@@ -3028,8 +3028,8 @@ const CAW: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    // it went to other chains and the crow went with it
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 11_000, nft: 6_000 } },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "It went to other chains and the crow went with it.",
   },
   {
@@ -3685,8 +3685,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    // an alliance is a group chat with a treasury
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 11_000, infra: 6_000 } },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "An alliance is a group chat with a treasury attached.",
   },
   {
@@ -3816,8 +3816,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    // battlegrounds every day, because a community needs something to do
-    effect: { kind: "benchmark", target: "ownProject", plus: 15_000 },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "Battlegrounds every day, because a community needs something to do.",
   },
   {
@@ -4215,8 +4215,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
-    // stake it, and it pays you for staying
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 22_000 },
+    // momentum cashes what it built, on the turn it chooses
+    effect: { kind: "pumpToMC", times: 4 },
     flavour: "Stake it, and it pays you for staying.",
   },
   {
