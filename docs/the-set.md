@@ -48,14 +48,14 @@ heading for thirty-four.
 Eight cards each: two commons, two rares, two epics, a legendary and a mythic,
 numbered I to VIII.
 
-### In the set — 34 families, 272 cards
+### In the set — 41 families, 328 cards
 
 | sector | families |
 |---|---|
-| meme | Clove the Pig · For Fox Sake! · CAW777 · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
-| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · DeFi Ape Kings · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
+| meme | Clove the Pig · For Fox Sake! · CAW777 · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush · Pyro · Bored Catz Club · ELMO · Gang Gang |
+| nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · DeFi Ape Kings · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army · Imperium · Scrap Monsters |
 | defi | Crooks Finance · Wolfswap · Tectonic · Ferro · Cronus · Fulcrom |
-| infra | Nova Labs · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
+| infra | Nova Labs · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO · CroDraw |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
 where the list of them lives — fifteen in one go and CRO Army after it, which is
@@ -180,7 +180,7 @@ look correct.
 
 ### The sector spread
 
-meme 10, nft 11, defi 6, infra 7 — thirty-four families and 272 project cards.
+meme 14, nft 13, defi 6, infra 8 — forty-one families and 328 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
@@ -820,6 +820,20 @@ archetypes and no mint bot. It came out on 2026-09-10 along with the tool card T
 Gas Tracker, both at the maker's request. They were also the only two cards in the
 set that existed in neither TCG's art folder nor anybody's plans to draw, which is
 the sort of thing that shows up when you go looking for pictures.
+
+### The people who bought a card
+
+Twenty-one more people went in on 2026-09-12, from the orders — see
+docs/the-orders.md. Nineteen became forty, and since every person card pumps a
+sector that is the support layer of the game rebuilt at twice the size rather than
+twenty-one cards arriving.
+
+It was weighted to fix a skew rather than double it. nft had eleven families and
+three aura cards worth 14K between them; infra had seven families and seven auras
+worth 119K. The new ones go eight to nft, six to meme, four to defi, two to infra
+and one that draws, and each follows what the person wrote about themselves on the
+order form. The layer now reads meme 14 families to 11 auras, nft 13 to 11, defi 6
+to 7, infra 8 to 9.
 
 ### All seven have their line
 
