@@ -5878,6 +5878,252 @@ const SCRAP: ProjectCard[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// THE PEOPLE WHO BOUGHT A CARD
+//
+// Written by scripts/order-people.ts, which is also where the reasoning lives.
+// Every line comes from what the person wrote on the order form.
+// ---------------------------------------------------------------------------
+
+const ORDERED_PEOPLE: PersonCard[] = [
+  {
+    id: "angelusbob",
+    type: "person",
+    name: "AngelusBoB",
+    ticker: "ANGELUS",
+    rarity: "legendary",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 20_000 },
+    // Howlers is a family in this set; its own page credits him and the supply is on-chain
+    flavour: "He drew all six hundred and thirty-eight Howlers himself.",
+  },
+  {
+    id: "snakeape",
+    type: "person",
+    name: "SnakeApe",
+    ticker: "SNAKEAPE",
+    rarity: "legendary",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 19_000 },
+    // his own description, word for word — it needed nothing
+    flavour: "Herpetologist, medic, gamer. Cordial, not nice.",
+  },
+  {
+    id: "ryantroopz",
+    type: "person",
+    name: "Ryan Troopz",
+    ticker: "TROOPZ",
+    rarity: "legendary",
+    aura: { kind: "pumpSector", sector: "infra", bonus: 19_000 },
+    // CroDraw is his, and it is a family in this set; the 25% is its own figure
+    flavour: "He built the lottery, and a quarter of every ticket goes to a fund.",
+  },
+  {
+    id: "kaancronos",
+    type: "person",
+    name: "KaanCronos",
+    ticker: "KAAN",
+    rarity: "epic",
+    aura: { kind: "drawEachTurn", cards: 1 },
+    // his own description: spreading knowledge on this chain in the form of tutorials
+    flavour: "Kaan the Tutorialist. He explains it until somebody gets it.",
+  },
+  {
+    id: "zwangtun",
+    type: "person",
+    name: "Zwangtun",
+    ticker: "ZWANG",
+    rarity: "epic",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 13_000 },
+    // his order was instructions; the only line he wanted on the card was that one
+    flavour: "The Thread Guy. That is what he asked to have printed.",
+  },
+  {
+    id: "elderkarl",
+    type: "person",
+    name: "ElderKarl",
+    ticker: "ELDER",
+    rarity: "epic",
+    aura: { kind: "pumpSector", sector: "defi", bonus: 12_000 },
+    // "Please create your own description and artwork for me" — the only honest answer
+    flavour: "He asked us to write his line for him. So this is it.",
+  },
+  {
+    id: "chubz",
+    type: "person",
+    name: "Chubz",
+    ticker: "CHUBZ",
+    rarity: "epic",
+    aura: { kind: "pumpSector", sector: "defi", bonus: 12_000 },
+    // his own description, trimmed of the third clause to fit
+    flavour: "Master of the charts. Sharer of referral codes.",
+  },
+  {
+    id: "whitewolf",
+    type: "person",
+    name: "White Wolf Archangel",
+    ticker: "ZEV",
+    rarity: "epic",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 11_000 },
+    // his own description, which ends "I am Zev!"
+    flavour: "White flames, the ancient rua life-breath, and a name: Zev.",
+  },
+  {
+    id: "thaxt",
+    type: "person",
+    name: "Thaxt",
+    ticker: "THAXT",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 8_000 },
+    // his own description. He ordered this card twice; it is one card
+    flavour: "Prophet of Cr00ts. Luck, he says, is a skill.",
+  },
+  {
+    id: "feedle",
+    type: "person",
+    name: "Feedle",
+    ticker: "FEEDLE",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "defi", bonus: 8_000 },
+    // his own words, and he is listed on the Timmy Finance team page
+    flavour: "Web3 wonderer, degen farmer. He also admins Scrap Monsters.",
+  },
+  {
+    id: "pieterl",
+    type: "person",
+    name: "Pieter L",
+    ticker: "PIETER",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "defi", bonus: 7_000 },
+    // his own description, in his own order
+    flavour: "Invest, support, achieve. He put it in that order.",
+  },
+  {
+    id: "darklion",
+    type: "person",
+    name: "Dark Lion",
+    ticker: "DARKLION",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 7_000 },
+    // his entire description was those four words
+    flavour: "Lions never back down. Four words, and he paid for all four.",
+  },
+  {
+    id: "spookypapi",
+    type: "person",
+    name: "SpookyPapi",
+    ticker: "SPOOKY",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 7_000 },
+    // his entire description
+    flavour: "Brick by brick. He did not need more words than that.",
+  },
+  {
+    id: "covertplate",
+    type: "person",
+    name: "Covert Plate",
+    ticker: "COVERT",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "infra", bonus: 6_000 },
+    // his own description: supporting transparency and accountability in web3
+    flavour: "A plate, and what it stands for is transparency.",
+  },
+  {
+    id: "mirko",
+    type: "person",
+    name: "Mirko",
+    ticker: "MIRKO",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 7_000 },
+    // "Just arrived here in time to make cronos great again"
+    flavour: "He turned up late and said he was here to fix it.",
+  },
+  {
+    id: "betrazen",
+    type: "person",
+    name: "Betrazen",
+    ticker: "BETRA",
+    rarity: "common",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 4_000 },
+    // his entire description was the first half of that
+    flavour: "The age of freedom begins. He did not say when.",
+  },
+  {
+    id: "crofamcard",
+    type: "person",
+    name: "CroFam",
+    ticker: "CROFAM",
+    rarity: "common",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 3_000 },
+    // ordered under that name, with "Get yours at crofam.com" as the description
+    flavour: "The name the whole chain calls itself, bought by one person.",
+  },
+  {
+    id: "cryptik",
+    type: "person",
+    name: "Cryptik",
+    ticker: "CRYPTIK",
+    rarity: "common",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 4_000 },
+    // it was
+    flavour: "His entire description was: 500 Cro?",
+  },
+  {
+    id: "dragonsong",
+    type: "person",
+    name: "DragonSong",
+    ticker: "DRAGON",
+    rarity: "common",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 3_000 },
+    // his own description, and the second half was the part he insisted on
+    flavour: "Gotta go fast. Even in death, he specified.",
+  },
+  {
+    id: "jersae",
+    type: "person",
+    name: "Jersae",
+    ticker: "JERSAE",
+    rarity: "common",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 3_000 },
+    // he was asked why he chose CroFam and that was the answer
+    flavour: "A smooth sea never made a skilled sailor. His reason for being here.",
+  },
+  {
+    id: "blacksea",
+    type: "person",
+    name: "Blacksea",
+    ticker: "BLACKSEA",
+    rarity: "common",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 4_000 },
+    // filed as a parody, and it is: he wrote the roast and then bought it
+    flavour: "Fuds CRO, claims CroFam. He ordered this card about himself.",
+  },
+];
+
+const ORDERED_TOOL: ToolCard[] = [
+  {
+    id: "compoundr",
+    type: "tool",
+    name: "CompoundR",
+    ticker: "COMPOUNDR",
+    rarity: "rare",
+    effect: { kind: "budgetToMC", percentage: 45 },
+    // "Maximize your crypto gains" was the order; its bio now reads "Profile activity moved on @wolfswapdotapp"
+    flavour: "It compounded for you. Then its account moved to Wolfswap.",
+  },
+];
+
+const ORDERED_EVENT: EventCard[] = [
+  {
+    id: "manifest-cro",
+    type: "event",
+    name: "Manifesting CRO",
+    ticker: "MANIFEST",
+    rarity: "epic",
+    effect: { kind: "pumpBySector", target: "allProjects", bonuses: { infra: 11_000 } },
+    // filed as a roast: "a manifesting card to send our beloved $CRO to 2,71$"
+    flavour: "A card bought to wish the price up. It is in the game now.",
+  },
+];
+
+// ---------------------------------------------------------------------------
 // NAMES
 //
 // The people who are on cards because of who they are, not because of what they
@@ -7241,6 +7487,9 @@ export const CARDS: readonly Card[] = [
   ...LIONS,
   ...CHIMPS,
   ...MINTED,
+  ...ORDERED_PEOPLE,
+  ...ORDERED_TOOL,
+  ...ORDERED_EVENT,
   ...PYRO,
   ...BORED,
   ...ELMO,
@@ -7273,9 +7522,9 @@ export const CARDS: readonly Card[] = [
 
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
-  common: 103,
-  rare: 107,
-  epic: 99,
-  legendary: 56,
+  common: 109,
+  rare: 115,
+  epic: 105,
+  legendary: 59,
   mythic: 43,
 } as const;
