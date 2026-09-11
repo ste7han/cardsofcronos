@@ -24,6 +24,8 @@ import { assertNever } from "@/engine/effects";
 import { restrictionOf } from "@/engine/rules-text";
 import type { Card, Effect } from "@/engine/types";
 
+import { CARDS } from "@/data/cards";
+
 /** The intents DESIGN.md already talks in. Same five as TCG, same names. */
 export type Intent = "community" | "money" | "momentum" | "takes" | "locks" | "none";
 
@@ -141,7 +143,7 @@ export const FAMILY_INTENT: Record<string, Intent> = {
   clove: "community",
   ffs: "community",
   monsters: "takes",
-  caw: "momentum",
+  caw777: "momentum",
   dak: "takes",
   crooks: "community",
   obsidian: "money",
@@ -193,7 +195,80 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * Changing what community is made of does not touch that, and this returns the
  * intent unchanged until somebody decides what to do about the column that wins.
  */
+/**
+ * Families that have not been given an intent yet, listed by name on purpose.
+ *
+ * Same shape as AWAITING_FLAVOUR in engine/validation.ts, and for the same
+ * reason: the alternative is a map that quietly returns undefined for anything
+ * it has not heard of, which is how this file came to hand CAW777's intent to a
+ * different family for three days without anything noticing.
+ *
+ * These fifteen have no effects either, so there is nothing yet for an intent to
+ * describe. The list is meant to empty.
+ */
+export const INTENT_UNDECIDED: ReadonlySet<string> = new Set([
+  "ballz",
+  "bobs",
+  "boomer",
+  "capybara",
+  "caw",
+  "corgi",
+  "cro",
+  "croarmy",
+  "cronus",
+  "ebisusbay",
+  "fulcrom",
+  "loaf",
+  "mery",
+  "puush",
+  "ryoshi",
+]);
+
+/**
+ * Every project family is either given an intent or listed as undecided.
+ *
+ * Checked when this module loads rather than by a test, so that no script which
+ * reads intents can run against a family nobody has classified. A renamed family
+ * key breaks here loudly instead of arriving as an undefined three calls later.
+ */
+export function unclassifiedFamilies(cards: readonly Card[]): string[] {
+  const families = new Set(
+    cards.flatMap((c) => (c.type === "project" ? [c.project] : [])),
+  );
+  const problems: string[] = [];
+  for (const f of families) {
+    if (!(f in FAMILY_INTENT) && !INTENT_UNDECIDED.has(f)) problems.push(f);
+  }
+  for (const f of Object.keys(FAMILY_INTENT)) {
+    if (!families.has(f)) problems.push(`${f} has an intent and is not in the set`);
+  }
+  for (const f of INTENT_UNDECIDED) {
+    if (!families.has(f)) problems.push(`${f} is listed undecided and is not in the set`);
+  }
+  return problems;
+}
+
+{
+  const problems = unclassifiedFamilies(CARDS);
+  if (problems.length > 0) {
+    throw new Error(
+      `scripts/intent.ts and the set disagree about ${problems.length} ` +
+        `${problems.length === 1 ? "family" : "families"}:\n  ` +
+        problems.join("\n  "),
+    );
+  }
+}
+
+/**
+ * The intent a family's effects should read as, or undefined while undecided.
+ *
+ * Throws for a family it has never heard of. Returning undefined for both "not
+ * decided yet" and "no such family" is what made the CAW777 rename invisible:
+ * one of those is a state and the other is a bug.
+ */
 export function effectIntentFor(family: string): Intent | undefined {
+  if (INTENT_UNDECIDED.has(family)) return undefined;
   const i = FAMILY_INTENT[family];
+  if (i === undefined) throw new Error(`No intent is recorded for the family "${family}".`);
   return i === "locks" ? "money" : i;
 }
