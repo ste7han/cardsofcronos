@@ -222,55 +222,46 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * did not recover it either — 36.9% against 36.4%, so it is not that this set's
  * money numbers are small.
  *
- * MEASURED AGAIN ON 2026-09-11, and the table this replaced was wrong.
+ * MEASURED AGAIN ON 2026-09-12, after eighty cards were added and after the
+ * second and third cash-out went onto every momentum family.
  *
- * That table said takes beat everything and community lost to everything
- * including itself. It could not be reproduced — nothing in the repository
- * produced it — and its diagonal gave it away: a style against itself has the
- * same cards on both sides and has to land near 50%, and it had takes at 35% and
- * momentum at 65%. It was measuring a seat, not a style.
+ * The table this replaced could not be reproduced at all — nothing in the
+ * repository produced it — and its diagonal gave it away: a style against itself
+ * has the same cards on both sides and has to land near 50%, and it had takes at
+ * 35% and momentum at 65%. It was measuring a seat, not a style.
  *
- * scripts/intent-duel.ts now produces this, sides swapped every match, forty
- * deck seeds per style, and the diagonal printed as the check on the rest.
- * 1200 matches per pairing, row wins against column:
- *
- *              takes  moment   money  commun   locks
- *   takes       50.9%   71.1%   36.3%   39.5%   39.3%
- *   momentum    29.5%   51.2%   39.5%   29.2%   23.8%
- *   money       65.1%   63.3%   49.7%   48.7%   46.2%
- *   community   61.2%   72.6%   54.3%   52.0%   48.8%
- *   locks       62.0%   75.3%   53.8%   54.0%   50.7%
- *
- * Every style is within two points of even against itself, which is what makes
- * the rest of it readable.
- *
- * Against the whole field: locks 59.1%, community 57.8%, money 54.6%,
- * takes 47.4%, momentum 34.6%.
- *
- * So community is not the problem and takes is not dominant. Momentum was, and
- * has since been answered — see pumpToMC in engine/types.ts. After it, 1200
- * matches per pairing:
+ * scripts/intent-duel.ts produces this, sides swapped every match, forty deck
+ * seeds per style, diagonal printed as the check on the rest. 1200 matches per
+ * pairing, row wins against column:
  *
  *              takes  moment   money  commun   locks
- *   takes       51.5%   60.2%   37.0%   37.5%   37.8%
- *   momentum    41.3%   49.3%   52.8%   39.8%   37.1%
- *   money       64.4%   49.7%   49.7%   46.4%   43.2%
- *   community   63.7%   62.8%   57.0%   51.8%   48.3%
- *   locks       63.6%   63.2%   56.4%   54.9%   51.7%
+ *   takes       50.5%   58.9%   33.1%   32.9%   35.7%
+ *   momentum    38.3%   50.7%   46.3%   43.1%   37.6%
+ *   money       66.2%   54.5%   49.8%   48.2%   48.1%
+ *   community   64.0%   56.7%   49.8%   49.9%   48.0%
+ *   locks       58.8%   61.4%   52.2%   51.0%   51.2%
  *
- * Against the field: locks 58.0%, community 56.7%, money 50.7%, takes 44.7%,
- * momentum 44.0%. Momentum went from 34.6% to 44.0% on one card per family, and
- * the spread across all five closed from 24.5 points to 14.0.
+ * Against the field: locks 54.9%, community 53.7%, money 53.3%, momentum 43.2%,
+ * takes 42.1%. Every style within 1.2 points of even against itself.
  *
- * WHAT IS LEFT is a different shape from what was here before. Nothing is far
- * behind any more; locks and community are ahead. That is a smaller problem than
- * one style at 34.6%, and nothing has been done about it.
+ * WHY MOMENTUM WAS LOSING, which took three wrong answers to find. Its cards are
+ * the biggest in the game — $50.7K of final margin per $10K spent, higher than
+ * any other style — and its decks were the worst. The reason is in the deck and
+ * not in the card: a momentum deck of forty cards held THIRTY-THREE PUMPS. Every
+ * other style holds between nought and five of anything. A pump is worth its rate
+ * times the turns a position survives, positions survive 3.05 turns, and the
+ * thirty-third pump in a deck is competing with thirty-two others for the same
+ * finite thing. Money's deck is 100% one effect and does not care, because
+ * directMC pays the same however many you have played.
  *
- * Two things changed between the tables and both matter. The old one was taken
- * when 136 of the 272 project cards did nothing and locks was a single card
- * carrying the one restriction the engine measures at minus fifteen thousand;
- * that game no longer exists. And it was measured in a way that cannot be
- * checked, which is the part worth remembering.
+ * So adding three momentum families in September made it WORSE, from 44.0% to
+ * 36.4%: more families meant a purer deck meant more pumps. The answer was not
+ * bigger pumps. It was pumpToMC on three cards of every momentum family instead
+ * of one — cash out early and small, mid, or late and large. That took the deck
+ * from 33 pumps and 4 cash-outs to 25 and 8, and momentum from 36.4% to 43.2%.
+ *
+ * WHAT IS LEFT: takes, at 42.1%, is now the bottom of the table. It was 44.7%
+ * before any of this. Nothing has been done about it.
  */
 /**
  * Families that have not been given an intent yet, listed by name on purpose.

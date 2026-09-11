@@ -533,8 +533,8 @@ const ROBOTS: ProjectCard[] = [
     // engine can do that, but a card whose text says "50% chance" and whose
     // outcome is fixed by the seed is a card that lies twice a match. It costs
     // itself something and gains more instead — the same trade, said honestly.
-    // heads it works, tails it also sort of works
-    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Armour, background, eyes, gear, scarf. Five things and that is all.",
   },
   {
@@ -566,7 +566,8 @@ const ROBOTS: ProjectCard[] = [
     launchMC: 28_000,
     pumpMC: 14_000,
     holders: 3,
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "The loser gets bought off the floor and burned. Every week.",
   },
   {
@@ -1151,8 +1152,8 @@ const NOVA: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 45_000 },
     },
-    // launch, stake, govern, and all three lift the board
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Launch, stake, govern. Three verbs and that is the pitch.",
   },
   {
@@ -1189,8 +1190,8 @@ const NOVA: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 4 },
       effect: { kind: "directMC", target: "self", mc: 110_000 },
     },
-    // audited, which for a launchpad is the whole argument
-    effect: { kind: "benchmark", target: "ownProject", plus: 11_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "CertiK audited it, which for a launchpad is the whole argument.",
   },
   {
@@ -1618,8 +1619,8 @@ const CAW777: ProjectCard[] = [
     launchMC: 17_000,
     pumpMC: 7_000,
     holders: 3,
-    // block seven-seven-seven-seven, and the screenshot did numbers
-    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "The token is called CAW777. The ticker is only 777.",
   },
   {
@@ -1652,8 +1653,8 @@ const CAW777: ProjectCard[] = [
     launchMC: 27_000,
     pumpMC: 17_000,
     holders: 3,
-    // the chat found sevens in the supply, the fee and the founder's age
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "A billion of them, and seventy-seven point seven million already gone.",
   },
   {
@@ -1918,8 +1919,8 @@ const VVS: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 8_000,
     holders: 3,
-    // emissions on everything; for a while the yield was the product
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Bling Swap, Crystal Farms, Glitter Mine. Everything is a jewel.",
   },
   {
@@ -1952,8 +1953,8 @@ const VVS: ProjectCard[] = [
     holders: 4,
     // the fees were the moat and nobody undercut it for two years
     payoff: { when: { kind: "turnAtMost", turn: 4 }, effect: { kind: "extraBudget", target: "self", mc: 60_000 } },
-    // the fees were the moat; nobody undercut it for two years
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "Half the token went to the community, and that was written in first.",
   },
   {
@@ -2964,8 +2965,8 @@ const CAW: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    // 2016, and the token came eight years later
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "That was 2016. The token came eight years later.",
   },
   {
@@ -2996,8 +2997,8 @@ const CAW: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    // no inflation, because there was nothing left to release
-    effect: { kind: "pumpProject", target: "ownProject", mc: 26_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "No inflation, because there was nothing left to release.",
   },
   {
@@ -3621,8 +3622,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    // land, and somebody who wants your land
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Land, and somebody who wants your land.",
   },
   {
@@ -3653,8 +3654,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    // crafting, because a war needs something to be made of
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "Crafting, because a war needs something to be made of.",
   },
   {
@@ -3752,8 +3753,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    // humans, cyborgs and reptiles, one legendary each
-    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Humans, cyborgs and reptiles, and one legendary each.",
   },
   {
@@ -3784,8 +3785,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    // claims daily, raffles nightly, airdrops on the weekend
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "Claims daily, raffles nightly, airdrops on the weekend.",
   },
   {
@@ -4151,8 +4152,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
-    // community first, and the roadmap said so out loud
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Community first, and the roadmap said so out loud.",
   },
   {
@@ -4183,8 +4184,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
-    // it launched through VVS like most things that got anywhere
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "It launched through VVS, like most things that got anywhere.",
   },
   {
@@ -4977,8 +4978,8 @@ const PYRO: ProjectCard[] = [
     launchMC: 13_000,
     pumpMC: 11_000,
     holders: 3,
-    // two renames, and the project announced the second one itself
-    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Then it was PYRO. Then it was PYROSTR. Same fire.",
   },
   {
@@ -5009,8 +5010,8 @@ const PYRO: ProjectCard[] = [
     launchMC: 22_000,
     pumpMC: 18_000,
     holders: 3,
-    // the deflationary slice, which is where the name comes from
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "One percent of that burns. Every buy, every sell.",
   },
   {
@@ -5110,8 +5111,8 @@ const BORED: ProjectCard[] = [
     launchMC: 17_000,
     pumpMC: 8_000,
     holders: 3,
-    // supply and the dead address, both read on-chain
-    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "A billion of them, and not one burned.",
   },
   {
@@ -5142,8 +5143,8 @@ const BORED: ProjectCard[] = [
     launchMC: 30_000,
     pumpMC: 13_000,
     holders: 3,
-    // quoted from the order form — the buyer wrote this line himself
-    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "Too cool to care, too iconic to ignore. Their words, not mine.",
   },
   {
@@ -5775,8 +5776,8 @@ const SCRAP: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 4,
-    // their own description of what backs the collection
-    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
+    // cash out early and small, so the curve is build, cash, build, cash, build, cash
+    effect: { kind: "pumpToMC", times: 1 },
     flavour: "Cans, bottles and scrap metal, turned into staking rewards.",
   },
   {
@@ -5807,8 +5808,8 @@ const SCRAP: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 4,
-    // their own hashtag
-    effect: { kind: "benchmark", target: "ownProject", plus: 11_000 },
+    // the second cash-out: a momentum deck is 33 pumps in 40 cards, and the thirty-third is worth nothing
+    effect: { kind: "pumpToMC", times: 2 },
     flavour: "Trash to treasure, and they mean the first half literally.",
   },
   {

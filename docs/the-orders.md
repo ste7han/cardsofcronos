@@ -13,15 +13,15 @@ what each one becomes. When it disagrees with `data/cards.ts`, the data is right
 
 ## What they cost the set
 
-**Thirty-one of the thirty-seven are in.** They become 80 cards, taking the set
-from 352 to 432.
+**Thirty-one of the thirty-seven are in, as 79 cards.** The set goes from 352 to
+431: 328 project cards, 40 people, 34 tactics, 21 events, 8 tools.
 
 | | | |
 |---|---|---|
 | 7 project families | 56 cards | eight each, like every other project |
-| 22 people | 22 cards | Crofam, Founder, Influencer, Parody, and one Special |
+| 21 people | 21 cards | twenty-two orders; Thaxt ordered twice from one account |
 | 1 tool | 1 card | CompoundR |
-| 1 event | 1 card | the CRO roast |
+| 1 event | 1 card | the CRO roast, as Manifesting CRO |
 
 **Rarity does not carry over.** Fourteen of the thirty-seven were bought as
 Mythical, which is what people buy when they are paying — and mythic is the
@@ -91,6 +91,63 @@ game being rebuilt at twice the size.
 The intent matrix was measured the day before this started (`npm run intents`) and
 it will not survive this unchanged. Measure again once they are in; do not tune
 anything on the old numbers.
+
+---
+
+## What it did to the game, measured
+
+Eighty cards is a fifth of the set, so nothing about the balance survived it
+unchanged. `npm run intents` before and after, 1200 matches per pairing:
+
+| | before | after |
+|---|---|---|
+| locks | 58.0% | 54.9% |
+| community | 56.7% | 53.7% |
+| money | 50.7% | 53.3% |
+| momentum | 44.0% | 43.2% |
+| takes | 44.7% | 42.1% |
+| **spread** | **14.0 points** | **12.8 points** |
+
+The spread closed and the top came down, which is the shape you want. It did not
+go in a straight line: momentum fell to 36.4% first, and finding out why produced
+the most useful thing in this whole pass.
+
+### Momentum's cards are the biggest and its decks were the worst
+
+A momentum card returns $50.7K of final margin per $10K spent, higher than any
+other style. A momentum deck of forty cards held **thirty-three pumps**. Every
+other style holds between nought and five of any one thing.
+
+A pump is worth its rate times the turns a position survives, and positions
+survive 3.05 turns. The thirty-third pump in a deck is competing with thirty-two
+others for the same finite thing — positions times remaining turns. Money does not
+have this problem: its deck is 100% one effect and `directMC` pays the same
+however many you have played.
+
+So adding three momentum families made momentum **worse**, because more families
+meant a purer deck meant more pumps. The fix was not bigger pumps. Every momentum
+family now carries three `pumpToMC` cards instead of one — cash out early and
+small on card II, mid on IV, late and large on VI. That took a momentum deck from
+33 pumps and 4 cash-outs to 25 and 8, and momentum from 36.4% back to 43.2%.
+
+### The aura layer was rebuilt, not just doubled
+
+Nineteen people became forty, and every person card pumps a sector. Before, the
+layer sat badly against the families: nft had eleven families and three aura cards
+worth 14K between them, while infra had seven families and seven auras worth 119K.
+
+The twenty-one new auras are weighted the other way — eight to nft, six to meme,
+four to defi, two to infra, one that draws — and each follows what the person wrote
+about themselves. It lands at meme 14 families to 11 auras, nft 13 to 11, defi 6 to
+7, infra 8 to 9. Infra is still the richest per family because the auras already
+there are large, and those were not touched.
+
+### What is left
+
+**Takes is now the bottom of the table at 42.1%**, where it was 44.7% before. It
+has six families and gained one. Nothing has been done about it, deliberately: the
+spread is tighter than it was and tuning a second style in the same pass makes it
+impossible to say afterwards which change did what.
 
 ---
 
