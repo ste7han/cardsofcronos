@@ -48,13 +48,13 @@ heading for thirty-four.
 Eight cards each: two commons, two rares, two epics, a legendary and a mythic,
 numbered I to VIII.
 
-### In the set — 35 families, 280 cards
+### In the set — 34 families, 272 cards
 
 | sector | families |
 |---|---|
 | meme | Clove the Pig · For Fox Sake! · CAW777 · CAW · Mistery · Capybara Nation · Loaf · Ballz of Steel · Corgi · Puush |
 | nft | Reckless Robots · Howlers · Loaded Lions · Cronos Chimp Club · Cr00ts · Crazzzy Monsters · DeFi Ape Kings · Ryoshi · Bob's Adventures · Boomer Squad · CRO Army |
-| defi | Crooks Finance · Wolfswap · Tectonic · Ferro · Cronus · Fulcrom · Single Finance |
+| defi | Crooks Finance · Wolfswap · Tectonic · Ferro · Cronus · Fulcrom |
 | infra | Nova Labs · Obsidian Finance · VVS Finance · Mad Meerkat Finance · Minted · Ebisusbay · CRO |
 
 The sixteen went in on 2026-09-08 with `scripts/new-families.ts`, which is also
@@ -180,7 +180,7 @@ look correct.
 
 ### The sector spread
 
-meme 10, nft 11, defi 7, infra 7 — thirty-five families and 280 project cards.
+meme 10, nft 11, defi 6, infra 7 — thirty-four families and 272 project cards.
 
 It matters because a sector is something you build around in this game. The deck
 presets are sector decks, the auras on the people cards pump one sector each, and
@@ -689,6 +689,18 @@ Left off because it moves: the floor, the CRO distributed to date, the volume.
 the reading that this was a venue taking a percentage — and it is a collection that
 pays half of every resale back. That is close to the opposite. Not touched here;
 written down for the effects pass.
+
+---
+
+## Single Finance came out
+
+Removed on 2026-09-11 at the maker's request — the second family to leave after Sloth
+Gang, and the first to leave with its eight lines already written and checked. The set
+goes to 34 families and 352 cards, `defi` down to six.
+
+Its line is gone from `scripts/new-families.ts` as well, with the reason in its place.
+That script only writes what is missing, so a family listed there is a family that
+comes back the next time anybody runs it.
 
 ---
 

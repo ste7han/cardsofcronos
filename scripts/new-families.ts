@@ -77,7 +77,9 @@ const FAMILIES: Family[] = [
   // ---- defi --------------------------------------------------------------
   { key: "cronus", name: "Cronus", ticker: "CRONUS", sector: "defi" },
   { key: "fulcrom", name: "Fulcrom", ticker: "FUL", sector: "defi" },
-  { key: "single", name: "Single Finance", ticker: "SINGLE", sector: "defi" },
+  // Single Finance is bewust weg. Het ging op 2026-09-08 in met de andere
+  // vijftien en kwam er op 2026-09-11 weer uit, op verzoek van de maker.
+  // Dit bestand is additief, dus een regel hier zet hem gewoon terug.
   { key: "corgi", name: "Corgi", ticker: "CORGI", sector: "defi" },
   { key: "puush", name: "Puush", ticker: "PUUSH", sector: "defi" },
   // CA is its own ticker, not the ARMY this file first guessed at, and it is a
