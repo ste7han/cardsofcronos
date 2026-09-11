@@ -3722,6 +3722,8 @@ const CRONUS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // every fee it takes goes back to whoever is holding it
+    effect: { kind: "directMC", target: "self", mc: 7_000, per: "holders" },
     flavour: "A bot in a chat window, and that was the whole product.",
   },
   {
@@ -3736,6 +3738,9 @@ const CRONUS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // set a price and go to bed, and nobody else gets to close
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
+    restriction: { kind: "banTakeProfit" },
     flavour: "Buy, sell, or set a price and go to bed.",
   },
   {
@@ -3750,6 +3755,8 @@ const CRONUS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // what you did not spend keeps working while you are asleep
+    effect: { kind: "budgetToMC", percentage: 60 },
     flavour: "It never had a venue of its own. Everything went through VVS.",
   },
   {
@@ -3764,6 +3771,8 @@ const CRONUS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // dollar-cost averaging, automated, for people who kept forgetting
+    effect: { kind: "directMC", target: "self", mc: 85_000 },
     flavour: "Dollar-cost averaging, automated, for people who kept forgetting.",
   },
   {
@@ -3778,6 +3787,8 @@ const CRONUS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // the same fees, at the size a real desk takes them
+    effect: { kind: "directMC", target: "self", mc: 42_000, per: "holders" },
     flavour: "Every fee it takes goes back to whoever is holding it.",
   },
   {
@@ -3792,6 +3803,8 @@ const CRONUS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // a trading desk that fits inside a message
+    effect: { kind: "scaleMC", target: "self", percentage: 14 },
     flavour: "A trading desk that fits inside a message.",
   },
   {
@@ -3806,6 +3819,9 @@ const CRONUS: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // nobody opened a website, so everyone else pays the toll
+    effect: { kind: "directMC", target: "self", mc: 110_000 },
+    restriction: { kind: "taxPlays", percent: 12 },
     flavour: "Nobody opened a website to use it, and that was the point.",
   },
   {
@@ -3820,6 +3836,8 @@ const CRONUS: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // the whole chain from one chat, and no room left in yours
+    restriction: { kind: "banRoom" },
     flavour: "The whole chain, reachable from a chat you were already in.",
   },
 ];
