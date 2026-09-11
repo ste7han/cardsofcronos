@@ -284,7 +284,6 @@ function slotsFor(
       return collect(state, effect.target, player, effect.percentage > 0 ? "helps" : "hurts");
 
     case "pumpToMC":
-    case "pumpToMC":
     case "budgetToMC":
     case "peekAndBurn":
       return [];
