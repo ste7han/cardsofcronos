@@ -3261,6 +3261,8 @@ const LOAF: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // a cat folded into the shape of a loaf
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "A cat, folded up, in the shape of a loaf of bread.",
   },
   {
@@ -3275,6 +3277,8 @@ const LOAF: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // forty to the presale, forty to the pool, fifteen to the fire
+    effect: { kind: "refundMC", percentage: 40 },
     flavour: "Forty percent to the presale, forty to the pool, fifteen to the fire.",
   },
   {
@@ -3289,6 +3293,8 @@ const LOAF: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // five percent held back for whoever turned up
+    effect: { kind: "directMC", target: "self", mc: 28_000, per: "holders" },
     flavour: "Five percent held back for whoever turned up.",
   },
   {
@@ -3303,6 +3309,9 @@ const LOAF: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // the more people arrive, the more of it burns
+    effect: { kind: "scaleMC", target: "self", percentage: 12 },
+    restriction: { kind: "taxPlays", percent: 10 },
     flavour: "The more people arrive, the more of it burns. That was written down first.",
   },
   {
@@ -3317,6 +3326,8 @@ const LOAF: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // Toastoff: you click and the bread earns
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "Toastoff. You click, and the bread earns.",
   },
   {
@@ -3331,6 +3342,8 @@ const LOAF: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // the chain own app listed it, which is not nothing
+    effect: { kind: "directMC", target: "self", mc: 170_000 },
     flavour: "The chain's own app listed it, which is not nothing for a cat.",
   },
   {
@@ -3345,6 +3358,9 @@ const LOAF: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // its own website calls it useless, and still nobody cashes out
+    effect: { kind: "unbankedMC", percentage: 30 },
+    restriction: { kind: "banTakeProfit" },
     flavour: "Its own website calls it useless. Nothing here is more honest than that.",
   },
   {
@@ -3359,6 +3375,8 @@ const LOAF: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // every cat on earth does this and none were taught
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
     flavour: "Every cat on earth does this and none of them were taught. That is the asset.",
   },
 ];
@@ -3855,6 +3873,8 @@ const FULCROM: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // perpetual trading, all of it on-chain
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Perpetual trading, and all of it on-chain.",
   },
   {
@@ -3869,6 +3889,8 @@ const FULCROM: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // low fees, no price impact, and that was enough
+    effect: { kind: "refundMC", percentage: 25 },
     flavour: "Low fees, no price impact. That was the pitch and it was enough.",
   },
   {
@@ -3883,6 +3905,8 @@ const FULCROM: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // seventy-five times your money if you are very sure
+    effect: { kind: "scaleMC", target: "self", percentage: 11 },
     flavour: "Seventy-five times your money, if you are very sure.",
   },
   {
@@ -3897,6 +3921,9 @@ const FULCROM: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // every trade on-chain, and nobody closes quietly
+    effect: { kind: "unbankedMC", percentage: 25 },
+    restriction: { kind: "banTakeProfit" },
     flavour: "Every trade on-chain, including the ones you would rather nobody saw.",
   },
   {
@@ -3911,6 +3938,8 @@ const FULCROM: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // it launched through VVS the way most things did
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "It launched through VVS, the way most things here did.",
   },
   {
@@ -3925,6 +3954,8 @@ const FULCROM: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // leverage is a loan against how sure you feel
+    effect: { kind: "scaleMC", target: "self", percentage: 18 },
     flavour: "Leverage is a loan against how sure you feel.",
   },
   {
@@ -3939,6 +3970,9 @@ const FULCROM: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // it went to other chains and charged the same everywhere
+    effect: { kind: "directMC", target: "self", mc: 110_000 },
+    restriction: { kind: "taxPlays", percent: 14 },
     flavour: "It went to other chains and kept the name it was born with.",
   },
   {
@@ -3953,6 +3987,8 @@ const FULCROM: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // the liquidation price is the only number that matters
+    effect: { kind: "peakMC", percentage: 30 },
     flavour: "The liquidation price is the only number on the screen that matters.",
   },
 ];
@@ -4201,6 +4237,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // open on the day the chain was
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Open on the day the chain was, with nothing yet to list.",
   },
   {
@@ -4215,6 +4253,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // you went there because there was nowhere else
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "You went there because there was nowhere else to go.",
   },
   {
@@ -4229,6 +4269,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // every collection on this chain has a page here
+    effect: { kind: "directMC", target: "self", mc: 28_000, per: "table" },
     flavour: "Every collection on this chain has a page here, visited or not.",
   },
   {
@@ -4243,6 +4285,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // a swap window open beside the listings
+    effect: { kind: "budgetToMC", percentage: 55 },
     flavour: "It kept a swap window open beside the listings, since everyone was already here.",
   },
   {
@@ -4257,6 +4301,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // a token of its own, so the venue paid you for using it
+    effect: { kind: "directMC", target: "self", mc: 42_000, per: "holders" },
     flavour: "A token of its own, so the venue paid you for using it.",
   },
   {
@@ -4271,6 +4317,9 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // drops and launches, and it decides whose
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
+    restriction: { kind: "banType", cardType: "person" },
     flavour: "Drops, launches, and money raised for things that were not its own.",
   },
   {
@@ -4285,6 +4334,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // older than almost everything it sells
+    effect: { kind: "scaleMC", target: "self", percentage: 24 },
     flavour: "Older than almost everything it sells, and still open.",
   },
   {
@@ -4299,6 +4350,8 @@ const EBISUSBAY: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // whatever this chain minted passed through here first
+    restriction: { kind: "banRoom" },
     flavour: "Whatever this chain minted, it passed through here first.",
   },
 ];
@@ -4316,6 +4369,8 @@ const CRO: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // the gas, and every transaction pays it
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "The gas. Every transaction on this chain is paid in it, noticed or not.",
   },
   {
@@ -4330,6 +4385,8 @@ const CRO: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // held by everyone here whether they chose it or not
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
     flavour: "Held by everyone here and chosen by almost nobody.",
   },
   {
@@ -4344,6 +4401,8 @@ const CRO: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // seventy billion burned, and the burn came back
+    effect: { kind: "refundMC", percentage: 40 },
     flavour: "Seventy billion burned, and they called it the largest there had ever been.",
   },
   {
@@ -4358,6 +4417,8 @@ const CRO: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // four years later a vote returned all of it
+    effect: { kind: "directMC", target: "self", mc: 85_000 },
     flavour: "Four years later a vote brought all seventy billion back.",
   },
   {
@@ -4372,6 +4433,9 @@ const CRO: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // the validators who carried the vote decide what happens next
+    effect: { kind: "scaleMC", target: "self", percentage: 14 },
+    restriction: { kind: "banType", cardType: "event" },
     flavour: "The validators who carried the vote were the ones who called it.",
   },
   {
@@ -4386,6 +4450,8 @@ const CRO: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // six and a half billion promised, briefly
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "Trump Media promised six and a half billion dollars of it.",
   },
   {
@@ -4400,6 +4466,9 @@ const CRO: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // it fell eight percent by morning and the toll stayed on
+    effect: { kind: "peakMC", percentage: 14 },
+    restriction: { kind: "taxPlays", percent: 10 },
     flavour: "A year later Trump Media walked away, and it fell eight percent by morning.",
   },
   {
@@ -4414,6 +4483,9 @@ const CRO: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // the chain stopped and rewound to before the damage
+    effect: { kind: "comebackMC", percentage: 45 },
+    restriction: { kind: "taxPlays", percent: 20 },
     flavour: "The same validators once stopped the chain and erased two hours of it.",
   },
 ];
