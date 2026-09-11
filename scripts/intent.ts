@@ -186,6 +186,20 @@ export const FAMILY_INTENT: Record<string, Intent> = {
   capybara: "money",
   ballz: "money",
   croarmy: "takes",
+
+  // The seven that people bought a card of, classified on 2026-09-12 alongside
+  // their effects. Weighted away from what the measurement says is already ahead:
+  // three momentum and one takes, the two weakest at 44.0% and 44.7%, against one
+  // community which leads the field at 56.7% — and that one only because Gang Gang
+  // renounced ownership and burned its liquidity, which is not a money deck and not
+  // a takes deck, and filing it elsewhere for the sake of a number would be a lie.
+  pyro: "momentum",
+  bored: "momentum",
+  scrap: "momentum",
+  imperium: "takes",
+  elmo: "money",
+  crodraw: "money",
+  ganggang: "community",
 };
 
 /**

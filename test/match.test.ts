@@ -29,6 +29,7 @@ import {
   playable,
   pumpOf,
   whyNot,
+  portfolioSizeFor,
 } from "@/engine/match";
 import type { State } from "@/engine/types";
 import { MARKETING_COST } from "@/engine/types";
@@ -165,11 +166,21 @@ describe("the portfolio cap", () => {
     return state;
   }
 
+  // Against portfolioSizeFor and not RULES.portfolioSize, because three project
+  // cards raise the limit while they are undamaged — howlers-pack by three,
+  // chimps-viii by three, nova-suite by two. This read the base constant and
+  // passed for as long as seed 77 happened not to draw one of them; it started
+  // failing when the set grew and the draw moved, with a legal board of seven
+  // against a limit that was nine at the time. engine/match.ts says it out loud:
+  // "a card that raised the limit while the message still said six would be the
+  // game lying about its own rule". So would a test.
   it("never grows past the cap", () => {
     let state = newMatch(CARDS, 77);
     while (!state.finished) {
       for (const player of ["you", "opponent"] as const) {
-        expect(state.players[player].projects.length).toBeLessThanOrEqual(RULES.portfolioSize);
+        expect(state.players[player].projects.length).toBeLessThanOrEqual(
+          portfolioSizeFor(state, player, index),
+        );
       }
       state = applyMove(state, chooseMove(state, index), index);
     }

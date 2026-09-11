@@ -13,7 +13,8 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { applyMove, budgetForTurn, newMatch } from "@/engine/match";
+import { cardById } from "@/engine/helpers";
+import { applyMove, budgetForTurn, newMatch, playable } from "@/engine/match";
 import { snapshotOfState } from "@/engine/snapshot";
 import { buildDeck } from "@/engine/deck";
 import { INDEX, SET } from "@/lib/set";
@@ -57,7 +58,17 @@ describe("what the table sounds like", () => {
     // The order is the meaning. The hand acts, then the board answers; playing
     // them the other way round tells the story backwards.
     const state = freshMatch();
-    const { cues } = after(state, { kind: "playCard", handIndex: 0 });
+    // The first card in hand that can actually be played, rather than slot zero.
+    // This asked for slot zero and passed for as long as the draw put something
+    // playable there; when the set grew it landed on a CAW777 card, which needs a
+    // position on the board, and the test failed for a reason that has nothing to
+    // do with what it is asking. What it is asking is that playing a card sounds
+    // like playing a card before it sounds like anything the card did.
+    const slot = state.players.you.hand.findIndex((id) =>
+      playable(state, cardById(INDEX, id), "you", INDEX),
+    );
+    expect(slot).toBeGreaterThanOrEqual(0);
+    const { cues } = after(state, { kind: "playCard", handIndex: slot });
     expect(cues[0]).toBe("card-played");
   });
 
