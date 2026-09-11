@@ -692,6 +692,38 @@ written down for the effects pass.
 
 ---
 
+## What CAW777 burns, and why the first answer was wrong by a factor of ten
+
+Its cards said it was "born from the ashes of burned $CAW" because that is what its
+bio says, and nobody had asked what was actually burning. The maker did, and the
+answer is better than the phrase.
+
+**CAW burns 7.77% of any amount bridged across chains.** It moved its bridge onto
+LayerZero's OFT protocol on 21 February 2025, and every hop destroys that share
+permanently. The reasoning is in its own announcement: a $3m LP tied to CRO had left
+it so correlated that "CAW has mostly become a CRO stablecoin, with the CAW price only
+moving when the CRO price moves". Making arbitrage cost 7.77% each way decouples the
+other chains — and every arbitrage then burns supply.
+
+**A search said 0.77%. The primary source says 7.77%**, ten times more, and the name
+is built on it. One more entry for the pile: a summary is not a source.
+
+On-chain, both halves check out. CAW's supply is 777,777,777,777,777 with
+10,623,373,280,241 already at the dead address, about 1.4%. CAW777 has a billion, and
+**77,700,000 of them are burned — exactly 7.77%**. It did not borrow the story, it
+applied it to itself on the way in.
+
+Three cards were sharpened on that: the billion now comes with the 77.7 million gone,
+the bridge rate is stated, and the mythic-adjacent epic says the self-burn matches the
+bridge rate exactly. What went was a joke that said nothing — "the one number here
+without a seven".
+
+Where the name comes from: in the same announcement CAW replaced its buggy Wormhole
+token on Solana with a vanity address beginning `CAW777`, "7.77% more scarce from the
+start". The Cronos CAW777 is a separate token named after that.
+
+---
+
 ## Single Finance came out
 
 Removed on 2026-09-11 at the maker's request — the second family to leave after Sloth

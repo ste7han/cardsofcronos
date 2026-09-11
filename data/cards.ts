@@ -1632,7 +1632,7 @@ const CAW777: ProjectCard[] = [
     holders: 3,
     // the chat found sevens in the supply, the fee and the founder's age
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
-    flavour: "A billion of them, which is the one number here without a seven.",
+    flavour: "A billion of them, and seventy-seven point seven million already gone.",
   },
   {
     id: "caw777-streak",
@@ -1649,7 +1649,7 @@ const CAW777: ProjectCard[] = [
     // seven in a row — every one of them counted
     onYourPlay: { mc: 30_000 },
     effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 11_000 } },
-    flavour: "It exists to celebrate a bridge, and burning things across one.",
+    flavour: "Seven point seven seven percent burns every time CAW crosses a chain.",
   },
   {
     id: "caw777-jackpot",
@@ -1667,7 +1667,7 @@ const CAW777: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 7 },
       effect: { kind: "directMC", target: "self", mc: 177_000 },
     },
-    flavour: "Born from the ashes of a burn, which is a lot to ask of a crow.",
+    flavour: "It burned the same share of itself that the bridge takes. Exactly.",
   },
   {
     id: "caw777-triple",
