@@ -41,30 +41,15 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { CARDS } from "../data/cards";
 import type { Effect, ProjectCard } from "../engine/types";
 
-type Intent = "community" | "momentum" | "money" | "takes" | "locks";
-
-/** Every family's way of playing. From scripts/family-proposal.ts. */
-const INTENT: Record<string, Intent> = {
-  clove: "community",
-  ffs: "community",
-  monsters: "takes",
-  caw: "momentum",
-  dak: "takes",
-  crooks: "community",
-  obsidian: "money",
-  tectonic: "locks",
-  ferro: "money",
-  wolfswap: "takes",
-  vvs: "momentum",
-  mmf: "money",
-  robots: "momentum",
-  howlers: "community",
-  lions: "money",
-  chimps: "community",
-  nova: "momentum",
-  cr00ts: "takes",
-  minted: "money",
-};
+// The intent map used to be copied in here, with its own `type Intent` beside
+// it. scripts/intent.ts exists because two scripts each carried a copy and its
+// own header calls that "one copy too many" — and then this file kept a third.
+//
+// It had gone stale exactly the way the header warned: `caw: "momentum"` was
+// still here after CAW777 gave up the key, while the card ids further down this
+// same file had already been renamed to caw777-. The cards moved and the list
+// above them did not, one screen apart.
+import { type Intent, effectIntentFor } from "./intent";
 
 /**
  * The plan, card by card. `null` means left bare, with the reason beside it.
@@ -271,7 +256,7 @@ if (!apply) {
     }
     const { effect, why } = PLAN[card.id]!;
     console.log(
-      `${pad(card.id, 18)}${pad(card.rarity, 10)}${pad(INTENT[card.project] ?? "?", 11)}` +
+      `${pad(card.id, 18)}${pad(card.rarity, 10)}${pad(effectIntentFor(card.project) ?? "?", 11)}` +
         `${effect === null ? "LEFT BARE" : render(effect)}\n${" ".repeat(18)}${why}`,
     );
   }
