@@ -44,8 +44,18 @@ describe("effectIntentFor separates undecided from unknown", () => {
     expect(effectIntentFor("caw777")).toBe("momentum");
   });
 
-  it("returns undefined for a family still undecided", () => {
-    expect(effectIntentFor("caw")).toBeUndefined();
+  // Written against "caw" while it was undecided, which broke the moment it was
+  // classified. A test that names the one example it has is a test with a
+  // shelf life; this one asks the question of whatever is on the list, and
+  // passes vacuously once the list is empty — which is where it is meant to end.
+  it("returns undefined for every family still undecided", () => {
+    for (const family of INTENT_UNDECIDED) {
+      expect(effectIntentFor(family)).toBeUndefined();
+    }
+  });
+
+  it("has nothing left undecided", () => {
+    expect([...INTENT_UNDECIDED]).toEqual([]);
   });
 
   it("throws for a family nobody has heard of", () => {

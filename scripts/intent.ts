@@ -159,6 +159,27 @@ export const FAMILY_INTENT: Record<string, Intent> = {
   nova: "momentum",
   cr00ts: "takes",
   minted: "money",
+
+  // The fifteen that went in without effects, classified on 2026-09-11.
+  // Deliberately no new takes beyond CRO Army and no new community: the table
+  // above says takes already beats everything and community loses to everything.
+  // Five went to locks, which had one family and is the only row that holds up
+  // against takes at all — 46% where momentum and money manage 26% and 32%.
+  cro: "locks",
+  cronus: "locks",
+  fulcrom: "locks",
+  ebisusbay: "locks",
+  loaf: "locks",
+  caw: "momentum",
+  corgi: "momentum",
+  ryoshi: "momentum",
+  bobs: "momentum",
+  mery: "money",
+  puush: "money",
+  boomer: "money",
+  capybara: "money",
+  ballz: "money",
+  croarmy: "takes",
 };
 
 /**
@@ -203,26 +224,13 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * it has not heard of, which is how this file came to hand CAW777's intent to a
  * different family for three days without anything noticing.
  *
- * These fifteen have no effects either, so there is nothing yet for an intent to
- * describe. The list is meant to empty.
+ * It is empty, which is the state it was built to reach: all thirty-four families
+ * were classified on 2026-09-11. It stays rather than being deleted, because the
+ * next family added will need somewhere to sit before anybody knows how it plays,
+ * and because an empty set still makes the load-time check refuse an unclassified
+ * one.
  */
-export const INTENT_UNDECIDED: ReadonlySet<string> = new Set([
-  "ballz",
-  "bobs",
-  "boomer",
-  "capybara",
-  "caw",
-  "corgi",
-  "cro",
-  "croarmy",
-  "cronus",
-  "ebisusbay",
-  "fulcrom",
-  "loaf",
-  "mery",
-  "puush",
-  "ryoshi",
-]);
+export const INTENT_UNDECIDED: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * Every project family is either given an intent or listed as undecided.
