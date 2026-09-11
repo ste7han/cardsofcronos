@@ -2916,6 +2916,8 @@ const CAW: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // one bird, one knife, one position
+    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
     flavour: "A crow in Vancouver stole a knife from a crime scene.",
   },
   {
@@ -2930,6 +2932,8 @@ const CAW: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // 2016, and the token came eight years later
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "That was 2016. The token came eight years later.",
   },
   {
@@ -2944,6 +2948,8 @@ const CAW: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // all of it out on the first day
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
     flavour: "Seven hundred and seventy-seven trillion of them, out on the first day.",
   },
   {
@@ -2958,6 +2964,8 @@ const CAW: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // no inflation, because there was nothing left to release
+    effect: { kind: "pumpProject", target: "ownProject", mc: 26_000 },
     flavour: "No inflation, because there was nothing left to release.",
   },
   {
@@ -2972,6 +2980,8 @@ const CAW: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // two and a half thousand percent in its first month
+    effect: { kind: "scalePump", target: "ownProject", percentage: 30 },
     flavour: "Two and a half thousand percent in its first month.",
   },
   {
@@ -2986,6 +2996,8 @@ const CAW: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // it went to other chains and the crow went with it
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 11_000, nft: 6_000 } },
     flavour: "It went to other chains and the crow went with it.",
   },
   {
@@ -3000,6 +3012,8 @@ const CAW: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // nobody runs it, so it keeps its own floor
+    effect: { kind: "benchmark", target: "ownProject", plus: 22_000 },
     flavour: "Nobody runs it. That is the arrangement, not the slogan.",
   },
   {
@@ -3014,6 +3028,8 @@ const CAW: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // a real bird stole a real knife, and this is what happened next
+    effect: { kind: "scalePump", target: "ownProject", percentage: 50 },
     flavour: "A real bird stole a real knife, and this is what happened next.",
   },
 ];
@@ -3509,6 +3525,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // pick a faction, and that is the whole of the onboarding
+    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
     flavour: "Pick a faction. That is the whole of the onboarding.",
   },
   {
@@ -3523,6 +3541,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // land, and somebody who wants your land
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Land, and somebody who wants your land.",
   },
   {
@@ -3537,6 +3557,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // a bank, a barracks and an alliance hall
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 14_000 } },
     flavour: "A bank, a barracks and an alliance hall, all inside a marketplace.",
   },
   {
@@ -3551,6 +3573,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // crafting, because a war needs something to be made of
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 9_000 },
     flavour: "Crafting, because a war needs something to be made of.",
   },
   {
@@ -3565,6 +3589,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // the factions fight over the market itself
+    effect: { kind: "benchmark", target: "ownProject", plus: 15_000 },
     flavour: "The factions fight over the market itself, not over a map.",
   },
   {
@@ -3579,6 +3605,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // an alliance is a group chat with a treasury
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 11_000, infra: 6_000 } },
     flavour: "An alliance is a group chat with a treasury attached.",
   },
   {
@@ -3593,6 +3621,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // it grew out of a shop and then outgrew it
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 23_000, meme: 12_000 } },
     flavour: "It grew out of a shop and then outgrew the shop.",
   },
   {
@@ -3607,6 +3637,8 @@ const RYOSHI: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // whoever holds the territory holds what moves across it
+    effect: { kind: "attach", target: "ownProject", every: { kind: "scalePump", target: "ownProject", percentage: 20 } },
     flavour: "Whoever holds the territory holds what moves across it.",
   },
 ];
@@ -3624,6 +3656,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // six hundred and sixty-six, drawn by hand
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Six hundred and sixty-six of them, drawn by hand.",
   },
   {
@@ -3638,6 +3672,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // humans, cyborgs and reptiles, one legendary each
+    effect: { kind: "pumpProject", target: "ownProject", mc: 18_000 },
     flavour: "Humans, cyborgs and reptiles, and one legendary each.",
   },
   {
@@ -3652,6 +3688,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // every royalty from every resale goes back
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 14_000 } },
     flavour: "Every royalty from every resale goes back to the people holding.",
   },
   {
@@ -3666,6 +3704,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // claims daily, raffles nightly, airdrops on the weekend
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
     flavour: "Claims daily, raffles nightly, airdrops on the weekend.",
   },
   {
@@ -3680,6 +3720,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // a second generation, and the first one walked in free
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 12_000 },
     flavour: "A second generation, and the first one walked in free.",
   },
   {
@@ -3694,6 +3736,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // battlegrounds every day, because a community needs something to do
+    effect: { kind: "benchmark", target: "ownProject", plus: 15_000 },
     flavour: "Battlegrounds every day, because a community needs something to do.",
   },
   {
@@ -3708,6 +3752,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // it stopped being a collection and became an income
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 25_000 } },
     flavour: "It stopped being a collection and became an income.",
   },
   {
@@ -3722,6 +3768,8 @@ const BOBS: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // the whole point was never the picture
+    effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
     flavour: "The whole point was never the picture.",
   },
 ];
@@ -4007,6 +4055,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // a dog, a chain, and people who liked both
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "A dog, a chain, and a group of people who liked both.",
   },
   {
@@ -4021,6 +4071,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 15_000,
     pumpMC: 9_000,
     holders: 3,
+    // community first, and the roadmap said so out loud
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
     flavour: "Community first, and the roadmap said so out loud.",
   },
   {
@@ -4035,6 +4087,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // the first thing here to say the word AI and mean it
+    effect: { kind: "benchmark", target: "ownProject", plus: 12_000 },
     flavour: "The first thing here to say the word AI and mean it.",
   },
   {
@@ -4049,6 +4103,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 26_000,
     pumpMC: 15_000,
     holders: 3,
+    // it launched through VVS like most things that got anywhere
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 12_000 } },
     flavour: "It launched through VVS, like most things that got anywhere.",
   },
   {
@@ -4063,6 +4119,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // image generators and a chatbot, from a token with a dog on it
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 12_000 },
     flavour: "Image generators and a chatbot, from a token with a dog on it.",
   },
   {
@@ -4077,6 +4135,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 40_000,
     pumpMC: 25_000,
     holders: 4,
+    // stake it, and it pays you for staying
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 22_000 },
     flavour: "Stake it, and it pays you for staying.",
   },
   {
@@ -4091,6 +4151,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 67_000,
     pumpMC: 42_000,
     holders: 5,
+    // it wanted to be the community token of the chain
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { meme: 21_000 } },
     flavour: "It wanted to be the community token of the chain, and said so.",
   },
   {
@@ -4105,6 +4167,8 @@ const CORGI: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
+    // nobody joined for the technology
+    effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
     flavour: "Nobody joined for the technology.",
   },
 ];
