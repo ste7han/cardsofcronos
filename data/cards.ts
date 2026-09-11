@@ -95,6 +95,8 @@ const CLOVE: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 70_000 },
     },
+    // spreading joy and munching her way up, one card at a time
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Her stated mission is to spread joy and munch her way up.",
   },
   {
@@ -678,6 +680,8 @@ const HOWLERS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 250_000 },
       effect: { kind: "directMC", target: "self", mc: 90_000 },
     },
+    // dire wolves in streetwear, and the pack keeps arriving
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Dire wolves in streetwear, which somebody had to try eventually.",
   },
   {
@@ -873,6 +877,8 @@ const FFS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 350_000 },
       effect: { kind: "directMC", target: "self", mc: 180_000 },
     },
+    // a billion of them, and it started from nothing in January 2025
+    effect: { kind: "comebackMC", percentage: 25 },
     flavour: "A billion of them, and it started in January 2025.",
   },
   {
@@ -909,6 +915,8 @@ const FFS: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 4 },
       effect: { kind: "directMC", target: "self", mc: 130_000 },
     },
+    // a vault of twenty-five million PACK behind it
+    effect: { kind: "directMC", target: "self", mc: 42_000, per: "holders" },
     flavour: "There is a vault of twenty-five million PACK behind it.",
   },
   {
@@ -1028,6 +1036,8 @@ const MONSTERS: ProjectCard[] = [
       when: { kind: "behindBy", mc: 300_000 },
       effect: { kind: "directMC", target: "self", mc: 150_000 },
     },
+    // ten thousand more, and those came out of horror films
+    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     flavour: "Then ten thousand more, and those came out of horror films.",
   },
   {
@@ -1141,6 +1151,8 @@ const NOVA: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 45_000 },
     },
+    // launch, stake, govern, and all three lift the board
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
     flavour: "Launch, stake, govern. Three verbs and that is the pitch.",
   },
   {
@@ -1177,6 +1189,8 @@ const NOVA: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 4 },
       effect: { kind: "directMC", target: "self", mc: 110_000 },
     },
+    // audited, which for a launchpad is the whole argument
+    effect: { kind: "benchmark", target: "ownProject", plus: 11_000 },
     flavour: "CertiK audited it, which for a launchpad is the whole argument.",
   },
   {
@@ -1212,6 +1226,8 @@ const NOVA: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "infra", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 160_000 },
     },
+    // whatever you were building, a Nova thing plugged into it
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { infra: 14_000 } },
     flavour: "Whatever you were building, there was a Nova thing that plugged in.",
   },
   {
@@ -1464,6 +1480,8 @@ const OBSIDIAN: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 6 },
       effect: { kind: "directMC", target: "self", mc: 100_000 },
     },
+    // half a percent on a swap, and half of that goes back
+    effect: { kind: "refundMC", percentage: 35 },
     flavour: "Half a percent on a swap, and half of that goes back to the project.",
   },
   {
@@ -1500,6 +1518,8 @@ const OBSIDIAN: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 4 },
       effect: { kind: "directMC", target: "self", mc: 170_000 },
     },
+    // a token can launch on Puush and trade here without leaving
+    effect: { kind: "extraBudget", target: "self", mc: 170_000 },
     flavour: "A token can launch on Puush and start trading here without leaving.",
   },
   {
@@ -1536,6 +1556,8 @@ const OBSIDIAN: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 8 },
       effect: { kind: "scaleMC", target: "self", percentage: 30 },
     },
+    // deployed on both of this chain\u2019s chains at once
+    effect: { kind: "directMC", target: "self", mc: 60_000, per: "table" },
     flavour: "Deployed on both of this chain's chains, mainnet and zkEVM.",
   },
   {
@@ -1667,6 +1689,8 @@ const CAW777: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 7 },
       effect: { kind: "directMC", target: "self", mc: 177_000 },
     },
+    // it burned the same share of itself that the bridge takes
+    effect: { kind: "scalePump", target: "ownProject", percentage: 28 },
     flavour: "It burned the same share of itself that the bridge takes. Exactly.",
   },
   {
@@ -1783,6 +1807,8 @@ const DAK: ProjectCard[] = [
       when: { kind: "turnAtLeast", turn: 5 },
       effect: { kind: "directMC", target: "self", mc: 120_000 },
     },
+    // weekly CRO out of the treasury, and it comes from somewhere
+    effect: { kind: "directMC", target: "opponent", mc: -9_000 },
     flavour: "Weekly CRO to holders, out of what the treasury earns.",
   },
   {
@@ -2164,6 +2190,8 @@ const TECTONIC: ProjectCard[] = [
     launchMC: 14_000,
     pumpMC: 9_000,
     holders: 4,
+    // supply something, borrow against it, try not to think about it
+    effect: { kind: "extraBudget", target: "self", mc: 21_000 },
     flavour: "Supply something, borrow against it, try not to think about it.",
   },
   {
@@ -2476,6 +2504,8 @@ const LIONS: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "nft", atLeast: 2 },
       effect: { kind: "directMC", target: "self", mc: 40_000 },
     },
+    // two hundred dollars a pack, five packs each
+    effect: { kind: "extraBudget", target: "self", mc: 24_000 },
     flavour: "November 2021, two hundred dollars a pack, five packs each.",
   },
   {
@@ -2546,6 +2576,8 @@ const LIONS: ProjectCard[] = [
       when: { kind: "ownProjectsInSector", sector: "nft", atLeast: 3 },
       effect: { kind: "directMC", target: "self", mc: 175_000 },
     },
+    // a game of its own, and the pride came with it
+    effect: { kind: "directMC", target: "self", mc: 42_000, per: "holders" },
     flavour: "It got a game of its own, Mane City, powered by Cronos Labs.",
   },
   {
