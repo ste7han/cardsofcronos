@@ -236,8 +236,8 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * did not recover it either — 36.9% against 36.4%, so it is not that this set's
  * money numbers are small.
  *
- * MEASURED AGAIN ON 2026-09-12, after eighty cards were added and after the
- * second and third cash-out went onto every momentum family.
+ * MEASURED AGAIN ON 2026-09-12, after the eighty order cards, after the second
+ * and third cash-out went onto every momentum family, and after Wolfies and FFTB.
  *
  * The table this replaced could not be reproduced at all — nothing in the
  * repository produced it — and its diagonal gave it away: a style against itself
@@ -245,37 +245,41 @@ export const FAMILY_INTENT: Record<string, Intent> = {
  * 35% and momentum at 65%. It was measuring a seat, not a style.
  *
  * scripts/intent-duel.ts produces this, sides swapped every match, forty deck
- * seeds per style, diagonal printed as the check on the rest. 1200 matches per
+ * seeds per style, diagonal printed as the check on the rest. 1000 matches per
  * pairing, row wins against column:
  *
  *              takes  moment   money  commun   locks
- *   takes       50.5%   58.9%   33.1%   32.9%   35.7%
- *   momentum    38.3%   50.7%   46.3%   43.1%   37.6%
- *   money       66.2%   54.5%   49.8%   48.2%   48.1%
- *   community   64.0%   56.7%   49.8%   49.9%   48.0%
- *   locks       58.8%   61.4%   52.2%   51.0%   51.2%
+ *   takes       49.4%   54.3%   33.7%   33.2%   35.5%
+ *   momentum    45.4%   51.4%   53.3%   45.8%   40.3%
+ *   money       67.7%   45.9%   49.1%   43.6%   42.7%
+ *   community   69.0%   53.9%   53.9%   47.7%   48.2%
+ *   locks       62.8%   59.6%   54.2%   51.5%   52.4%
  *
- * Against the field: locks 54.9%, community 53.7%, money 53.3%, momentum 43.2%,
- * takes 42.1%. Every style within 1.2 points of even against itself.
+ * Against the field: locks 56.1%, community 54.5%, money 49.8%, momentum 47.2%,
+ * takes 41.1%. Every style within 2.4 points of even against itself.
  *
  * WHY MOMENTUM WAS LOSING, which took three wrong answers to find. Its cards are
- * the biggest in the game — $50.7K of final margin per $10K spent, higher than
- * any other style — and its decks were the worst. The reason is in the deck and
- * not in the card: a momentum deck of forty cards held THIRTY-THREE PUMPS. Every
- * other style holds between nought and five of anything. A pump is worth its rate
- * times the turns a position survives, positions survive 3.05 turns, and the
- * thirty-third pump in a deck is competing with thirty-two others for the same
- * finite thing. Money's deck is 100% one effect and does not care, because
- * directMC pays the same however many you have played.
+ * the biggest in the game — more final margin per marketing dollar than any other
+ * style — and its decks were the worst. The reason is in the deck and not in the
+ * card: a momentum deck of forty cards held THIRTY-THREE PUMPS. Every other style
+ * holds between nought and five of anything. A pump is worth its rate times the
+ * turns a position survives, positions survive 3.05 turns, and the thirty-third
+ * pump competes with thirty-two others for the same finite thing. Money's deck is
+ * 100% one effect and does not care, because directMC pays the same however many
+ * you have played.
  *
  * So adding three momentum families in September made it WORSE, from 44.0% to
  * 36.4%: more families meant a purer deck meant more pumps. The answer was not
  * bigger pumps. It was pumpToMC on three cards of every momentum family instead
  * of one — cash out early and small, mid, or late and large. That took the deck
- * from 33 pumps and 4 cash-outs to 25 and 8, and momentum from 36.4% to 43.2%.
+ * from 33 pumps and 4 cash-outs to 25 and 8, and momentum to 43.2%, then 47.2%
+ * once Wolfies arrived.
  *
- * WHAT IS LEFT: takes, at 42.1%, is now the bottom of the table. It was 44.7%
- * before any of this. Nothing has been done about it.
+ * WHAT IS LEFT: takes, at 41.1%, is the bottom of the table and the gap has
+ * widened rather than closed — it was 44.7% before any of this and every other
+ * style has moved up past it. It loses to money 33.7%, to community 33.2% and to
+ * locks 35.5%, while holding even against itself, so it is not a seat and not a
+ * measurement artefact. Six families, and nothing has been done about it.
  */
 /**
  * Families that have not been given an intent yet, listed by name on purpose.
