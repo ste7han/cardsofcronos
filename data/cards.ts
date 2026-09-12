@@ -6161,8 +6161,12 @@ const LATER_PEOPLE: PersonCard[] = [
     ticker: "DREAMQC",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "nft", bonus: 19_000 },
-    // his bio lists both: "Founder: @Cr00tsNFT | @FFTBcro", and both are families here
-    flavour: "Works in the shadow, and founded Cr00ts and Fortune Favours The Brave.",
+    // His bio lists "Founder: @Cr00tsNFT | @FFTBcro", and @FFTBcro is FFTheBozos —
+    // NOT the Fortune Favours The Brave family two blocks up. Two live Cronos tokens
+    // carry the symbol FFTB: Brave at 0xd677944d... with 100 billion, and Bozos at
+    // 0x8eBB8795... with 420 million, whose own bio calls itself "the real $FFTB".
+    // The first version of this card handed Brave to him on that one handle.
+    flavour: "Works in the shadow. Founded Cr00ts, and a token calling itself the real FFTB.",
   },
   {
     id: "artdoo",

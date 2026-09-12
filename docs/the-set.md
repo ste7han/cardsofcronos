@@ -751,6 +751,34 @@ without anybody noticing: a link that works is not a link that is right. Now
 
 ---
 
+## Two live tokens on this chain are called FFTB
+
+Only one of them is in the set, and the other one is why a person card had to be
+corrected within the hour.
+
+| | contract | supply |
+|---|---|---|
+| Fortune Favours The Brave | `0xd677944d...` | 100,000,000,000 |
+| FFTheBozos | `0x8eBB8795...` | 420,000,000 |
+
+**The family is Brave.** Named after Crypto.com's own advert, which is also why it
+spells favours the British way. Bozos is a much smaller variant whose own bio reads
+"Fortune Favors The Bozos, the real $FFTB" — a dig at the other one, and the reason
+to write this down rather than trust a ticker.
+
+DreamQc's bio lists "Founder: @Cr00tsNFT | @FFTBcro", and `@FFTBcro` is **Bozos**.
+His card was written the same day the Brave family was, read that handle as the
+family sitting two blocks above it, and credited him with the wrong project. Caught
+by the maker, not by anything here.
+
+That is the third time in this set a ticker has pointed at two projects: CAW and
+CAW777 on Cronos and Ethereum, BALLZ on Cronos and Solana, and now FFTB twice on
+Cronos alone. The rule that catches it is the one already written down — read the
+contract, not the symbol — and it did not catch this one, because the ticker was
+never in doubt. The handle was.
+
+---
+
 ## The rule for a line on a card
 
 **Nothing that moves.** A card is minted and then it is somebody's for good, so
