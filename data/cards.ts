@@ -6398,15 +6398,6 @@ const TOOLS: ToolCard[] = [
     effect: { kind: "cancel", target: "opponent", count: 1 },
     flavour: "Eleven wallets, one cluster, and a founder with nothing to say.",
   },
-  {
-    id: "ledger",
-    type: "tool",
-    name: "Ledger",
-    ticker: "LEDGER",
-    rarity: "legendary",
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
-    flavour: "The one thing in this entire folder that has never lost anybody money.",
-  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -7493,6 +7484,6 @@ export const EXPECTED_DISTRIBUTION = {
   common: 107,
   rare: 115,
   epic: 104,
-  legendary: 59,
+  legendary: 58,
   mythic: 43,
 } as const;

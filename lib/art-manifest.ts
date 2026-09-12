@@ -92,7 +92,6 @@ export const ART_FILES: Record<string, string> = {
   "jkcrypto": "/art/jkcryptoxyz.webp?v=b5b7e6bc",
   "kaancronos": "/art/kaancronos.webp?v=4b803b59",
   "kris": "/art/kris.webp?v=5289753a",
-  "ledger": "/art/ledger.webp?v=d7bfb666",
   "liquidation-cascade": "/art/liquidationcascade.webp?v=3e9badcb",
   "lions": "/art/loadedlions.webp?v=b06dd540",
   "loaf": "/art/loaf.webp?v=02a327d0",
