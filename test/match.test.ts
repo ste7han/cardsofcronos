@@ -539,7 +539,13 @@ describe("the bot", () => {
  * touching card numbers or the turn structure.
  */
 describe("turn order is fair", () => {
-  it("neither player ends grossly ahead on average", { timeout: 60_000 }, () => {
+  // Three minutes, not one. A timeout is a claim about hardware, so it gets set
+  // where the work is: 400 matches took 57s against a 60s limit on the machine
+  // this was written on, which is a test that fails on a slow morning rather than
+  // on a real change. The work grew with the set — 352 cards when this limit was
+  // last right, 445 now — and the measurement itself is unbothered: 2.94% against
+  // a threshold of 8%.
+  it("neither player ends grossly ahead on average", { timeout: 180_000 }, () => {
     const matches = 400;
     let firstTotal = 0;
     let secondTotal = 0;
