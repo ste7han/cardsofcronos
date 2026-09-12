@@ -6047,26 +6047,6 @@ const ORDERED_PEOPLE: PersonCard[] = [
     flavour: "The age of freedom begins. No date was given.",
   },
   {
-    id: "crofamcard",
-    type: "person",
-    name: "CroFam",
-    ticker: "CROFAM",
-    rarity: "common",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 3_000 },
-    // ordered under that name, with "Get yours at crofam.com" as the description
-    flavour: "The name the whole chain calls itself, bought by one person.",
-  },
-  {
-    id: "cryptik",
-    type: "person",
-    name: "Cryptik",
-    ticker: "CRYPTIK",
-    rarity: "common",
-    aura: { kind: "pumpSector", sector: "nft", bonus: 4_000 },
-    // it was
-    flavour: "500 Cro? That was the offer, and the whole of it.",
-  },
-  {
     id: "dragonsong",
     type: "person",
     name: "DragonSong",
@@ -6111,18 +6091,6 @@ const ORDERED_TOOL: ToolCard[] = [
   },
 ];
 
-const ORDERED_EVENT: EventCard[] = [
-  {
-    id: "manifest-cro",
-    type: "event",
-    name: "Manifesting CRO",
-    ticker: "MANIFEST",
-    rarity: "epic",
-    effect: { kind: "pumpBySector", target: "allProjects", bonuses: { infra: 11_000 } },
-    // filed as a roast: "a manifesting card to send our beloved $CRO to 2,71$"
-    flavour: "A card bought to wish the price up. It is in the game now.",
-  },
-];
 
 // ---------------------------------------------------------------------------
 // NAMES
@@ -7490,7 +7458,6 @@ export const CARDS: readonly Card[] = [
   ...MINTED,
   ...ORDERED_PEOPLE,
   ...ORDERED_TOOL,
-  ...ORDERED_EVENT,
   ...PYRO,
   ...BORED,
   ...ELMO,
@@ -7523,9 +7490,9 @@ export const CARDS: readonly Card[] = [
 
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
-  common: 109,
+  common: 107,
   rare: 115,
-  epic: 105,
+  epic: 104,
   legendary: 59,
   mythic: 43,
 } as const;

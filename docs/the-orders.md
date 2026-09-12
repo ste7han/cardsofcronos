@@ -13,15 +13,20 @@ what each one becomes. When it disagrees with `data/cards.ts`, the data is right
 
 ## What they cost the set
 
-**Thirty-one of the thirty-seven are in, as 79 cards.** The set goes from 352 to
-431: 328 project cards, 40 people, 34 tactics, 21 events, 8 tools.
+**Twenty-eight of the thirty-seven are in, as 76 cards.** The set goes from 352 to
+428: 328 project cards, 38 people, 34 tactics, 20 events, 8 tools.
 
 | | | |
 |---|---|---|
 | 7 project families | 56 cards | eight each, like every other project |
-| 21 people | 21 cards | twenty-two orders; Thaxt ordered twice from one account |
+| 19 people | 19 cards | twenty-two orders; Thaxt ordered twice from one account |
 | 1 tool | 1 card | CompoundR |
-| 1 event | 1 card | the CRO roast, as Manifesting CRO |
+
+**Three came out again on 2026-09-12, after they were already in.** CroFam,
+Cryptik and the CRO roast, at the maker's request. They were his to keep or drop
+and the reason is not recorded beyond that. Their art went with them: an unused
+file in `public/art` is something `npm run art` reports on every run, so leaving it
+would have been a small permanent lie about what the set contains.
 
 **Rarity does not carry over.** Fourteen of the thirty-seven were bought as
 Mythical, which is what people buy when they are paying — and mythic is the

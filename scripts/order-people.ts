@@ -50,6 +50,11 @@ const sector = (s: "meme" | "nft" | "defi" | "infra", bonus: number): Aura => ({
   bonus,
 });
 
+// CroFam, Cryptik and the CRO roast came out on 2026-09-12 at the maker's request,
+// after they were in. This file is the record of what was written, so the three are
+// gone from it rather than commented out — but the reason belongs somewhere, and the
+// reason is that they were his to keep or drop. Their art went with them: an unused
+// file in public/art is reported by npm run art every time it runs.
 const PEOPLE: Person[] = [
   // --- legendary: three people who built something this set already contains ---
   {
@@ -155,18 +160,6 @@ const PEOPLE: Person[] = [
     why: "his entire description was the first half of that",
   },
   {
-    id: "crofamcard", name: "CroFam", ticker: "CROFAM", rarity: "common",
-    aura: sector("meme", 3_000),
-    flavour: "The name the whole chain calls itself, bought by one person.",
-    why: "ordered under that name, with \"Get yours at crofam.com\" as the description",
-  },
-  {
-    id: "cryptik", name: "Cryptik", ticker: "CRYPTIK", rarity: "common",
-    aura: sector("nft", 4_000),
-    flavour: "500 Cro? That was the offer, and the whole of it.",
-    why: "it was",
-  },
-  {
     id: "dragonsong", name: "DragonSong", ticker: "DRAGON", rarity: "common",
     aura: sector("meme", 3_000),
     flavour: "Gotta go fast. Even in death, which was specified.",
@@ -205,13 +198,6 @@ const EXTRAS: Extra[] = [
     effect: { kind: "budgetToMC", percentage: 45 },
     flavour: "It compounded for you. Then its account moved to Wolfswap.",
     why: "\"Maximize your crypto gains\" was the order; its bio now reads \"Profile activity moved on @wolfswapdotapp\"",
-  },
-  {
-    id: "manifest-cro", type: "event", name: "Manifesting CRO", ticker: "MANIFEST", rarity: "epic",
-    // It lifts everybody's infra, both sides. A wish is not aimed at anyone.
-    effect: { kind: "pumpBySector", target: "allProjects", bonuses: { infra: 11_000 } },
-    flavour: "A card bought to wish the price up. It is in the game now.",
-    why: "filed as a roast: \"a manifesting card to send our beloved $CRO to 2,71$\"",
   },
 ];
 
@@ -303,10 +289,6 @@ const ORDERED_TOOL: ToolCard[] = [
 ${extraBlocks[0]}
 ];
 
-const ORDERED_EVENT: EventCard[] = [
-${extraBlocks[1]}
-];
-
 `;
 
 const anchor = source.indexOf(
@@ -316,7 +298,7 @@ if (anchor < 0) throw new Error("Could not find where the projects end.");
 source = source.slice(0, anchor) + header + source.slice(anchor);
 source = source.replace(
   "  ...MINTED,\n",
-  "  ...MINTED,\n  ...ORDERED_PEOPLE,\n  ...ORDERED_TOOL,\n  ...ORDERED_EVENT,\n",
+  "  ...MINTED,\n  ...ORDERED_PEOPLE,\n  ...ORDERED_TOOL,\n",
 );
 
 writeFileSync(path, source);
