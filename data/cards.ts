@@ -425,7 +425,7 @@ const WOLFSWAP: ProjectCard[] = [
     tip: 20,
     // volume was the product and the token was the receipt — you see what is coming
     effect: { kind: "peekAndBurn", look: 3 },
-    flavour: "Five thousand two hundred and twelve wolves, each holding a reserve.",
+    flavour: "Half of everything it earns goes back into buying its own token.",
   },
   {
     id: "wolfswap-pack",
@@ -440,7 +440,7 @@ const WOLFSWAP: ProjectCard[] = [
     pumpMC: 24_000,
     holders: 3,
     effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
-    flavour: "Burn a Wolfie and it pays out the liquidity sitting behind it.",
+    flavour: "A token launcher with rug-proof written on the tin.",
   },
   {
     id: "wolfswap-liquidity",
@@ -5878,6 +5878,304 @@ const SCRAP: ProjectCard[] = [
   },
 ];
 
+// Fortune Favours The Brave — a community token whose product is the community; named after Crypto.com's own advert.
+// Plays as community: educational, collaborative, and its own sources use that word three times.
+const FFTB: ProjectCard[] = [
+  {
+    id: "fftb-i",
+    type: "project",
+    project: "fftb",
+    moment: "I",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "common",
+    sector: "meme",
+    launchMC: 15_000,
+    pumpMC: 9_000,
+    holders: 3,
+    // Fortune Favours the Brave was the Matt Damon campaign
+    effect: { kind: "drawCards", amount: 1 },
+    flavour: "It is named after an advert. Crypto.com's own advert.",
+  },
+  {
+    id: "fftb-ii",
+    type: "project",
+    project: "fftb",
+    moment: "II",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "common",
+    sector: "meme",
+    launchMC: 15_000,
+    pumpMC: 9_000,
+    holders: 3,
+    // 100,000,000,000 supply, 256,697,127 at the dead address, both on-chain
+    effect: { kind: "directMC", target: "self", mc: 21_000 },
+    flavour: "A hundred billion of them, and a quarter of a billion burned.",
+  },
+  {
+    id: "fftb-iii",
+    type: "project",
+    project: "fftb",
+    moment: "III",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "rare",
+    sector: "meme",
+    launchMC: 26_000,
+    pumpMC: 15_000,
+    holders: 3,
+    // the contract name is FORTUNE FAVOURS THE BRAVE
+    effect: { kind: "extraBudget", target: "self", mc: 26_000 },
+    flavour: "It spells favours the British way, because the advert did.",
+  },
+  {
+    id: "fftb-iv",
+    type: "project",
+    project: "fftb",
+    moment: "IV",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "rare",
+    sector: "meme",
+    launchMC: 26_000,
+    pumpMC: 15_000,
+    holders: 3,
+    // it describes itself as a bridge between Crypto.com users and the Cronos ecosystem
+    effect: { kind: "recoverCard", amount: 1 },
+    flavour: "A bridge between the app and the chain, in its own words.",
+  },
+  {
+    id: "fftb-v",
+    type: "project",
+    project: "fftb",
+    moment: "V",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "epic",
+    sector: "meme",
+    launchMC: 40_000,
+    pumpMC: 25_000,
+    holders: 4,
+    // collaborations and educational content, which is the whole stated mission
+    effect: { kind: "comebackMC", percentage: 30 },
+    flavour: "Its product is other people understanding the chain.",
+  },
+  {
+    id: "fftb-vi",
+    type: "project",
+    project: "fftb",
+    moment: "VI",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "epic",
+    sector: "meme",
+    launchMC: 40_000,
+    pumpMC: 25_000,
+    holders: 4,
+    // VVS again, for the seventh time in this set
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: 2 },
+    flavour: "It trades on VVS, like almost everything that got anywhere here.",
+  },
+  {
+    id: "fftb-vii",
+    type: "project",
+    project: "fftb",
+    moment: "VII",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "legendary",
+    sector: "meme",
+    launchMC: 67_000,
+    pumpMC: 42_000,
+    holders: 5,
+    // there is nothing else to find, and that is the honest description
+    effect: { kind: "scaleMC", target: "self", percentage: 22 },
+    flavour: "No product, no roadmap, no launch. A slogan and a group of people.",
+  },
+  {
+    id: "fftb-viii",
+    type: "project",
+    project: "fftb",
+    moment: "VIII",
+    name: "Fortune Favours The Brave",
+    ticker: "FFTB",
+    rarity: "mythic",
+    sector: "meme",
+    launchMC: 110_000,
+    pumpMC: 56_000,
+    holders: 6,
+    // the whole thing in one sentence
+    effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    flavour: "A chain borrowed a line from an advert and made it a token.",
+  },
+];
+
+// Wolfies — 5,212 NFTs, each with liquidity behind it.
+// Plays as momentum: the reserve behind a Wolfie grows with platform revenue, which is
+// exactly what momentum is — the thing you hold becoming worth more while you hold it.
+const WOLFIES: ProjectCard[] = [
+  {
+    id: "wolfies-i",
+    type: "project",
+    project: "wolfies",
+    moment: "I",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "common",
+    sector: "nft",
+    launchMC: 15_000,
+    pumpMC: 9_000,
+    holders: 3,
+    // the project's own figure; the contract says 5,211 today, which is the mechanic working
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 3_000 },
+    flavour: "Five thousand two hundred and twelve wolves were minted.",
+  },
+  {
+    id: "wolfies-ii",
+    type: "project",
+    project: "wolfies",
+    moment: "II",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "common",
+    sector: "nft",
+    launchMC: 15_000,
+    pumpMC: 9_000,
+    holders: 3,
+    // each is backed by PACK-CRO LP and burnable at any time
+    effect: { kind: "pumpToMC", times: 1 },
+    flavour: "Burn one and it hands you the liquidity behind it.",
+  },
+  {
+    id: "wolfies-iii",
+    type: "project",
+    project: "wolfies",
+    moment: "III",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "rare",
+    sector: "nft",
+    launchMC: 26_000,
+    pumpMC: 15_000,
+    holders: 3,
+    // their own claim, and nothing found contradicts it
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 14_000 } },
+    flavour: "The first NFTs on this chain with real money underneath.",
+  },
+  {
+    id: "wolfies-iv",
+    type: "project",
+    project: "wolfies",
+    moment: "IV",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "rare",
+    sector: "nft",
+    launchMC: 26_000,
+    pumpMC: 15_000,
+    holders: 3,
+    // buybacks feed the treasury, which is why this family is momentum
+    effect: { kind: "pumpToMC", times: 2 },
+    flavour: "The reserve grows. Platform revenue keeps buying into it.",
+  },
+  {
+    id: "wolfies-v",
+    type: "project",
+    project: "wolfies",
+    moment: "V",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "epic",
+    sector: "nft",
+    launchMC: 40_000,
+    pumpMC: 25_000,
+    holders: 4,
+    // Wolfswap wrote that about its own collection
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 12_000 },
+    flavour: "Floor price means nothing if nobody is buying. Their words.",
+  },
+  {
+    id: "wolfies-vi",
+    type: "project",
+    project: "wolfies",
+    moment: "VI",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "epic",
+    sector: "nft",
+    launchMC: 40_000,
+    pumpMC: 25_000,
+    holders: 4,
+    // read on-chain; the number only goes down
+    effect: { kind: "pumpToMC", times: 4 },
+    flavour: "Some are already at an address with no keys. That number only grows.",
+  },
+  {
+    id: "wolfies-vii",
+    type: "project",
+    project: "wolfies",
+    moment: "VII",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "legendary",
+    sector: "nft",
+    launchMC: 67_000,
+    pumpMC: 42_000,
+    holders: 5,
+    // PACK is backed partly by what sits behind these
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 23_000 } },
+    flavour: "Wolfies Owned Liquidity. The NFTs hold up the token.",
+  },
+  {
+    id: "wolfies-viii",
+    type: "project",
+    project: "wolfies",
+    moment: "VIII",
+    name: "Wolfies",
+    ticker: "WOLFIES",
+    rarity: "mythic",
+    sector: "nft",
+    launchMC: 110_000,
+    pumpMC: 56_000,
+    holders: 6,
+    // the whole point of the collection
+    effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
+    flavour: "A picture you can cash in, which is not how pictures usually work.",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// ADDED BY HAND, not from the orders
+//
+// DreamQc founded two of the families in this set — Cr00ts and Fortune Favours
+// The Brave — and is the person in the Cr00ts story: the largest holder who took
+// the project over when the founder of Cronos Y00ts stopped answering.
+// ---------------------------------------------------------------------------
+
+const LATER_PEOPLE: PersonCard[] = [
+  {
+    id: "dreamqc",
+    type: "person",
+    name: "DreamQc",
+    ticker: "DREAMQC",
+    rarity: "legendary",
+    aura: { kind: "pumpSector", sector: "nft", bonus: 19_000 },
+    // his bio lists both: "Founder: @Cr00tsNFT | @FFTBcro", and both are families here
+    flavour: "Works in the shadow, and founded Cr00ts and Fortune Favours The Brave.",
+  },
+  {
+    id: "artdoo",
+    type: "person",
+    name: "ArtDoo",
+    ticker: "ARTDOO",
+    rarity: "rare",
+    aura: { kind: "pumpSector", sector: "meme", bonus: 7_000 },
+    // the entire bio is those four letters; the community is "crofam meme degens"
+    flavour: "The whole bio is four letters: FAFO. Runs a room for meme calls.",
+  },
+];
+
 // ---------------------------------------------------------------------------
 // THE PEOPLE WHO BOUGHT A CARD
 //
@@ -7447,7 +7745,10 @@ export const CARDS: readonly Card[] = [
   ...LIONS,
   ...CHIMPS,
   ...MINTED,
+  ...FFTB,
+  ...WOLFIES,
   ...ORDERED_PEOPLE,
+  ...LATER_PEOPLE,
   ...ORDERED_TOOL,
   ...PYRO,
   ...BORED,
@@ -7481,9 +7782,9 @@ export const CARDS: readonly Card[] = [
 
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
-  common: 107,
-  rare: 115,
-  epic: 104,
-  legendary: 58,
-  mythic: 43,
+  common: 111,
+  rare: 120,
+  epic: 108,
+  legendary: 61,
+  mythic: 45,
 } as const;
