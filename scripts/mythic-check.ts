@@ -11,11 +11,18 @@
 //
 // So this asks it of all of them at once, on three counts:
 //
-//   ECHO      the mythic runs the same effect kind as its own legendary
+//   ECHO      the mythic runs an effect kind that already appears lower down in
+//             its own family
 //   THIN      one line of rules and nothing else: no payoff, no standing, no
 //             restriction, no loyalty
 //   COMMON    the effect kind is shared with several other families' mythics,
 //             so the top card of this family is the top card of those too
+//
+// ECHO ORIGINALLY LOOKED AT THE LEGENDARY ALONE, and that is how Puush got past
+// it: the mythic was extraBudget 380K and the *epic* was extraBudget 170K, the
+// same card with a bigger number, one rung further down than this was looking.
+// It scored one count and fell below the shortlist. The maker found it by reading
+// the family. ECHO now reads the whole family, which is what the fault always was.
 //
 // RUN ON 2026-09-14 IT FLAGGED TWENTY-TWO FAMILIES WITH TWO COUNTS OR MORE, and
 // scripts/mythic-variety.ts answered eighteen of them. One-line mythics went from
@@ -57,6 +64,7 @@ interface Row {
   kind: string;
   lines: number;
   echo: boolean;
+  echoes: string[];
   thin: boolean;
   common: number;
   flags: number;
@@ -69,7 +77,12 @@ for (const [family, cards] of byFamily) {
   if (!mythic || !legendary) continue;
 
   const kind = kindOf(mythic);
-  const echo = kind !== "—" && kind === kindOf(legendary);
+  // Any rung, not just the one below: a mythic that repeats its family's epic is
+  // the same fault as one that repeats its legendary.
+  const echoes = cards
+    .filter((c) => c.id !== mythic.id && kind !== "—" && kindOf(c) === kind)
+    .map((c) => c.rarity);
+  const echo = echoes.length > 0;
   const lines = bodyLines(mythic).length;
   const thin = lines <= 1;
   const shared = (mythicKinds.get(kind) ?? []).length;
@@ -83,6 +96,7 @@ for (const [family, cards] of byFamily) {
     kind,
     lines,
     echo,
+    echoes,
     thin,
     common,
     flags: (echo ? 1 : 0) + (thin ? 1 : 0) + (common ? 1 : 0),
@@ -95,7 +109,7 @@ console.log(`${rows.length} families with both a legendary and a mythic\n`);
 console.log("  flags  family              mythic effect        lines  notes");
 for (const r of rows) {
   const notes = [
-    r.echo ? "ECHO: same kind as its own legendary" : "",
+    r.echo ? `ECHO: same kind as its own ${[...new Set(r.echoes)].join(", ")}` : "",
     r.thin ? "THIN: one line" : "",
     r.common ? `COMMON: ${r.common} families top out on this` : "",
   ].filter(Boolean);

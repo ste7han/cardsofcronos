@@ -4412,8 +4412,12 @@ const PUUSH: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    // the only number here that never goes up is the supply
-    effect: { kind: "extraBudget", target: "self", mc: 380_000 },
+    // everything else on this chain came and went; the supply only ever shrank
+    effect: { kind: "mcPerPositionGone", mc: 42_000 },
+    payoff: {
+      when: { kind: "holdersLostAtLeast", holders: 6 },
+      effect: { kind: "scaleMC", target: "self", percentage: 25 },
+    },
     flavour: "The only number here that never goes up is the supply.",
   },
 ];
