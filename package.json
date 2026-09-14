@@ -16,6 +16,7 @@
     "archetypes": "tsx scripts/archetypes.ts",
     "render-cards": "tsx scripts/render-cards.ts",
     "outliers": "tsx scripts/card-outliers.ts",
+    "mythics": "tsx scripts/mythic-check.ts",
     "art": "tsx scripts/art.ts",
     "art:optimise": "tsx scripts/optimise-art.ts",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

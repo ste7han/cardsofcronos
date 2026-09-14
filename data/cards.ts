@@ -486,7 +486,8 @@ const WOLFSWAP: ProjectCard[] = [
     launchMC: 115_000,
     pumpMC: 52_000,
     holders: 5,
-    effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 3 },
+    // it bought Ebisu's Bay, which is the one thing in this game takeOver is
+    effect: { kind: "takeOver" },
     flavour: "It aggregated the whole chain, then bought the oldest venue on it.",
   },
 ];
@@ -2019,6 +2020,8 @@ const VVS: ProjectCard[] = [
     holders: 6,
     // deep enough that size stopped mattering
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 50 },
+    // the front door of the chain takes a toll on everything that walks through
+    standing: { kind: "extraBudget", target: "self", mc: 40_000 },
     flavour: "The front door of the chain, whether or not it meant to be.",
   },
 ];
@@ -3078,6 +3081,8 @@ const CAW: ProjectCard[] = [
     holders: 6,
     // a real bird stole a real knife, and this is what happened next
     effect: { kind: "scalePump", target: "ownProject", percentage: 50 },
+    // a real bird stole a real knife, and it does it again once there is blood
+    payoff: { when: { kind: "holdersLostAtLeast", holders: 6 }, effect: { kind: "stealMC", percentage: 12 } },
     flavour: "A real bird stole a real knife, and this is what happened next.",
   },
 ];
@@ -3208,7 +3213,8 @@ const MERY: ProjectCard[] = [
     pumpMC: 56_000,
     holders: 6,
     // it handed over the keys and never asked for them back
-    effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    // it handed over the keys, so what it pays is read off the whole table
+    effect: { kind: "directMC", target: "self", mc: 70_000, per: "table" },
     flavour: "It handed over the keys on the first day and never asked for them back.",
   },
 ];
@@ -3340,6 +3346,8 @@ const CAPYBARA: ProjectCard[] = [
     holders: 6,
     // a nation with no land and no borders
     effect: { kind: "comebackMC", percentage: 45 },
+    // a nation with no borders keeps letting people in
+    standing: { kind: "drawCards", amount: 1 },
     flavour: "A nation with no land and no borders, run out of a chat window.",
   },
 ];
@@ -3473,6 +3481,8 @@ const LOAF: ProjectCard[] = [
     holders: 6,
     // every cat on earth does this and none were taught
     effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    // the more people arrive the more it burns, and arriving costs them
+    restriction: { kind: "taxPlays", percent: 14 },
     flavour: "Every cat on earth does this and none of them were taught. That is the asset.",
   },
 ];
@@ -3604,6 +3614,8 @@ const BALLZ: ProjectCard[] = [
     holders: 6,
     // a game of pure chance, sold to people who think they are picking
     effect: { kind: "peakMC", percentage: 30 },
+    // a game of pure chance, and the jackpot lands on the wreckage
+    payoff: { when: { kind: "holdersLostAtLeast", holders: 8 }, effect: { kind: "directMC", target: "self", mc: 200_000 } },
     flavour: "A game of pure chance, sold to people who believe they are picking.",
   },
 ];
@@ -3866,6 +3878,8 @@ const BOBS: ProjectCard[] = [
     holders: 6,
     // the whole point was never the picture
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
+    // it stopped being a collection and became an income, which takes until late
+    payoff: { when: { kind: "turnAtLeast", turn: 8 }, effect: { kind: "directMC", target: "self", mc: 45_000, per: "holders" } },
     flavour: "The whole point was never the picture.",
   },
 ];
@@ -4133,6 +4147,8 @@ const FULCROM: ProjectCard[] = [
     holders: 6,
     // the liquidation price is the only number that matters
     effect: { kind: "peakMC", percentage: 30 },
+    // the liquidation price is the only number that matters and nobody closes on their own terms
+    restriction: { kind: "banTakeProfit" },
     flavour: "The liquidation price is the only number on the screen that matters.",
   },
 ];
@@ -4265,6 +4281,8 @@ const CORGI: ProjectCard[] = [
     holders: 6,
     // nobody joined for the technology
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
+    // nobody joined for the technology; they joined and stayed and keep turning up
+    standing: { kind: "drawCards", amount: 1 },
     flavour: "Nobody joined for the technology.",
   },
 ];
@@ -4807,6 +4825,8 @@ const CROARMY: ProjectCard[] = [
     holders: 6,
     // a game first and a token second, which almost never happens
     effect: { kind: "stealMC", percentage: 22 },
+    // a war that does not stop when you log off, and it finishes what is left
+    payoff: { when: { kind: "theirHandAtMost", cards: 3 }, effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 } },
     flavour: "It set out to be a game first and a token second, which almost never happens.",
   },
 ];
@@ -4952,6 +4972,8 @@ const BOOMER: ProjectCard[] = [
     holders: 6,
     // a company with a collection attached, not the other way round
     effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    // a company with a collection attached pays more when there is a collection
+    payoff: { when: { kind: "ownProjectsInSector", sector: "nft", atLeast: 2 }, effect: { kind: "directMC", target: "self", mc: 200_000 } },
     flavour: "Not a collection with a company attached. A company with a collection attached.",
   },
 ];
@@ -5091,6 +5113,8 @@ const PYRO: ProjectCard[] = [
     holders: 6,
     // 7% of the 7.5% goes elsewhere; the team takes half a percent
     effect: { kind: "scalePump", target: "ownProject", percentage: 45 },
+    // every trade pays six other things, so the turn you trade twice pays twice
+    payoff: { when: { kind: "playedThisTurnAtLeast", cards: 2 }, effect: { kind: "directMC", target: "self", mc: 160_000 } },
     flavour: "Every trade pays six other things before it pays the team.",
   },
 ];
@@ -5224,6 +5248,8 @@ const BORED: ProjectCard[] = [
     holders: 6,
     // the mythic says the quiet part: it worked
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 40 },
+    // a club is worth what turns up to it
+    payoff: { when: { kind: "ownProjectsInSector", sector: "meme", atLeast: 3 }, effect: { kind: "pumpProject", target: "allOwnProjects", mc: 24_000 } },
     flavour: "It was a picture of a cat on a couch, and the chain agreed.",
   },
 ];
@@ -5357,6 +5383,8 @@ const ELMO: ProjectCard[] = [
     holders: 6,
     // the whole family in one line
     effect: { kind: "peakMC", percentage: 30 },
+    // it published its own books, and a dashboard that keeps counting keeps paying
+    standing: { kind: "directMC", target: "self", mc: 36_000 },
     flavour: "A meme token that published its own books.",
   },
 ];
@@ -5489,7 +5517,8 @@ const GANGGANG: ProjectCard[] = [
     pumpMC: 56_000,
     holders: 7,
     // quoted from the order form, and still undefined
-    effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    // a gang is a group that decided to be one, and it brings everybody back whole
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     flavour: "$GG behavior is the way. Nobody has ever defined it.",
   },
 ];
@@ -5756,6 +5785,8 @@ const CRODRAW: ProjectCard[] = [
     holders: 6,
     // the buyer's own line on the order form, against the machine he built
     effect: { kind: "comebackMC", percentage: 45 },
+    // the draw is every Wednesday and the late ones are the ones worth winning
+    payoff: { when: { kind: "turnAtLeast", turn: 7 }, effect: { kind: "directMC", target: "self", mc: 210_000 } },
     flavour: "Winners make their own luck. The oracle disagrees.",
   },
 ];
@@ -6167,6 +6198,8 @@ const WOLFIES: ProjectCard[] = [
     holders: 6,
     // the whole point of the collection
     effect: { kind: "scalePump", target: "allOwnProjects", percentage: 45 },
+    // a picture you can cash in only proves it once you have cashed one in
+    payoff: { when: { kind: "bankedAtLeast", count: 1 }, effect: { kind: "directMC", target: "self", mc: 190_000 } },
     flavour: "A picture you can cash in, which is not how pictures usually work.",
   },
 ];
