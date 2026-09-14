@@ -2593,9 +2593,8 @@ const LIONS: ProjectCard[] = [
     launchMC: 69_000,
     pumpMC: 41_000,
     holders: 6,
-    // blue chip is a thing people call you; nobody applies for it
+    // it outlasts what happens to it, which is the whole of the word
     loyalty: 40,
-    // blue chip is a thing people call you; nobody applies for it
     effect: { kind: "scaleMC", target: "self", percentage: 21 },
     flavour: "The flagship of Crypto.com's own NFT platform.",
   },
@@ -2612,7 +2611,23 @@ const LIONS: ProjectCard[] = [
     pumpMC: 56_000,
     holders: 7,
     // two cycles in and the floor is still where the floor was
-    effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    // The legendary of this family carries loyalty 40 and this carried nothing, so
+    // the mythic read as the legendary with a bigger number on the same line — and
+    // scaleMC 27 was also the mythic of Clove, Chimp Club and FFTB. Four families
+    // sharing a top card. The power was never the problem: measured at turn 8, the
+    // only turn a 280K card can first be afforded, it sat third of twenty-six.
+    //
+    // So the strength moved rather than grew. 27% flat becomes 22% plus a payoff
+    // that only lands once the table has been hurt, which is what a blue chip is:
+    // the thing still standing after the damage. Threshold 4, because holders lost
+    // runs at a median of 3 on turn seven and 11 on turn ten — it fires about half
+    // the time when the card first becomes playable and three times in four by the
+    // end. Measured at 656K against the 659K it replaced.
+    effect: { kind: "scaleMC", target: "self", percentage: 22 },
+    payoff: {
+      when: { kind: "holdersLostAtLeast", holders: 4 },
+      effect: { kind: "directMC", target: "self", mc: 140_000 },
+    },
     flavour: "Blue chip is a thing people call you. Nobody applies for it.",
   },
 ];
