@@ -6192,6 +6192,8 @@ const LATER_PEOPLE: PersonCard[] = [
     // carry the symbol FFTB: Brave at 0xd677944d... with 100 billion, and Bozos at
     // 0x8eBB8795... with 420 million, whose own bio calls itself "the real $FFTB".
     // The first version of this card handed Brave to him on that one handle.
+    // he took over a project its founder had walked away from
+    effect: { kind: "recoverCard", amount: 1 },
     flavour: "Works in the shadow. Founded Cr00ts, and a token calling itself the real FFTB.",
   },
   {
@@ -6222,6 +6224,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "nft", bonus: 20_000 },
     // Howlers is a family in this set and it credits him; not "drew", because that card says he calls himself a master of AI
+    // the artist lifts everything he has drawn
+    effect: { kind: "pumpProject", target: "allOwnProjects", mc: 6_000 },
     flavour: "The Howlers, all six hundred and thirty-eight of them, are this artist's.",
   },
   {
@@ -6232,6 +6236,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "nft", bonus: 19_000 },
     // his own description, word for word — it needed nothing
+    // cordial, not nice — his own four words
+    effect: { kind: "damageHolders", target: "enemyBest", amount: 1 },
     flavour: "Herpetologist, medic, gamer. Cordial, not nice.",
   },
   {
@@ -6242,6 +6248,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "infra", bonus: 19_000 },
     // CroDraw is his, and it is a family in this set; the 25% is its own figure
+    // he built the lottery and it pays out
+    effect: { kind: "directMC", target: "self", mc: 45_000 },
     flavour: "He built the lottery, and a quarter of every ticket goes to a fund.",
   },
   {
@@ -6252,6 +6260,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     rarity: "epic",
     aura: { kind: "drawEachTurn", cards: 1 },
     // his own description: spreading knowledge on this chain in the form of tutorials
+    // the tutorialist explains the thing you threw away until you want it back
+    effect: { kind: "recoverCard", amount: 1 },
     flavour: "Kaan the Tutorialist, who explains it until somebody gets it.",
   },
   {
@@ -6280,7 +6290,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     name: "Chubz",
     ticker: "CHUBZ",
     rarity: "epic",
-    aura: { kind: "pumpSector", sector: "defi", bonus: 12_000 },
+    // sharer of referral codes, which the engine already calls a gift and an attack in one
+    aura: { kind: "giftBudget", budget: 24_000, times: 2 },
     // his own description, trimmed of the third clause to fit
     flavour: "Master of the charts. Sharer of referral codes.",
   },
@@ -6400,7 +6411,8 @@ const ORDERED_PEOPLE: PersonCard[] = [
     name: "Blacksea",
     ticker: "BLACKSEA",
     rarity: "common",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 4_000 },
+    // fuds CRO and claims CroFam — the budget you leave idle costs you double
+    aura: { kind: "punishWaste", times: 2 },
     // filed as a parody, and it is: he wrote the roast and then bought it
     flavour: "Fuds CRO, claims CroFam. This roast was ordered by its subject.",
   },
@@ -6464,6 +6476,8 @@ const NAMES: PersonCard[] = [
     ticker: "KRIS",
     rarity: "mythic",
     aura: { kind: "pumpSector", sector: "infra", bonus: 38_000 },
+    // it began as a card you topped up, so it hands you something to spend
+    effect: { kind: "extraBudget", target: "self", mc: 60_000 },
     flavour: "In 2016 it was a card you topped up with bitcoin. Then it was a chain.",
   },
   {
@@ -6485,6 +6499,8 @@ const NAMES: PersonCard[] = [
     ticker: "ALEX",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "defi", bonus: 20_000 },
+    // built one venue and then bought the other
+    effect: { kind: "stealMC", percentage: 8 },
     flavour: "Built Wolfswap. Then Wolfswap bought Ebisu's Bay.",
   },
   {
@@ -6494,6 +6510,8 @@ const NAMES: PersonCard[] = [
     ticker: "HATEN",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
+    // main stakeholder: a share of it comes back to him
+    effect: { kind: "refundMC", percentage: 25 },
     flavour: "Main stakeholder in Obsidian, and an ambassador for the chain itself.",
   },
   {
@@ -6503,6 +6521,8 @@ const NAMES: PersonCard[] = [
     ticker: "SCHWIZ",
     rarity: "epic",
     aura: { kind: "pumpSector", sector: "infra", bonus: 14_000 },
+    // he opened the marketplace, so something new turns up
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Opened this chain's first NFT marketplace, in November 2021.",
   },
   {
@@ -6512,6 +6532,8 @@ const NAMES: PersonCard[] = [
     ticker: "JKC",
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "defi", bonus: 8_000 },
+    // ten thousand monsters in twenty families, and he lifts the pictures rather than the money
+    effect: { kind: "pumpBySector", target: "allOwnProjects", bonuses: { nft: 7_000 } },
     flavour: "Founder of Crazzzy Monsters, and an ambassador for the chain.",
   },
   {
@@ -6524,6 +6546,8 @@ const NAMES: PersonCard[] = [
     ticker: "ARTIK",
     rarity: "epic",
     aura: { kind: "drawEachTurn", cards: 1 },
+    // he built a dashboard for the whole chain, so he sees what is coming
+    effect: { kind: "peekAndBurn", look: 3 },
     flavour: "Built a dashboard for the whole chain, and calls it drawing random lines.",
   },
 ];
@@ -6546,6 +6570,8 @@ const VOICES: PersonCard[] = [
     ticker: "21M",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "meme", bonus: 20_000 },
+    // held through two cycles and will tell you the entire story
+    effect: { kind: "healHolders", target: "allOwnProjects", amount: 1 },
     flavour: "Has held through two cycles and will tell you the entry price.",
   },
   {
@@ -6610,6 +6636,8 @@ const ARCHETYPES: PersonCard[] = [
     ticker: "COPYTARGET",
     rarity: "rare",
     aura: { kind: "pumpSector", sector: "meme", bonus: 7_000 },
+    // four thousand wallets watch the address, and what he holds arrives in your hand
+    effect: { kind: "drawCards", amount: 1 },
     flavour: "Does not post. Four thousand wallets watch the address anyway.",
   },
   {
@@ -6619,6 +6647,8 @@ const ARCHETYPES: PersonCard[] = [
     ticker: "SWEEP",
     rarity: "common",
     aura: { kind: "pumpSector", sector: "nft", bonus: 3_000 },
+    // buys the cheapest twenty of anything the moment it moves
+    effect: { kind: "directMC", target: "self", mc: 14_000 },
     flavour: "Buys the cheapest twenty of anything the moment it moves.",
   },
   {
@@ -6636,7 +6666,8 @@ const ARCHETYPES: PersonCard[] = [
     name: "The Validator",
     ticker: "VALIDATOR",
     rarity: "rare",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 6_000 },
+    // keeps a machine in a rack running so everybody else can trade
+    aura: { kind: "healEachTurn", sector: "infra", bonus: 6_000, holders: 1 },
     flavour: "Keeps a machine in a rack running so everybody else can trade.",
   },
   {
@@ -6654,7 +6685,8 @@ const ARCHETYPES: PersonCard[] = [
     name: "The Node Runner",
     ticker: "NODE",
     rarity: "rare",
-    aura: { kind: "pumpSector", sector: "infra", bonus: 7_000 },
+    // six boxes on the roof; the only aura that changes a rule rather than a number
+    aura: { kind: "morePositions", positions: 1 },
     flavour: "Six boxes on the roof and a spreadsheet of what each one earns.",
   },
 ];
