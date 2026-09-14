@@ -6021,7 +6021,18 @@ const FFTB: ProjectCard[] = [
     pumpMC: 56_000,
     holders: 6,
     // the whole thing in one sentence
-    effect: { kind: "scaleMC", target: "self", percentage: 27 },
+    // This family's legendary is scaleMC 22 and this was scaleMC 27: the mythic as
+    // the legendary with a bigger number, which is the exact fault diagnosed on
+    // Loaded Lions two days earlier and then written again here by the same hand.
+    // It was also one of the twenty-eight mythics carrying a single line of rules.
+    //
+    // "Fortune favours the brave" has a precise meaning in this game and it is not
+    // scaleMC. You are paid for what you have not banked — value left where a rug
+    // can still reach it. No other mythic runs on it. The standing is the other
+    // half of the family: a token whose product is other people understanding the
+    // chain hands you a card every turn.
+    effect: { kind: "unbankedMC", percentage: 45 },
+    standing: { kind: "drawCards", amount: 1 },
     flavour: "A chain borrowed a line from an advert and made it a token.",
   },
 ];

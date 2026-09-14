@@ -466,9 +466,17 @@ function closePositionIfFull(
   if (projects.length < portfolioSizeFor(state, player, index)) return;
 
   if (targetIndex === undefined) {
+    const room = portfolioSizeFor(state, player, index);
+    // Over the limit rather than at it, which happens when a card that granted
+    // room takes damage: the room goes and the positions stay. Saying "full at
+    // six" to somebody looking at nine of their own positions is the game lying
+    // about its own rule, the same way it would if a card raised the limit and
+    // this still said six.
     throw new IllegalMove(
-      `Your portfolio is full at ${portfolioSizeFor(state, player, index)} positions. ` +
-        `Close one to open a new position.`,
+      projects.length > room
+        ? `You hold ${projects.length} positions and have room for ${room} — a card that ` +
+          `was making space has been damaged. Close one to open a new position.`
+        : `Your portfolio is full at ${room} positions. Close one to open a new position.`,
     );
   }
 
