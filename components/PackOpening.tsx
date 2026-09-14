@@ -146,7 +146,7 @@ export function PackOpening({
                     animate={{ rotate: (i - (copy.stack - 1) / 2) * 3, y: i * 5 }}
                     whileHover={i === 0 ? { y: -6, rotate: 0 } : undefined}
                   >
-                    <CardBack size="large" design="foil" />
+                    <CardBack size="large" />
                   </motion.div>
                 ))}
               </div>

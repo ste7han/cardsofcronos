@@ -57,8 +57,8 @@ export function Nav() {
             src="/logo.png"
             alt="Cards of Cronos"
             className="h-9 w-auto sm:h-11"
-            width={1224}
-            height={1604}
+            width={1258}
+            height={1762}
           />
           <span className="hidden text-[9px] tracking-[0.22em] text-faint transition-colors group-hover:text-muted lg:inline">
             CARDS OF CRONOS

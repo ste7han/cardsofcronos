@@ -32,8 +32,8 @@ export function Footer() {
             src="/logo.png"
             alt="Cards of Cronos"
             className="inline-block h-7 w-auto align-middle"
-            width={1224}
-            height={1604}
+            width={1258}
+            height={1762}
           />
           <span className="ml-2 align-middle">CARDS OF CRONOS</span>
         </p>

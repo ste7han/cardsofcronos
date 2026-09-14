@@ -72,7 +72,11 @@ const H = Math.round(CARD_H / (1 - 2 * MARGIN));
 // are set in --font-display and the face gradient is the component's own. A
 // standalone page would fall back to a system font and the mark would be a
 // different mark.
-const card = renderToStaticMarkup(<CardBack size="large" design="foil" />);
+// No design prop: the logo wears whatever the game's cards wear. Naming one here
+// is how the site came to wear a back that appeared nowhere on the table — the
+// default was guilloche and this asked for foil, so the mark in the corner and
+// the cards in your hand were two different objects for three weeks.
+const card = renderToStaticMarkup(<CardBack size="large" />);
 
 // CARD_RATIO above is a copy of a number that lives in CardBack, so it is read
 // back out of the markup and checked rather than trusted. If the back is ever

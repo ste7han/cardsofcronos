@@ -33,11 +33,17 @@ type Design = "coin" | "wordmark" | "guilloche" | "foil";
 /**
  * What a card wears when nothing says otherwise.
  *
- * The sealed stack overrides it to `foil`, and that is the whole idea rather
- * than an exception: foil reads as a stack and a coin reads as a card. Unopened,
- * the thing in front of you is a gold bar; torn open, it is a pile of cards with
- * a struck mark on each. Both were worth keeping, so both are used where each
- * one is the stronger of the two.
+ * ONE BACK, EVERYWHERE. This used to be two: foil on the sealed stack and
+ * guilloche on everything else, on the argument that foil reads as a stack and a
+ * struck mark reads as a card. The argument was fine and the result was not — the
+ * logo in the corner of the site is rendered from this component at `foil`, so
+ * the thing the site wears as its face was a back that appeared nowhere in the
+ * game. TCG, which this component came from, has no Design type at all: one back,
+ * three sizes, and that is the whole of it.
+ *
+ * A card back that varies is not really a card back. It is the one surface in the
+ * game that is supposed to be identical on every card, and identical to the
+ * picture of it on the front page.
  *
  * What the design must never do is vary with what is *on* the card. The back is
  * what you look at before you know, and a rarer card wearing a better back would
@@ -55,7 +61,7 @@ const GROUND = "#080a0d";
  */
 const MARK_SIZE = 34;
 
-const DESIGN: Design = "guilloche";
+const DESIGN: Design = "foil";
 const FACE: keyof typeof PALETTES = "cronos";
 
 const PALETTES = {
