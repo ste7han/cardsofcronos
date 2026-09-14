@@ -6710,6 +6710,9 @@ const TOOLS: ToolCard[] = [
     ticker: "EXPLORER",
     rarity: "common",
     effect: { kind: "drawCards", amount: 1 },
+    // the explorer is where you look up what a position actually realised, so
+    // closing one pays: bankPays was the last aura in the engine nothing used
+    aura: { kind: "bankPays", sector: "infra", bonus: 3_000, mc: 24_000 },
     flavour: "Every answer is already in there. Nobody wants to read it.",
   },
   {
@@ -6728,6 +6731,9 @@ const TOOLS: ToolCard[] = [
     ticker: "DEBANK",
     rarity: "common",
     effect: { kind: "drawCards", amount: 1 },
+    // it shows you what you are holding, and knowing that is worth a little
+    // every turn — the joke on the card is that the number was always there
+    aura: { kind: "budgetEachTurn", budget: 7_000 },
     flavour: "Shows you a number you already knew, in a font you trust more.",
   },
   {
@@ -6799,6 +6805,12 @@ const TACTICS: TacticCard[] = [
     ticker: "COPY",
     rarity: "common",
     effect: { kind: "drawCards", amount: 2 },
+    // copying works when there is something to copy: once they have emptied
+    // their hand onto the table you have seen every move worth taking
+    payoff: {
+      when: { kind: "theirHandAtMost", cards: 3 },
+      effect: { kind: "directMC", target: "self", mc: 40_000 },
+    },
     flavour: "Opening his wallet is faster than thinking for yourself.",
   },
   {
@@ -7061,6 +7073,12 @@ const TACTICS: TacticCard[] = [
     ticker: "TRACK",
     rarity: "rare",
     effect: { kind: "drawCards", amount: 3 },
+    // watching a wallet is watching what comes next, which is what peekAndBurn
+    // is. Gated on turn five because there is nothing to track on turn one.
+    payoff: {
+      when: { kind: "turnAtLeast", turn: 5 },
+      effect: { kind: "peekAndBurn", look: 3 },
+    },
     flavour: "You don't need an edge if you can watch someone who has one.",
   },
   {

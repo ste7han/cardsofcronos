@@ -198,9 +198,17 @@ export const THICK_PROJECT: ProjectCard = CARDS.filter(
   (c): c is ProjectCard => c.type === "project" && c.pumpMC > 0,
 ).sort((a, b) => b.holders - a.holders)[0]!;
 
-/** A tool that carries an aura, and the sector it pumps. */
+/**
+ * A tool that carries a sector aura, and the sector it pumps.
+ *
+ * The kind is part of the fixture, not an accident of ordering. This asked for
+ * the first tool with any aura at all, which was the only one that had one until
+ * a second tool was given bankPays — and then the test that checks a sector pump
+ * keeps working was handed a tool that does not pump a sector. It said so rather
+ * than failing on the arithmetic, which is why this is a two-line fix.
+ */
 export const AURA_TOOL: string = (() => {
-  const found = CARDS.find((c) => c.type === "tool" && c.aura !== undefined);
-  if (!found) throw new Error("Test fixtures need a tool with an aura.");
+  const found = CARDS.find((c) => c.type === "tool" && c.aura?.kind === "pumpSector");
+  if (!found) throw new Error("Test fixtures need a tool with a pumpSector aura.");
   return found.id;
 })();
