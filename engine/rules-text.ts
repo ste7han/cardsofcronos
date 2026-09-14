@@ -331,7 +331,11 @@ export function describeCondition(condition: Condition): string {
             "times"
           )} or fewer`;
     case "holdersLostAtLeast":
-      return `When ${condition.holders} holders have been lost this match`;
+      // "anywhere", because holdersLost is counted across both boards and a
+      // player reading this had to ask whose. mcPerHolderLost has said the word
+      // since it was written — the same fact wearing two different sentences,
+      // and only one of them answered the question.
+      return `When ${condition.holders} holders have been lost anywhere this match`;
     case "bankedAtLeast":
       return condition.count === 1
         ? "Once you have taken profit"
