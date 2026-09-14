@@ -29,6 +29,13 @@
 //   - Anything that pays across turns. Both sides coast after the card is played,
 //     so a pump is worth one turn of itself rather than the three a position
 //     survives.
+//   - STANDINGS, and this one runs the other way: a standing effect is paid every
+//     turn while the position is undamaged, and coasting hands it every remaining
+//     turn with nobody to damage it. So the top of a list is as suspect as the
+//     bottom. The five epics carrying a $74K standing measure between $929K and
+//     $1155K against an epic average of $389K, and in 600 real matches they are
+//     played on turn five rather than turn two and only a quarter to a half are
+//     still undamaged at the end.
 //
 // Read the bottom of a list as a question, not a verdict.
 //
@@ -44,6 +51,12 @@
 // arriving as a list of names, which is more useful than a warning: these are the
 // cards a still life cannot judge. scripts/never-played.ts is the instrument that
 // judges them, and it says nothing in this set is dead.
+//
+// THE TOP OF THE LIST WENT THE SAME WAY. tectonic-v came out at 297% of its
+// rarity and is the most conservative card of its kind in the set: 36K per holder
+// where the five other per-holder epics pay 42K, and a standing identical to four
+// of them. Splitting it showed the standing alone worth $910K of the $1155K. The
+// number was the coast, not the card.
 
 import { CARDS } from "../data/cards";
 import { buildDeck } from "../engine/deck";
