@@ -118,6 +118,10 @@ function attributesOf(card: (typeof CARDS)[number]) {
     traits.push({ trait_type: "Pumps sector", value: aura.sector });
     traits.push({ trait_type: "Aura bonus", value: aura.bonus });
   }
+  if (aura?.kind === "pumpSectors") {
+    traits.push({ trait_type: "Pumps sector", value: aura.sectors.join(", ") });
+    traits.push({ trait_type: "Aura bonus", value: aura.bonus });
+  }
   if (card.effect) traits.push({ trait_type: "Effect", value: card.effect.kind });
 
   return traits;

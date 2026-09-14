@@ -126,6 +126,8 @@ function scoreAura(aura: Aura, profile: FamilyProfile): number {
       return aura.sector === profile.sector ? SCORE.sameSector : SCORE.neutral;
     case "pumpSector":
       return aura.sector === profile.sector ? SCORE.sameSector : SCORE.neutral;
+    case "pumpSectors":
+      return aura.sectors.includes(profile.sector) ? SCORE.sameSector : SCORE.neutral;
     case "bankPays":
       return profile.banks ? SCORE.shapeFits : SCORE.neutral;
     case "morePositions":

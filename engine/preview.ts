@@ -144,6 +144,8 @@ function slotsForAura(
   switch (aura.kind) {
     case "pumpSector":
       return inSectors(state, "allOwnProjects", player, index, new Set([aura.sector]), "helps");
+    case "pumpSectors":
+      return inSectors(state, "allOwnProjects", player, index, new Set(aura.sectors), "helps");
     case "budgetEachTurn":
     case "drawEachTurn":
       // Nothing on the board to point at: these hand the player a resource, not

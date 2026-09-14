@@ -1384,6 +1384,7 @@ export function auraUpkeep(aura: Aura): AuraUpkeep {
   const none = { budget: 0, draw: 0, heal: 0, positions: 0, gift: 0, strip: 0, burn: 0, wasteTimes: 1 };
   switch (aura.kind) {
     case "pumpSector":
+    case "pumpSectors":
     case "championProjects":
       return none;
     case "budgetEachTurn":
@@ -1506,6 +1507,10 @@ export function auraWouldPay(
 export function auraFloor(aura: Aura): number {
   switch (aura.kind) {
     case "pumpSector":
+      return aura.bonus;
+    case "pumpSectors":
+      // The same floor, not a multiple of it. Reaching two sectors makes the
+      // bonus likelier to land, never larger on the position it lands on.
       return aura.bonus;
     case "championProjects":
       // The flat half only. A multiplier needs a specific family on the table
@@ -1746,6 +1751,8 @@ function shortAura(aura: Aura): string {
   switch (aura.kind) {
     case "pumpSector":
       return `${aura.sector} pumps ${formatMC(aura.bonus)} more per turn`;
+    case "pumpSectors":
+      return `${aura.sectors.join(" and ")} pump ${formatMC(aura.bonus)} more per turn`;
     case "budgetEachTurn":
       return `${formatMC(aura.budget)} more budget a turn`;
     case "drawEachTurn":

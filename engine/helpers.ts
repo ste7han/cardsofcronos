@@ -80,6 +80,7 @@ export function drawToFull(state: State, player: Player, handSize: number): void
  */
 export function auraSectors(aura: Aura, cards: readonly Card[]): Sector[] {
   if (aura.kind === "pumpSector") return [aura.sector];
+  if (aura.kind === "pumpSectors") return [...aura.sectors];
   // Budget, hand and healing are not about a sector at all — they help whatever
   // you happen to be holding. An empty list is the true answer and the callers
   // are built for it: the coverage test asks which sectors have an aura behind

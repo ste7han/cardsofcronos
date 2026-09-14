@@ -20,9 +20,10 @@ import { MARKETING_COST, RARITIES, RULES, SECTORS, auraOf } from "../engine/type
 const index = buildIndex(CARDS);
 
 /** Every project of the sector, then the cheapest legal filler. */
-function focusedDeck(sector: Sector): string[] {
+function focusedDeck(sectors: readonly Sector[]): string[] {
+  const want = new Set(sectors);
   // Capped at the deck size — meme now has more projects than a deck has slots.
-  const picks = CARDS.filter((c) => c.type === "project" && c.sector === sector)
+  const picks = CARDS.filter((c) => c.type === "project" && want.has(c.sector))
     .map((c) => c.id)
     .slice(0, RULES.deckSize);
   const rest = [...CARDS]
@@ -37,13 +38,29 @@ function focusedDeck(sector: Sector): string[] {
     if (!picks.includes(c.id)) picks.push(c.id);
   }
   const problems = deckProblems(picks, index);
-  if (problems.length > 0) throw new Error(`focused ${sector} deck is illegal: ${problems.join(" ")}`);
+  if (problems.length > 0)
+    throw new Error(`focused ${[...want].join("+")} deck is illegal: ${problems.join(" ")}`);
   return picks;
 }
 
 /** Projects of `sector` held per turn, in a deck built around it. */
-function presence(sector: Sector): number {
-  const deck = focusedDeck(sector);
+/**
+ * How many positions of these sectors you hold per turn, in a deck built around
+ * them.
+ *
+ * Takes a list rather than one sector because a two-sector aura's presence is
+ * NOT the sum of its parts, and adding them was this report's answer for an
+ * afternoon. A deck focused on defi holds 3.54 defi positions and one focused on
+ * infra holds 3.62 infra ones; a deck built around both still holds about the
+ * same number of positions in total, because the portfolio cap is what limits
+ * it and not the supply of projects in a sector. Summing said 7.16 and priced
+ * Pampa at less than half the bonus the still-life measured him needing.
+ *
+ * So a pair is played out like any other deck and counted once.
+ */
+function presence(sectors: readonly Sector[]): number {
+  const want = new Set(sectors);
+  const deck = focusedDeck(sectors);
   let count = 0;
   let snaps = 0;
   for (let seed = 0; seed < 1200; seed++) {
@@ -57,7 +74,7 @@ function presence(sector: Sector): number {
         snaps++;
         for (const pos of state.players.you.projects) {
           const card = index.get(pos.cardId);
-          if (card?.type === "project" && card.sector === sector) count++;
+          if (card?.type === "project" && want.has(card.sector)) count++;
         }
       }
     }
@@ -66,13 +83,25 @@ function presence(sector: Sector): number {
 }
 
 const held = new Map<Sector, number>();
-for (const sector of SECTORS) held.set(sector, presence(sector));
+for (const sector of SECTORS) held.set(sector, presence([sector]));
+
+/** Presence for any combination, measured once and kept. */
+const pairs = new Map<string, number>();
+function presenceOf(sectors: readonly Sector[]): number {
+  if (sectors.length === 1) return held.get(sectors[0]!) ?? 0;
+  const key = [...sectors].sort().join("+");
+  if (!pairs.has(key)) pairs.set(key, presence(sectors));
+  return pairs.get(key)!;
+}
 
 interface Row {
   id: string;
   name: string;
   rarity: Rarity;
-  sector: Sector;
+  sector: Sector | string;
+  /** Positions the aura can land on. Carried here because a two-sector aura's
+   *  label is no longer a key into `held`. */
+  per: number;
   bonus: number;
   hasEffect: boolean;
   value: number;
@@ -87,16 +116,21 @@ for (const card of CARDS) {
   // aura as bonus-times-positions-held, which has no meaning for one that
   // multiplies — and a made-up number in a balance table is worse than a gap,
   // because the gap is visible and the number is not.
-  if (aura.kind !== "pumpSector") {
+  if (aura.kind !== "pumpSector" && aura.kind !== "pumpSectors") {
     skipped.push(`${card.name} (${aura.kind})`);
     continue;
   }
-  const per = held.get(aura.sector) ?? 0;
+  // A flat aura over two sectors is priced the same way as over one: the bonus
+  // times the positions it can land on. What that number is has to be played
+  // out, not added up — see presence().
+  const sectors = aura.kind === "pumpSector" ? [aura.sector] : aura.sectors;
+  const per = presenceOf(sectors);
   rows.push({
     id: card.id,
     name: card.name,
     rarity: card.rarity,
-    sector: aura.sector,
+    sector: sectors.join("+"),
+    per,
     bonus: aura.bonus,
     hasEffect: Boolean(card.effect),
     value: aura.bonus * per,
@@ -157,7 +191,7 @@ for (const rarity of RARITIES) {
   if (group.length === 0) continue;
   const target = median(group.map(onPureScale));
   for (const r of group.sort((a, b) => a.name.localeCompare(b.name))) {
-    const per = held.get(r.sector) ?? 1;
+    const per = r.per || 1;
     const want = Math.max(
       1000,
       Math.round(((target * (r.hasEffect ? EFFECT_DISCOUNT : 1)) / per) / 1000) * 1000,

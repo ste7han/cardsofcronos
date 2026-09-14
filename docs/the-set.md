@@ -183,8 +183,10 @@ look correct.
 meme 14, nft 13, defi 6, infra 8 — forty-one families and 328 project cards.
 
 It matters because a sector is something you build around in this game. The deck
-presets are sector decks, the auras on the people cards pump one sector each, and
-a `pumpBySector` card is worth what your board holds of it. Before the merge it
+presets are sector decks, the auras on the people cards pump a sector, and a
+`pumpBySector` card is worth what your board holds of it. One person pumps two:
+Pampa reads as somebody who lifts the working half of the chain rather than the
+memes, and there was no shape that could say so until `pumpSectors` existed. Before the merge it
 was 9 / 7 / 10 / 4 / 3, so a player leaning infra picked from three families and
 one leaning defi from ten. Now three of the four hold eight and meme holds eleven.
 
@@ -924,3 +926,43 @@ defi is the thinnest: three aura cards for ten families.
 
 Effects. Nothing on this page is about what a card does — that is settled once it
 is settled who is on the cards.
+
+---
+
+## Pampa pumps two sectors, and what that cost to price
+
+Every sector aura in the set named exactly one sector, which made every person
+carrying one a specialist. The maker's note was that Pampa is not: he reads as
+somebody who lifts infra and defi rather than memes. There was no way to write
+that down, so the aura became a union entry — `pumpSectors` — and the compiler
+named the eight switches that had to answer for it.
+
+Two of the places that read an aura are `if` chains rather than switches and the
+compiler cannot flag them: `auraSectors` in helpers, which feeds the deck presets
+and the sector-coverage test, and `auraBonusOf` in effects. Missing either is a
+card that quietly stops counting, which is the failure this codebase exists to
+refuse. Both were updated by hand. `render-cards.ts` was a third: its NFT trait
+printed a sector only for `pumpSector`, so Pampa's card image would have lost its
+aura line without a word.
+
+**What the bonus should be was measured twice and the two answers disagreed.**
+The obvious rule is that reach costs something, so two sectors should pay less
+per sector than one. The still-life said otherwise: defi+infra at 11K measured
+the same as meme at 11K. The reason is that sectors are not the same size — meme
+holds 120 projects and nft 112, while infra holds 64 and defi 48 — so Pampa
+reaching both small ones covers 112 projects against a meme specialist's 120. He
+buys no extra reach and stays in the ordinary epic band, at 12K.
+
+`aura-balance.ts` disagreed and proposed 5K, and it was wrong. It priced an aura
+as bonus times presence, and for a pair it summed the two sectors' presence:
+3.54 + 3.62 = 7.16 positions. That is a deck built around defi *and* a deck built
+around infra at once. A real deck holding both still holds about the same number
+of positions, because the portfolio cap is the limit and not the supply of
+projects in a sector. Measured properly — one deck, both sectors, played out —
+the number is 3.55, the table now proposes 11K, and it agrees with the still-life.
+
+The lesson is the one already in CLAUDE.md: when an outcome cannot possibly be
+right, suspect the measurement first. Both the sum and, later, a baseline check
+reporting 167 regressions turned out to be the instrument rather than the change.
+The baseline had not been re-recorded after the Puush mythic went in, so it was
+measuring two changes and had been told about one.

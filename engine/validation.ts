@@ -1421,6 +1421,34 @@ export function validateAura(
       }
       return problems;
     }
+    case "pumpSectors": {
+      const problems: string[] = [];
+      // One sector is pumpSector and two ways to write one card is the trap this
+      // codebase exists to refuse; a repeat is a card that reads as reaching two
+      // sectors and reaches one.
+      if (aura.sectors.length < 2) {
+        problems.push(
+          `${where}: pumpSectors names ${aura.sectors.length} sector(s). One sector is what pumpSector is for.`
+        );
+      }
+      if (new Set(aura.sectors).size !== aura.sectors.length) {
+        problems.push(`${where}: pumpSectors names the same sector twice.`);
+      }
+      for (const sector of aura.sectors) {
+        if (!SECTORS.includes(sector)) {
+          problems.push(`${where}: aura points at unknown sector "${sector}".`);
+        } else if (!sectorsInSet.has(sector)) {
+          // No project in this sector: that half of the aura can never apply.
+          problems.push(
+            `${where}: aura pumps sector "${sector}", but no project in the set has that sector. That half of this card does nothing.`
+          );
+        }
+      }
+      if (!Number.isFinite(aura.bonus) || aura.bonus === 0) {
+        problems.push(`${where}: an aura bonus of zero does nothing.`);
+      }
+      return problems;
+    }
     case "championProjects": {
       const problems: string[] = [];
       // The flat half is a sector aura and gets a sector aura's checks. Skipping

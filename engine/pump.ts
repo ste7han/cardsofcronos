@@ -38,6 +38,8 @@ export function auraOn(aura: Aura, project: ProjectCard): AuraOn {
   switch (aura.kind) {
     case "pumpSector":
       return { add: aura.sector === project.sector ? aura.bonus : 0, times: 1 };
+    case "pumpSectors":
+      return { add: aura.sectors.includes(project.sector) ? aura.bonus : 0, times: 1 };
     case "healEachTurn":
     case "bankPays":
       // The floor half. What each of them does on top happens elsewhere — the

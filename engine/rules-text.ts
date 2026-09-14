@@ -844,6 +844,10 @@ export function describeAura(aura: Aura): string {
       return `All your ${sectorName(aura.sector)} cards pump ${formatMC(
         aura.bonus
       )} MC more per turn.`;
+    case "pumpSectors":
+      return `All your ${aura.sectors
+        .map(sectorName)
+        .join(" and ")} cards pump ${formatMC(aura.bonus)} MC more per turn.`;
     case "budgetEachTurn":
       return `You get ${formatMC(
         aura.budget

@@ -1339,7 +1339,8 @@ function owned(owner: Player, name: string): string {
 function auraBonusOf(card: Card): number {
   const aura = auraOf(card);
   if (!aura) return 0;
-  return aura.kind === "pumpSector" ? aura.bonus : 0;
+  if (aura.kind === "pumpSector" || aura.kind === "pumpSectors") return aura.bonus;
+  return 0;
 }
 
 function scope(target: TargetProject, targets: Targeted[]): string {

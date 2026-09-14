@@ -920,6 +920,30 @@ export type Aura =
   /** Adds to every project of a sector, every turn. The original, and still 59 of 61. */
   | { kind: "pumpSector"; sector: Sector; bonus: number }
   /**
+   * The same thing across more than one sector, for a person whose taste does
+   * not sit in a single column.
+   *
+   * Every sector aura in the game named exactly one, which made every person who
+   * carried one a specialist. Some of them are not. The maker's note about Pampa
+   * was that he reads as somebody who lifts infra and defi rather than memes, and
+   * there was no way to say that: the only shape available forced a choice
+   * between the two and printed a card that was wrong either way.
+   *
+   * The bonus is per sector, and what it should be was measured rather than
+   * assumed. The obvious rule — two sectors, so a smaller number than a
+   * specialist gets — turns out to be wrong here, because sectors are not the
+   * same size: meme holds 120 projects and nft 112, while infra holds 64 and
+   * defi 48. Pampa reaching both of the small ones is 112 projects against the
+   * 120 a meme specialist reaches, so he is buying no extra reach at all and his
+   * bonus stays in the ordinary epic band. A pair that included meme or nft
+   * would be buying reach and would have to pay for it. Measure the pair.
+   *
+   * A single-entry list is deliberately not allowed — that is `pumpSector`, and
+   * two ways to write the same card is the "one name, two meanings" trap this
+   * codebase is built to refuse. validateSet rejects it.
+   */
+  | { kind: "pumpSectors"; sectors: readonly Sector[]; bonus: number }
+  /**
    * A sector aura with a favourite: it lifts the sector like any other, and it
    * multiplies the pump of your projects from these families on top.
    *

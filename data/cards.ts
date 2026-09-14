@@ -6596,7 +6596,8 @@ const VOICES: PersonCard[] = [
     name: "Pampa",
     ticker: "PAMPA",
     rarity: "epic",
-    aura: { kind: "pumpSector", sector: "meme", bonus: 11_000 },
+    // reads as somebody who lifts the working half of the chain, not the memes
+    aura: { kind: "pumpSectors", sectors: ["defi", "infra"], bonus: 12_000 },
     effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 1 },
     flavour: "Says the thing everybody was thinking, an hour before they think it.",
   },
