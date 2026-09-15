@@ -3218,9 +3218,13 @@ const MERY: ProjectCard[] = [
     launchMC: 110_000,
     pumpMC: 56_000,
     holders: 6,
-    // it handed over the keys and never asked for them back
-    // it handed over the keys, so what it pays is read off the whole table
-    effect: { kind: "directMC", target: "self", mc: 70_000, per: "table" },
+    // it handed over the keys, so what it pays is read off the whole table, and
+    // the second line is the rest of that sentence: it never asked for them back
+    effect: { kind: "directMC", target: "self", mc: 24_000, per: "table" },
+    payoff: {
+      when: { kind: "bankedAtMost", count: 0 },
+      effect: { kind: "peakMC", percentage: 8 },
+    },
     flavour: "It handed over the keys on the first day and never asked for them back.",
   },
 ];
@@ -5527,8 +5531,13 @@ const GANGGANG: ProjectCard[] = [
     pumpMC: 56_000,
     holders: 7,
     // quoted from the order form, and still undefined
-    // a gang is a group that decided to be one, and it brings everybody back whole
-    effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
+    // paid for everyone the match has cost, and if the gang is big enough they
+    // all come back — which is the only thing $GG behavior has ever meant
+    effect: { kind: "mcPerHolderLost", mc: 30_000 },
+    payoff: {
+      when: { kind: "ownProjectCount", atLeast: 3 },
+      effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
+    },
     flavour: "$GG behavior is the way. Nobody has ever defined it.",
   },
 ];

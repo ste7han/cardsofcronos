@@ -1003,3 +1003,46 @@ what the card says rather than from what was missing:
 
 Ferro VI is a separate matter and was left alone: it measures 245% of the epic
 average, and it was doing that before either of these changes.
+
+---
+
+## The other two the widened check named
+
+Of the seventeen families the widened ECHO left flagged, fifteen are one
+finding rather than fifteen faults: `scaleMC` has become the set's default
+mythic effect, with nine families ending on it and eight on `scalePump`. That
+is a question about the whole set and not a repair to any one card.
+
+Two sat outside that pattern and were the same shape as Puush and Ferro.
+
+**Gang Gang** was `healHolders` "every holder back" over an epic doing the same
+for two, one line, and it measured 64% of the mythic average — the second
+weakest mythic in the game. Healing is the family's identity and stays, but it
+moved to the conditional half: the card now pays $30K for every holder lost
+anywhere this match, and brings every holder back when you hold three or more
+projects. A gang is a group that decided to be one, so the gang being big enough
+is the condition. 387K to 534K.
+
+`mcPerHolderLost` went in at $40K and `validateSet` refused it: the ceiling is
+$30K, set after somebody measured that a match costs 18 holders by the end and
+noted that $30K a holder is already half a million on a late board. The card
+sits at the ceiling. Worth recording that typecheck passed and the *tests*
+caught it, because validateSet runs at module load.
+
+**Mistery** was the opposite problem. Its mythic measured **161%** — the
+strongest in the set, not the weakest — and the fault was only ever that it was
+one line repeating a kind the family already used three times. ECHO alone is not
+a fault, and this file's own check says so: a family whose identity is one effect
+may want its mythic to be the biggest version of it, and Mistery's identity is
+money scaled by something. So the kind stayed and the two real faults were fixed.
+The per-table figure came down from $70K to $24K and a second line went on that
+finishes the flavour's sentence: it handed over the keys, and when you have never
+taken profit it pays 8% of the peak you reached. 984K to 650K.
+
+Four candidate designs were measured and thrown away first. `unbankedMC` was the
+best thematic fit for Mistery and the numbers refused it: to land near the
+average it had to sit at 25%, which is what a *rare* in this set pays, and a
+mythic printing a rare's number is the same readability fault in a new place.
+`banTakeProfit` was considered as the second line — "never asked for them back"
+as an actual rule — until the engine's own note said it measures **-$15K** and is
+the only standing rule in the game worth nothing.
