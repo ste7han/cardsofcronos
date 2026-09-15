@@ -2461,8 +2461,14 @@ const FERRO: ProjectCard[] = [
     launchMC: 102_000,
     pumpMC: 58_000,
     holders: 8,
-    // nothing dramatic ever happened to it, which is the achievement
-    effect: { kind: "extraBudget", target: "self", mc: 380_000 },
+    // a stableswap is a peg, and a benchmark is the only thing in the set that
+    // holds one position at what another is worth
+    effect: { kind: "benchmark", target: "ownProject", plus: 40_000 },
+    payoff: {
+      // nothing dramatic ever happened to it, which is the achievement
+      when: { kind: "bankedAtMost", count: 1 },
+      effect: { kind: "directMC", target: "self", mc: 180_000 },
+    },
     flavour: "The pool nobody watched, because it never did anything.",
   },
 ];

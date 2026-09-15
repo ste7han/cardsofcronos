@@ -966,3 +966,40 @@ right, suspect the measurement first. Both the sum and, later, a baseline check
 reporting 167 regressions turned out to be the instrument rather than the change.
 The baseline had not been re-recorded after the Puush mythic went in, so it was
 measuring two changes and had been told about one.
+
+---
+
+## Two mythics that were their own family's lower card
+
+The maker read Puush's mythic and said it was mediocre. It was `extraBudget`
+380K, and the family's *epic* was `extraBudget` 170K: the same card with a bigger
+number. It measured 298K against a mythic average of 591K, exactly half.
+
+`mythic-check.ts` had been built after the maker found this same fault twice
+before, and it missed this one, because ECHO compared a mythic only against its
+own legendary and the repeat here was one rung further down. It now reads the
+whole family. That widened the shortlist from four families to eighteen and
+immediately named the second instance: Ferro, whose mythic was `extraBudget` 380K
+over an epic at 180K and a rare at 85K — three cards of one family on one effect.
+
+Both were replaced with something the family did not already own, chosen from
+what the card says rather than from what was missing:
+
+- **Puush VIII** — "The only number here that never goes up is the supply."
+  `mcPerPositionGone`, which pays for every position that has left the table
+  either side, plus a payoff at six holders lost. Both lines are attrition, which
+  is the flavour read from the other end: everything else came and went, the
+  supply only shrank. The family was otherwise entirely about money —
+  `extraBudget` three times, `directMC` three times. Measured 585K on turn 7 and
+  rising, the right shape for a card about outliving things.
+- **Ferro VIII** — "The pool nobody watched, because it never did anything."
+  `benchmark`, which lifts one of your positions to what the opponent's best
+  yields and never downwards. A stableswap is a peg and a benchmark is the only
+  thing in the set that holds one position at what another is worth; no mythic
+  used it and nobody in Ferro's family did. The payoff fires when you have taken
+  profit once or less, which is the flavour again: you never touched it.
+  Measured 699K on turn 7 *falling* to 510K by turn 9 — the opposite shape to
+  Puush, which is the variety two mythics ought to have.
+
+Ferro VI is a separate matter and was left alone: it measures 245% of the epic
+average, and it was doing that before either of these changes.
