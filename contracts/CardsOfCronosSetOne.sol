@@ -117,8 +117,8 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
      */
     address payable public immutable splitter;
 
-    /// @notice The royalty, in basis points out of 10_000.
-    uint96 public constant ROYALTY_BPS = 500;
+    /// @notice The royalty, in basis points out of 10_000. Settled by the maker.
+    uint96 public constant ROYALTY_BPS = 1_000;
 
     event Released(uint256 amount);
 

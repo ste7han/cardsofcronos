@@ -357,7 +357,8 @@ contract BuyingTest is Test {
     function test_royaltyGoesToTheSplitter() public {
         (address receiver, uint256 owed) = nft.royaltyInfo(1, 10_000 ether);
         assertEq(receiver, address(splitter), "a royalty is divided like everything else");
-        assertEq(owed, 500 ether, "5% of the sale");
+        assertEq(owed, 1_000 ether, "10% of the sale");
+        assertEq(nft.ROYALTY_BPS(), 1_000);
         assertTrue(nft.supportsInterface(0x2a55205a), "ERC2981");
         assertTrue(nft.supportsInterface(0x80ac58cd), "ERC721");
     }

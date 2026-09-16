@@ -604,8 +604,8 @@ a single CRO anywhere but there.
 **Royalties are declared on the collection.** ERC2981, paying the splitter, set
 in the constructor — so a venue that honours it is configured by the collection
 rather than by somebody remembering a form on every marketplace. Not enforcement:
-venues that ignore ERC2981 exist. The royalty is **5%** and that number is the
-one thing here nobody has explicitly settled.
+venues that ignore ERC2981 exist. The royalty is **10%**, settled by the maker,
+and it is divided like everything else.
 
 **There is a way out, and it waits two days.** `contracts/Rescuable.sol`, on all
 three contracts. None of this is audited — 59 tests is not an audit — and
@@ -661,10 +661,38 @@ nothing out of a mint.
 does. Paid out, never spent — it is the one wallet whose balance is somebody
 else's.
 
-**How holders are paid is not decided.** A share-out needs a snapshot or a claim
-and neither exists, so the stream is not live. It is written down as an open
-question on the stream itself rather than nowhere, which is the only reason the
-file can tell the difference between a decision and a gap.
+**How holders are paid: a merkle round.** `contracts/HolderDrop.sol`. $CROCARD
+has a billion supply and thousands of holders, and paying them by transfer costs
+more gas than the smallest shares are worth. So a round is published as one
+number — a root — and each share is proved when it is taken. A holder who never
+takes theirs costs nothing to have included.
+
+`claim` pays the holder named in the proof rather than the caller, so a holder
+can take their own or anything can push it to them. The publisher may open a
+round and nothing else: it cannot withdraw, cannot change a round it has opened,
+and cannot take anybody's share, because the tree decides who gets what and is
+fixed the moment the round opens.
+
+**What nobody takes comes back.** A round expires after 90 days and what is left
+returns to the unallocated balance to be shared again. Without that, every
+round's dust is stranded and `allocated` only ever grows — the same leftover
+`lib/revenue.ts` refuses a 99% split for, in a slower form.
+
+**The tree is built by `scripts/holder-drop.ts`**, which finds holders by
+replaying every Transfer the token has emitted. An ERC20 has no list of its
+holders — the balances are a mapping and a mapping cannot be read without its
+keys — so the keys come from the logs. Slow, and the only honest way: asking an
+indexer would make this depend on somebody else's uptime and somebody else's
+definition of a holder, for a number that decides who gets paid.
+
+Left out: the zero address, the burn address, and this project's own contracts.
+Shares are floored so they always sum to a little *under* the round, and shares
+below 0.01 CRO are dropped because a claim below that costs more than it moves.
+Both leftovers stay in the contract and are shared again.
+
+**What is still open** is when a round is opened — the cron closes the week and
+pays the prize today, and opening a round needs the tree built first, which is a
+script somebody runs. That is the last piece of handwork left.
 
 **A ranked match divides its cut exactly like a mint.** It was 100% burn, on the
 argument that "all of it goes into the token" is a shorter sentence than any
