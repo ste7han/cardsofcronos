@@ -453,9 +453,31 @@ on a stream marked live while a wallet it pays is still unknown.
 
 | stream | split |
 |---|---|
-| paid mints | 75% burn · 25% creator |
+| paid mints | 50% $CROCARD holders · 25% burn · 25% prize pot |
 | NFT royalties | 75% burn · 25% creator |
 | staked matches | 100% burn |
+
+**A mint is one card or ten, and nothing else.** A card is 15 CRO and a pack of
+ten is 100, so the pack is a third off — ten singles would be 150. The $CROCARD
+discount carried over from the first collection comes off on top, one percent per
+million held and capped at thirty, which puts the floor at 10.5 CRO for a card
+and 70 for a pack. `lib/revenue.ts` refuses at load a pack that is not cheaper
+per card than a single, because that is a button nobody has a reason to press and
+the mistake is one digit wide.
+
+**Half of a mint goes back to the people already holding the token.** That is a
+different promise from burning and both are being made: a burn helps every holder
+by making the supply smaller, and this pays them in CRO. The creator takes
+nothing out of a mint.
+
+**A quarter is the prize pot**, paid out weekly on high score, which is what TCG
+does. Paid out, never spent — it is the one wallet whose balance is somebody
+else's.
+
+**How holders are paid is not decided.** A share-out needs a snapshot or a claim
+and neither exists, so the stream is not live. It is written down as an open
+question on the stream itself rather than nowhere, which is the only reason the
+file can tell the difference between a decision and a gap.
 
 The rake is the only stream that is entirely burn, deliberately: it is the one
 players pay directly, and "all of it goes into the token" is a shorter sentence

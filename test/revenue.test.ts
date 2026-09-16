@@ -9,7 +9,16 @@
 import { describe, expect, it } from "vitest";
 
 import { isAddress, normalise } from "@/lib/address";
-import { BURN_ADDRESS, CROCARD, STREAMS, WALLETS, nameOf, walletFor } from "@/lib/revenue";
+import {
+  BURN_ADDRESS,
+  CROCARD,
+  MINT_OPTIONS,
+  STREAMS,
+  WALLETS,
+  croPerCard,
+  nameOf,
+  walletFor,
+} from "@/lib/revenue";
 
 describe("the wallets", () => {
   // ── All four are null for now, and that is a fact rather than a gap. ──────
@@ -105,8 +114,13 @@ describe("the splits", () => {
     // page that says where the money goes.
     expect(STREAMS.find((stream) => stream.id === "creator-fee")).toBeUndefined();
 
-    expect(share("mints", "burn")).toBe(75);
-    expect(share("mints", "creator")).toBe(25);
+    // Half of a mint goes back to the people holding the token, a quarter is
+    // burned and a quarter is the weekly prize pot. The creator takes nothing
+    // out of a mint.
+    expect(share("mints", "holders")).toBe(50);
+    expect(share("mints", "burn")).toBe(25);
+    expect(share("mints", "tournament")).toBe(25);
+    expect(share("mints", "creator")).toBe(0);
 
     expect(share("royalties", "burn")).toBe(75);
     expect(share("royalties", "creator")).toBe(25);
@@ -161,5 +175,43 @@ describe("what is still open", () => {
         expect(walletFor(share.to).address).not.toBeNull();
       }
     }
+  });
+});
+
+describe("what a mint costs", () => {
+  it("is one card or ten and nothing else", () => {
+    expect(MINT_OPTIONS.map((option) => option.id)).toEqual(["single", "pack"]);
+    expect(MINT_OPTIONS.map((option) => option.cards)).toEqual([1, 10]);
+  });
+
+  it("is the price the maker settled", () => {
+    const price = (id: string) => MINT_OPTIONS.find((option) => option.id === id)!.cro;
+    expect(price("single")).toBe(15);
+    expect(price("pack")).toBe(100);
+  });
+
+  it("makes the pack the cheaper way in, which is the only reason it exists", () => {
+    const [single, pack] = MINT_OPTIONS;
+    expect(croPerCard(pack!)).toBeLessThan(croPerCard(single!));
+    // Ten singles are 150 and a pack is 100: a third off, not a rounding.
+    expect(croPerCard(pack!)).toBe(10);
+    expect(pack!.cards * single!.cro - pack!.cro).toBe(50);
+  });
+});
+
+describe("paying the holders", () => {
+  it("runs through the deployer, because holders are not a wallet", () => {
+    expect(walletFor("holders")).toBe(WALLETS.deployer);
+  });
+
+  it("is named as itself and not as a wallet", () => {
+    expect(nameOf("holders")).toBe("Paid out to $CROCARD holders");
+    expect(nameOf("holders")).not.toBe(WALLETS.deployer.what);
+  });
+
+  it("does not claim to be running while nobody has said how a share-out works", () => {
+    const mints = STREAMS.find((stream) => stream.id === "mints")!;
+    expect(mints.live).toBe(false);
+    expect(mints.open).toBeTruthy();
   });
 });

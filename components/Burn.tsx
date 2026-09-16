@@ -52,13 +52,17 @@ const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)
  */
 const COLOUR: Record<Destination, { bar: string; text: string }> = {
   burn: { bar: "bg-dump", text: "text-dump" },
+  holders: { bar: "bg-primary", text: "text-primary" },
   creator: { bar: "bg-gold", text: "text-gold" },
   marketing: { bar: "bg-pump", text: "text-pump" },
   tournament: { bar: "bg-fg/60", text: "text-fg" },
   deployer: { bar: "bg-dump", text: "text-dump" },
 };
 
-/** Burn shares are the ones worth reading first, so they are drawn differently. */
+/**
+ * Shares are drawn in the order the stream lists them, so a stream reads the way
+ * it was written down rather than largest-first.
+ */
 function Bar({ shares }: { shares: readonly { to: Destination; percent: number }[] }) {
   return (
     <div className="mt-3 flex h-2 w-full overflow-hidden border border-line">

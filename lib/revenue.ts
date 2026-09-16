@@ -53,7 +53,7 @@ export const WALLETS: Record<Wallet["id"], Wallet> = {
   deployer: {
     id: "deployer",
     address: null,
-    what: "Deploys the contract, and does every buy-and-burn.",
+    what: "Deploys the contract, does every buy-and-burn, and pays the holders.",
   },
   marketing: {
     id: "marketing",
@@ -63,7 +63,7 @@ export const WALLETS: Record<Wallet["id"], Wallet> = {
   tournament: {
     id: "tournament",
     address: null,
-    what: "Tournament prizes. Paid out, not spent.",
+    what: "The prize pot for the weekly high score. Paid out, not spent.",
   },
 };
 
@@ -97,7 +97,63 @@ for (const wallet of Object.values(WALLETS)) {
   }
 }
 
-export type Destination = "burn" | Wallet["id"];
+/**
+ * "burn" and "holders" are not wallets — they are what happens to the money once
+ * a wallet has it. Both run through the deployer, which is why `walletFor` exists
+ * at all: the page has to show an address somebody can watch, and neither of
+ * these has one of its own.
+ */
+/**
+ * What a mint costs, in whole CRO.
+ *
+ * Two ways to buy and no others: one card, or ten. The pack is the cheaper way
+ * in per card and that is the whole reason it exists — ten singles are 150 CRO
+ * and the pack is 100, so a pack is a third off. Checked at load, because a pack
+ * that is not cheaper than its cards is a button nobody has a reason to press
+ * and the mistake is one digit wide.
+ *
+ * These are the list prices. The $CROCARD discount carried over from the first
+ * collection comes off on top — one percent per million held, capped at thirty —
+ * so the most anybody pays less is 10.5 CRO for a card and 70 for a pack.
+ */
+export interface MintOption {
+  id: "single" | "pack";
+  /** How many cards it hands over. */
+  cards: number;
+  /** List price in whole CRO, before the $CROCARD discount. */
+  cro: number;
+}
+
+export const MINT_OPTIONS: readonly MintOption[] = [
+  { id: "single", cards: 1, cro: 15 },
+  { id: "pack", cards: 10, cro: 100 },
+];
+
+/** CRO per card, for comparing the two ways to buy. */
+export function croPerCard(option: MintOption): number {
+  return option.cro / option.cards;
+}
+
+{
+  const single = MINT_OPTIONS.find((option) => option.id === "single")!;
+  const pack = MINT_OPTIONS.find((option) => option.id === "pack")!;
+  if (croPerCard(pack) >= croPerCard(single)) {
+    throw new Error(
+      `A pack costs ${croPerCard(pack)} CRO a card and a single costs ${croPerCard(single)}. ` +
+        `Nobody would buy the pack.`,
+    );
+  }
+  for (const option of MINT_OPTIONS) {
+    if (!Number.isInteger(option.cro) || option.cro <= 0) {
+      throw new Error(`The ${option.id} price is ${option.cro} CRO, which is not a price.`);
+    }
+    if (!Number.isInteger(option.cards) || option.cards <= 0) {
+      throw new Error(`The ${option.id} hands over ${option.cards} cards.`);
+    }
+  }
+}
+
+export type Destination = "burn" | "holders" | Wallet["id"];
 
 export interface Share {
   to: Destination;
@@ -121,11 +177,19 @@ export const STREAMS: readonly Stream[] = [
     id: "mints",
     name: "Paid mints",
     from: "Packs and cards of the new line.",
+    // Half of it goes back to the people already holding the token, which is a
+    // different promise from burning: a burn helps everyone holding it by making
+    // the supply smaller, and this pays them in CRO. The creator takes nothing
+    // out of a mint any more.
     shares: [
-      { to: "burn", percent: 75 },
-      { to: "creator", percent: 25 },
+      { to: "holders", percent: 50 },
+      { to: "burn", percent: 25 },
+      { to: "tournament", percent: 25 },
     ],
     live: false,
+    open:
+      "How holders are paid has not been decided. A share-out needs a snapshot or a " +
+      "claim, and neither exists yet.",
   },
   {
     id: "royalties",
@@ -186,10 +250,12 @@ for (const stream of STREAMS) {
 
 /** What a destination is called on screen. */
 export function nameOf(to: Destination): string {
-  return to === "burn" ? "Buy and burn $CROCARD" : WALLETS[to].what;
+  if (to === "burn") return "Buy and burn $CROCARD";
+  if (to === "holders") return "Paid out to $CROCARD holders";
+  return WALLETS[to].what;
 }
 
 /** Which wallet actually receives it. Burns go through the deployer. */
 export function walletFor(to: Destination): Wallet {
-  return to === "burn" ? WALLETS.deployer : WALLETS[to];
+  return to === "burn" || to === "holders" ? WALLETS.deployer : WALLETS[to];
 }
