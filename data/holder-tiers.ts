@@ -7,8 +7,15 @@
 // That was measured before it was decided. A deck built on 110 points beats one
 // built on 80 in 86% of matches, and even 90 against 80 wins 64%. Selling deck
 // power in a game people bet on is not selling a stronger deck, it is selling the
-// result of the bet. So holding buys economics and access instead: how much of
-// your winnings you keep, and where you are allowed to play.
+// result of the bet. So holding buys economics instead, and only economics: how
+// much of what you win you keep. Nothing else.
+//
+// There were perks on these rungs — all tables, tournament entry, new sets
+// first — and they are gone. Every one of them was a promise about a thing that
+// does not exist yet, printed next to a number that does, and a rung that
+// promises four things is four things to keep true. TCG offers one, and one is
+// the whole reason the sentence above stays honest: a smaller cut is not access,
+// so it cannot quietly turn into an advantage at a table.
 //
 // THE LADDER IS TCG'S, and it carries over without a number changing, which is
 // worth saying because it nearly always is not. $TCG has a supply of one billion
@@ -45,8 +52,6 @@ export interface HolderTier {
    * beat you.
    */
   burn: number;
-  /** What the rung opens up, beyond the cut. */
-  perks: readonly string[];
 }
 
 /**
@@ -63,28 +68,24 @@ export const HOLDER_TIERS: readonly HolderTier[] = [
     // One per cent of a billion.
     atLeast: CROCARD_SUPPLY / 100,
     burn: 0.05,
-    perks: ["All tables", "Tournament entry", "New sets before anyone else"],
   },
   {
     id: "medium",
     name: "HOLDER",
     atLeast: CROCARD_SUPPLY / 1_000,
     burn: 0.1,
-    perks: ["All tables", "Match history and replays kept"],
   },
   {
     id: "small",
     name: "BAGHOLDER",
     atLeast: CROCARD_SUPPLY / 10_000,
     burn: 0.15,
-    perks: ["All tables"],
   },
   {
     id: "none",
     name: "RETAIL",
     atLeast: 0,
     burn: 0.25,
-    perks: ["Every card in the set is yours to build with", "Tables up to a small stake"],
   },
 ];
 

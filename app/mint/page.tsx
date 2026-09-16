@@ -53,7 +53,7 @@ export default function MintPage() {
           That was measured before it was decided. When decks did have a points budget, one built on
           110 points beat one built on 80 in 86% of matches. Selling deck power in a game people bet
           on is not selling a stronger deck, it is selling the result of the bet. So holding buys
-          economics and access instead.
+          economics instead, and only economics: a smaller cut out of what you win.
         </p>
 
         {/* Reversed: the ladder is stored highest-first because that is the order
@@ -77,7 +77,10 @@ export default function MintPage() {
                     ).toFixed(2)}% OF SUPPLY`}
               </p>
 
-              <dl className="mt-4 border-y border-line py-3">
+              {/* A rule above and none below: with the perks gone there is
+                  nothing under this to divide it from, and a trailing border
+                  reads as something having been cut off. */}
+              <dl className="mt-4 border-t border-line pt-3">
                 <dt className="text-[8px] tracking-[0.18em] text-faint">BURNED WHEN YOU WIN</dt>
                 <dd className="display mt-1 text-2xl text-gold">
                   {Math.round(tier.burn * 100)}%
@@ -85,15 +88,6 @@ export default function MintPage() {
                 <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">DECK POWER</dt>
                 <dd className="display mt-1 text-2xl">SAME</dd>
               </dl>
-
-              <ul className="mt-3 space-y-1.5">
-                {tier.perks.map((perk) => (
-                  <li key={perk} className="flex gap-2 text-[10px] leading-relaxed text-muted">
-                    <span className="text-pump">›</span>
-                    {perk}
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
         </div>

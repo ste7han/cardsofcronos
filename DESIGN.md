@@ -438,8 +438,11 @@ deck built on 110 points of a deck budget beat one built on 80 in 86% of matches
 and even 90 against 80 won 64%. Selling deck power in a game people bet on is not
 selling a stronger deck, it is selling the result of the bet.
 
-So holding buys **economics and access** instead — how much of your winnings you
-keep, and where you are allowed to play. `data/holder-tiers.ts` has four tiers,
+So holding buys **economics** instead, and only economics — how much of what you
+win you keep, and nothing else. The rungs used to carry perks as well (all
+tables, tournament entry, new sets first); every one of them was a promise about
+something that does not exist, printed beside a number that does, so they are
+gone. `data/holder-tiers.ts` has four tiers,
 and they are TCG's ladder carried over without a number changing:
 
 | tier | from | burned when you win |
