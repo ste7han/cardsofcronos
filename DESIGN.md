@@ -490,7 +490,7 @@ something that does not exist, printed beside a number that does, so they are
 gone. `data/holder-tiers.ts` has four tiers,
 and they are TCG's ladder carried over without a number changing:
 
-| tier | from | burned when you win |
+| tier | from | taken when you win |
 |---|---|---|
 | RETAIL | any amount, including none | 25% |
 | BAGHOLDER | 100,000 · 0.01% of supply | 15% |
@@ -508,6 +508,13 @@ be wrong, every threshold is wrong with it.
 you lose, so a discount on a loss would only ever have been a discount for the
 person who beat you. A balance nobody could read is retail: a discount that
 cannot be verified is a discount nobody earned.
+
+**The field is called `cut`, not `burn`**, and it was `burn` for an afternoon.
+That was true while a ranked match was entirely burn and stopped being true the
+moment the stream split three ways — a quarter of this is burned and the rest
+goes to holders and the pot. It had already reached the page as "BURNED WHEN YOU
+WIN", which is the "one name, two meanings" failure this project has a section
+about, arriving by the ordinary route: the name was right when it was written.
 
 The file refuses at load a rung that is unreachable from the one below it, or a
 burn that does not fall as you climb. Both are one digit wide and neither shows
@@ -537,8 +544,8 @@ on a stream marked live while a wallet it pays is still unknown.
 | stream | split |
 |---|---|
 | paid mints | 50% $CROCARD holders · 25% burn · 25% prize pot |
+| ranked matches | 50% $CROCARD holders · 25% burn · 25% prize pot |
 | NFT royalties | 75% burn · 25% creator |
-| staked matches | 100% burn |
 
 **A mint is one card or ten, and nothing else.** A card is 15 CRO and a pack of
 ten is 100, so the pack is a third off — ten singles would be 150. The $CROCARD
@@ -562,10 +569,15 @@ and neither exists, so the stream is not live. It is written down as an open
 question on the stream itself rather than nowhere, which is the only reason the
 file can tell the difference between a decision and a gap.
 
-The rake is the only stream that is entirely burn, deliberately: it is the one
-players pay directly, and "all of it goes into the token" is a shorter sentence
-than any split. What the rake *is* has not been decided, and nothing is staked
-yet.
+**A ranked match divides its cut exactly like a mint.** It was 100% burn, on the
+argument that "all of it goes into the token" is a shorter sentence than any
+split. It is, and it was the wrong trade twice over: this is the stream players
+pay most often, so two streams dividing differently is two things to learn and
+two to get wrong — and the weekly pot has to be fed by the thing people do every
+day, or the prize is only ever as big as last week's minting.
+
+**How much is taken is the holder ladder**, 25% down to 5% by what the winner
+holds. Nothing is staked yet, so nothing is taken.
 
 **The burn is $CROCARD**, the token that already exists, sent to the burn address
 the first version already used — so every burn this project has ever done lands

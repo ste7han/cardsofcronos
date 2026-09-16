@@ -203,15 +203,27 @@ export const STREAMS: readonly Stream[] = [
   },
   {
     id: "rake",
-    name: "Staked matches",
+    name: "Ranked matches",
     from: "A cut of what is staked on a match.",
-    // All of it. The rake is the only stream that is entirely burn, which is
-    // deliberate: it is the one players pay directly, and the answer to "what
-    // happens to my money" being "all of it goes into the token" is a shorter
-    // sentence than any split.
-    shares: [{ to: "burn", percent: 100 }],
+    // The same split as a mint, on purpose. This is the stream players pay
+    // directly and most often, so it is the one they will actually learn — and
+    // two streams that divide differently is two things to explain and two
+    // things to get wrong.
+    //
+    // It used to be 100% burn, on the argument that "all of it goes into the
+    // token" is a shorter sentence than any split. It is, and it was the wrong
+    // trade: the pot has to be fed by the thing people do every day rather than
+    // by mints alone, or the weekly prize is only ever as big as last week's
+    // minting.
+    shares: [
+      { to: "holders", percent: 50 },
+      { to: "burn", percent: 25 },
+      { to: "tournament", percent: 25 },
+    ],
     live: false,
-    open: "What that cut is has not been decided. Nothing is staked yet, so nothing is taken.",
+    open:
+      "How much is taken is the holder ladder in data/holder-tiers.ts, 25% down to 5% " +
+      "by what the winner holds. Nothing is staked yet, so nothing is taken.",
   },
 ];
 

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { STREAMS } from "@/lib/revenue";
+
 import {
   CROCARD_SUPPLY,
   HOLDER_TIERS,
-  burnFor,
+  cutFor,
   nextTier,
   tierFor,
 } from "@/data/holder-tiers";
@@ -30,9 +32,9 @@ describe("the holder ladder", () => {
   });
 
   it("costs less the higher you climb", () => {
-    const burns = HOLDER_TIERS.map((tier) => tier.burn);
-    expect(burns).toEqual([0.05, 0.1, 0.15, 0.25]);
-    for (let i = 1; i < burns.length; i++) expect(burns[i]!).toBeGreaterThan(burns[i - 1]!);
+    const cuts = HOLDER_TIERS.map((tier) => tier.cut);
+    expect(cuts).toEqual([0.05, 0.1, 0.15, 0.25]);
+    for (let i = 1; i < cuts.length; i++) expect(cuts[i]!).toBeGreaterThan(cuts[i - 1]!);
   });
 
   it("puts every rung within reach of the one below it", () => {
@@ -59,11 +61,20 @@ describe("which rung a balance is on", () => {
     // The expensive rate, deliberately. An RPC that will not answer must not be
     // worth money to the person it would not answer about.
     expect(tierFor(null).id).toBe("none");
-    expect(burnFor(null)).toBe(0.25);
+    expect(cutFor(null)).toBe(0.25);
   });
 
   it("charges a whale less than retail on the same pot", () => {
-    expect(burnFor(CROCARD_SUPPLY / 100)).toBeLessThan(burnFor(0));
+    expect(cutFor(CROCARD_SUPPLY / 100)).toBeLessThan(cutFor(0));
+  });
+
+  it("is a cut and not a burn, because only a quarter of it is burned", () => {
+    // The field was called `burn` while a ranked match was 100% burn. It is not
+    // any more, and a name that describes a quarter of what it does is the trap
+    // this codebase keeps a whole section of CLAUDE.md about.
+    const rake = STREAMS.find((stream) => stream.id === "rake")!;
+    expect(rake.shares.find((share) => share.to === "burn")!.percent).toBe(25);
+    expect(rake.shares).toHaveLength(3);
   });
 
   it("says what the next rung needs, and says nothing at the top", () => {

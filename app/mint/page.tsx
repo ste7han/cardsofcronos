@@ -81,9 +81,9 @@ export default function MintPage() {
                   nothing under this to divide it from, and a trailing border
                   reads as something having been cut off. */}
               <dl className="mt-4 border-t border-line pt-3">
-                <dt className="text-[8px] tracking-[0.18em] text-faint">BURNED WHEN YOU WIN</dt>
+                <dt className="text-[8px] tracking-[0.18em] text-faint">TAKEN WHEN YOU WIN</dt>
                 <dd className="display mt-1 text-2xl text-gold">
-                  {Math.round(tier.burn * 100)}%
+                  {Math.round(tier.cut * 100)}%
                 </dd>
                 <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">DECK POWER</dt>
                 <dd className="display mt-1 text-2xl">SAME</dd>
@@ -96,6 +96,15 @@ export default function MintPage() {
           The winner&rsquo;s tier is the one that counts. Holding is meant to mean you keep more of
           what you win, and your stake is gone either way when you lose — so a discount on a loss
           would only ever have been a discount for the person who beat you.
+        </p>
+
+        <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-muted">
+          What is taken is not all burned. A ranked match splits its cut the way a mint does — half
+          back to $CROCARD holders, a quarter burned, a quarter into the{" "}
+          <Link href="/tournament" className="text-pump hover:underline">
+            weekly prize pot
+          </Link>
+          .
         </p>
 
         <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">

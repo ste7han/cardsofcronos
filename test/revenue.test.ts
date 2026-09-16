@@ -125,9 +125,13 @@ describe("the splits", () => {
     expect(share("royalties", "burn")).toBe(75);
     expect(share("royalties", "creator")).toBe(25);
 
-    // The one stream players pay directly, and all of it goes into the token.
-    expect(share("rake", "burn")).toBe(100);
-    expect(by("rake").shares).toHaveLength(1);
+    // The same split as a mint, on purpose: this is the stream players pay
+    // most often, so it is the one they actually learn, and two streams that
+    // divide differently is two things to get wrong.
+    expect(share("rake", "holders")).toBe(50);
+    expect(share("rake", "burn")).toBe(25);
+    expect(share("rake", "tournament")).toBe(25);
+    expect(by("rake").shares).toHaveLength(3);
   });
 });
 

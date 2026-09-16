@@ -10,6 +10,10 @@
 // result of the bet. So holding buys economics instead, and only economics: how
 // much of what you win you keep. Nothing else.
 //
+// What is taken does not all go up in smoke. A ranked match splits its cut the
+// same way a mint does — half to holders, a quarter burned, a quarter into the
+// weekly pot — which is why the number below is a cut and not a burn.
+//
 // There were perks on these rungs — all tables, tournament entry, new sets
 // first — and they are gone. Every one of them was a promise about a thing that
 // does not exist yet, printed next to a number that does, and a rung that
@@ -44,14 +48,23 @@ export interface HolderTier {
   /** The least you must hold, in whole $CROCARD. */
   atLeast: number;
   /**
-   * Share of the pot burned when you win, 0 to 1.
+   * Share of the pot taken when you win, 0 to 1. What is left is yours.
+   *
+   * CALLED `cut` AND NOT `burn`, and it was `burn` for an afternoon. That was
+   * true while a ranked match was 100% burn and stopped being true the moment
+   * the stream started splitting three ways — a quarter of this is burned and
+   * the rest goes to holders and the prize pot. A field named for one of the
+   * three things it pays is the "one name, two meanings" trap CLAUDE.md is
+   * about, and it had already reached the page as "BURNED WHEN YOU WIN".
+   *
+   * Where it goes is lib/revenue.ts and lives there only. This says how much.
    *
    * The winner's tier is the one that counts. Holding is meant to mean you keep
    * more of what you win, and your stake is gone either way when you lose — so a
    * discount on a loss would only ever have been a discount for the person who
    * beat you.
    */
-  burn: number;
+  cut: number;
 }
 
 /**
@@ -67,25 +80,25 @@ export const HOLDER_TIERS: readonly HolderTier[] = [
     name: "WHALE",
     // One per cent of a billion.
     atLeast: CROCARD_SUPPLY / 100,
-    burn: 0.05,
+    cut: 0.05,
   },
   {
     id: "medium",
     name: "HOLDER",
     atLeast: CROCARD_SUPPLY / 1_000,
-    burn: 0.1,
+    cut: 0.1,
   },
   {
     id: "small",
     name: "BAGHOLDER",
     atLeast: CROCARD_SUPPLY / 10_000,
-    burn: 0.15,
+    cut: 0.15,
   },
   {
     id: "none",
     name: "RETAIL",
     atLeast: 0,
-    burn: 0.25,
+    cut: 0.25,
   },
 ];
 
@@ -108,9 +121,9 @@ export const HOLDER_TIERS: readonly HolderTier[] = [
           `${above.atLeast}. The rung above is unreachable.`,
       );
     }
-    if (below.burn <= above.burn) {
+    if (below.cut <= above.cut) {
       throw new Error(
-        `${below.name} burns ${below.burn} and ${above.name} above it burns ${above.burn}. ` +
+        `${below.name} is cut ${below.cut} and ${above.name} above it ${above.cut}. ` +
           `Climbing the ladder has to cost you less, or it is not a ladder.`,
       );
     }
@@ -133,9 +146,9 @@ export function tierFor(balance: number | null): HolderTier {
   return HOLDER_TIERS.find((tier) => balance >= tier.atLeast) ?? retail;
 }
 
-/** What share of the pot is burned when this balance wins. */
-export function burnFor(balance: number | null): number {
-  return tierFor(balance).burn;
+/** What share of the pot is taken when this balance wins. */
+export function cutFor(balance: number | null): number {
+  return tierFor(balance).cut;
 }
 
 /** What the next rung up would need, or null at the top. */
