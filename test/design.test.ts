@@ -21,7 +21,6 @@ import { describe, expect, it } from "vitest";
 import { CARDS } from "@/data/cards";
 import { MARKETING_COST, RULES, SECTORS, TURN_ACTION_COST } from "@/engine/types";
 import { PACK_SIZE } from "@/engine/pack";
-import { DECK_MINT_SIZE } from "@/engine/mint";
 import { PULL_WEIGHTS } from "@/engine/draw";
 
 const DESIGN = readFileSync("DESIGN.md", "utf8");
@@ -77,7 +76,6 @@ describe("the design document still describes this game", () => {
 
   it("describes the packs the code opens", () => {
     expect(DESIGN).toContain(`**A pack is ${PACK_SIZE} cards**`);
-    expect(DESIGN).toContain(`**${DECK_MINT_SIZE}**`);
     const weights = Object.entries(PULL_WEIGHTS)
       .map(([rarity, weight]) => `${rarity} ${weight}`)
       .join(" · ");

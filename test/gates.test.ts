@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 
 import { SOLO_A, SOLO_B } from "./one-per-project";
 
-import { DECK_FROM_COLLECTION, MINT_OPEN, buyDeckMint, buyPack, collection, ownedForRules } from "@/lib/collection";
+import { DECK_FROM_COLLECTION, MINT_OPEN, buyPack, buySingle, collection, ownedForRules } from "@/lib/collection";
 import { loadDeck, saveDeck } from "@/lib/deck-storage";
 
 describe("the mint", () => {
@@ -22,11 +22,11 @@ describe("the mint", () => {
     // collection as a real mint and be indistinguishable from it afterwards.
     if (MINT_OPEN) {
       expect(() => buyPack()).not.toThrow();
-      expect(() => buyDeckMint()).not.toThrow();
+      expect(() => buySingle()).not.toThrow();
       return;
     }
     expect(() => buyPack()).toThrow(/mint is closed/i);
-    expect(() => buyDeckMint()).toThrow(/mint is closed/i);
+    expect(() => buySingle()).toThrow(/mint is closed/i);
   });
 });
 

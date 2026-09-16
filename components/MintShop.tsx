@@ -2,13 +2,15 @@
 
 // The two things you can mint.
 //
-//   a pack        ten cards, one of them rare or better
-//   a deck mint   sixty cards, twenty more than a deck so there is a deck to build
+//   one card      15 CRO, at the printed odds, nothing promised
+//   a pack        100 CRO for ten, one of them rare or better
 //
-// Nothing here costs anything. There is no token, no mint and no transaction to
-// sign, so both are free and say so — the odds are real and the ceremony is real,
-// and the price is the one part still missing. Pretending otherwise would be the
-// worst kind of placeholder: the kind you forget is a placeholder.
+// The prices are settled and live in lib/revenue.ts with the split they pay
+// into — one file, because a price on a button and a price in the design notes
+// is two chances to be wrong. What is still missing is the transaction: there is
+// no mint and nothing to sign, so nothing here actually charges anybody, and the
+// page says so rather than pretending. A price that cannot be paid is worth
+// printing; a button that looks like it charges you is not.
 //
 // The collection is local to this browser. That is also temporary and also said
 // out loud, because a player who builds a collection and loses it to a cleared
@@ -23,10 +25,11 @@ import { useEffect, useState } from "react";
 
 import { PackOpening, type PackKind } from "@/components/PackOpening";
 import { PULL_WEIGHTS } from "@/engine/draw";
-import { DECK_MINT_MAX_PER_PROJECT, DECK_MINT_SIZE } from "@/engine/mint";
+
 import { PACK_SIZE } from "@/engine/pack";
 import { RARITIES } from "@/engine/types";
-import { MINT_OPEN, buyDeckMint, buyPack, collectionProgress, type PackResult } from "@/lib/collection";
+import { MINT_OPEN, buyPack, buySingle, collectionProgress, type PackResult } from "@/lib/collection";
+import { MINT_OPTIONS } from "@/lib/revenue";
 import { useSession } from "@/lib/use-session";
 import { cx } from "@/lib/cx";
 import { RARITY } from "@/lib/rarity";
@@ -37,25 +40,32 @@ type Product = {
   id: PackKind;
   name: string;
   size: number;
+  /** List price in whole CRO, before the $CROCARD discount. */
+  cro: number;
   blurb: string;
   promise: string;
   buy: () => PackResult;
 };
 
+/** The price this product is sold at, from the file the split is in. */
+const priceOf = (id: "single" | "pack"): number =>
+  MINT_OPTIONS.find((option) => option.id === id)!.cro;
+
 const PRODUCTS: Product[] = [
   {
-    id: "deck",
-    name: "DECK MINT",
-    size: DECK_MINT_SIZE,
-    blurb:
-      "Everything you need to start, in one go. Sixty rather than forty, because forty cards is a deck and leaves you nothing to build.",
-    promise: `At least 20 projects, never more than ${DECK_MINT_MAX_PER_PROJECT} cards of the same one.`,
-    buy: buyDeckMint,
+    id: "single",
+    name: "ONE CARD",
+    size: 1,
+    cro: priceOf("single"),
+    blurb: "One card at the printed odds. The cheapest way in, and the only one with no floor.",
+    promise: "Nothing promised. One card is what the odds say it is.",
+    buy: buySingle,
   },
   {
     id: "pack",
     name: "PACK",
     size: PACK_SIZE,
+    cro: priceOf("pack"),
     blurb: "The one you open for the pull. Ten cards and whatever the odds hand you.",
     promise: "One slot guaranteed rare or better. The rest is the table.",
     buy: buyPack,
@@ -108,6 +118,17 @@ export function MintShop() {
             </div>
             <p className="mt-2 text-[11px] leading-relaxed text-muted">{product.blurb}</p>
             <p className="mt-2 text-[10px] leading-relaxed text-pump">{product.promise}</p>
+
+            {/* The price is printed even though nothing charges for it yet. A
+                product whose cost is a question mark is not a product, and the
+                button below says plainly that today it takes nothing. */}
+            <p className="mt-4 text-[10px] tracking-[0.18em] text-faint">
+              <span className="text-fg tabular-nums">{product.cro} CRO</span>
+              {product.size > 1 ? (
+                <span className="tabular-nums"> · {product.cro / product.size} a card</span>
+              ) : null}
+              <span> · before the $CROCARD discount</span>
+            </p>
 
             <div className="flex-1" />
 

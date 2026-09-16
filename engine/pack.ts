@@ -96,3 +96,22 @@ export function openPack(cards: readonly Card[], seed: number): string[] {
   }
   return pack;
 }
+
+/**
+ * One card, at the printed odds and with nothing promised.
+ *
+ * The other way to buy. A pack guarantees a rare or better because ten cards
+ * with no floor is a wrapper you can open and feel robbed by; one card has no
+ * such problem, because one card at 50/35/9/5/1 is exactly what it says on the
+ * page and there is nothing to hide a bad slot inside.
+ *
+ * So this is deliberately not "a pack of one". It runs the same weights and
+ * makes no guarantee, which is the whole difference between the two products and
+ * the reason the pack is worth a third less per card: the pack sells you a floor.
+ *
+ * Deterministic in the seed, like everything else here.
+ */
+export function openSingle(cards: readonly Card[], seed: number): string[] {
+  const drawn = drawOne(cards, PACK_PULL_WEIGHTS, new Set<string>(), seed | 0);
+  return drawn ? [drawn.card.id] : [];
+}

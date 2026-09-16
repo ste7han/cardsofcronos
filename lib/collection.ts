@@ -1,7 +1,7 @@
 // What this player owns.
 //
-// Your collection is everything you have minted: packs of ten, or a deck mint of
-// sixty. It only ever grows, and every product is drawn against it rather than
+// Your collection is everything you have minted: single cards, or packs of ten.
+// It only ever grows, and every product is drawn against it rather than
 // against the set, so you are never handed a card you already have. A player who
 // has minted nothing owns nothing — there is no free pack underneath this.
 //
@@ -34,11 +34,10 @@
 // against this set.
 //
 // Opening the mint again is one constant below and nothing else.
-
 import { provenAdmin } from "@/lib/admin";
 import { signedIn } from "@/lib/session";
-import { DECK_MINT_SIZE, mintDeck as drawDeckMint } from "@/engine/mint";
-import { PACK_SIZE, openPack as drawPack } from "@/engine/pack";
+
+import { PACK_SIZE, openPack as drawPack, openSingle as drawSingle } from "@/engine/pack";
 import type { Card } from "@/engine/types";
 import { SET } from "@/lib/set";
 
@@ -200,14 +199,15 @@ export function buyPack(): PackResult {
 }
 
 /**
- * Mints a deck: sixty cards in one go, against the same collection.
+ * Buys one card.
  *
- * The other product on /mint. Sixty rather than forty so there is something left
- * to build — see engine/mint.ts for what that is worth.
+ * The other product on /mint, and the cheaper way to find out what a card costs
+ * without buying ten. No guarantee on it — see openSingle for why one card does
+ * not need one.
  */
-export function buyDeckMint(): PackResult {
+export function buySingle(): PackResult {
   refuseWhenShut();
-  return keep(DECK_MINT_SIZE, (seed) => drawDeckMint(SET, seed));
+  return keep(1, (seed) => drawSingle(SET, seed));
 }
 
 /**

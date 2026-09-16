@@ -1,6 +1,6 @@
 "use client";
 
-// Opening a pack, or a deck mint.
+// Opening a pack, or the one card you bought.
 //
 // Before this the cards simply appeared: you loaded the deck page and a deck was
 // there. That is the one moment a trading card game has that nothing else does,
@@ -25,7 +25,7 @@ import { cx } from "@/lib/cx";
 import { RARITY } from "@/lib/rarity";
 import { INDEX } from "@/lib/set";
 
-export type PackKind = "pack" | "deck";
+export type PackKind = "pack" | "single";
 
 const COPY: Record<
   PackKind,
@@ -39,13 +39,15 @@ const COPY: Record<
     done: "KEEP THEM",
     stack: 3,
   },
-  deck: {
-    eyebrow: "SET 01 — DECK MINT",
-    sealed: "A DECK MINT",
+  single: {
+    eyebrow: "SET 01 — ONE CARD",
+    sealed: "ONE CARD",
     blurb:
-      "Sixty cards, drawn. Twenty more than a deck, so there is something left to build — and never more than two cards of the same project. Nothing you already own comes out of it twice.",
-    done: "BUILD FROM THESE",
-    stack: 5,
+      "One card, drawn at the printed odds. Nothing is promised and nothing needs to be — one card at 50/35/9/5/1 is exactly what the page says it is.",
+    done: "KEEP IT",
+    // One card is not a stack. Three sealed cards fanned behind a single is the
+    // pack's picture borrowed for a product that is not a pack.
+    stack: 1,
   },
 };
 

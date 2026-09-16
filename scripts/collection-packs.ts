@@ -15,7 +15,6 @@ import { chooseMove } from "../engine/bot";
 import { buildDeckPreferring, deckProblems } from "../engine/deck";
 import { applyMove, buildIndex, newMatch } from "../engine/match";
 import { openPack } from "../engine/pack";
-import { mintDeck } from "../engine/mint";
 import { MARKETING_COST, RARITIES, RULES } from "../engine/types";
 
 const index = buildIndex(CARDS);
@@ -30,16 +29,34 @@ const PLAYERS = 40;
 /** Pairs for the head-to-head at the end. */
 const PAIRS = 40;
 
-/** A player's cards after opening a starter and then `packs` ordinary packs. */
+/**
+ * How many packs a player is assumed to start with.
+ *
+ * Six, because the deck mint this script was written around handed over sixty
+ * cards in one go and six packs is the same sixty. That product is gone — the
+ * mint is one card or ten and nothing else — so the starter is spelled out in
+ * the only thing you can still buy. The number is the old one on purpose: it
+ * keeps every row this script has ever printed comparable with the next.
+ */
+const STARTER_PACKS = 6;
+
+/** A player's cards after opening the starter and then `packs` more. */
 function collectionAfter(packs: number, seed: number): string[] {
-  const owned = mintDeck(CARDS, seed);
-  for (let i = 0; i < packs; i++) {
+  const owned: string[] = [];
+  for (let i = 0; i < STARTER_PACKS + packs; i++) {
     // A different seed per pack, and the collection so far, so no pack repeats a
     // card — the same rule the shop plays by.
     owned.push(...openPack(CARDS, seed * 7919 + i * 104_729 + 1));
   }
   return owned;
 }
+
+/**
+ * What the player began with, which is the deck they keep if no pack improves on
+ * it. The first STARTER_PACKS packs of the same seed, so it is always a subset of
+ * whatever collectionAfter hands back for that player.
+ */
+const starter = (seed: number): string[] => collectionAfter(0, seed);
 
 /**
  * The decks a player could build out of what they own.
@@ -122,8 +139,8 @@ function trial(deck: readonly string[], from: number, to: number): number {
  * than the best one, which is the mistake the seed tuning already made once.
  */
 function settledOn(collection: readonly string[], floor: readonly string[]): { pct: number; deck: string[] } | null {
-  // The starter forty is always on the table. A player who opens packs and likes
-  // none of them still has the deck they began with.
+  // What they began with is always on the table. A player who opens packs and
+  // likes none of them still has the cards they started with.
   const decks = [...candidates(collection), [...floor]];
   if (decks.length === 0) return null;
 
@@ -163,7 +180,7 @@ for (const packs of [0, 1, 2, 4, 8, 12, 17]) {
   for (let player = 0; player < PLAYERS; player++) {
     const seed = player * 1013 + 1;
     const collection = collectionAfter(packs, seed);
-    const settled = settledOn(collection, mintDeck(CARDS, seed));
+    const settled = settledOn(collection, starter(seed));
     if (!settled) continue;
     players++;
     owned += collection.length;
@@ -194,8 +211,8 @@ let decided = 0;
 for (let pair = 0; pair < PAIRS; pair++) {
   const rookieSeed = pair * 1013 + 1;
   const veteranSeed = pair * 2027 + 500_003;
-  const rookie = settledOn(collectionAfter(0, rookieSeed), mintDeck(CARDS, rookieSeed));
-  const veteran = settledOn(collectionAfter(17, veteranSeed), mintDeck(CARDS, veteranSeed));
+  const rookie = settledOn(collectionAfter(0, rookieSeed), starter(rookieSeed));
+  const veteran = settledOn(collectionAfter(17, veteranSeed), starter(veteranSeed));
   if (!rookie || !veteran) continue;
 
   for (let seed = CHOOSE; seed < CHOOSE + SCORE; seed++) {

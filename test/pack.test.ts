@@ -8,6 +8,7 @@ import {
   PACK_SIZE,
   isBackbone,
   openPack,
+  openSingle,
 } from "@/engine/pack";
 import { RARITIES, RULES } from "@/engine/types";
 
@@ -113,3 +114,43 @@ describe("opening an ordinary pack", () => {
  * caller drew a fresh pack over the top — so a player lost forty cards without
  * being told. These are the tests for the repair.
  */
+
+describe("buying one card", () => {
+  it("hands over exactly one card, and one that exists", () => {
+    for (let seed = 0; seed < 200; seed++) {
+      const drawn = openSingle(CARDS, seed);
+      expect(drawn).toHaveLength(1);
+      expect(index.get(drawn[0]!)).toBeTruthy();
+    }
+  });
+
+  it("replays the same seed and differs on a different one", () => {
+    expect(openSingle(CARDS, 4242)).toEqual(openSingle(CARDS, 4242));
+    const spread = new Set(Array.from({ length: 200 }, (_, s) => openSingle(CARDS, s)[0]));
+    expect(spread.size).toBeGreaterThan(20);
+  });
+
+  it("promises nothing, unlike a pack", () => {
+    // The pack guarantees a rare or better and this deliberately does not. If a
+    // single ever stopped producing commons, the two products would have become
+    // the same product at two prices — which is the one thing the split of 15
+    // against 10 a card cannot survive.
+    const rarities = Array.from(
+      { length: 4000 },
+      (_, seed) => index.get(openSingle(CARDS, seed)[0]!)!.rarity,
+    );
+    expect(rarities.filter((r) => r === "common").length).toBeGreaterThan(0);
+    expect(new Set(rarities).size).toBe(RARITIES.length);
+  });
+
+  it("draws at the printed odds rather than flat", () => {
+    // 50/35/9/5/1 over four thousand draws: commons have to be the biggest pile
+    // by a distance, and mythics the smallest.
+    const count = (want: string) =>
+      Array.from({ length: 4000 }, (_, seed) => index.get(openSingle(CARDS, seed)[0]!)!.rarity)
+        .filter((r) => r === want).length;
+    expect(count("common")).toBeGreaterThan(count("rare"));
+    expect(count("rare")).toBeGreaterThan(count("epic"));
+    expect(count("mythic")).toBeLessThan(count("legendary"));
+  });
+});

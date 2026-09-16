@@ -316,9 +316,19 @@ somebody one and calling it a starting point.
 
 ## Collecting
 
-**A pack is 10 cards**, one slot guaranteed rare or better. A deck mint is
-**60**: at least 20 projects, and never more than two cards of one project. 60
-rather than 40 because 40 is a deck and leaves you nothing to build.
+**A pack is 10 cards**, one slot guaranteed rare or better. The only other way
+to buy is **one card**, at the printed odds with nothing promised.
+
+One card needs no guarantee and a pack does. Ten cards with no floor is a wrapper
+somebody opens and feels robbed by; one card at 50/35/9/5/1 is exactly what the
+page says it is, with no bad slot hidden inside a good one. That floor is what
+the pack sells, and it is why a pack is worth a third less per card.
+
+**The 60-card deck mint is gone.** It handed over sixty in one go — twenty more
+than a deck, so there was something left to build — and it was a third product on
+a page that now has two. `scripts/collection-packs.ts` still models a player who
+starts with sixty cards, spelled as six packs, so its rows stay comparable with
+every run before this.
 
 Pull weights, the same table for both:
 
