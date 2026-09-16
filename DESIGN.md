@@ -455,6 +455,30 @@ never touches a server, rotates it.
 A cron does it the moment a week closes; if the cron is down, anyone can. A prize
 that has to be fetched is a prize somebody forgets to fetch.
 
+**The week closes on a timer.** A Cloudflare cron fires Monday 00:10 UTC — ten
+minutes after the week ends, so a tick that runs early cannot close a week that
+is still running. `worker/index.js` wraps the worker OpenNext generates, which
+only has a fetch handler, and turns the tick into an ordinary request to
+`/api/cron/weekly`; the job then runs inside Next with the same D1 binding and
+helpers as everything else. That route is public because it has to be, so it
+compares a `CRON_SECRET` and refuses an absent one rather than matching it.
+
+`lib/publisher.ts` reads the winner out of our own table, tells the pot, and
+pushes the prize. **It is safe to run twice** — closing a closed week reverts and
+paying a paid one reverts, so a double tick, a retry, or a hand-run all end in
+the same place. That is the contract enforcing it rather than this file keeping
+its own record of who has been paid, which would be a second source of truth
+about money.
+
+**Transactions are signed here rather than by a library.** `lib/evm-tx.ts`:
+RLP, keccak, secp256k1, legacy type 0 with EIP-155. Adding ethers or viem to a
+Worker for two contract calls is megabytes for an encoder and a signature this
+repository already had the pieces for. It is checked against the specification's
+own vectors — the EIP-155 example transaction, byte for byte, and known
+four-byte selectors. That mattered: the first version sliced five bytes off an
+unprefixed hex string instead of four, which is a call to a function that does
+not exist, and only the vectors caught it.
+
 **Nothing is in the pot yet.** No mint has happened and the prize wallet has no
 address, so the page says there is nothing to win and runs the board anyway —
 the scores are the part that has to be real first.

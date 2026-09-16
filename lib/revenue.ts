@@ -166,6 +166,29 @@ export function croPerCard(option: MintOption): number {
   }
 }
 
+/**
+ * The contracts, once they exist.
+ *
+ * Null until deployed, for exactly the reason the wallets are: a stand-in reads
+ * like a real address and this is the file where money goes somewhere. The cron
+ * that closes a week checks these and does nothing rather than sending a
+ * transaction into the dark.
+ *
+ * Deploy order is splitter, pot, then the NFT — each needs the one before it.
+ */
+export const CONTRACTS: Record<"splitter" | "pot" | "nft", string | null> = {
+  splitter: null,
+  pot: null,
+  nft: null,
+};
+
+for (const [name, address] of Object.entries(CONTRACTS)) {
+  if (address === null) continue;
+  if (normalise(address) !== address) {
+    throw new Error(`The ${name} contract address is not in the stored lowercase form.`);
+  }
+}
+
 export type Destination = "burn" | "holders" | Wallet["id"];
 
 export interface Share {

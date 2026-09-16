@@ -1,6 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
+  // A wrapper round the generated worker, not the generated worker itself.
+  // OpenNext rewrites .open-next/worker.js on every build and it only has a
+  // fetch handler; worker/index.js re-exports it and adds the scheduled one the
+  // cron below needs.
+  "main": "worker/index.js",
   "name": "cards-of-cronos",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -24,6 +28,12 @@
     { "pattern": "cardsofcronos.com", "custom_domain": true },
     { "pattern": "www.cardsofcronos.com", "custom_domain": true }
   ],
+  // Monday, ten past midnight UTC. The week closes at midnight — see
+  // lib/tournament.ts — and ten minutes is enough slack that a tick which fires
+  // a little early does not close the week that is still running.
+  "triggers": {
+    "crons": ["10 0 * * 1"]
+  },
   "workers_dev": true,
   // Cloudflare's SQLite, on this account, free at this size. A match is a seed
   // and a list of moves — a few hundred bytes — so the storage this game needs

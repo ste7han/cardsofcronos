@@ -21,4 +21,25 @@ interface CloudflareEnv {
    * provider's URL carries its key, so it is a secret and never a var.
    */
   CRONOS_RPC?: string;
+  /**
+   * What the weekly cron sends to prove it is the cron.
+   *
+   * Absent means the job refuses to run rather than running for anybody who
+   * finds the URL. /api/cron/weekly is a public route: it has to be, because
+   * the scheduled handler reaches it the same way a browser would.
+   */
+  CRON_SECRET?: string;
+  /**
+   * The PrizePot publisher's private key, 0x-prefixed.
+   *
+   * THE ONLY KEY THIS PROJECT PUTS ON A SERVER, and it is allowed there because
+   * of what contracts/PrizePot.sol lets it do: name the winner of a week that
+   * has not closed yet, and nothing else. It cannot withdraw, cannot reopen a
+   * week, cannot reach the balance. If it leaks, the owner rotates it with
+   * setPublisher and the worst that happened is one week's pot.
+   *
+   * Never the owner key. That one can reach the money through the rescue hatch
+   * and belongs on a wallet that never touches a server.
+   */
+  PUBLISHER_KEY?: string;
 }
