@@ -82,7 +82,13 @@ export interface Unsigned {
   nonce: bigint;
   gasPrice: bigint;
   gasLimit: bigint;
-  /** Lowercase 0x address. */
+  /**
+   * Lowercase 0x address, or "0x" for a contract creation.
+   *
+   * Empty and not the zero address. Those are different transactions: an empty
+   * `to` deploys the data as code, and the zero address sends it to a wallet
+   * nobody has the key to.
+   */
   to: string;
   value: bigint;
   /** Call data, 0x-prefixed. */
@@ -102,7 +108,7 @@ export function signTransaction(tx: Unsigned, privateKey: Uint8Array): string {
     minimal(tx.nonce),
     minimal(tx.gasPrice),
     minimal(tx.gasLimit),
-    hexToBytes(tx.to),
+    tx.to === "0x" || tx.to === "" ? new Uint8Array(0) : hexToBytes(tx.to),
     minimal(tx.value),
     hexToBytes(tx.data),
     minimal(BigInt(tx.chainId)),

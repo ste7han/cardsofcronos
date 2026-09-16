@@ -121,3 +121,31 @@ describe("calling a contract", () => {
     expect(() => word("0x" + "f".repeat(65))).toThrow(/does not fit/i);
   });
 });
+
+describe("deploying rather than calling", () => {
+  it("leaves `to` empty, which is what makes it a creation", () => {
+    const key = hexToBytes(
+      "0x4646464646464646464646464646464646464646464646464646464646464646",
+    );
+    const base = {
+      nonce: 0n,
+      gasPrice: 1_000_000_000n,
+      gasLimit: 1_000_000n,
+      value: 0n,
+      data: "0x6080",
+      chainId: 25,
+    };
+    const creation = signTransaction({ ...base, to: "0x" }, key);
+    const toNobody = signTransaction(
+      { ...base, to: "0x0000000000000000000000000000000000000000" },
+      key,
+    );
+
+    // Different transactions entirely: one deploys the data as code, the other
+    // sends it to an address nobody holds the key to.
+    expect(creation).not.toBe(toNobody);
+    // An empty field is 0x80 in RLP; twenty zero bytes is 0x94 and then them.
+    expect(creation).toContain("80");
+    expect(toNobody).toContain("94" + "00".repeat(20));
+  });
+});

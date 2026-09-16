@@ -174,9 +174,12 @@ export function croPerCard(option: MintOption): number {
  * that closes a week checks these and does nothing rather than sending a
  * transaction into the dark.
  *
- * Deploy order is splitter, pot, then the NFT — each needs the one before it.
+ * Deploy order is the drop and the pot, then the splitter that pays them, then
+ * the NFT that pays the splitter — each needs the ones before it. That order is
+ * what scripts/deploy-contracts.ts exists to get right.
  */
-export const CONTRACTS: Record<"splitter" | "pot" | "nft", string | null> = {
+export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | null> = {
+  drop: null,
   splitter: null,
   pot: null,
   nft: null,
