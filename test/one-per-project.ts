@@ -180,6 +180,46 @@ if (auras.length < 2 || auras[0]!.aura.bonus === auras.at(-1)!.aura.bonus) {
 export const AURA_SMALLEST = auras[0]!.id;
 export const AURA_BIGGEST = auras.at(-1)!.id;
 
+/**
+ * The biggest sector aura on a card whose effect points at no project.
+ *
+ * AURA_BIGGEST is picked by bonus alone, which is right for the tests that
+ * compare sizes and wrong for the one that asks which slots an aura lights up.
+ * Kris held both jobs until his effect became a multiplier over every project
+ * you own — at which point "the aura lights its sector and only its sector"
+ * started failing on a card that was doing something else as well, and the test
+ * read as a bug in the preview rather than a fixture that had moved.
+ *
+ * The allowed effects are a whitelist rather than a blacklist, for the same
+ * reason STANDING_ALLOWED is: a new effect kind is not safe here until somebody
+ * has thought about whether it points at the board.
+ */
+const POINTS_AT_NOTHING = new Set([
+  "drawCards",
+  "extraBudget",
+  "budgetToMC",
+  "refundMC",
+  "recoverCard",
+  "discardCards",
+]);
+
+export const AURA_SECTOR_ONLY: string = (() => {
+  const found = CARDS.filter((card) => {
+    const aura = auraOf(card);
+    const effect = (card as { effect?: { kind: string } }).effect;
+    return (
+      aura?.kind === "pumpSector" && (effect === undefined || POINTS_AT_NOTHING.has(effect.kind))
+    );
+  }).sort((a, b) => (auraOf(b) as SizedAura).bonus - (auraOf(a) as SizedAura).bonus);
+
+  if (found.length === 0) {
+    throw new Error(
+      "Test fixtures need a sector aura on a card whose effect points at no project.",
+    );
+  }
+  return found[0]!.id;
+})();
+
 /** A tool whose effect draws a card and moves no market cap. */
 export const DRAW_TOOL: string = (() => {
   const found = CARDS.find((c) => c.type === "tool" && c.effect.kind === "drawCards");

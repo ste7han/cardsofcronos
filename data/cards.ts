@@ -6528,8 +6528,16 @@ const NAMES: PersonCard[] = [
     ticker: "KRIS",
     rarity: "mythic",
     aura: { kind: "pumpSector", sector: "infra", bonus: 38_000 },
-    // it began as a card you topped up, so it hands you something to spend
-    effect: { kind: "extraBudget", target: "self", mc: 60_000 },
+    // "Then it was a chain": everything standing on it goes up together.
+    //
+    // It was extraBudget 60K and it measured 112K on turn seven, which is less
+    // than the average legendary person is worth at two thirds of the price. An
+    // aura pays per turn and a mythic cannot be afforded until turn seven, so
+    // the most expensive card in the set is also the one with the least time
+    // left to earn anything back. Making the aura bigger does not fix that. A
+    // multiplier does: it is worth whatever your board has already become, which
+    // on turn seven is the most it will ever be.
+    effect: { kind: "scalePump", target: "allOwnProjects", percentage: 35 },
     flavour: "In 2016 it was a card you topped up with bitcoin. Then it was a chain.",
   },
   {
@@ -6539,6 +6547,11 @@ const NAMES: PersonCard[] = [
     ticker: "RYAN",
     rarity: "legendary",
     aura: { kind: "pumpSector", sector: "infra", bonus: 21_000 },
+    // He spent seven years watching things get big, so he brings one of yours up
+    // to whatever the biggest thing on the table is doing. The only legendary
+    // person carrying one line, and it measured 76K against the 153K the other
+    // eight average.
+    effect: { kind: "benchmark", target: "ownProject", plus: 6_000 },
     flavour: "Seven years making YouTube Gaming, then three chains. This is the third.",
   },
   {

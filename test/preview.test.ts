@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { AURA_BIGGEST, FAMILY_CARDS, SOLO, SOLO_A, SOLO_B, SOLO_C } from "./one-per-project";
+import {
+  AURA_SECTOR_ONLY,
+  FAMILY_CARDS,
+  SOLO,
+  SOLO_A,
+  SOLO_B,
+  SOLO_C,
+} from "./one-per-project";
 import { cardById } from "@/engine/helpers";
 import { auraSectors } from "@/engine/helpers";
 import { applyMove, buildIndex, needsPortfolioSlot, newMatch, playable } from "@/engine/match";
@@ -133,7 +140,10 @@ describe("the hover preview", () => {
 
   it("lights up the projects an aura would pump, and only those", () => {
     const { state, sectorOf } = sectorBoard();
-    const biggest = CARDS.find((c) => c.id === AURA_BIGGEST);
+    // Deliberately not the biggest aura in the set: that card's effect also
+    // reaches every project, so it would light the whole board for a reason
+    // this test is not about.
+    const biggest = CARDS.find((c) => c.id === AURA_SECTOR_ONLY);
     expect(biggest, "the biggest aura is in the set").toBeDefined();
     const aura = auraOf(biggest!);
     expect(aura, "it carries an aura").toBeDefined();
