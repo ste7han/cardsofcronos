@@ -19,6 +19,7 @@ import {
   WALLETS,
   croPerCard,
   nameOf,
+  receiverOf,
   walletFor,
 } from "@/lib/revenue";
 
@@ -31,10 +32,26 @@ describe("the wallets", () => {
   //
   // The test below FAILS the day an address is filled in, which is what brings
   // somebody back here to restore the assertion that all four are set.
-  it("has no addresses yet", () => {
+  it("names the deployer and nothing else yet", () => {
+    // The maker's cold wallet, checked against the chain before it went in. It
+    // is also the owner of all four contracts, which is why it is the one that
+    // must never become a Worker secret.
+    expect(WALLETS.deployer.address).toBe("0x48d0af6f9cf85d80d61657ce7b852f3dc4aa16e8");
+
+    // The rest are still nobody's. Null and not a stand-in: an address that
+    // reads like a real one is how money goes somewhere nobody chose.
     for (const wallet of Object.values(WALLETS)) {
-      expect(wallet.address).toBeNull();
+      if (wallet.id === "deployer") continue;
+      expect(wallet.address, `${wallet.id} has an address nobody announced`).toBeNull();
     }
+  });
+
+  it("keeps the owner apart from the key that lives on a server", () => {
+    // The publisher signs from a Worker and may name a winner. The deployer owns
+    // the contracts and can reach the money through the rescue hatch. One wallet
+    // doing both would undo the whole reason the publisher is allowed there.
+    const publisher = "0x60f84405917a456527744a40b3b64b63ab5e007c";
+    expect(WALLETS.deployer.address).not.toBe(publisher);
   });
 
   it("keeps whatever is filled in normalised, so it can be compared", () => {
@@ -145,7 +162,8 @@ describe("burning", () => {
     // One wallet does every buy-and-burn, so all of it lands somewhere anybody
     // can watch. A second burning wallet would mean a total nobody can add up.
     expect(walletFor("burn").id).toBe("deployer");
-    expect(walletFor("burn").address).toBe(WALLETS.deployer.address);
+    // The burn address has always been known, so it never reads as unannounced.
+    expect(receiverOf("burn")).toBe(BURN_ADDRESS);
     for (const stream of STREAMS) {
       for (const share of stream.shares) {
         if (share.to !== "burn") continue;

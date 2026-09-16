@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 
-import { STREAMS, WALLETS, nameOf, walletFor, type Destination } from "@/lib/revenue";
+import { STREAMS, WALLETS, nameOf, receiverOf, walletFor, type Destination } from "@/lib/revenue";
 import { EXPLORER, toCro, toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
 
@@ -212,19 +212,21 @@ export function Burn() {
                     </dt>
                     <dd className="min-w-0 flex-1 text-muted">
                       {nameOf(share.to)}{" "}
-                      {/* No address, no link. A wallet nobody has named yet says
-                          so — a placeholder here would be an address somebody
-                          could send money to, and it would not be ours. */}
-                      {walletFor(share.to).address === null ? (
-                        <span className="text-gold">not announced yet</span>
+                      {/* The thing that actually receives it, which for two of
+                          the three is a contract rather than a wallet. No
+                          address, no link: a placeholder here would be an
+                          address somebody could send money to, and it would not
+                          be ours. */}
+                      {receiverOf(share.to) === null ? (
+                        <span className="text-gold">not deployed yet</span>
                       ) : (
                         <a
-                          href={`${EXPLORER}/address/${walletFor(share.to).address}`}
+                          href={`${EXPLORER}/address/${receiverOf(share.to)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-mono text-faint hover:text-fg"
                         >
-                          {short(walletFor(share.to).address!)}
+                          {short(receiverOf(share.to)!)}
                         </a>
                       )}
                     </dd>

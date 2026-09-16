@@ -65,8 +65,18 @@ export const WALLETS: Record<Wallet["id"], Wallet> = {
   },
   deployer: {
     id: "deployer",
-    address: null,
-    what: "Deploys the contract, does every buy-and-burn, and pays the holders.",
+    /**
+     * The maker's cold wallet, given on 2026-09-16 and checked against the chain
+     * before it was written here: the EIP-55 checksum verifies and it held 10
+     * CRO, which is what the maker said it held.
+     *
+     * IT IS ALSO THE OWNER of all four contracts, because whoever deploys them
+     * is. That makes it the only key that can reach the money, through the
+     * rescue hatch in contracts/Rescuable.sol, and the reason it must never be
+     * the publisher and must never become a Worker secret.
+     */
+    address: normalise("0x48D0af6f9cf85D80D61657cE7b852f3Dc4aa16E8"),
+    what: "Deploys the contracts and owns them. Never on a server.",
   },
   marketing: {
     id: "marketing",
@@ -311,7 +321,33 @@ export function nameOf(to: Destination): string {
   return WALLETS[to].what;
 }
 
-/** Which wallet actually receives it. Burns go through the deployer. */
+/**
+ * The address a share actually lands on, or null while nobody has deployed it.
+ *
+ * THIS USED TO ANSWER "THE DEPLOYER" for burns and for the holders' half, and
+ * that was true while a person did those jobs by hand. It stopped being true the
+ * moment contracts started doing them, and it stopped in the quietest way: the
+ * page carried on showing a wallet somebody could go and look at, and the money
+ * was going somewhere else.
+ *
+ * So each destination now names the thing that really receives it. The burn
+ * address is a constant and has always been known; the other two are contracts
+ * and are null until scripts/deploy-contracts.ts has run.
+ */
+export function receiverOf(to: Destination): string | null {
+  switch (to) {
+    case "burn":
+      return BURN_ADDRESS;
+    case "holders":
+      return CONTRACTS.drop;
+    case "tournament":
+      return CONTRACTS.pot;
+    default:
+      return WALLETS[to].address;
+  }
+}
+
+/** Which wallet is responsible for a destination, for naming it on a page. */
 export function walletFor(to: Destination): Wallet {
   return to === "burn" || to === "holders" ? WALLETS.deployer : WALLETS[to];
 }
