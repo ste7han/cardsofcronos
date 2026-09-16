@@ -545,7 +545,16 @@ on a stream marked live while a wallet it pays is still unknown.
 |---|---|
 | paid mints | 50% $CROCARD holders · 25% burn · 25% prize pot |
 | ranked matches | 50% $CROCARD holders · 25% burn · 25% prize pot |
-| NFT royalties | 75% burn · 25% creator |
+| NFT royalties | 50% $CROCARD holders · 25% burn · 25% prize pot |
+
+**One split, and it is the only one.** Three streams dividing three different
+ways was three things to explain; one sentence now covers every way money enters
+this game, and a rule somebody can repeat from memory is a rule they can check.
+
+**Nothing pays the creator wallet.** It took a quarter of mints and a quarter of
+royalties once, and both moved. That is the settled position and not an
+oversight, so the wallet stays in the file saying so — deleting it would make
+paying the maker a new decision rather than a visible one.
 
 **A mint is one card or ten, and nothing else.** A card is 15 CRO and a pack of
 ten is 100, so the pack is a third off — ten singles would be 150. The $CROCARD

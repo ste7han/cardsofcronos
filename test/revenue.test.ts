@@ -122,8 +122,11 @@ describe("the splits", () => {
     expect(share("mints", "tournament")).toBe(25);
     expect(share("mints", "creator")).toBe(0);
 
-    expect(share("royalties", "burn")).toBe(75);
-    expect(share("royalties", "creator")).toBe(25);
+    // The third stream on the same split, which makes it the only split there
+    // is: every way money enters this game divides the same three ways.
+    expect(share("royalties", "holders")).toBe(50);
+    expect(share("royalties", "burn")).toBe(25);
+    expect(share("royalties", "tournament")).toBe(25);
 
     // The same split as a mint, on purpose: this is the stream players pay
     // most often, so it is the one they actually learn, and two streams that

@@ -48,7 +48,20 @@ export const WALLETS: Record<Wallet["id"], Wallet> = {
   creator: {
     id: "creator",
     address: null,
-    what: "The maker's own wallet.",
+    /**
+     * NO STREAM PAYS THIS, and that is the settled position rather than an
+     * oversight.
+     *
+     * It took 25% of mints and 25% of royalties once. Mints went to the holders,
+     * the pot and the burn first; royalties followed, and that was the last one.
+     * Every way money enters this game now divides the same three ways and none
+     * of them is here.
+     *
+     * The wallet stays because it is a real wallet with a real job the moment
+     * anything is ever paid out of the project rather than into it, and deleting
+     * it would make that a new decision instead of a visible one.
+     */
+    what: "The maker's own wallet. No stream pays it.",
   },
   deployer: {
     id: "deployer",
@@ -195,9 +208,14 @@ export const STREAMS: readonly Stream[] = [
     id: "royalties",
     name: "NFT royalties",
     from: "Secondary sales of the cards.",
+    // The third stream on the same split, which makes it the only split there
+    // is. Three streams dividing three ways was three things to explain; one
+    // sentence now covers every way money enters this game, and a rule somebody
+    // can repeat from memory is a rule they can check.
     shares: [
-      { to: "burn", percent: 75 },
-      { to: "creator", percent: 25 },
+      { to: "holders", percent: 50 },
+      { to: "burn", percent: 25 },
+      { to: "tournament", percent: 25 },
     ],
     live: false,
   },
