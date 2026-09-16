@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { MintClosedNotice } from "@/components/MintClosedNotice";
 import { MintShop } from "@/components/MintShop";
-import { HOLDER_TIERS } from "@/data/holder-tiers";
+import { CROCARD_SUPPLY, HOLDER_TIERS } from "@/data/holder-tiers";
 import type { Rarity } from "@/engine/types";
 import { RARITIES, RULES } from "@/engine/types";
 import { RARITY } from "@/lib/rarity";
@@ -56,20 +56,32 @@ export default function MintPage() {
           economics and access instead.
         </p>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {HOLDER_TIERS.map((tier, i) => (
-            <div key={tier.name} className="panel relative border border-line p-5">
+        {/* Reversed: the ladder is stored highest-first because that is the order
+            tierFor searches it in, and read lowest-first because that is how
+            anybody reads a ladder. */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[...HOLDER_TIERS].reverse().map((tier, i) => (
+            <div key={tier.id} className="panel relative border border-line p-5">
               <span
                 className={`absolute inset-x-0 top-0 h-px ${
-                  ["bg-line-strong", "bg-pump", "bg-gold"][i]
+                  ["bg-line-strong", "bg-line-strong", "bg-pump", "bg-gold"][i]
                 }`}
               />
               <p className="display text-lg">{tier.name}</p>
-              <p className="mt-1 text-[10px] tracking-[0.16em] text-faint">{tier.holding}</p>
+              <p className="mt-1 text-[10px] tracking-[0.16em] text-faint">
+                {tier.atLeast === 0
+                  ? "ANY AMOUNT, INCLUDING NONE"
+                  : `FROM ${tier.atLeast.toLocaleString("en-US")} · ${(
+                      (tier.atLeast / CROCARD_SUPPLY) *
+                      100
+                    ).toFixed(2)}% OF SUPPLY`}
+              </p>
 
               <dl className="mt-4 border-y border-line py-3">
-                <dt className="text-[8px] tracking-[0.18em] text-faint">BURN ON A STAKED MATCH</dt>
-                <dd className="display mt-1 text-2xl text-gold">{tier.burn}</dd>
+                <dt className="text-[8px] tracking-[0.18em] text-faint">BURNED WHEN YOU WIN</dt>
+                <dd className="display mt-1 text-2xl text-gold">
+                  {Math.round(tier.burn * 100)}%
+                </dd>
                 <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">DECK POWER</dt>
                 <dd className="display mt-1 text-2xl">SAME</dd>
               </dl>
@@ -86,9 +98,16 @@ export default function MintPage() {
           ))}
         </div>
 
-        <p className="mt-4 text-[10px] leading-relaxed text-gold">
-          The thresholds and percentages are placeholders. They cannot be settled until the token
-          exists and there is a real burn to divide.
+        <p className="mt-4 max-w-2xl text-[10px] leading-relaxed text-muted">
+          The winner&rsquo;s tier is the one that counts. Holding is meant to mean you keep more of
+          what you win, and your stake is gone either way when you lose — so a discount on a loss
+          would only ever have been a discount for the person who beat you.
+        </p>
+
+        <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">
+          Nothing here is running yet: nothing is staked, so there is no cut to take. Anybody whose
+          balance cannot be read is on the retail rate, because a discount that could not be
+          verified is a discount nobody earned.
         </p>
       </section>
 

@@ -1,7 +1,7 @@
-// What holding $CROCARD gets you.
+// What holding $CROCARD gets you: a smaller cut taken out of what you win.
 //
 // One rule sits above all of these: holding never changes what you may put in a
-// deck. Everyone builds inside the same budget, so a match for money is decided
+// deck. Everyone builds inside the same rules, so a match for money is decided
 // by how you play and not by what you hold.
 //
 // That was measured before it was decided. A deck built on 110 points beats one
@@ -10,36 +10,136 @@
 // result of the bet. So holding buys economics and access instead: how much of
 // your winnings you keep, and where you are allowed to play.
 //
-// The thresholds and percentages below are placeholders. They cannot be settled
-// until the token exists and there is a real burn to divide, and DESIGN.md says
-// so rather than pretending otherwise.
+// THE LADDER IS TCG'S, and it carries over without a number changing, which is
+// worth saying because it nearly always is not. $TCG has a supply of one billion
+// and the ladder is built on fractions of it — one per cent, a tenth, a
+// hundredth. $CROCARD's supply was read off the chain rather than assumed and it
+// is one billion exactly, so 10,000,000 / 1,000,000 / 100,000 is the same ladder
+// and not a coincidence dressed up as one. If that supply is ever wrong here,
+// every threshold below is wrong with it.
+//
+// The three tiers this replaced were placeholders and said so: "no bag", "a
+// bag", "a serious bag", with a burn of 10/7/4 that nobody had settled.
+
+/**
+ * One billion, read from the token on Cronos rather than taken on trust.
+ *
+ *   cast call 0xECf3361441512c1e9F6A6e8734D86614D8e795BC "totalSupply()" \
+ *     --rpc-url https://evm.cronos.org
+ *
+ * 18 decimals, so the raw answer is this times 1e18.
+ */
+export const CROCARD_SUPPLY = 1_000_000_000;
 
 export interface HolderTier {
+  id: "none" | "small" | "medium" | "whale";
   name: string;
-  /** Written out rather than a number, because the supply is not set yet. */
-  holding: string;
-  /** Share of the pot burned on a match played at stake. */
-  burn: string;
-  perks: string[];
+  /** The least you must hold, in whole $CROCARD. */
+  atLeast: number;
+  /**
+   * Share of the pot burned when you win, 0 to 1.
+   *
+   * The winner's tier is the one that counts. Holding is meant to mean you keep
+   * more of what you win, and your stake is gone either way when you lose — so a
+   * discount on a loss would only ever have been a discount for the person who
+   * beat you.
+   */
+  burn: number;
+  /** What the rung opens up, beyond the cut. */
+  perks: readonly string[];
 }
 
+/**
+ * Highest tier first, because that is the order they are searched in.
+ *
+ * A ladder read the other way round would hand a whale the retail rate the
+ * moment somebody inserted a tier above them. The mint page reverses it for
+ * display, where low-to-high is the way anybody reads a ladder.
+ */
 export const HOLDER_TIERS: readonly HolderTier[] = [
   {
-    name: "RETAIL",
-    holding: "no bag",
-    burn: "10%",
-    perks: ["Every card in the set is yours to build with", "Tables up to a small stake"],
+    id: "whale",
+    name: "WHALE",
+    // One per cent of a billion.
+    atLeast: CROCARD_SUPPLY / 100,
+    burn: 0.05,
+    perks: ["All tables", "Tournament entry", "New sets before anyone else"],
   },
   {
+    id: "medium",
     name: "HOLDER",
-    holding: "a bag",
-    burn: "7%",
+    atLeast: CROCARD_SUPPLY / 1_000,
+    burn: 0.1,
     perks: ["All tables", "Match history and replays kept"],
   },
   {
-    name: "WHALE",
-    holding: "a serious bag",
-    burn: "4%",
-    perks: ["All tables", "Tournament entry", "New sets before anyone else"],
+    id: "small",
+    name: "BAGHOLDER",
+    atLeast: CROCARD_SUPPLY / 10_000,
+    burn: 0.15,
+    perks: ["All tables"],
+  },
+  {
+    id: "none",
+    name: "RETAIL",
+    atLeast: 0,
+    burn: 0.25,
+    perks: ["Every card in the set is yours to build with", "Tables up to a small stake"],
   },
 ];
+
+/**
+ * Refuses at load a ladder that is out of order or does not reward holding.
+ *
+ * Both mistakes are one digit wide and neither is visible on the page: a
+ * threshold typed below the rung under it silently makes that rung unreachable,
+ * and a burn that does not fall as you climb is a ladder that charges you for
+ * holding. Checked here rather than only in a test, because the test cannot stop
+ * a deploy and this can.
+ */
+{
+  for (let i = 1; i < HOLDER_TIERS.length; i++) {
+    const above = HOLDER_TIERS[i - 1]!;
+    const below = HOLDER_TIERS[i]!;
+    if (below.atLeast >= above.atLeast) {
+      throw new Error(
+        `${below.name} asks for ${below.atLeast} and ${above.name} above it asks for ` +
+          `${above.atLeast}. The rung above is unreachable.`,
+      );
+    }
+    if (below.burn <= above.burn) {
+      throw new Error(
+        `${below.name} burns ${below.burn} and ${above.name} above it burns ${above.burn}. ` +
+          `Climbing the ladder has to cost you less, or it is not a ladder.`,
+      );
+    }
+  }
+  if (HOLDER_TIERS[HOLDER_TIERS.length - 1]!.atLeast !== 0) {
+    throw new Error("The bottom rung asks for a balance. Somebody holding nothing has no tier.");
+  }
+}
+
+/**
+ * Which tier a balance falls in.
+ *
+ * `null` — a balance nobody could read — is retail. Never give a discount that
+ * could not be verified: an RPC that will not answer must not be worth money to
+ * the person it would not answer about.
+ */
+export function tierFor(balance: number | null): HolderTier {
+  const retail = HOLDER_TIERS[HOLDER_TIERS.length - 1]!;
+  if (balance === null) return retail;
+  return HOLDER_TIERS.find((tier) => balance >= tier.atLeast) ?? retail;
+}
+
+/** What share of the pot is burned when this balance wins. */
+export function burnFor(balance: number | null): number {
+  return tierFor(balance).burn;
+}
+
+/** What the next rung up would need, or null at the top. */
+export function nextTier(balance: number | null): HolderTier | null {
+  const current = tierFor(balance);
+  const index = HOLDER_TIERS.findIndex((tier) => tier.id === current.id);
+  return index > 0 ? HOLDER_TIERS[index - 1]! : null;
+}

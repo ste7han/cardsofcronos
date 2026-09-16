@@ -439,9 +439,34 @@ and even 90 against 80 won 64%. Selling deck power in a game people bet on is no
 selling a stronger deck, it is selling the result of the bet.
 
 So holding buys **economics and access** instead — how much of your winnings you
-keep, and where you are allowed to play. `data/holder-tiers.ts` has three tiers
-with a burn cut each. **Every number in it is a placeholder** and cannot be
-settled until the token economics exist and there is a real pot to divide.
+keep, and where you are allowed to play. `data/holder-tiers.ts` has four tiers,
+and they are TCG's ladder carried over without a number changing:
+
+| tier | from | burned when you win |
+|---|---|---|
+| RETAIL | any amount, including none | 25% |
+| BAGHOLDER | 100,000 · 0.01% of supply | 15% |
+| HOLDER | 1,000,000 · 0.1% | 10% |
+| WHALE | 10,000,000 · 1% | 5% |
+
+**The thresholds carry over because the supplies match, not because they were
+copied.** TCG's ladder is built on fractions of a one-billion supply. $CROCARD's
+supply was read off the chain — `totalSupply()` on
+`0xECf3361441512c1e9F6A6e8734D86614D8e795BC`, 18 decimals — and it is one billion
+exactly, so the same fractions give the same numbers. If that ever turns out to
+be wrong, every threshold is wrong with it.
+
+**The winner's tier is the one that counts.** Your stake is gone either way when
+you lose, so a discount on a loss would only ever have been a discount for the
+person who beat you. A balance nobody could read is retail: a discount that
+cannot be verified is a discount nobody earned.
+
+The file refuses at load a rung that is unreachable from the one below it, or a
+burn that does not fall as you climb. Both are one digit wide and neither shows
+on the page.
+
+This replaced three tiers that said so themselves — "no bag", "a bag", "a serious
+bag", burning 10/7/4 — and none of those numbers had been settled.
 
 **A collection buys choice, not power.** A card is the same card however you got
 it, and packs run 44.6% common and 31.7% rare against this set — measured over
