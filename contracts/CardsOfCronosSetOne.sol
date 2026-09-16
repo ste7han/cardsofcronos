@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -21,7 +22,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * The tests that ought to sit beside it do not exist yet; see the note at the
  * bottom of this file.
  */
-contract CardsOfCronosSetOne is ERC721, Ownable {
+contract CardsOfCronosSetOne is ERC721, ERC2981, Ownable {
     // ---------------------------------------------------------------- supply
 
     /// @notice The highest id that will ever exist. Fixed at deploy, forever.
@@ -104,16 +105,48 @@ contract CardsOfCronosSetOne is ERC721, Ownable {
     error WithdrawFailed();
     error NoSuchToken();
 
+    /**
+     * @notice Where the money goes, fixed at deploy and never again.
+     *
+     * Both the mint proceeds and the royalties. Immutable on purpose: the owner
+     * can open and close the sale and move the price, and cannot move a single
+     * CRO anywhere other than here. `release` below is the only way out of this
+     * contract and it takes no arguments.
+     */
+    address payable public immutable splitter;
+
+    /// @notice The royalty, in basis points out of 10_000.
+    uint96 public constant ROYALTY_BPS = 500;
+
+    event Released(uint256 amount);
+
+    error ZeroAddress();
+    error NothingToRelease();
+
     constructor(
         string memory name_,
         string memory symbol_,
         uint256 maxSupply_,
         string memory baseURI_,
-        bytes32 allowlistRoot_
+        bytes32 allowlistRoot_,
+        address payable splitter_
     ) ERC721(name_, symbol_) Ownable(msg.sender) {
+        if (splitter_ == address(0)) revert ZeroAddress();
         maxSupply = maxSupply_;
         _base = baseURI_;
         allowlistRoot = allowlistRoot_;
+        splitter = splitter_;
+
+        // ERC2981, so a marketplace can read the royalty off the collection
+        // instead of being told it in a form somebody has to remember to fill
+        // in on every venue. It pays the splitter, which divides a royalty the
+        // same way it divides a mint.
+        //
+        // Not enforcement. ERC2981 is a statement of what is owed and venues
+        // that ignore it exist; what it buys is that every venue which does
+        // honour it is configured correctly the moment the collection is
+        // deployed, by the collection itself.
+        _setDefaultRoyalty(splitter_, ROYALTY_BPS);
     }
 
     // ------------------------------------------------------------------ mint
@@ -238,9 +271,35 @@ contract CardsOfCronosSetOne is ERC721, Ownable {
         discountToken = token;
     }
 
-    function withdraw(address payable to) external onlyOwner {
-        (bool sent, ) = to.call{value: address(this).balance}("");
+    /**
+     * @notice Sends everything this contract holds to the splitter.
+     *
+     * ANYONE MAY CALL THIS, and it takes no arguments. It was
+     * `withdraw(address payable to) onlyOwner`, which is the ordinary shape and
+     * meant the proceeds of every mint sat here until the owner moved them, to
+     * an address chosen at the moment of moving.
+     *
+     * This shape cannot choose. The destination is immutable and the function
+     * has no parameters, so calling it is not a decision — which is what makes
+     * it safe to automate. A cron calls this on a timer and holds no key,
+     * because there is no key that would help it.
+     */
+    function release() external {
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert NothingToRelease();
+        (bool sent, ) = splitter.call{value: balance}("");
         if (!sent) revert WithdrawFailed();
+        emit Released(balance);
+    }
+
+    /// @dev ERC721 and ERC2981 both answer this, and both answers are needed.
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC2981)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
 

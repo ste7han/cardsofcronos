@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {CardsOfCronosSetOne} from "../CardsOfCronosSetOne.sol";
+import {Splitter} from "../Splitter.sol";
 
 /**
  * The contract, against the allowlist it will actually be deployed with.
@@ -19,6 +20,7 @@ import {CardsOfCronosSetOne} from "../CardsOfCronosSetOne.sol";
 contract AllowlistTest is Test {
     CardsOfCronosSetOne private nft;
     Fake private crocard;
+    Splitter private splitter;
 
     bytes32 private root;
     string private allowlist;
@@ -27,7 +29,10 @@ contract AllowlistTest is Test {
         allowlist = vm.readFile("data/allowlist.json");
         root = vm.parseJsonBytes32(allowlist, ".root");
 
-        nft = new CardsOfCronosSetOne("Cards of Cronos Set 01", "COC1", 2000, "ipfs://x/", root);
+        splitter = new Splitter(payable(address(0xA1)), payable(address(0xB2)), payable(address(0xC3)));
+        nft = new CardsOfCronosSetOne(
+            "Cards of Cronos Set 01", "COC1", 2000, "ipfs://x/", root, payable(address(splitter))
+        );
         crocard = new Fake();
         nft.setDiscountToken(IERC20(address(crocard)));
         nft.setClaimsOpen(true);
@@ -183,11 +188,18 @@ contract AllowlistTest is Test {
 contract BuyingTest is Test {
     CardsOfCronosSetOne private nft;
     Fake private crocard;
+    Splitter private splitter;
 
     address private buyer = address(0xB0B);
+    address private holdersTo = address(0xA1);
+    address private burnTo = address(0xB2);
+    address private potTo = address(0xC3);
 
     function setUp() public {
-        nft = new CardsOfCronosSetOne("Cards of Cronos Set 01", "COC1", 5, "ipfs://x/", bytes32(0));
+        splitter = new Splitter(payable(holdersTo), payable(burnTo), payable(potTo));
+        nft = new CardsOfCronosSetOne(
+            "Cards of Cronos Set 01", "COC1", 5, "ipfs://x/", bytes32(0), payable(address(splitter))
+        );
         crocard = new Fake();
         nft.setDiscountToken(IERC20(address(crocard)));
         nft.setSaleOpen(true);
@@ -309,20 +321,52 @@ contract BuyingTest is Test {
         nft.setAllowlistRoot(bytes32(uint256(1)));
         vm.expectRevert();
         nft.setMintPrice(1);
-        vm.expectRevert();
-        nft.withdraw(payable(buyer));
         vm.stopPrank();
     }
 
-    function test_withdrawing() public {
+    /**
+     * Releasing is not a lever, and that is the point of the shape.
+     *
+     * The old function was `withdraw(to) onlyOwner`: the owner decided when the
+     * money moved and where it went. This one has no destination to give and no
+     * caller to check, so a stranger calling it does exactly what the owner
+     * would — which is what makes it safe to put on a timer.
+     */
+    function test_anybodyCanRelease() public {
         uint256 price = nft.priceFor(buyer);
         vm.prank(buyer);
         nft.buy{value: price}(1);
 
-        address payable to = payable(address(0xCAFE));
-        nft.withdraw(to);
-        assertEq(to.balance, price);
-        assertEq(address(nft).balance, 0);
+        vm.prank(address(0xDEAD1));
+        nft.release();
+
+        assertEq(address(nft).balance, 0, "the contract keeps nothing back");
+        assertEq(address(splitter).balance, price, "and it can only have gone one place");
+    }
+
+    function test_releasingNothingReverts() public {
+        vm.expectRevert(CardsOfCronosSetOne.NothingToRelease.selector);
+        nft.release();
+    }
+
+    /**
+     * The royalty is declared on the collection, so a venue that reads ERC2981
+     * is configured by the collection rather than by somebody remembering to
+     * fill in a form on every marketplace.
+     */
+    function test_royaltyGoesToTheSplitter() public {
+        (address receiver, uint256 owed) = nft.royaltyInfo(1, 10_000 ether);
+        assertEq(receiver, address(splitter), "a royalty is divided like everything else");
+        assertEq(owed, 500 ether, "5% of the sale");
+        assertTrue(nft.supportsInterface(0x2a55205a), "ERC2981");
+        assertTrue(nft.supportsInterface(0x80ac58cd), "ERC721");
+    }
+
+    /** What the owner may do, and the one thing they may not: move the money. */
+    function test_theOwnerCannotRedirectTheMoney() public view {
+        assertEq(nft.splitter(), address(splitter));
+        // There is no setter. If one is ever added, this stops compiling, which
+        // is the point of asserting on a thing that does not exist.
     }
 }
 

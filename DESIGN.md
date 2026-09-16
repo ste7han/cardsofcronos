@@ -547,6 +547,31 @@ on a stream marked live while a wallet it pays is still unknown.
 | ranked matches | 50% $CROCARD holders · 25% burn · 25% prize pot |
 | NFT royalties | 50% $CROCARD holders · 25% burn · 25% prize pot |
 
+**The split is done by a contract, not by a person.** `contracts/Splitter.sol`
+holds the three destinations as immutables and the three shares as constants,
+and its `release()` takes no arguments and may be called by anyone. That is the
+whole safety argument for automating it: there is no destination to give and no
+caller to check, so a stranger calling it does exactly what the owner would.
+Nothing anywhere holds a key that could send the money elsewhere, because no key
+would help.
+
+The NFT contract's `withdraw(to) onlyOwner` is gone for the same reason and is
+now `release()`, which sends everything to the splitter and takes no arguments
+either. The owner can open and close the sale and move the price, and cannot move
+a single CRO anywhere but there.
+
+**Royalties are declared on the collection.** ERC2981, paying the splitter, set
+in the constructor — so a venue that honours it is configured by the collection
+rather than by somebody remembering a form on every marketplace. Not enforcement:
+venues that ignore ERC2981 exist. The royalty is **5%** and that number is the
+one thing here nobody has explicitly settled.
+
+**The split is written in two languages and they are checked against each other.**
+`lib/revenue.ts` for the site, `contracts/Splitter.sol` for the money. They cannot
+be one file because one of them is Solidity, so `test/revenue.test.ts` reads the
+contract and compares the basis points — a split changed in the TypeScript and
+not on the chain is a page describing a division that is not happening.
+
 **One split, and it is the only one.** Three streams dividing three different
 ways was three things to explain; one sentence now covers every way money enters
 this game, and a rule somebody can repeat from memory is a rule they can check.

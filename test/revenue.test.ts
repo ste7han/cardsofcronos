@@ -6,6 +6,8 @@
 // back from. Neither shows up as an error anywhere — which is why they are
 // checked at load and checked again here.
 
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { isAddress, normalise } from "@/lib/address";
@@ -220,5 +222,54 @@ describe("paying the holders", () => {
     const mints = STREAMS.find((stream) => stream.id === "mints")!;
     expect(mints.live).toBe(false);
     expect(mints.open).toBeTruthy();
+  });
+});
+
+describe("the split is written in two languages", () => {
+  /**
+   * `lib/revenue.ts` says where the money goes for the site and
+   * `contracts/Splitter.sol` says it for the money itself. Two files holding one
+   * truth is the thing this project has a rule about — the old card data lived
+   * in two places and the frontend shipped the wrong one eight times — and here
+   * the two cannot be one file, because one of them is Solidity.
+   *
+   * So they are checked against each other instead. A split changed in the
+   * TypeScript and not in the contract is a page that describes a division the
+   * chain is not doing.
+   */
+  it("agrees with contracts/Splitter.sol", () => {
+    const source = readFileSync(
+      new URL("../contracts/Splitter.sol", import.meta.url),
+      "utf8",
+    );
+    const bps = (name: string) => {
+      const found = source.match(
+        new RegExp(`${name}\\s*=\\s*([0-9_]+)\\s*;`),
+      );
+      expect(found, `${name} is not in the contract`).toBeTruthy();
+      return Number(found![1]!.replace(/_/g, ""));
+    };
+
+    const mints = STREAMS.find((stream) => stream.id === "mints")!;
+    const share = (to: string) => mints.shares.find((s) => s.to === to)!.percent;
+
+    expect(bps("HOLDERS_BPS")).toBe(share("holders") * 100);
+    expect(bps("BURN_BPS")).toBe(share("burn") * 100);
+    expect(bps("POT_BPS")).toBe(share("tournament") * 100);
+    expect(bps("HOLDERS_BPS") + bps("BURN_BPS") + bps("POT_BPS")).toBe(10_000);
+  });
+
+  it("is the same split for every stream, so one contract can do all of them", () => {
+    // The Splitter cannot tell a mint from a royalty from a rake — CRO arrives
+    // and it does not announce where it came from. That only works because the
+    // three streams divide identically, and this is what would catch somebody
+    // changing one of them and leaving the chain doing something else.
+    const shapes = STREAMS.map((stream) =>
+      [...stream.shares]
+        .sort((a, b) => a.to.localeCompare(b.to))
+        .map((share) => `${share.to}:${share.percent}`)
+        .join(" "),
+    );
+    expect(new Set(shapes).size, `streams divide differently: ${shapes.join(" | ")}`).toBe(1);
   });
 });
