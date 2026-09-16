@@ -78,6 +78,26 @@ export function CardView({ card, compact = false, free = false, price, className
   const cut = !free && showing < printed;
   const style = RARITY[card.rarity];
   const lines = compact ? effectLines(card) : rulesText(card);
+
+  /**
+   * The size the rules are set at on a full card, from how much of them there is.
+   *
+   * It was a flat 3.54cqw with the note that "at full size nothing is clamped,
+   * because nothing needs to be". That was true of the cards that existed when
+   * it was written. It stopped being true quietly: MAX_RULES_LINE caps a single
+   * line at 120 characters and nothing capped the total, so a card with four
+   * long lines passed every check, grew past the footer, and pushed the flavour
+   * off the bottom edge where the card's own overflow-hidden ate it. Nine cards
+   * were over 200 characters and ferro-viii rendered with its last rule cut
+   * mid-word and no flavour at all — into a 1072x1504 PNG that was going to be
+   * somebody's NFT.
+   *
+   * Two steps, and both only reachable by cards that need them: everything
+   * under 190 characters renders exactly as it always has, which is 417 of the
+   * 445 and every image already made.
+   */
+  const rulesChars = lines.reduce((total, line) => total + line.text.length, 0);
+  const rulesSize = rulesChars <= 190 ? 3.54 : rulesChars <= 215 ? 3.2 : 2.95;
   const precious = card.rarity === "legendary" || card.rarity === "mythic";
 
   /**
@@ -322,9 +342,17 @@ export function CardView({ card, compact = false, free = false, price, className
             // 3.54cqw is 9.5px at the 268px the card is designed at, so nothing
             // renders differently at that size — including every card image
             // already rendered.
-            compact ? "min-h-0 flex-1 overflow-hidden text-[6.4cqw] @[150px]:text-[5cqw]" : "text-[3.54cqw]",
+            // min-h-0 and overflow-hidden on both now. The compact branch has
+            // carried them from the start with the right reason written next to
+            // it — "never overflows" as a property of the layout instead of a
+            // coincidence of the wording — and the full card was the one place
+            // that trusted the wording.
+            compact
+              ? "min-h-0 flex-1 overflow-hidden text-[6.4cqw] @[150px]:text-[5cqw]"
+              : "min-h-0 overflow-hidden",
             card.type === "project" && "pt-1.5",
           )}
+          style={compact ? undefined : { fontSize: `${rulesSize}cqw` }}
         >
           {lines.map((line) => (
             <li key={line.text} className="flex gap-1.5">

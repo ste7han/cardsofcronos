@@ -687,8 +687,12 @@ export function describeEffect(
       // that kept "permanently". A dollar sign has no second reading; a rate that
       // might switch off does, and that word going missing is what made five
       // scalePump cards unreadable earlier the same day.
+      // "rises to" rather than "matches ..., if theirs is higher": it carries the
+      // floor-not-ceiling meaning in two words instead of eleven, and it took
+      // twenty-one characters off a line that sits on six cards. That mattered
+      // once the cap stopped being about one line — see MAX_RULES_TOTAL.
       const which = effect.target === "ownProject" ? "your" : "the opponent's";
-      const match = `One of ${which} projects matches the opponent's best pump, if theirs is higher`;
+      const match = `One of ${which} projects rises to the opponent's best pump`;
       return effect.plus
         ? `${match}, then permanently pumps ${formatMC(
             effect.plus
