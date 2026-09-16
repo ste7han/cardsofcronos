@@ -347,7 +347,7 @@ still takes one of each.
 ### What a card actually is
 
 `scripts/render-cards.ts` screenshots `/card/<id>/image` at four times scale into
-a 1072×1500 PNG, with ERC721 metadata beside it. There is exactly **one** renderer
+a 1072×1504 PNG, with ERC721 metadata beside it. There is exactly **one** renderer
 for a card — the same `CardView` the game draws — so the picture on the NFT and
 the card in the match cannot disagree.
 
