@@ -583,6 +583,28 @@ rather than by somebody remembering a form on every marketplace. Not enforcement
 venues that ignore ERC2981 exist. The royalty is **5%** and that number is the
 one thing here nobody has explicitly settled.
 
+**There is a way out, and it waits two days.** `contracts/Rescuable.sol`, on all
+three contracts. None of this is audited — 59 tests is not an audit — and
+unaudited code holding money with no escape trades "somebody could steal it" for
+"nobody can ever have it", which is not obviously the better trade. The emergency
+it answers is money *stuck*: an accounting bug, a destination that reverts, a
+week that cannot be closed.
+
+A rescue is announced **with its destination**, and can only be carried out two
+days later; the owner can cancel in between, and a new destination cannot inherit
+an old clock. Without the wait, the owner key *is* the money — one leak, one
+transaction, nobody able to react. With it, a stolen key announces itself on a
+contract anybody can watch.
+
+The wait costs nothing in the case it exists for: stuck money does not run away
+while you wait. It does not answer an active drain, and no timelock would —
+somebody emptying a contract is not going to wait either.
+
+It is the **owner**, which should be a wallet that never touches a server, and
+never the publisher key, which lives in a Worker and may name a winner and
+nothing else. Two keys, two jobs, and the one that can reach the money is the one
+that is hardest to reach.
+
 **The split is written in two languages and they are checked against each other.**
 `lib/revenue.ts` for the site, `contracts/Splitter.sol` for the money. They cannot
 be one file because one of them is Solidity, so `test/revenue.test.ts` reads the

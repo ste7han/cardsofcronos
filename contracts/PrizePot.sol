@@ -3,6 +3,8 @@ pragma solidity ^0.8.26;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {Rescuable} from "./Rescuable.sol";
+
 /**
  * The weekly prize, held where nobody can spend it.
  *
@@ -35,7 +37,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * a cron pushes it the moment a week closes, and if the cron is down, anybody
  * can. A prize that has to be fetched is a prize somebody forgets to fetch.
  */
-contract PrizePot is Ownable {
+contract PrizePot is Rescuable {
     struct Prize {
         address winner;
         uint256 amount;
@@ -66,7 +68,6 @@ contract PrizePot is Ownable {
     error NoSuchWeek();
     error AlreadyPaid();
     error NothingToWin();
-    error ZeroAddress();
     error TransferFailed();
 
     constructor(address publisher_) Ownable(msg.sender) {

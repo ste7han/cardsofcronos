@@ -5,6 +5,8 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
+import {Rescuable} from "./Rescuable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -22,7 +24,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * The tests that ought to sit beside it do not exist yet; see the note at the
  * bottom of this file.
  */
-contract CardsOfCronosSetOne is ERC721, ERC2981, Ownable {
+contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
     // ---------------------------------------------------------------- supply
 
     /// @notice The highest id that will ever exist. Fixed at deploy, forever.
@@ -120,7 +122,6 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Ownable {
 
     event Released(uint256 amount);
 
-    error ZeroAddress();
     error NothingToRelease();
 
     constructor(

@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+import {Rescuable} from "./Rescuable.sol";
+
 /**
  * Every way money enters this game, divided the one way it is divided.
  *
@@ -38,7 +42,7 @@ pragma solidity ^0.8.26;
  * royalty payment that reverts is a sale that reverts — which is a marketplace
  * quietly delisting you.
  */
-contract Splitter {
+contract Splitter is Rescuable {
     /// Basis points, out of 10_000. Constants: this split has no admin.
     uint256 public constant HOLDERS_BPS = 5_000;
     uint256 public constant BURN_BPS = 2_500;
@@ -54,10 +58,11 @@ contract Splitter {
     event Released(uint256 toHolders, uint256 burned, uint256 toPot);
 
     error NothingToRelease();
-    error ZeroAddress();
     error TransferFailed(address to);
 
-    constructor(address payable holders_, address payable burner_, address payable pot_) {
+    constructor(address payable holders_, address payable burner_, address payable pot_)
+        Ownable(msg.sender)
+    {
         // A zero address here is money sent to nowhere, forever, on every
         // release. Checked at construction because it cannot be fixed after.
         if (holders_ == address(0) || burner_ == address(0) || pot_ == address(0)) {

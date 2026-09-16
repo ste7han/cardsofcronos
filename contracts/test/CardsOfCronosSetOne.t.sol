@@ -362,6 +362,27 @@ contract BuyingTest is Test {
         assertTrue(nft.supportsInterface(0x80ac58cd), "ERC721");
     }
 
+    /**
+     * The mint proceeds can be got out if release() ever stops working.
+     *
+     * A splitter whose destination reverts would make release() revert with it,
+     * and every mint since would sit here with nothing able to move it. That is
+     * the emergency this answers, and it waits two days like every other.
+     */
+    function test_mintProceedsCanBeRescuedAfterTheWait() public {
+        uint256 price = nft.priceFor(buyer);
+        vm.prank(buyer);
+        nft.buy{value: price}(1);
+
+        address safe = address(0x5AFE);
+        nft.announceRescue(safe);
+        vm.warp(block.timestamp + 2 days);
+        nft.rescue();
+
+        assertEq(safe.balance, price);
+        assertEq(address(nft).balance, 0);
+    }
+
     /** What the owner may do, and the one thing they may not: move the money. */
     function test_theOwnerCannotRedirectTheMoney() public view {
         assertEq(nft.splitter(), address(splitter));

@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Test} from "forge-std/Test.sol";
 
 import {Splitter} from "../Splitter.sol";
+import {Rescuable} from "../Rescuable.sol";
 
 /**
  * The one split there is, and the reason it needs nobody's permission.
@@ -85,11 +86,11 @@ contract SplitterTest is Test {
 
     /** A zero destination is money burned by accident, on every release. */
     function test_refusesAZeroDestination() public {
-        vm.expectRevert(Splitter.ZeroAddress.selector);
+        vm.expectRevert(Rescuable.ZeroAddress.selector);
         new Splitter(payable(address(0)), payable(burner), payable(pot));
-        vm.expectRevert(Splitter.ZeroAddress.selector);
+        vm.expectRevert(Rescuable.ZeroAddress.selector);
         new Splitter(payable(holders), payable(address(0)), payable(pot));
-        vm.expectRevert(Splitter.ZeroAddress.selector);
+        vm.expectRevert(Rescuable.ZeroAddress.selector);
         new Splitter(payable(holders), payable(burner), payable(address(0)));
     }
 

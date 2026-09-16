@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Test} from "forge-std/Test.sol";
 
 import {PrizePot} from "../PrizePot.sol";
+import {Rescuable} from "../Rescuable.sol";
 
 /**
  * What a stolen publisher key is worth, and what it is not.
@@ -197,15 +198,15 @@ contract PrizePotTest is Test {
     }
 
     function test_refusesAZeroPublisher() public {
-        vm.expectRevert(PrizePot.ZeroAddress.selector);
+        vm.expectRevert(Rescuable.ZeroAddress.selector);
         new PrizePot(address(0));
-        vm.expectRevert(PrizePot.ZeroAddress.selector);
+        vm.expectRevert(Rescuable.ZeroAddress.selector);
         pot.setPublisher(address(0));
     }
 
     function test_refusesAZeroWinner() public {
         vm.prank(publisher);
-        vm.expectRevert(PrizePot.ZeroAddress.selector);
+        vm.expectRevert(Rescuable.ZeroAddress.selector);
         pot.closeWeek(week38, address(0));
     }
 }
