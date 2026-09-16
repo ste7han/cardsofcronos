@@ -438,6 +438,23 @@ to arrive the moment either changes.
 an invisible one, which is the failure worth being loud about. `tournament_paid`
 has the week as its primary key, so a week cannot be paid twice.
 
+**The pot is a contract, not a wallet.** `contracts/PrizePot.sol` takes a quarter
+of everything from the splitter and holds it where nobody can spend it. Who won
+is the one thing that cannot be decided on chain — it comes from replaying
+submitted matches — so something off-chain has to name a name, and naming needs a
+key.
+
+What the contract does about that is make the key nearly worthless to steal. The
+publisher may do exactly one thing: name the winner of a week that has not closed
+yet. It cannot withdraw, cannot reopen a week it has already announced, and
+cannot reach what earlier weeks are owed. The worst a stolen key can do is take
+one week's pot, in public, once — and the owner, which should be a wallet that
+never touches a server, rotates it.
+
+`claim` pays the winner rather than the caller, so anybody can push a prize out.
+A cron does it the moment a week closes; if the cron is down, anyone can. A prize
+that has to be fetched is a prize somebody forgets to fetch.
+
 **Nothing is in the pot yet.** No mint has happened and the prize wallet has no
 address, so the page says there is nothing to win and runs the board anyway —
 the scores are the part that has to be real first.
