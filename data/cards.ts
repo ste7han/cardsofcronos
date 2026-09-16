@@ -1858,7 +1858,7 @@ const DAK: ProjectCard[] = [
     // they came down the timeline together and something stopped existing
     severance: { percentage: 55, from: "theirs" },
     effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 },
-    flavour: "It calls itself the first of its kind here. Nothing contradicts it.",
+    flavour: "First of its kind here, it says. Nothing contradicts it.",
   },
   {
     id: "dak-again",
@@ -2792,7 +2792,7 @@ const CHIMPS: ProjectCard[] = [
       when: { kind: "ownProjectCount", atLeast: 5 },
       effect: { kind: "directMC", target: "self", mc: 260_000 },
     },
-    flavour: "Own one and you own the picture. The commercial rights come with it.",
+    flavour: "Own one and you own the picture. The rights come with it.",
   },
 ];
 

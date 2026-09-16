@@ -101,6 +101,31 @@ export const MAX_FLAVOUR = 85;
 export const MAX_RULES_LINE = 120;
 
 /**
+ * Every rules line and the flavour together, in characters.
+ *
+ * MAX_RULES_LINE caps one line and nothing capped the total, which is how
+ * twenty-two cards came to carry Launch, Pump and two real rules — passing every
+ * check and rendering with the last line cut mid-word and the flavour pushed off
+ * the bottom edge, into PNGs that were going to be somebody's NFT.
+ *
+ * 290, and the number is a measurement rather than an opinion. The card frame
+ * was settled by rendering all 445 and checking that no rules block overflowed
+ * and no flavour fell past the card's bottom edge; the busiest card that passes
+ * is mery-viii at 282. The cap sits just above it.
+ *
+ * It was set at 275 first, which is what ferro-viii needs, and that was the
+ * wrong card to calibrate on: mery-viii is longer in characters and wraps into
+ * fewer lines, so it fits while being bigger. Length is a proxy and the render
+ * is the truth.
+ *
+ * It is an early warning and not a proof. Whether text fits depends on where it
+ * wraps, which depends on the words — two cards of the same length can differ by
+ * a line. The real check is the render pass; this is the cheap one that runs on
+ * every save and catches the obvious half.
+ */
+export const MAX_CARD_TEXT = 290;
+
+/**
  * Two *projects* showing the same ticker is the Cards of Cronos lesson in
  * miniature: one name, two meanings, and no way to tell from the screen which
  * one you are looking at. It is invisible statically, which is why it is checked.
@@ -295,6 +320,18 @@ export function validateSet(cards: readonly Card[]): void {
     }
     if (!RARITIES.includes(card.rarity)) {
       problems.push(`${where}: unknown rarity "${card.rarity}".`);
+    }
+
+    // The card as a whole, not one line of it. See MAX_CARD_TEXT.
+    {
+      const rules = rulesText(card).reduce((total, line) => total + line.text.length, 0);
+      const together = rules + card.flavour.length;
+      if (together > MAX_CARD_TEXT) {
+        problems.push(
+          `${where}: ${rules} characters of rules and ${card.flavour.length} of flavour is ` +
+            `${together}; ${MAX_CARD_TEXT} is what the card frame holds. Shorten one of them.`
+        );
+      }
     }
 
     // Generated, and checked anyway. See MAX_RULES_LINE.

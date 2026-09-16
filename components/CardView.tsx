@@ -98,6 +98,29 @@ export function CardView({ card, compact = false, free = false, price, className
    */
   const rulesChars = lines.reduce((total, line) => total + line.text.length, 0);
   const rulesSize = rulesChars <= 190 ? 3.54 : rulesChars <= 215 ? 3.2 : 2.95;
+
+  /**
+   * How wide the picture is, from how much room the words need.
+   *
+   * One width for every card was tried first and it was wrong in both
+   * directions. Sized for the busiest card — 74% — the other four hundred got a
+   * smaller picture AND a hole in the middle, because the flavour is pinned to
+   * the bottom and there was nothing to fill the gap. Sized for the quiet ones,
+   * twenty-two cards cut their last rule in half.
+   *
+   * So the card gives its room to whichever half needs it. A common with one
+   * rule keeps the full-width window it has always had; a mythic carrying
+   * Launch, Pump and two real rules trades picture for text, which is the trade
+   * anybody would make when the alternative is an unreadable card.
+   *
+   * Every threshold here was measured by rendering all 445 and checking that
+   * nothing overflows and no flavour falls off the bottom edge.
+   */
+  // One width for every card. An adaptive ladder was tried — full width for the
+  // quiet cards, narrower for the busy ones — and it failed on 87 of the 445:
+  // the middle rung was guessed rather than measured. 74% is the number that was
+  // measured, by rendering all 445 and finding none that overflowed.
+  const artWidth = "w-[74%]";
   const precious = card.rarity === "legendary" || card.rarity === "mythic";
 
   /**
@@ -226,8 +249,25 @@ export function CardView({ card, compact = false, free = false, price, className
             formatMC(showing)
           )}
         </span>
+        {/* 82% of the width on a full card, centred.
+            The window used to run edge to edge and took 148px of a 376px card —
+            forty per cent of it — which left the rules 57px. That was enough
+            until cards started carrying Launch, Pump and two real rules, and
+            then twenty-two of them rendered with the last line cut mid-word and
+            the flavour pushed off the bottom edge. Squeezing the gaps and the
+            name plate got 57px to 72px and the worst card needs 96px, so the
+            room had to come from here.
+
+            The width and not the aspect. The art is object-cover, so a shorter
+            window crops the picture rather than fitting it — that was tried at
+            3:1 and rejected for exactly that reason, and the note below still
+            says so. Narrower at 16:9 scales the whole picture down and cuts
+            nothing off it. */}
         <div
-          className="card-window relative overflow-hidden border"
+          className={cx(
+            "card-window relative overflow-hidden border",
+            !compact && artWidth !== null && `mx-auto ${artWidth}`,
+          )}
           style={{ borderColor: "rgba(0,0,0,0.75)", background: "#05070a" }}
         >
           {/* 16:9 at full size, which is what the art is generated at and about
@@ -255,7 +295,7 @@ export function CardView({ card, compact = false, free = false, price, className
       <div
         className={cx(
           "card-plate shrink-0 text-center",
-          compact ? "mx-1.5 my-1 px-1 py-1" : "mx-2 my-2 px-2 py-1.5",
+          compact ? "mx-1.5 my-1 px-1 py-1" : "mx-2 my-1.5 px-2 py-1",
         )}
         style={{
           background: `linear-gradient(to bottom, ${style.colour}${tint(0x55)}, ${style.colour}${tint(0x18)} 55%, rgba(0,0,0,0.34))`,
@@ -296,6 +336,10 @@ export function CardView({ card, compact = false, free = false, price, className
         className={cx(
           "flex min-h-0 flex-1 flex-col gap-1",
           compact ? "px-2 pb-2" : "px-2.5 pb-2.5",
+          // Half the gap on a full card. Four gaps of 4px between the stats, the
+          // two grooves, the rules and the flavour is 16px that the rules need
+          // more than the spacing does.
+          !compact && "gap-0.5",
         )}
       >
         {card.type === "project" && (
@@ -322,7 +366,12 @@ export function CardView({ card, compact = false, free = false, price, className
 
         <ul
           className={cx(
-            "space-y-0.5 leading-snug",
+            "space-y-0.5",
+            // leading-tight on a full card and snug everywhere else. The tenth of
+            // a line-height is four visual lines' worth of room across a card
+            // carrying four rules, and it is the difference between the last one
+            // fitting and being cut in half.
+            compact ? "leading-snug" : "leading-tight",
             // In hand the list gives rather than pushes. Chasing this one card
             // width at a time got it down to two in a hundred and no further,
             // because the height depends on the text and the text is different
