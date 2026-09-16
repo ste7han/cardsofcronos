@@ -399,6 +399,51 @@ match whichever is chosen.
 
 ---
 
+## The weekly high score
+
+Beat the bot, and your market cap goes on that week's board. The best score when
+the week closes takes the prize pot, which is a quarter of every paid mint.
+
+**Your best of the week counts, not your last.** A board where playing again can
+cost you your place is a board that tells you to stop playing.
+
+**Weeks run Monday 00:00 UTC to Sunday midnight.** UTC, because a week that ends
+at a different instant depending on where you are is one somebody can argue
+about, and a prize is exactly the thing somebody argues about. Written as
+`2026-W38`, with the ISO rule that a week's Thursday decides its year — so
+1 January 2027 belongs to `2026-W53`.
+
+**Scores are replayed, not reported.** `lib/history.ts` is blunt that a solo
+result is computed in the player's own browser and is worth exactly as much as
+the player's honesty. True, and harmless on a profile; worthless the moment a
+prize hangs on it. So `/api/tournament` takes the seed, the deck and every move,
+rebuilds the bot's deck from the seed — which is all it is derived from — replays
+the match through its own engine, and records what *that* produced. Nothing the
+caller says about the outcome is read. It is the same machinery `/api/ref/demo`
+uses to check somebody met the game.
+
+What that still cannot stop is somebody writing a solver and submitting the
+matches it played. The engine is public. What it costs them is a program that
+beats the same bot everybody else is beating, which is the game rather than a way
+past it.
+
+**What it cannot check yet is that the deck is yours.** A collection lives in the
+player's browser, so there is nothing on chain to read it against. That does not
+matter while the mint is shut — with nothing to mint there is nothing to own, and
+`DECK_FROM_COLLECTION` stands down with `MINT_OPEN` — and it is the check that has
+to arrive the moment either changes.
+
+**A won week that has not been paid shows as unpaid**, rather than not showing.
+`pastWeeks` is a LEFT JOIN for that reason: hiding an unpaid week turns it into
+an invisible one, which is the failure worth being loud about. `tournament_paid`
+has the week as its primary key, so a week cannot be paid twice.
+
+**Nothing is in the pot yet.** No mint has happened and the prize wallet has no
+address, so the page says there is nothing to win and runs the board anyway —
+the scores are the part that has to be real first.
+
+---
+
 ## Records, ranks and clocks
 
 **Two kinds of record, kept apart and labelled.**

@@ -254,3 +254,55 @@ CREATE TABLE IF NOT EXISTS burns (
 );
 
 CREATE INDEX IF NOT EXISTS burns_by_time ON burns (at DESC);
+
+-- The weekly high score: one row per wallet per week, holding their best.
+--
+-- VERIFIED, NOT REPORTED. lib/history.ts says it plainly about solo results:
+-- they are computed in the player's own browser, so they are worth exactly as
+-- much as the player's honesty. That is fine for a profile and worthless the
+-- moment a prize hangs on it. So a score only gets here by being replayed on the
+-- server from its seed, its deck and its moves — the same way /api/ref/demo
+-- checks that somebody met the game.
+--
+-- The seed is kept so a disputed score can be replayed by anybody who asks.
+CREATE TABLE IF NOT EXISTS tournament (
+  wallet      TEXT NOT NULL
+              CHECK (wallet = lower(wallet)),
+  -- ISO-ish week, "2026-W38". Weeks run Monday 00:00 UTC to Sunday midnight.
+  week        TEXT NOT NULL,
+  -- The market cap this wallet finished on. The score.
+  mc          INTEGER NOT NULL,
+  -- What the bot finished on, kept because beating it is the entry requirement
+  -- and a row should carry its own proof of that.
+  opponent_mc INTEGER NOT NULL
+              CHECK (opponent_mc < mc),
+  seed        INTEGER NOT NULL,
+  at          INTEGER NOT NULL,
+  PRIMARY KEY (wallet, week)
+);
+
+CREATE INDEX IF NOT EXISTS tournament_board ON tournament (week, mc DESC, at ASC);
+
+-- What a closed week paid out, one row per week.
+--
+-- The week is the primary key rather than a column, so the same week cannot be
+-- paid twice — which is the one mistake that costs real money and leaves a
+-- perfectly ordinary-looking second row behind.
+--
+-- Nothing writes to this yet. The prize pot is a quarter of every paid mint and
+-- no mint has happened, so there is nothing to pay; the table exists so the
+-- first payout has somewhere to go rather than being reconstructed later.
+CREATE TABLE IF NOT EXISTS tournament_paid (
+  week     TEXT PRIMARY KEY,
+  wallet   TEXT NOT NULL
+           CHECK (wallet = lower(wallet)),
+  -- CRO paid, in wei, as TEXT. Eighteen zeroes behind it: SQLite's INTEGER is
+  -- 64-bit signed and would wrap somewhere around nine CRO without erroring.
+  -- Same rule as the burns table.
+  wei      TEXT NOT NULL,
+  -- The Cronos transaction. Checkable, by anyone, forever.
+  tx_hash  TEXT NOT NULL
+           CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
+                  AND substr(tx_hash, 1, 2) = '0x'),
+  at       INTEGER NOT NULL
+);

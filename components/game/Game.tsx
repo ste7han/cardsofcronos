@@ -116,6 +116,8 @@ export function Game() {
   /** The end screen has been dismissed so the board and the log can be read. */
   const [reviewing, setReviewing] = useState(false);
   const [deckInfo, setDeckInfo] = useState<LoadedDeck | null>(null);
+  /** The board answered that this is the week's best for this wallet. */
+  const [onBoard, setOnBoard] = useState(false);
   /**
    * Playing the borrowed deck rather than one of your own.
    *
@@ -154,6 +156,8 @@ export function Game() {
   const played = useRef<{ seed: number; moves: Move[] }>({ seed: 0, moves: [] });
   /** Whether this demo has already been handed over. Cleared by start(). */
   const sent = useRef(false);
+  /** This match has been handed to the weekly board. One entry per match. */
+  const entered = useRef(false);
   const stateRef = useRef<State | null>(null);
   const boards = {
     you: useRef<HTMLDivElement>(null),
@@ -204,6 +208,8 @@ export function Game() {
     );
     played.current = { seed, moves: [] };
     sent.current = false;
+    entered.current = false;
+    setOnBoard(false);
     stateRef.current = fresh;
     setState(fresh);
     setAiming(null);
@@ -389,17 +395,49 @@ export function Game() {
     });
   }, [demo, state?.finished, wallet]);
 
-  // NO WEEKLY TOURNAMENT HERE, and the code for one is gone rather than dormant.
-  //
-  // TCG posts every win against the bot to /api/tournament, which replays the
-  // seed and the moves on the server and answers with where it landed on the
-  // week's board. That route does not exist in this game, so the call came over
-  // as a POST to a 404 whose failure path is a `.catch` that does nothing — a
-  // request per won match, silently dropped, and a feature the screen could
-  // never show. Failing silently is the one thing this codebase does not do.
-  //
-  // What comes back with the tournament when it is built: this effect, the Entry
-  // shape, BoardStanding, and the link to /tournament under the result.
+  /**
+   * Hand a won match to the weekly board.
+   *
+   * The seed, the deck and the moves. The server rebuilds the bot's deck from
+   * the seed and replays the match itself, so what lands on the board is what
+   * its own engine produced rather than a number this browser reported.
+   *
+   * Only a win, because beating the bot is the entry requirement, and never a
+   * demo: a demo plays fixed decks that are not the player's, so it is not an
+   * entry in a competition about the deck you built. Signed out there is nobody
+   * to put on the board.
+   *
+   * `entered` holds what came back — whether this became the week's best for
+   * this wallet — so the end screen can say so. A failure is quiet on purpose:
+   * nothing the player did has gone wrong, they won a match, and the next one
+   * they win sends again.
+   */
+  useEffect(() => {
+    if (demo || state?.winner !== "you" || wallet === null || entered.current) return;
+    entered.current = true;
+
+    const proof = proofOf();
+    if (proof === null) return;
+
+    void fetch("/api/tournament", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        proof,
+        seed: played.current.seed,
+        deck: deckInfo?.cardIds ?? [],
+        moves: played.current.moves,
+      }),
+    })
+      .then(async (answer) => {
+        if (!answer.ok) return;
+        const said = (await answer.json().catch(() => null)) as { best?: boolean } | null;
+        if (said?.best) setOnBoard(true);
+      })
+      .catch(() => {
+        entered.current = false;
+      });
+  }, [demo, state?.winner, wallet, deckInfo]);
 
 
   /**
@@ -876,6 +914,7 @@ export function Game() {
           <EndScreen
             state={state}
             demo={demo}
+            onBoard={onBoard}
             onNew={() => start(demo)}
             onReview={() => setReviewing(true)}
           />
@@ -1705,11 +1744,14 @@ function Hand({
 function EndScreen({
   state,
   demo,
+  onBoard,
   onNew,
   onReview,
 }: {
   state: State;
   demo: boolean;
+  /** The server took this as the week's best for this wallet. */
+  onBoard: boolean;
   onNew: () => void;
   onReview: () => void;
 }) {
@@ -1766,6 +1808,19 @@ function EndScreen({
             ? "Level to the dollar."
             : `${won ? "Won" : "Lost"} by ${formatMCExact(Math.abs(yours - theirs))}.`}
         </p>
+
+        {/* Only when the server said so. A win that did not beat your own best
+            this week changes nothing on the board, and saying otherwise would
+            be this screen reporting a result it did not get. */}
+        {onBoard && (
+          <p className="mt-3 text-center text-[10px] text-pump">
+            Your best of the week.{" "}
+            <Link href="/tournament" className="underline hover:text-fg">
+              See the board
+            </Link>
+            .
+          </p>
+        )}
 
         {demo && (
           // The moment somebody decides whether this was worth coming back for.

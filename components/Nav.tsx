@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/deck", label: "DECK" },
   { href: "/cards", label: "CARDS" },
   { href: "/mint", label: "MINT" },
+  { href: "/tournament", label: "WEEKLY" },
   { href: "/burn", label: "BURN" },
   { href: "/profile", label: "PROFILE" },
 ];
