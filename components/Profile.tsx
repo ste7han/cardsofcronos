@@ -46,6 +46,10 @@ interface Standing {
   /** Base units as decimal strings, or null when the chain would not answer. */
   held: string | null;
   taken: string | null;
+  /** Sitting in open rounds and not taken yet. Null while the drop is not live. */
+  claimable: string | null;
+  /** How many open rounds that is spread over. */
+  rounds: number;
   drop: string | null;
 }
 
@@ -219,6 +223,13 @@ function Holding({ standing }: { standing: Standing | null }) {
 
   const whole = (value: number) => Math.round(value).toLocaleString("en-US");
 
+  // Null when there is nothing waiting, so the sentence below can simply not be
+  // there. Zero and "the drop is not deployed" both mean nothing to say.
+  const waiting =
+    standing?.claimable != null && BigInt(standing.claimable) > 0n
+      ? whole(toTokens(standing.claimable))
+      : null;
+
   return (
     <section>
       <h2 className="display text-xl">$CROCARD</h2>
@@ -263,6 +274,17 @@ function Holding({ standing }: { standing: Standing | null }) {
       {held !== null && next === null && tier.id === HOLDER_TIERS[0]!.id ? (
         <p className="mt-3 text-[10px] leading-relaxed text-muted">
           Top rung. Nothing above this one.
+        </p>
+      ) : null}
+
+      {/* Only when there is something to take. A line saying "0 waiting" every
+          week is a line people stop reading, and this one has to be read the
+          week it is not zero. */}
+      {waiting !== null ? (
+        <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-pump">
+          {waiting} $CROCARD is waiting for you across {standing!.rounds}{" "}
+          {standing!.rounds === 1 ? "round" : "rounds"}. It is yours whenever you take it; a round
+          is open for ninety days and what nobody takes goes back into the next one.
         </p>
       ) : null}
 

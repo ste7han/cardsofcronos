@@ -249,3 +249,76 @@ CREATE TABLE IF NOT EXISTS cursors (
   block INTEGER NOT NULL,
   at    INTEGER NOT NULL
 );
+
+-- Who holds $CROCARD and how much, kept up to date rather than rediscovered.
+--
+-- An ERC20 has no list of its holders. The balances are a mapping and a mapping
+-- cannot be read without knowing the keys, so the keys come from the Transfer
+-- log and the balances are rebuilt by adding up what moved. Doing that from the
+-- token's first block is 37,822 eth_getLogs calls — about ten minutes against a
+-- fast endpoint, and far more than a scheduled job can do while somebody waits.
+--
+-- So it is done once by scripts/holder-drop.ts and kept current from then on by
+-- the daily job, which reads one day of blocks and applies the differences. The
+-- cursor in `cursors` under the name "holders" says how far it has read.
+--
+-- THIS TABLE IS A CACHE OF THE CHAIN and not a record of anything. Every number
+-- in it is derived, and losing it costs a rescan rather than a fact. What it is
+-- not allowed to be is subtly wrong, which is why the balance is applied as a
+-- delta from the log rather than asked for per address: asking would be right
+-- for the addresses asked about and silently stale for every other.
+CREATE TABLE IF NOT EXISTS holders (
+  address     TEXT PRIMARY KEY
+              CHECK (address = lower(address) AND length(address) = 42
+                     AND substr(address, 1, 2) = '0x'),
+  -- Base units, TEXT. Eighteen zeroes behind it; SQLite's INTEGER is 64-bit
+  -- signed and wraps somewhere around nine of anything without erroring.
+  balance     TEXT NOT NULL,
+  -- 1 if the address has code on it, 0 if it does not, NULL if nobody has
+  -- asked yet. Three states and not two: an address that has not been checked
+  -- must not be treated as a person, because the largest holder of this token
+  -- is a liquidity pool and paying it would be paying two fifths of a round to
+  -- nobody. Asked once and remembered — code does not appear on an address
+  -- that had none, except by a deploy to a counterfactual address, which is
+  -- not a thing that happens to a holder by accident.
+  is_contract INTEGER,
+  at          INTEGER NOT NULL
+);
+
+-- Anything with a balance is a candidate; the ones that are not people are
+-- filtered out. Indexed for the round builder, which reads every positive
+-- balance and nothing else.
+CREATE INDEX IF NOT EXISTS holders_positive ON holders (balance) WHERE balance <> '0';
+
+-- What each round promised whom, so a proof can be rebuilt on demand.
+--
+-- The tree itself is not stored. It is rebuilt from these rows when somebody
+-- asks for their proof, which is cheap for a few thousand leaves and means
+-- there is one source of truth rather than a blob that can disagree with the
+-- rows it was made from.
+CREATE TABLE IF NOT EXISTS drop_entries (
+  round   INTEGER NOT NULL,
+  address TEXT NOT NULL
+          CHECK (address = lower(address) AND length(address) = 42
+                 AND substr(address, 1, 2) = '0x'),
+  -- The share, in base units, as TEXT. Same rule as everywhere else.
+  amount  TEXT NOT NULL,
+  PRIMARY KEY (round, address)
+);
+
+-- One row per round opened, so the site can say what is open without asking the
+-- chain for something it already knows.
+CREATE TABLE IF NOT EXISTS drop_rounds (
+  round     INTEGER PRIMARY KEY,
+  root      TEXT NOT NULL,
+  -- What the tree promises in total. The contract allocates whatever is
+  -- unallocated at the moment the transaction lands, which can be a little more
+  -- if something arrived in between; the difference is swept back after the
+  -- round expires rather than being paid twice.
+  promised  TEXT NOT NULL,
+  holders   INTEGER NOT NULL,
+  tx_hash   TEXT NOT NULL
+            CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
+                   AND substr(tx_hash, 1, 2) = '0x'),
+  opened_at INTEGER NOT NULL
+);

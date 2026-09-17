@@ -1,13 +1,19 @@
-// The daily tick: release what the splitter is holding and record what burned.
+// The daily tick: release, record what burned, and pay the holders.
 //
 // Same shape as the weekly tick next door and for the same reasons: reached only
 // by worker/index.js, an ordinary route so the job runs inside Next with the D1
 // binding and the helpers already wired, and gated on a secret out of the
 // environment because there is nobody signed in at ten past midnight.
 //
-// The work is in lib/splitter.ts. This is the door.
+// Three things, in this order and for a reason. The splitter releases first, so
+// what it buys is in the drop before the drop is divided. The burns are recorded
+// from the log that release wrote. Then the holder table is brought up to date
+// and a round is opened over whatever is sitting there unclaimed.
+//
+// The work is in lib/splitter.ts and lib/holders.ts. This is the door.
 
 import { db, env } from "@/lib/api";
+import { runHolders } from "@/lib/holders";
 import { runDaily } from "@/lib/splitter";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +35,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "No." }, { status: 401 });
   }
 
-  const ran = await runDaily(
-    db(),
-    { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC },
-    Date.now(),
-  );
+  const secrets = { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC };
+  const now = Date.now();
+
+  // Sequential, not parallel. The round is opened over what the release just
+  // bought, so running them at the same time would open today's round over
+  // yesterday's money and leave today's for tomorrow.
+  const splitter = await runDaily(db(), secrets, now);
+  const holders = await runHolders(db(), secrets, now);
+  const ran = { splitter, holders };
 
   // Always 200 with what happened, for the same reason the weekly one does. Most
   // days there is nothing to release, and a job that returns an error for the

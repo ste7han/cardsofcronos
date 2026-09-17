@@ -691,6 +691,37 @@ more gas than the smallest shares are worth. So a round is published as one
 number — a root — and each share is proved when it is taken. A holder who never
 takes theirs costs nothing to have included.
 
+**A round opens by itself, weekly.** The daily cron releases what the splitter is
+holding, records the burns, brings the holder table up to date and then opens a
+round over whatever the drop is holding and nobody is owed yet — see
+`lib/holders.ts`. Three things decide whether it actually opens: a week since the
+last one, at least a thousand $CROCARD to share, and a holder table that has been
+filled in.
+
+**Weekly and not daily, and that is about the holder.** Each round is claimed
+separately — the contract keeps `claimed[round][holder]` — so a round a day would
+face a holder with ninety open rounds inside the ninety-day window and ninety
+transactions to collect. Nobody does that and the shares would expire. Thirteen
+is a number somebody actually works through.
+
+**Who holds it is a table, not a scan.** An ERC20 has no list of its holders: the
+balances are a mapping, a mapping needs its keys, and the keys only exist in the
+Transfer log. Replaying that from the token's first block — 18,857,956, 2 April
+2025 — is 37,822 `eth_getLogs` calls, because Cronos answers two thousand blocks
+at a time and a block is 0.42 seconds. Twelve at once against publicnode does it
+in ten minutes; a cron doing a hundred and fifty a day would take eight months.
+
+So `scripts/holder-drop.ts` does it once and writes SQL, and the daily job keeps
+it current from there — one day is a hundred calls. **The table is a cache of the
+chain**: everything in it is derived, losing it costs a rescan rather than a
+fact, and `runHolders` refuses to open a round while the cursor is unset rather
+than paying whoever happened to transact lately.
+
+**Nothing with code on it is paid.** The pool holds thirty-nine per cent of the
+supply. Unknown counts as not paid too — an address nobody has asked about is
+left out of this round and is in the next, and that asymmetry is deliberate:
+leaving somebody out is recoverable and paying a pool is not.
+
 `claim` pays the holder named in the proof rather than the caller, so a holder
 can take their own or anything can push it to them. The publisher may open a
 round and nothing else: it cannot withdraw, cannot change a round it has opened,

@@ -31,6 +31,8 @@
     "allowlist": "tsx scripts/allowlist.ts",
     "db:local": "wrangler d1 execute cards-of-cronos --local --file=db/schema.sql",
     "db:remote": "wrangler d1 execute cards-of-cronos --remote --file=db/schema.sql",
+    "holder-scan": "tsx scripts/holder-drop.ts",
+    "db:holders": "wrangler d1 execute cards-of-cronos --remote --file=data/holders.sql",
     "contract": "forge test",
     "site-logo": "tsx scripts/site-logo.tsx",
     "trace-mark": "tsx scripts/trace-mark.ts",

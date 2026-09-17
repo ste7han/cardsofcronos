@@ -575,6 +575,217 @@ export async function setCursor(
     .run();
 }
 
+/** One holder of $CROCARD, as the table keeps it. */
+export interface Holder {
+  address: string;
+  balance: bigint;
+  /** Null until somebody has asked the chain whether there is code on it. */
+  isContract: boolean | null;
+}
+
+/**
+ * Applies what a batch of Transfer logs moved.
+ *
+ * DELTAS AND NOT BALANCES. The log says what moved; adding it up is what makes
+ * the table right for every address at once. Asking the chain for a balance
+ * per address would be right for the addresses asked about and quietly stale
+ * for every other one, and the ones that go stale are exactly the ones nobody
+ * thought to ask about.
+ *
+ * `is_contract` is left alone on an address that already has a row. Whether an
+ * address has code is asked once and remembered; see `unknownHolders`.
+ *
+ * THE ADDITION HAPPENS IN JAVASCRIPT, not in SQL. `balance + delta` inside the
+ * statement would be SQLite arithmetic, and SQLite's INTEGER is 64-bit signed:
+ * it stops being able to hold one of these somewhere around nine tokens and it
+ * does not error, it wraps. That is the reason the column is TEXT in the first
+ * place, and doing the sum in SQL would have thrown that away in the one place
+ * it mattered. Read, add with bigints, write back — this is the only writer, so
+ * there is nothing to race with.
+ */
+export async function moveBalances(
+  db: Database,
+  deltas: ReadonlyMap<string, bigint>,
+  at: number,
+): Promise<void> {
+  const rows = [...deltas].filter(([, delta]) => delta !== 0n);
+  if (rows.length === 0) return;
+
+  const had = new Map<string, bigint>();
+  for (let i = 0; i < rows.length; i += 50) {
+    const slice = rows.slice(i, i + 50);
+    const found = await Promise.all(
+      slice.map(([address]) =>
+        db
+          .prepare(`SELECT balance FROM holders WHERE address = ?`)
+          .bind(address)
+          .first<{ balance: string }>(),
+      ),
+    );
+    for (const [j, row] of found.entries()) {
+      if (row !== null) had.set(slice[j]![0], BigInt(row.balance));
+    }
+  }
+
+  for (let i = 0; i < rows.length; i += 50) {
+    await Promise.all(
+      rows.slice(i, i + 50).map(([address, delta]) =>
+        db
+          .prepare(
+            `INSERT INTO holders (address, balance, is_contract, at) VALUES (?, ?, NULL, ?)
+             ON CONFLICT (address) DO UPDATE SET balance = excluded.balance, at = excluded.at`,
+          )
+          .bind(address, ((had.get(address) ?? 0n) + delta).toString(), at)
+          .run(),
+      ),
+    );
+  }
+}
+
+/**
+ * Everyone with a positive balance who is known not to be a contract.
+ *
+ * Unknown is excluded rather than included. The largest holder of this token is
+ * a liquidity pool, so "we have not checked" has to mean "not paid" — the other
+ * way round pays two fifths of a round to nobody, once, before anybody notices.
+ */
+export async function payableHolders(db: Database): Promise<Holder[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT address, balance, is_contract FROM holders
+        WHERE is_contract = 0 AND balance <> '0'`,
+    )
+    .all<{ address: string; balance: string; is_contract: number | null }>();
+
+  return results
+    .map((row) => ({
+      address: row.address,
+      balance: BigInt(row.balance),
+      isContract: row.is_contract === null ? null : row.is_contract === 1,
+    }))
+    .filter((holder) => holder.balance > 0n);
+}
+
+/** Addresses holding something that nobody has checked for code yet. */
+export async function unknownHolders(db: Database, limit: number): Promise<string[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT address FROM holders
+        WHERE is_contract IS NULL AND balance <> '0'
+        ORDER BY at ASC LIMIT ?`,
+    )
+    .bind(limit)
+    .all<{ address: string }>();
+  return results.map((row) => row.address);
+}
+
+/** Writes down whether an address has code on it. */
+export async function markContracts(
+  db: Database,
+  answers: ReadonlyMap<string, boolean>,
+): Promise<void> {
+  await Promise.all(
+    [...answers].map(([address, isContract]) =>
+      db
+        .prepare(`UPDATE holders SET is_contract = ? WHERE address = ?`)
+        .bind(isContract ? 1 : 0, address)
+        .run(),
+    ),
+  );
+}
+
+/** A round that has been opened, and what it promised. */
+export interface DropRound {
+  round: number;
+  root: string;
+  promised: bigint;
+  holders: number;
+  txHash: string;
+  openedAt: number;
+}
+
+/**
+ * Writes a round and everything it promised.
+ *
+ * The entries go in first. A round row with no entries is a round nobody can
+ * prove a share against, and the order is the difference between that and a
+ * round that is simply not there yet.
+ */
+export async function recordRound(
+  db: Database,
+  round: DropRound,
+  entries: readonly (readonly [string, bigint])[],
+): Promise<void> {
+  for (let i = 0; i < entries.length; i += 50) {
+    await Promise.all(
+      entries.slice(i, i + 50).map(([address, amount]) =>
+        db
+          .prepare(
+            `INSERT INTO drop_entries (round, address, amount) VALUES (?, ?, ?)
+             ON CONFLICT (round, address) DO NOTHING`,
+          )
+          .bind(round.round, address, amount.toString())
+          .run(),
+      ),
+    );
+  }
+
+  await db
+    .prepare(
+      `INSERT INTO drop_rounds (round, root, promised, holders, tx_hash, opened_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (round) DO NOTHING`,
+    )
+    .bind(
+      round.round,
+      round.root,
+      round.promised.toString(),
+      round.holders,
+      round.txHash.toLowerCase(),
+      round.openedAt,
+    )
+    .run();
+}
+
+/** Every round that has been opened, newest first. */
+export async function dropRounds(db: Database, limit = 12): Promise<DropRound[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT round, root, promised, holders, tx_hash, opened_at
+         FROM drop_rounds ORDER BY round DESC LIMIT ?`,
+    )
+    .bind(limit)
+    .all<{
+      round: number;
+      root: string;
+      promised: string;
+      holders: number;
+      tx_hash: string;
+      opened_at: number;
+    }>();
+
+  return results.map((row) => ({
+    round: row.round,
+    root: row.root,
+    promised: BigInt(row.promised),
+    holders: row.holders,
+    txHash: row.tx_hash,
+    openedAt: row.opened_at,
+  }));
+}
+
+/** Everything one round promised, in the order the tree was built from. */
+export async function roundEntries(
+  db: Database,
+  round: number,
+): Promise<[string, string][]> {
+  const { results } = await db
+    .prepare(`SELECT address, amount FROM drop_entries WHERE round = ? ORDER BY address ASC`)
+    .bind(round)
+    .all<{ address: string; amount: string }>();
+  return results.map((row) => [row.address, row.amount]);
+}
+
 /** The seed for a new match. Not from the engine: it is what the engine is given. */
 export function seedFor(id: string): number {
   // A hash of the id rather than a random number, so creating the same match
