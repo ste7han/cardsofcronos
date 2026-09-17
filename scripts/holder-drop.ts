@@ -22,9 +22,22 @@
 //
 // ── WHAT IS LEFT OUT ─────────────────────────────────────────────────────────
 //
-// The burn address, the zero address, and this project's own contracts. Tokens
-// sent to a burn address are gone by definition and paying them would be paying
-// nobody, forever, out of everybody else's share.
+// Anything that is not a person. The burn address and the zero address, because
+// tokens sent there are gone by definition and paying them is paying nobody
+// forever out of everybody else's share. This project's own contracts, because
+// they would be paying themselves. And ANY ADDRESS WITH CODE ON IT.
+//
+// That last one is the rule and the rest is the list, and it is this way round
+// because of one address: the EbisusBay CROCARD/WCRO pool holds 399 million —
+// thirty-nine per cent of the supply. It is the largest holder of the token by
+// far and it is not a holder, it is the liquidity. A list-only approach pays it
+// two fifths of every round until somebody notices, and the next pool, bridge or
+// router is the one nobody remembers to add.
+//
+// A holder whose wallet is a contract — a Safe, say — is caught by this too, and
+// that is the trade. Every skipped contract is printed with what it holds, so
+// allowing one is a deliberate line in lib/revenue.ts rather than a silent
+// payout to a pool.
 //
 // Shares are floored, so they always sum to a little UNDER the round. The few
 // wei left over stay in the contract and are swept into a later round rather
@@ -35,7 +48,7 @@ import { writeFileSync } from "node:fs";
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 
 import { normalise } from "@/lib/address";
-import { BURN_ADDRESS, CROCARD, CONTRACTS } from "@/lib/revenue";
+import { CROCARD, CONTRACTS, NOT_A_HOLDER } from "@/lib/revenue";
 import { PUBLIC_RPCS } from "@/lib/cronos";
 
 /** keccak of "Transfer(address,address,uint256)". */
@@ -107,6 +120,32 @@ async function balances(): Promise<Map<string, bigint>> {
   return held;
 }
 
+/**
+ * Which of these addresses have code on them.
+ *
+ * `eth_getCode` per address, in batches the endpoints will take. It is a lot of
+ * calls for a script that runs when a round is opened, and the alternative is
+ * trusting a list of addresses somebody remembered to keep up to date with a
+ * payout hanging on it.
+ */
+async function whichHaveCode(addresses: readonly string[]): Promise<Set<string>> {
+  const found = new Set<string>();
+  const AT_A_TIME = 10; // evm.cronos.org refuses a larger JSON-RPC batch.
+
+  for (let i = 0; i < addresses.length; i += AT_A_TIME) {
+    const slice = addresses.slice(i, i + AT_A_TIME);
+    const answers = await Promise.all(
+      slice.map((address) => rpc("eth_getCode", [address, "latest"]) as Promise<string>),
+    );
+    for (const [j, code] of answers.entries()) {
+      // "0x" is an ordinary wallet. Anything longer is a contract.
+      if (code !== "0x" && code !== "0x0") found.add(slice[j]!);
+    }
+    process.stderr.write(`  code ${Math.min(i + AT_A_TIME, addresses.length)}/${addresses.length}\r`);
+  }
+  return found;
+}
+
 async function main(): Promise<void> {
   const round = Number(process.argv[2]);
   const total = BigInt(process.argv[3] ?? "0");
@@ -116,17 +155,36 @@ async function main(): Promise<void> {
 
   const held = await balances();
 
-  // Everything that is not a person. A contract of this project's own holding
-  // the token would be paying itself out of everybody else's share.
+  // The named ones: burn, zero, the pool, the router, and this project's own
+  // contracts. Known today, and not what is relied on.
   const skip = new Set<string>([
-    normalise("0x0000000000000000000000000000000000000000"),
-    BURN_ADDRESS,
+    ...NOT_A_HOLDER,
     ...Object.values(CONTRACTS).filter((a): a is string => a !== null),
   ]);
 
-  const holders = [...held]
+  const positive = [...held]
     .filter(([address, amount]) => amount > 0n && !skip.has(address))
     .sort(([a], [b]) => a.localeCompare(b));
+
+  // And the rule: anything with code is not a person. Asked of the chain rather
+  // than assumed, because this is the check that catches the pool nobody wrote
+  // down — and it is asked for every address rather than only the big ones, so
+  // that adding a contract to the list later is a decision and not a discovery.
+  const contracts = await whichHaveCode(positive.map(([address]) => address));
+  const holders = positive.filter(([address]) => !contracts.has(address));
+
+  if (contracts.size > 0) {
+    const missed = positive
+      .filter(([address]) => contracts.has(address))
+      .sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));
+    process.stderr.write(`\n  Skipped ${contracts.size} address(es) with code on them:\n`);
+    for (const [address, amount] of missed) {
+      process.stderr.write(`    ${address}  ${(amount / 10n ** 18n).toLocaleString("en-US")}\n`);
+    }
+    process.stderr.write(
+      "  Any of these that is a person's wallet has to be allowed in lib/revenue.ts.\n\n",
+    );
+  }
 
   const supply = holders.reduce((sum, [, amount]) => sum + amount, 0n);
   if (supply === 0n) throw new Error("Nobody holds any, which cannot be right.");

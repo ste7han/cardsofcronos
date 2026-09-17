@@ -15,10 +15,8 @@ import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { byDeck, history, tally, type DeckRow, type MatchOutcome } from "@/lib/history";
 import { LINKABLE, type Network } from "@/lib/links";
-import { Points } from "@/components/Points";
-import { RefWelcome } from "@/components/RefWelcome";
-import { Referrals } from "@/components/Referrals";
-import { noticeRefInUrl } from "@/lib/ref";
+import { HOLDER_TIERS, nextTier, tierFor } from "@/data/holder-tiers";
+import { toTokens } from "@/lib/units";
 import { TelegramLink } from "@/components/TelegramLink";
 import { proofOf } from "@/lib/session";
 import { useSession } from "@/lib/use-session";
@@ -45,6 +43,10 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
 
 interface Standing {
   record: { wins: number; losses: number; draws: number };
+  /** Base units as decimal strings, or null when the chain would not answer. */
+  held: string | null;
+  taken: string | null;
+  drop: string | null;
 }
 
 export function Profile() {
@@ -59,15 +61,12 @@ export function Profile() {
     setMatches(wallet === null ? [] : history());
   }, [ready, wallet]);
 
-  // A code arriving on a link, held until there is a wallet to attach it to.
-  useEffect(() => noticeRefInUrl(), []);
-
   useEffect(() => {
     if (!ready || wallet === null) return;
     void (async () => {
       const proof = proofOf();
       if (proof === null) return;
-      const response = await fetch("/api/ref/me", {
+      const response = await fetch("/api/profile", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ proof }),
@@ -78,9 +77,7 @@ export function Profile() {
 
   if (ready && wallet === null) {
     return (
-      <>
-        <RefWelcome signedIn={false} />
-        <div className="panel border border-line px-6 py-16 text-center">
+      <div className="panel border border-line px-6 py-16 text-center">
         <p className="text-[10px] tracking-[0.28em] text-faint">NOT SIGNED IN</p>
         <h2 className="display mt-3 text-2xl">A PROFILE IS A WALLET</h2>
         <p className="mx-auto mt-4 max-w-md text-[11px] leading-relaxed text-muted">
@@ -90,8 +87,7 @@ export function Profile() {
         <p className="mt-8 text-[10px] tracking-[0.18em] text-pump">
           USE THE WALLET BUTTON, TOP RIGHT
         </p>
-        </div>
-      </>
+      </div>
     );
   }
 
@@ -101,8 +97,6 @@ export function Profile() {
 
   return (
     <div className="space-y-10">
-      <RefWelcome signedIn={wallet !== null} />
-
       <section className="panel border border-line px-5 py-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div className="min-w-0">
@@ -117,8 +111,10 @@ export function Profile() {
         </div>
       </section>
 
-      {/* Rank first, because it is the number that will matter, and empty is the
-          honest thing for it to say today. */}
+      <Holding standing={standing} />
+
+      {/* Rank after holding, because holding is the thing that pays and rank is
+          the thing that will. Empty is the honest answer for both today. */}
       <section>
         <h2 className="display text-xl">RANK</h2>
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
@@ -191,11 +187,79 @@ export function Profile() {
       </section>
 
       <LinkedAccounts />
-
-      <Points wallet={wallet} />
-
-      <Referrals wallet={wallet} />
     </div>
+  );
+}
+
+/**
+ * What you hold and what holding it has paid you.
+ *
+ * Half of every mint, royalty and ranked match is bought as $CROCARD and shared
+ * out among the people holding it, so this is the section the rest of the
+ * economy points at. Three facts and no invitation: what is in the wallet, what
+ * that makes you, and what has actually arrived.
+ *
+ * READING NOTHING IS NOT THE SAME AS HOLDING NOTHING, which is why every figure
+ * here has a third state. An RPC that would not answer must not print a zero
+ * balance next to a tier calculated from it — that is a page telling somebody
+ * they are on the retail rate when they are not.
+ */
+function Holding({ standing }: { standing: Standing | null }) {
+  const held = standing?.held == null ? null : toTokens(standing.held);
+  const tier = tierFor(held);
+  const next = nextTier(held);
+
+  const whole = (value: number) => Math.round(value).toLocaleString("en-US");
+
+  return (
+    <section>
+      <h2 className="display text-xl">$CROCARD</h2>
+      <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
+        Half of every paid mint, every royalty and every ranked match is bought as $CROCARD and
+        shared out among the people holding it. Holding also decides what is taken from a win —
+        the more you hold, the more of your own prize you keep.
+      </p>
+
+      <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-3">
+        <Figure
+          label="HELD"
+          value={held === null ? "—" : whole(held)}
+          note={held === null ? "Not read" : "$CROCARD"}
+        />
+        <Figure
+          label="TIER"
+          value={tier.name}
+          note={`${Math.round(tier.cut * 100)}% taken when you win`}
+        />
+        <Figure
+          label="RECEIVED"
+          value={standing?.taken == null ? "—" : whole(toTokens(standing.taken))}
+          note={standing?.drop == null ? "Nothing pays out yet" : "$CROCARD, every round"}
+        />
+      </dl>
+
+      {/* Only the rung above, and only when there is one. A ladder that lists
+          every rung a wallet is not on reads as a page asking somebody to buy
+          more, which is not what this section is for. */}
+      {held !== null && next !== null ? (
+        <p className="mt-3 text-[10px] leading-relaxed text-muted">
+          {whole(next.atLeast - held)} more is {next.name}, where {Math.round(next.cut * 100)}% is
+          taken instead of {Math.round(tier.cut * 100)}%.
+        </p>
+      ) : null}
+
+      {held !== null && next === null && tier.id === HOLDER_TIERS[0]!.id ? (
+        <p className="mt-3 text-[10px] leading-relaxed text-muted">
+          Top rung. Nothing above this one.
+        </p>
+      ) : null}
+
+      <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">
+        {standing?.drop == null
+          ? "Nothing has been minted and the contract that shares it out is not deployed, so nothing has been paid to anybody yet. What is held above is read from the chain and is real."
+          : "What has been received is the contract's own tally across every round, and it is the same number your wallet saw arrive."}
+      </p>
+    </section>
   );
 }
 

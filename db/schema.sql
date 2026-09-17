@@ -72,19 +72,15 @@ CREATE INDEX IF NOT EXISTS matches_opponent ON matches (seat_opponent, finished_
 -- DESIGN.md settles that rank comes from staked PvP.
 CREATE TABLE IF NOT EXISTS players (
   wallet        TEXT PRIMARY KEY CHECK (wallet = lower(wallet) AND length(wallet) = 42 AND substr(wallet, 1, 2) = '0x'),
-  -- The code other people type to say this player brought them, and when this
-  -- player finished their demo match.
+  -- Left over from the referral system, which this game does not have. See
+  -- DESIGN.md: it was taken out on 2026-09-17 along with points, because what
+  -- holding $CROCARD gets you is the whole of the reward and a second currency
+  -- beside it is a second thing to explain and a second thing to farm.
   --
-  -- Both of these were ALTER TABLE statements at the end of this file, because
-  -- over in the other project they were added to a table that already existed.
-  -- They were also commented out, while the index that needs ref_code was not —
-  -- so this file could only ever be run against the one database it had already
-  -- been run against. On anything fresh it stopped at
-  -- `no such column: ref_code`, which is what it did the first time anybody
-  -- tried it here.
-  --
-  -- This game has no database yet, so there is no migration to respect. The
-  -- columns go where columns go.
+  -- Kept as columns rather than dropped. The rows in D1 are real rows on a live
+  -- table and SQLite's DROP COLUMN is the one statement in this file that could
+  -- lose something; two unused columns cost nothing and a migration that goes
+  -- wrong costs a players table. Nothing reads them.
   ref_code      TEXT,
   demo_done_at  INTEGER,
   -- 1000 at first login, settled in DESIGN.md.
@@ -121,100 +117,19 @@ CREATE TABLE IF NOT EXISTS links (
 
 CREATE UNIQUE INDEX IF NOT EXISTS links_account ON links (network, account_id);
 
--- Who brought whom.
---
--- One row per person referred, and the primary key says so: you can be referred
--- once, ever. Not once per campaign and not once per code — the question "who
--- brought this player to the game" has exactly one answer for the whole life of
--- the wallet, and a table that could hold two answers is a table somebody will
--- eventually make hold two.
---
--- `qualified_at` is the whole anti-farming design and it is worth reading before
--- changing anything here. Wallets are free, so a referral that counted the
--- moment a wallet appeared would be a wallet-generating machine. It counts when
--- the person referred has both linked an X account and finished a match: an X
--- account is not free, and a match is not instant. Neither is impossible to
--- fake — nothing here is — but together they cost more than the referral can
--- ever be worth, which is the only bar that matters.
---
--- Deliberately no points column. What a referral is worth is not settled and
--- does not have to be: this table records what happened, and a price can be
--- decided later without any of this history being wrong.
-CREATE TABLE IF NOT EXISTS referrals (
-  -- The one referred. One row each, forever.
-  referee      TEXT PRIMARY KEY CHECK (referee = lower(referee) AND length(referee) = 42 AND substr(referee, 1, 2) = '0x'),
-  referrer     TEXT NOT NULL CHECK (referrer = lower(referrer) AND length(referrer) = 42 AND substr(referrer, 1, 2) = '0x'),
-  -- The code as it was used, kept so a changed code cannot rewrite history.
-  code         TEXT NOT NULL,
-  claimed_at   INTEGER NOT NULL,
-  -- Null until it counts. See above.
-  qualified_at INTEGER
-);
 
 CREATE INDEX IF NOT EXISTS referrals_by_referrer ON referrals (referrer, qualified_at);
 
 -- One code per player, and no two players sharing one. NULL is allowed as often
 -- as it likes, which is what makes this work: a code is handed out lazily, on
 -- the first time somebody asks for one.
+-- Unused with ref_code, and kept with it for the same reason.
 CREATE UNIQUE INDEX IF NOT EXISTS players_ref_code ON players (ref_code);
 
--- The five things a player can do, one row each.
---
--- A row exists or it does not, which is what makes "have they done this" a
--- lookup rather than a calculation over other tables. `proof` says how we know:
--- `verified` means this server checked it, `declared` means the player said so
--- and nothing checked. Those are not the same fact and a column that blurred
--- them would make the difference invisible on the day it mattered.
---
--- `voided_at` is the maker's stated right to refuse what looks botted. Set it
--- and the task stops counting, for the player and for whoever referred them.
--- Nothing is deleted: a voided row is evidence, and a deleted one is an argument
--- nobody can settle.
-CREATE TABLE IF NOT EXISTS tasks (
-  wallet    TEXT NOT NULL CHECK (wallet = lower(wallet) AND length(wallet) = 42 AND substr(wallet, 1, 2) = '0x'),
-  task      TEXT NOT NULL,
-  done_at   INTEGER NOT NULL,
-  proof     TEXT NOT NULL CHECK (proof IN ('verified', 'declared')),
-  voided_at INTEGER,
-  PRIMARY KEY (wallet, task)
-);
 
 CREATE INDEX IF NOT EXISTS tasks_by_wallet ON tasks (wallet, voided_at);
 
--- Points, as a ledger rather than a balance.
---
--- A balance column would be one number with no account of how it got there, and
--- the first time somebody disputes it there is nothing to show them. Every entry
--- here says what happened and when: earned by doing a task, earned because
--- somebody you referred did one, spent on a reward, or adjusted by hand.
---
--- The balance is the sum of everything not voided. That is a cheap query at this
--- size and it can never disagree with its own history.
-CREATE TABLE IF NOT EXISTS points (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  wallet    TEXT NOT NULL CHECK (wallet = lower(wallet) AND length(wallet) = 42 AND substr(wallet, 1, 2) = '0x'),
-  -- Positive earned, negative spent. One column, so the sum is the balance.
-  amount    INTEGER NOT NULL,
-  reason    TEXT NOT NULL CHECK (reason IN ('task', 'referral', 'claim', 'adjust')),
-  -- Which task earned it. Empty for a claim or an adjustment.
-  task      TEXT NOT NULL DEFAULT '',
-  -- Whose task it was, when this is a referral point. Empty otherwise.
-  about     TEXT NOT NULL DEFAULT '',
-  -- What was claimed. Empty unless this is a claim.
-  reward    TEXT NOT NULL DEFAULT '',
-  at        INTEGER NOT NULL,
-  voided_at INTEGER
-);
 
--- One point per task, and one referral point per task per person referred.
--- Partial, so claims and adjustments are free to repeat — you may buy two
--- booster packs, and you may not be paid twice for one task.
---
--- Empty strings rather than NULLs on purpose: SQLite counts two NULLs as
--- different, so a nullable column here would let the same point in twice.
-CREATE UNIQUE INDEX IF NOT EXISTS points_once
-  ON points (wallet, reason, task, about)
-  WHERE reason IN ('task', 'referral');
 
 CREATE INDEX IF NOT EXISTS points_by_wallet ON points (wallet, voided_at);
 

@@ -154,8 +154,6 @@ export function Game() {
    * whole match was played. Kept in a ref because none of it is drawn.
    */
   const played = useRef<{ seed: number; moves: Move[] }>({ seed: 0, moves: [] });
-  /** Whether this demo has already been handed over. Cleared by start(). */
-  const sent = useRef(false);
   /** This match has been handed to the weekly board. One entry per match. */
   const entered = useRef(false);
   const stateRef = useRef<State | null>(null);
@@ -207,7 +205,6 @@ export function Game() {
           },
     );
     played.current = { seed, moves: [] };
-    sent.current = false;
     entered.current = false;
     setOnBoard(false);
     stateRef.current = fresh;
@@ -367,33 +364,6 @@ export function Game() {
     // that shows a record somebody other than this tab has checked.
   }, [state, demo, deckInfo]);
 
-  /**
-   * Hand a finished demo to the server, so a referral can count.
-   *
-   * The seed and the moves and nothing else, which is the same thing a PvP
-   * match is stored as: the server rebuilds both decks from the seed and
-   * replays every move, so what it is checking is that a whole legal match
-   * happened rather than that somebody said one did.
-   *
-   * Signed out there is nobody to credit, so nothing is sent.
-   */
-  useEffect(() => {
-    if (!demo || !state?.finished || wallet === null || sent.current) return;
-    sent.current = true;
-
-    const proof = proofOf();
-    if (proof === null) return;
-
-    void fetch("/api/ref/demo", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ proof, seed: played.current.seed, moves: played.current.moves }),
-    }).catch(() => {
-      // Quiet. Nothing the player did has failed — they finished the match, and
-      // the next one they finish sends again.
-      sent.current = false;
-    });
-  }, [demo, state?.finished, wallet]);
 
   /**
    * Hand a won match to the weekly board.
@@ -504,8 +474,7 @@ export function Game() {
           <p className="mt-3 text-[10px] leading-relaxed text-faint">
             Or borrow a deck and play a match right now. It is the whole game — same ten turns,
             same bot — and it is nobody&rsquo;s collection: nothing is saved and nothing is yours
-            at the end of it.{" "}
-            {wallet !== null && "Finishing one is also what makes a referral count."}
+            at the end of it.
           </p>
           <div className="mt-8 flex justify-center gap-2">
             <button

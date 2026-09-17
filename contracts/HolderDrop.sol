@@ -76,6 +76,21 @@ contract HolderDrop is Rescuable {
     /// @notice Who has taken their share of which round.
     mapping(uint256 => mapping(address => bool)) public claimed;
 
+    /**
+     * @notice What each holder has taken across every round, for good.
+     *
+     * Kept because the site shows it. The alternative is reading back every
+     * Claimed log this contract has ever emitted to answer "what have I been
+     * paid", and Cronos answers eth_getLogs over two thousand blocks at a time —
+     * a block is 0.42 seconds, so a year of history is a quarter of a million
+     * requests to produce one number on one profile page.
+     *
+     * It costs one storage write per claim and it is never read by anything that
+     * decides who gets what. `claimed` does that, per round, and this is only a
+     * tally.
+     */
+    mapping(address => uint256) public taken;
+
     /// @notice What is spoken for across every open round.
     uint256 public allocated;
 
@@ -163,6 +178,7 @@ contract HolderDrop is Rescuable {
 
         claimed[round][holder] = true;
         one.taken += amount;
+        taken[holder] += amount;
         allocated -= amount;
 
         if (!card.transfer(holder, amount)) revert TokenTransferFailed();

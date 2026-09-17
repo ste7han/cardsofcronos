@@ -20,6 +20,9 @@ import {
   KNOWN_ADDRESSES,
   MINT_OPTIONS,
   MOST_PER_WEEK,
+  NOT_A_HOLDER,
+  POOL,
+  ROUTER,
   nameOf,
   receiverOf,
   STREAMS,
@@ -170,6 +173,35 @@ describe("burning", () => {
 
   it("is named as itself and not as a wallet", () => {
     expect(nameOf("burn")).toMatch(/burn/i);
+  });
+});
+
+describe("who is not a holder", () => {
+  it("leaves out the pool, which is the largest holder of the token and not one", () => {
+    // 399 million $CROCARD sits in the EbisusBay CROCARD/WCRO pool: thirty-nine
+    // per cent of the supply. Pay it a holder's share and two fifths of every
+    // round goes to the liquidity instead of to the people it was bought for.
+    expect(NOT_A_HOLDER).toContain(POOL);
+    expect(NOT_A_HOLDER).toContain(BURN_ADDRESS);
+    expect(NOT_A_HOLDER).toContain(ROUTER);
+    expect(NOT_A_HOLDER).toContain("0x0000000000000000000000000000000000000000");
+  });
+
+  it("is written the way every other address in this file is", () => {
+    // Lowercase, or the set membership check in the drop script silently misses
+    // it and pays it anyway.
+    for (const address of NOT_A_HOLDER) {
+      expect(address).toBe(address.toLowerCase());
+      expect(address).toMatch(/^0x[0-9a-f]{40}$/);
+    }
+    expect(new Set(NOT_A_HOLDER).size).toBe(NOT_A_HOLDER.length);
+  });
+
+  it("never names a wallet of ours, which would be a payout quietly withheld", () => {
+    for (const wallet of Object.values(WALLETS)) {
+      if (wallet.address === null) continue;
+      expect(NOT_A_HOLDER).not.toContain(wallet.address);
+    }
   });
 });
 

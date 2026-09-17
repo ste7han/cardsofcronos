@@ -14,7 +14,7 @@
 
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { clearPending, LINK_COOKIE, readPending } from "@/lib/link-cookie";
-import { completeTask, linkAccount } from "@/lib/store";
+import { linkAccount } from "@/lib/store";
 import { identify, redirectUriFor } from "@/lib/x-oauth";
 
 export const dynamic = "force-dynamic";
@@ -80,13 +80,9 @@ export async function GET(request: Request) {
     linkedAt: Date.now(),
   });
 
-  // One account, one wallet. Without this the referral system is farmed by
-  // making wallets, and wallets are free.
+  // One account, one wallet. Somebody who can link the same X account to ten
+  // wallets is ten people as far as anything reading this table is concerned.
   if (heldBy) return done({ link: "taken", handle: identity.username });
-
-  // The point is paid at the moment it is verified. A later sweep over "who has
-  // an X link" would work too and would be a second place where the rule lives.
-  await completeTask(db(), wallet, "link_x", "verified", Date.now());
 
   return done({ link: "x", handle: identity.username });
 }

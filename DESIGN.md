@@ -757,14 +757,14 @@ The moment there is a stake, the same proof has to be checked on the server and
 the client's answer stops counting.
 
 **One spelling per wallet.** An EVM address is the same address in any case, so
-two spellings of one wallet would be two players, two referral rows and two point
+two spellings of one wallet would be two players, two records and two holder
 balances — and nothing about it looks wrong until somebody counts. Lowercase
 everywhere it is stored and compared, checksummed only where a person reads it.
 Enforced at the door in `lib/api.ts` and by a `CHECK` on every wallet column.
 
 ---
 
-## PvP, referrals and points
+## PvP
 
 **Correspondence and friendly only.** Live and staked are refused by name.
 
@@ -776,21 +776,24 @@ gets 404 rather than 403.
 The clock is lazy: an end-of-turn is appended for every window that closed while
 nobody was looking, so nothing needs a cron.
 
-**Referrals qualify on work, not on arrival.** Wallets are free, so a referral
-that counted the moment a wallet appeared would be a wallet-generating machine.
-It counts when the person referred has linked an X account *and* finished a
-match. Neither is impossible to fake; together they cost more than the referral
-can be worth, which is the only bar that matters.
+**There are no referrals and no points.** There were, ported over with the rest
+of the foundation: five tasks worth a point each, a referral worth up to five,
+a ledger of every row, and a catalogue of what points bought. It was taken out on
+2026-09-17 because this game is not that game — what holding $CROCARD gets you is
+a share of every stream and a smaller cut taken from a win, and a second currency
+next to it is a second thing to explain and a second thing to farm.
 
-**Points are a ledger, not a balance.** Every row says what happened and when.
-Idempotency by unique index rather than read-then-write. Nothing is deleted;
-a voided task takes its points with it and both keep their history.
+What went with it: `/r/[code]`, `/api/ref/*`, `/api/tasks/*`, `lib/ref.ts`,
+`lib/points.ts`, four components and the store functions behind them. The
+`referrals`, `tasks` and `points` tables are out of `db/schema.sql`; the ones
+already in D1 are empty and harmless, and dropping them is a hand command nobody
+has to run.
 
-Five tasks, a point each, and a referrer earns one for each of the five their
-referee does — so a referral is worth up to five. `follow_x` is recorded as
-*declared* rather than *verified*, because X has no free tier and checking one
-follower costs about twenty dollars. The page says so, because a player who knows
-it is checked by hand behaves differently from one who thinks nothing is.
+**What the profile shows instead** is what you hold, which tier that puts you in,
+and what the holder drop has actually paid you. The first two are read off the
+chain and the third is `taken(address)` on `contracts/HolderDrop.sol` — a tally
+the contract keeps precisely so that a profile page does not have to replay a
+year of logs to answer one question.
 
 ---
 

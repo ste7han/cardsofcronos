@@ -4,7 +4,6 @@ import { Archivo_Black, JetBrains_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { CopycatWarning } from "@/components/CopycatWarning";
 import { Nav } from "@/components/Nav";
-import { RefCatcher } from "@/components/RefCatcher";
 
 import "./globals.css";
 
@@ -48,7 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="grid-lines flex min-h-screen flex-col">
         <CopycatWarning />
         <Nav />
-        <RefCatcher />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>

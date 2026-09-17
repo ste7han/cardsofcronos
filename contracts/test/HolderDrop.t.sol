@@ -202,4 +202,49 @@ contract HolderDropTest is Test {
         vm.expectRevert(Rescuable.ZeroAddress.selector);
         new HolderDrop(IERC20(address(card)), address(0));
     }
+
+    /**
+     * The running tally the profile page reads.
+     *
+     * It must follow the transfers exactly, across rounds, and it must never be
+     * what decides a claim — that is `claimed`, per round. A tally that drifted
+     * from what was actually sent would be a number on somebody's profile that
+     * their own wallet disagrees with.
+     */
+    function test_whatAHolderHasBeenPaidAddsUpAcrossRounds() public {
+        assertEq(drop.taken(a11), 0, "nothing before anything is claimed");
+
+        vm.prank(publisher);
+        drop.openRound(1, root);
+        drop.claim(1, a11, 5 ether, proofFor(0));
+
+        assertEq(drop.taken(a11), 5 ether);
+        assertEq(drop.taken(a11), card.balanceOf(a11), "it is what the wallet actually got");
+        assertEq(drop.taken(b22), 0, "and it is per holder");
+
+        // A second round with the same tree. `claimed` is keyed by round, so a11
+        // is owed again — which is the case the tally has to add up rather than
+        // overwrite.
+        card.mint(address(drop), 10 ether);
+        vm.prank(publisher);
+        drop.openRound(2, root);
+        drop.claim(2, a11, 5 ether, proofFor(0));
+
+        assertEq(drop.taken(a11), 10 ether, "a second round adds to it");
+        assertEq(drop.taken(a11), card.balanceOf(a11), "and it still matches the wallet");
+    }
+
+    /** A claim that is refused must not move the tally. */
+    function test_arefusedClaimLeavesTheTallyAlone() public {
+        vm.prank(publisher);
+        drop.openRound(1, root);
+        drop.claim(1, a11, 5 ether, proofFor(0));
+
+        vm.expectRevert(HolderDrop.AlreadyClaimed.selector);
+        drop.claim(1, a11, 5 ether, proofFor(0));
+
+        assertEq(drop.taken(a11), 5 ether, "the second attempt added nothing");
+        assertEq(drop.taken(a11), card.balanceOf(a11));
+    }
+
 }

@@ -53,6 +53,31 @@ export const TEAM_WALLET = normalise("0x42BCc1355808aDf2344773c54e364257911CcC99
  */
 export const ROUTER = normalise("0xa476c97d8d1ec7d263eafa0039645dbe0cc0a012");
 
+/**
+ * The CROCARD/WCRO pool the router trades against.
+ *
+ * Named here because of what it holds: 399 million $CROCARD, thirty-nine per
+ * cent of the supply. It is the single largest holder of the token by a long way
+ * and it is not a person — it is the liquidity, and paying it a holder's share
+ * would send two fifths of every payout to nobody, out of everybody else's.
+ */
+export const POOL = normalise("0xce7AE1d9dB768bfCccD3E7acAC2C0E563c25caEA");
+
+/**
+ * Addresses that hold $CROCARD and are not holders.
+ *
+ * Named so they can be checked, and not the whole rule — scripts/holder-drop.ts
+ * also refuses any address with code on it, because the next pool, router or
+ * bridge is the one nobody remembered to add to a list. This is what is known
+ * to be here today; that is what catches what is not.
+ */
+export const NOT_A_HOLDER: readonly string[] = [
+  normalise("0x0000000000000000000000000000000000000000"),
+  BURN_ADDRESS,
+  POOL,
+  ROUTER,
+];
+
 export interface Wallet {
   id: "creator" | "deployer" | "marketing" | "tournament";
   /**

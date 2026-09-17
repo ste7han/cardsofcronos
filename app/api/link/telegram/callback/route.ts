@@ -11,7 +11,7 @@
 
 import { db, env, signedInWallet } from "@/lib/api";
 import { clearPending, LINK_COOKIE, readPending } from "@/lib/link-cookie";
-import { completeTask, linkAccount } from "@/lib/store";
+import { linkAccount } from "@/lib/store";
 import { authFrom, handleOf, verifyTelegram } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
@@ -58,8 +58,6 @@ export async function GET(request: Request) {
     linkedAt: Date.now(),
   });
   if (heldBy) return done({ link: "taken", handle });
-
-  await completeTask(db(), wallet, "link_telegram", "verified", Date.now());
 
   return done({ link: "telegram", handle });
 }
