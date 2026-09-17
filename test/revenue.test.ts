@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { isAddress, normalise } from "@/lib/address";
+import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 import {
   BURN_ADDRESS,
   CONTRACTS,
@@ -18,6 +19,7 @@ import {
   croPerCard,
   KNOWN_ADDRESSES,
   MINT_OPTIONS,
+  MOST_PER_WEEK,
   nameOf,
   receiverOf,
   STREAMS,
@@ -287,6 +289,24 @@ describe("the split is written in two languages", () => {
     expect(bps("BURN_BPS")).toBe(share("burn") * 100);
     expect(bps("POT_BPS")).toBe(share("tournament") * 100);
     expect(bps("HOLDERS_BPS") + bps("BURN_BPS") + bps("POT_BPS")).toBe(10_000);
+  });
+
+  it("agrees with contracts/PrizePot.sol about the ceiling on a week", () => {
+    // The site tells people a week pays at most one percent of supply. The
+    // contract is what actually holds a winner to it, and a ceiling raised in
+    // one file and not the other is a page making a promise the chain is not
+    // keeping — or, worse, keeping one the page does not mention.
+    const source = readFileSync(new URL("../contracts/PrizePot.sol", import.meta.url), "utf8");
+    const found = source.match(/DEFAULT_MOST_PER_WEEK\s*=\s*([0-9_]+)\s*ether\s*;/);
+    expect(found, "DEFAULT_MOST_PER_WEEK is not in the contract").toBeTruthy();
+
+    expect(Number(found![1]!.replace(/_/g, ""))).toBe(MOST_PER_WEEK);
+    expect(MOST_PER_WEEK).toBe(CROCARD_SUPPLY / 100);
+
+    // And the constructor uses it, rather than declaring it and setting
+    // something else — which would compile, and pass every test that only reads
+    // the constant.
+    expect(source).toMatch(/mostPerWeek\s*=\s*DEFAULT_MOST_PER_WEEK\s*;/);
   });
 
   it("is the same split for every stream, so one contract can do all of them", () => {

@@ -22,7 +22,8 @@ import { buildDeckPreferring, deckProblems } from "@/engine/deck";
 import { applyMove, newMatch } from "@/engine/match";
 import { RULES, type Move } from "@/engine/types";
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
-import { PUBLIC_RPCS, tokenBalances } from "@/lib/cronos";
+import { PUBLIC_RPCS, rpc, tokenBalances } from "@/lib/cronos";
+import { selector } from "@/lib/evm-tx";
 import { CONTRACTS, CROCARD } from "@/lib/revenue";
 import { INDEX } from "@/lib/set";
 import { pastWeeks, record, standings, weekEnds, weekOf } from "@/lib/tournament";
@@ -56,15 +57,39 @@ export async function GET() {
  * pot is not deployed yet, or an RPC would not answer. Neither is zero. A pot
  * reading empty because a request timed out is the kind of number that makes
  * somebody stop playing.
+ *
+ * TWO NUMBERS, BECAUSE THEY STOPPED BEING THE SAME. A week pays at most one
+ * percent of supply and what is over that rolls into the next week, so once the
+ * pot is fuller than a week may pay, the balance is no longer what a winner
+ * takes home. `most` is what they would actually get — `nextPrize()` on the
+ * contract, which is the contract's own answer rather than this route doing the
+ * arithmetic with a ceiling it assumed.
  */
-async function potNow(): Promise<{ wei: string | null; wallet: string | null }> {
+async function potNow(): Promise<{
+  wei: string | null;
+  most: string | null;
+  wallet: string | null;
+}> {
   const pot = CONTRACTS.pot;
-  if (pot === null) return { wei: null, wallet: null };
+  if (pot === null) return { wei: null, most: null, wallet: null };
 
   const secret = env().CRONOS_RPC;
   const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
-  const [held] = await tokenBalances(rpcs, CROCARD, [pot]);
-  return { wei: held?.toString() ?? null, wallet: pot };
+
+  const [[held], most] = await Promise.all([
+    tokenBalances(rpcs, CROCARD, [pot]),
+    rpc<string>(rpcs, "eth_call", [{ to: pot, data: selector("nextPrize()") }, "latest"]).catch(
+      // The balance is worth showing on its own. A ceiling this route could not
+      // read is a missing sentence, not a missing pot.
+      () => null,
+    ),
+  ]);
+
+  return {
+    wei: held?.toString() ?? null,
+    most: most === null ? null : BigInt(most).toString(),
+    wallet: pot,
+  };
 }
 
 export async function POST(request: Request) {

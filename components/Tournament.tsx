@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 
 import { formatMCExact } from "@/engine/format";
 import { EXPLORER, toTokens } from "@/lib/units";
-import { STREAMS } from "@/lib/revenue";
+import { MOST_PER_WEEK, STREAMS } from "@/lib/revenue";
 
 interface Standing {
   wallet: string;
@@ -38,7 +38,7 @@ interface Board {
   closes: number;
   standings: Standing[];
   past: PastWeek[];
-  pot: { wei: string | null; wallet: string | null };
+  pot: { wei: string | null; most: string | null; wallet: string | null };
 }
 
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -75,8 +75,33 @@ export function Tournament() {
     return () => clearInterval(tick);
   }, []);
 
+  // The default the contract is deployed with. What is live is read from the
+  // chain above; this is for the sentence that has to be sayable before there is
+  // a chain to ask.
+  const ONE_PERCENT = MOST_PER_WEEK.toLocaleString("en-US");
+
   const share = STREAMS.find((stream) => stream.id === "mints")
     ?.shares.find((s) => s.to === "tournament")?.percent;
+
+  /**
+   * What the figure at the top says, and what it is called.
+   *
+   * `most` is the contract's own answer to "what would a winner get", ceiling
+   * and all. When it cannot be read, the balance is shown under a label that
+   * does not promise it: a pot fuller than a week may pay would otherwise print
+   * the larger number as the prize, which is the flattering direction to be
+   * wrong in and the one this page is written against.
+   */
+  const shown = board?.pot.most ?? board?.pot.wei ?? null;
+  const prize =
+    shown === null ? "—" : `${Math.round(toTokens(shown)).toLocaleString("en-US")} $CROCARD`;
+
+  // The balance, but only when it is more than a week can pay. Equal means the
+  // ceiling is not biting and there is nothing to explain.
+  const holdingBack =
+    board?.pot.wei != null && board.pot.most != null && BigInt(board.pot.wei) > BigInt(board.pot.most)
+      ? Math.round(toTokens(board.pot.wei)).toLocaleString("en-US")
+      : null;
 
   return (
     <div>
@@ -85,15 +110,14 @@ export function Tournament() {
         <Figure label="CLOSES IN" value={board ? until(board.closes, now) : "—"} />
         {/* $CROCARD and not CRO. The pot holds the token, because every share is
             bought before it is paid — and the two have eighteen decimals each,
-            so the figure was right and only the unit was wrong. */}
-        <Figure
-          label="IN THE POT"
-          value={
-            board?.pot.wei
-              ? `${Math.round(toTokens(board.pot.wei)).toLocaleString("en-US")} $CROCARD`
-              : "—"
-          }
-        />
+            so the figure was right and only the unit was wrong.
+
+            WHAT A WINNER TAKES, not what is in the pot, once those differ. A
+            week pays at most one percent of supply and the rest rolls over, so
+            the balance would be the bigger number and the wrong promise. The
+            balance is said underneath instead, where it cannot be misread as
+            the prize. */}
+        <Figure label={board?.pot.most != null ? "TO BE WON" : "IN THE POT"} value={prize} />
       </div>
 
       <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
@@ -101,6 +125,17 @@ export function Tournament() {
         last — a board where playing again can cost you your place is a board that tells you to stop
         playing. Weeks run Monday 00:00 UTC to Sunday midnight.
       </p>
+
+      {/* Only when the two differ. While the pot is under the ceiling this
+          sentence would be a rule about nothing, and a page that explains a cap
+          that is not biting reads as a page looking for reasons to pay less. */}
+      {holdingBack !== null ? (
+        <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
+          There is {holdingBack} $CROCARD in the pot, and a week pays at most one percent of the
+          supply. The rest is not held back from anybody — it stays in the pot and is next
+          week&rsquo;s prize.
+        </p>
+      ) : null}
 
       <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
         Scores are replayed, not reported. You hand over the seed, the deck and every move, and the
@@ -112,9 +147,10 @@ export function Tournament() {
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-gold">
           {share ?? 25}% of every paid mint feeds the pot, and the same share of every royalty and
           every ranked match. It arrives as $CROCARD: the CRO buys the token first and the pot is
-          paid in it. Nothing has been minted yet and the pot is not deployed, so there is nothing
-          in it to win — the board runs anyway, because the scores are the part that has to be
-          real first.
+          paid in it. One week pays at most one percent of the supply — {ONE_PERCENT} $CROCARD —
+          and whatever is over that stays in the pot as next week&rsquo;s prize. Nothing has been
+          minted yet and the pot is not deployed, so there is nothing in it to win — the board
+          runs anyway, because the scores are the part that has to be real first.
         </p>
       )}
 

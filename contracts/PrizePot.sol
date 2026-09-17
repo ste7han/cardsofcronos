@@ -41,6 +41,23 @@ import {Rescuable} from "./Rescuable.sol";
  * anything, does not need to know this contract exists, and does not need gas —
  * a cron pushes it the moment a week closes, and if the cron is down, anybody
  * can. A prize that has to be fetched is a prize somebody forgets to fetch.
+ *
+ * ── WHY ONE WEEK CANNOT TAKE EVERYTHING ──────────────────────────────────────
+ *
+ * A quarter of every mint lands here and the mint is the busiest this game will
+ * ever be. Without a ceiling the first week after a good mint hands one player
+ * a double-digit percentage of the supply — for beating a bot once — and that
+ * player is then the market. So a week pays at most `mostPerWeek`, and what is
+ * over stays here and is the next week's pot.
+ *
+ * It rolls over rather than being refused, which matters: refusing would strand
+ * it, and capping without rolling over would mean the pot only ever empties.
+ * Every token that arrives is still paid out, just never all in one week.
+ *
+ * The ceiling is the owner's to move. A percentage of supply is the right rule
+ * at a small market cap and the wrong one at a large one, and nobody can know
+ * today which side of that this ends up on. It cannot be set to zero, because a
+ * ceiling of nothing is a pot nobody can ever win out of.
  */
 contract PrizePot is Rescuable {
     struct Prize {
@@ -67,7 +84,20 @@ contract PrizePot is Rescuable {
      */
     uint256 public allocated;
 
+    /**
+     * @notice The most one week may pay. Anything over it rolls to the next.
+     *
+     * One percent of the billion $CROCARD there will ever be. Set in the
+     * constructor rather than as a constant so it can be moved without a new
+     * contract and a migration of the balance — see `setMostPerWeek`.
+     */
+    uint256 public mostPerWeek;
+
+    /// @notice The default ceiling: 1% of a supply of one billion, at 18 decimals.
+    uint256 public constant DEFAULT_MOST_PER_WEEK = 10_000_000 ether;
+
     event WeekClosed(bytes32 indexed week, address indexed winner, uint256 amount);
+    event MostPerWeekChanged(uint256 from, uint256 to);
     event Paid(bytes32 indexed week, address indexed winner, uint256 amount);
     event PublisherChanged(address indexed from, address indexed to);
 
@@ -76,6 +106,7 @@ contract PrizePot is Rescuable {
     error NoSuchWeek();
     error AlreadyPaid();
     error NothingToWin();
+    error CeilingOfNothing();
 
     error TokenTransferFailed();
 
@@ -83,6 +114,7 @@ contract PrizePot is Rescuable {
         if (address(card_) == address(0) || publisher_ == address(0)) revert ZeroAddress();
         card = card_;
         publisher = publisher_;
+        mostPerWeek = DEFAULT_MOST_PER_WEEK;
     }
 
     /**
@@ -95,10 +127,13 @@ contract PrizePot is Rescuable {
     /**
      * @notice Names the winner of a week and sets that week's prize aside.
      *
-     * The prize is whatever has arrived and is not already spoken for. It is
-     * fixed at this moment rather than read at payout, so a deposit that lands
-     * between closing and paying belongs to the next week and not to a week that
-     * has already been decided.
+     * The prize is whatever has arrived and is not already spoken for, up to
+     * `mostPerWeek`. It is fixed at this moment rather than read at payout, so a
+     * deposit that lands between closing and paying belongs to the next week and
+     * not to a week that has already been decided.
+     *
+     * What the ceiling holds back is not refused and not lost. It stays in the
+     * balance, is not allocated to anybody, and is therefore the next week's pot.
      */
     function closeWeek(bytes32 week, address winner) external {
         if (msg.sender != publisher) revert NotThePublisher();
@@ -109,6 +144,7 @@ contract PrizePot is Rescuable {
         if (prizes[week].winner != address(0)) revert WeekAlreadyClosed();
 
         uint256 amount = card.balanceOf(address(this)) - allocated;
+        if (amount > mostPerWeek) amount = mostPerWeek;
         if (amount == 0) revert NothingToWin();
 
         prizes[week] = Prize({winner: winner, amount: amount, paid: false});
@@ -151,8 +187,38 @@ contract PrizePot is Rescuable {
         publisher = publisher_;
     }
 
-    /// @notice What the next week would pay, if it closed now.
+    /**
+     * @notice Moves the ceiling on what one week may pay.
+     *
+     * One percent of supply is the right rule while the token is small and the
+     * wrong one if it is ever large, and this is the maker's judgement to make
+     * later rather than a number welded in today.
+     *
+     * It does not touch a week already closed. A winner who has been told what
+     * they won keeps it, the same way a key rotation cannot take it back.
+     */
+    function setMostPerWeek(uint256 most) external onlyOwner {
+        // Zero would not be a small ceiling, it would be a pot nobody can ever
+        // win out of: closeWeek would revert with NothingToWin every week while
+        // the balance kept growing, and it would look like a bug in the cron.
+        if (most == 0) revert CeilingOfNothing();
+        emit MostPerWeekChanged(mostPerWeek, most);
+        mostPerWeek = most;
+    }
+
+    /// @notice What has arrived and is spoken for by nobody.
     function unallocated() external view returns (uint256) {
         return card.balanceOf(address(this)) - allocated;
+    }
+
+    /**
+     * @notice What the next week would pay, if it closed now.
+     *
+     * Not the same as `unallocated` once the pot is fuller than a week may pay,
+     * and that is exactly when somebody looking at the balance would guess wrong.
+     */
+    function nextPrize() external view returns (uint256) {
+        uint256 free = card.balanceOf(address(this)) - allocated;
+        return free > mostPerWeek ? mostPerWeek : free;
     }
 }

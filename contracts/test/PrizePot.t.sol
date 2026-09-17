@@ -215,4 +215,124 @@ contract PrizePotTest is Test {
         vm.expectRevert(Rescuable.ZeroAddress.selector);
         pot.closeWeek(week38, address(0));
     }
+
+    // ── THE CEILING ─────────────────────────────────────────────────────────
+
+    /**
+     * The reason it exists: a quarter of every mint lands here, the mint is the
+     * busiest this game will ever be, and without a ceiling the first week after
+     * it hands one player a tenth of the supply for beating a bot once.
+     */
+    function test_aWeekPaysAtMostTheCeiling() public {
+        // Four times the ceiling sitting in the pot, which is the shape a good
+        // mint produces.
+        card.mint(address(pot), pot.DEFAULT_MOST_PER_WEEK() * 4);
+
+        vm.prank(publisher);
+        pot.closeWeek(week38, winner);
+
+        (, uint256 amount,) = pot.prizes(week38);
+        assertEq(amount, pot.DEFAULT_MOST_PER_WEEK(), "a week cannot take more than the ceiling");
+    }
+
+    /**
+     * What the ceiling holds back is next week's pot, not stranded and not lost.
+     *
+     * The ceiling is lowered to four so the whole sequence fits in one read:
+     * ten in the pot pays four, four and two, and then it is empty. Every token
+     * that arrived is paid out, just never all in one week.
+     */
+    function test_whatIsOverTheCeilingRollsOver() public {
+        pot.setMostPerWeek(4 ether);
+        bytes32 week40 = bytes32("2026-W40");
+
+        vm.prank(publisher);
+        pot.closeWeek(week38, winner);
+        pot.claim(week38);
+        assertEq(card.balanceOf(winner), 4 ether);
+
+        vm.prank(publisher);
+        pot.closeWeek(week39, stranger);
+        pot.claim(week39);
+        assertEq(card.balanceOf(stranger), 4 ether);
+
+        vm.prank(publisher);
+        pot.closeWeek(week40, winner);
+        (, uint256 tail,) = pot.prizes(week40);
+        assertEq(tail, 2 ether, "the last of it is paid whole rather than held back");
+
+        pot.claim(week40);
+        assertEq(card.balanceOf(address(pot)), 0, "nothing is stranded by the ceiling");
+    }
+
+    /** Under the ceiling nothing changes: a small pot is paid whole. */
+    function test_asmallPotIsStillPaidWhole() public {
+        vm.prank(publisher);
+        pot.closeWeek(week38, winner);
+
+        (, uint256 amount,) = pot.prizes(week38);
+        assertEq(amount, 10 ether, "the ceiling is a ceiling, not an amount");
+    }
+
+    /** One percent of a billion, which is what the site tells people it is. */
+    function test_theCeilingStartsAtOnePercentOfSupply() public view {
+        assertEq(pot.mostPerWeek(), 10_000_000 ether);
+        assertEq(pot.mostPerWeek(), 1_000_000_000 ether / 100);
+    }
+
+    function test_theOwnerCanMoveTheCeiling() public {
+        pot.setMostPerWeek(1 ether);
+        assertEq(pot.mostPerWeek(), 1 ether);
+
+        card.mint(address(pot), 100 ether);
+        vm.prank(publisher);
+        pot.closeWeek(week38, winner);
+
+        (, uint256 amount,) = pot.prizes(week38);
+        assertEq(amount, 1 ether, "the new ceiling applies to the next week closed");
+    }
+
+    function test_nobodyElseCanMoveTheCeiling() public {
+        vm.prank(stranger);
+        vm.expectRevert();
+        pot.setMostPerWeek(1 ether);
+
+        vm.prank(publisher);
+        vm.expectRevert();
+        pot.setMostPerWeek(1 ether);
+    }
+
+    /**
+     * Zero is not a small ceiling. It is a pot nobody can ever win out of, and
+     * it would look like a broken cron rather than a setting.
+     */
+    function test_theCeilingCannotBeNothing() public {
+        vm.expectRevert(PrizePot.CeilingOfNothing.selector);
+        pot.setMostPerWeek(0);
+    }
+
+    /** Moving it cannot reach into a week that has already been decided. */
+    function test_movingTheCeilingDoesNotTakeBackAWeekAlreadyClosed() public {
+        card.mint(address(pot), pot.DEFAULT_MOST_PER_WEEK() * 2);
+
+        vm.prank(publisher);
+        pot.closeWeek(week38, winner);
+        (, uint256 promised,) = pot.prizes(week38);
+
+        pot.setMostPerWeek(1 ether);
+
+        pot.claim(week38);
+        assertEq(card.balanceOf(winner), promised, "what was promised is what is paid");
+    }
+
+    /** What the site shows as the next prize is the capped figure, not the balance. */
+    function test_nextPrizeIsWhatAWinnerWouldActuallyGet() public {
+        assertEq(pot.nextPrize(), 10 ether, "under the ceiling it is the whole balance");
+        assertEq(pot.unallocated(), 10 ether);
+
+        card.mint(address(pot), pot.DEFAULT_MOST_PER_WEEK() * 3);
+        assertEq(pot.nextPrize(), pot.DEFAULT_MOST_PER_WEEK(), "over it, it is the ceiling");
+        assertGt(pot.unallocated(), pot.nextPrize(), "and the balance is the larger number");
+    }
+
 }

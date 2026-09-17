@@ -12,6 +12,7 @@
 // than quietly leaving a remainder somewhere.
 
 import { normalise } from "@/lib/address";
+import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 
 /**
  * The token this game burns. Already live on Cronos, already held by the people
@@ -341,6 +342,25 @@ for (const stream of STREAMS) {
     }
   }
 }
+
+/**
+ * The most one week's prize may be, in whole $CROCARD.
+ *
+ * One percent of the billion there will ever be. A quarter of every mint lands
+ * in the pot and the mint is the busiest this game will ever be, so without a
+ * ceiling the first week after it hands one player a tenth of the supply for
+ * beating a bot once — and that player is then the market.
+ *
+ * What is over the ceiling is not refused and not lost. It stays in the pot and
+ * is the next week's prize, so every token that arrives is still paid out, just
+ * never all in one week.
+ *
+ * THIS IS THE DEFAULT AND NOT THE TRUTH once the pot is deployed. The contract
+ * holds the live figure in `mostPerWeek` and the owner can move it — a percent
+ * of supply is the right rule at a small market cap and the wrong one at a
+ * large one. The site reads the chain where it can and falls back to this.
+ */
+export const MOST_PER_WEEK = CROCARD_SUPPLY / 100;
 
 /**
  * What a burn row's source is called on screen.

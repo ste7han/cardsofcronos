@@ -669,6 +669,22 @@ takes nothing out of a mint.
 does. Paid out, never spent — it is the one wallet whose balance is somebody
 else's.
 
+**A week pays at most one percent of supply**, which is 10 million $CROCARD. A
+quarter of every mint lands in the pot and the mint is the busiest this game will
+ever be, so without a ceiling the first week after it hands one player a tenth of
+the supply for beating a bot once — and that player is then the market. What is
+over the ceiling is not refused and not lost: it stays in the pot and is the next
+week's prize, so everything that arrives is still paid out, just never all at
+once.
+
+The owner can move it (`setMostPerWeek`). A percentage of supply is the right
+rule while the token is small and the wrong one if it is ever large, and that is
+a judgement to make then rather than a number welded in now. It cannot be set to
+zero — a ceiling of nothing is a pot nobody can win out of, and it would look
+like a broken cron rather than a setting. `test/revenue.test.ts` checks the
+default against `contracts/PrizePot.sol`, because the site making a promise the
+chain is not keeping is the failure that matters here.
+
 **How holders are paid: a merkle round.** `contracts/HolderDrop.sol`. $CROCARD
 has a billion supply and thousands of holders, and paying them by transfer costs
 more gas than the smallest shares are worth. So a round is published as one
