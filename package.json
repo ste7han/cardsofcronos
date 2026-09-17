@@ -34,7 +34,8 @@
     "site-logo": "tsx scripts/site-logo.tsx",
     "trace-mark": "tsx scripts/trace-mark.ts",
     "webp": "tsx scripts/nft/webp.ts",
-    "tokens": "tsx scripts/nft/tokens.ts"
+    "tokens": "tsx scripts/nft/tokens.ts",
+    "upload": "tsx scripts/nft/upload.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
@@ -60,6 +61,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^3.0.0",
-    "wrangler": "^4.86.0"
+    "wrangler": "^4.86.0",
+    "@aws-sdk/client-s3": "^3.984.0"
   }
 }
