@@ -110,7 +110,12 @@ export interface PastWeek {
   opponentMC: number;
   /** How many wallets beat the bot that week. */
   entries: number;
-  /** CRO paid, in wei as TEXT, or null when the payout is not recorded yet. */
+  /**
+   * $CROCARD paid, in the token's smallest unit as TEXT, or null when the payout
+   * is not recorded yet. Named wei because it is eighteen decimals and the
+   * column is called that; it has not been CRO since the splitter started
+   * buying the token before paying anything.
+   */
   wei: string | null;
   txHash: string | null;
   paidAt: number | null;

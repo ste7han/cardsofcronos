@@ -13,14 +13,15 @@ import { describe, expect, it } from "vitest";
 import { isAddress, normalise } from "@/lib/address";
 import {
   BURN_ADDRESS,
+  CONTRACTS,
   CROCARD,
-  MINT_OPTIONS,
-  STREAMS,
-  WALLETS,
   croPerCard,
+  KNOWN_ADDRESSES,
+  MINT_OPTIONS,
   nameOf,
   receiverOf,
-  walletFor,
+  STREAMS,
+  WALLETS,
 } from "@/lib/revenue";
 
 describe("the wallets", () => {
@@ -158,18 +159,11 @@ describe("the splits", () => {
 });
 
 describe("burning", () => {
-  it("always runs through the deployer", () => {
-    // One wallet does every buy-and-burn, so all of it lands somewhere anybody
-    // can watch. A second burning wallet would mean a total nobody can add up.
-    expect(walletFor("burn").id).toBe("deployer");
-    // The burn address has always been known, so it never reads as unannounced.
+  it("goes to the dead address and to no wallet of ours", () => {
+    // It went to a team wallet once — an address with 201 outgoing transactions,
+    // which is not a burn whatever it is called. The dead address cannot spend.
     expect(receiverOf("burn")).toBe(BURN_ADDRESS);
-    for (const stream of STREAMS) {
-      for (const share of stream.shares) {
-        if (share.to !== "burn") continue;
-        expect(walletFor(share.to).id).toBe("deployer");
-      }
-    }
+    expect(KNOWN_ADDRESSES).not.toContain(receiverOf("burn"));
   });
 
   it("is named as itself and not as a wallet", () => {
@@ -194,14 +188,26 @@ describe("what is still open", () => {
   it("cannot go live while it does not know where the money goes", () => {
     // The check that makes the null addresses safe rather than merely honest.
     // Flipping `live` is one word in a diff, and nobody reviewing it would think
-    // to look at the wallets a hundred lines away — so lib/revenue.ts refuses at
-    // load, and this is that rule written down where it can be read.
+    // to look at the addresses a hundred lines away — so lib/revenue.ts refuses
+    // at load, and this is that rule written down where it can be read.
+    //
+    // Stated as an implication so it keeps meaning something after the first
+    // stream goes live, and paired with the line below so it means something
+    // now: while every stream is off, a loop over the live ones checks nothing.
     for (const stream of STREAMS) {
       if (!stream.live) continue;
+      expect(CONTRACTS.splitter).not.toBeNull();
       for (const share of stream.shares) {
-        expect(walletFor(share.to).address).not.toBeNull();
+        expect(receiverOf(share.to)).not.toBeNull();
       }
     }
+
+    // And today the guard has something to refuse: two of the three
+    // destinations have no contract yet, so flipping any `live` throws at load
+    // rather than paying into nothing.
+    expect(receiverOf("holders")).toBeNull();
+    expect(receiverOf("tournament")).toBeNull();
+    expect(CONTRACTS.splitter).toBeNull();
   });
 });
 
@@ -227,13 +233,19 @@ describe("what a mint costs", () => {
 });
 
 describe("paying the holders", () => {
-  it("runs through the deployer, because holders are not a wallet", () => {
-    expect(walletFor("holders")).toBe(WALLETS.deployer);
+  it("goes to the drop contract, because holders are not a wallet", () => {
+    expect(receiverOf("holders")).toBe(CONTRACTS.drop);
   });
 
   it("is named as itself and not as a wallet", () => {
-    expect(nameOf("holders")).toBe("Paid out to $CROCARD holders");
-    expect(nameOf("holders")).not.toBe(WALLETS.deployer.what);
+    // Not pinned to the sentence, which is copy and may be reworded. What it
+    // has to say is which token and who gets it, and it must never fall back to
+    // naming the wallet that happens to be near it.
+    expect(nameOf("holders")).toMatch(/\$CROCARD/);
+    expect(nameOf("holders")).toMatch(/hold/i);
+    for (const wallet of Object.values(WALLETS)) {
+      expect(nameOf("holders")).not.toBe(wallet.what);
+    }
   });
 
   it("does not claim to be running while nobody has said how a share-out works", () => {

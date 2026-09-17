@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { formatMCExact } from "@/engine/format";
-import { EXPLORER, toCro } from "@/lib/units";
+import { EXPLORER, toTokens } from "@/lib/units";
 import { STREAMS } from "@/lib/revenue";
 
 interface Standing {
@@ -83,9 +83,16 @@ export function Tournament() {
       <div className="grid gap-3 sm:grid-cols-3">
         <Figure label="THIS WEEK" value={board?.week ?? "—"} />
         <Figure label="CLOSES IN" value={board ? until(board.closes, now) : "—"} />
+        {/* $CROCARD and not CRO. The pot holds the token, because every share is
+            bought before it is paid — and the two have eighteen decimals each,
+            so the figure was right and only the unit was wrong. */}
         <Figure
           label="IN THE POT"
-          value={board?.pot.wei ? `${toCro(board.pot.wei).toLocaleString("en-US")} CRO` : "—"}
+          value={
+            board?.pot.wei
+              ? `${Math.round(toTokens(board.pot.wei)).toLocaleString("en-US")} $CROCARD`
+              : "—"
+          }
         />
       </div>
 
@@ -103,9 +110,11 @@ export function Tournament() {
 
       {board?.pot.wallet === null && (
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-gold">
-          {share ?? 25}% of every paid mint goes into the pot. Nothing has been minted yet and the
-          prize wallet has no address on it, so there is nothing in it to win — the board runs
-          anyway, because the scores are the part that has to be real first.
+          {share ?? 25}% of every paid mint feeds the pot, and the same share of every royalty and
+          every ranked match. It arrives as $CROCARD: the CRO buys the token first and the pot is
+          paid in it. Nothing has been minted yet and the pot is not deployed, so there is nothing
+          in it to win — the board runs anyway, because the scores are the part that has to be
+          real first.
         </p>
       )}
 
@@ -178,7 +187,7 @@ export function Tournament() {
                       rel="noreferrer"
                       className="text-[10px] tracking-[0.14em] text-pump hover:underline"
                     >
-                      {toCro(week.wei).toLocaleString("en-US")} CRO
+                      {Math.round(toTokens(week.wei)).toLocaleString("en-US")} $CROCARD
                     </a>
                   )}
                 </span>

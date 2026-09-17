@@ -2,9 +2,15 @@
 
 // The banner that says there is no token yet.
 //
+// IT DRAWS NOTHING FOR THIS PROJECT AND THAT IS IT WORKING. $CROCARD launched
+// with the first version, so lib/launch.ts answers yes and this returns null on
+// the first line — the header below describes a component that removes itself,
+// and it has. What is left is the empty-override case, and the copy has to stay
+// true for that one or it is a trap for whoever sets it.
+//
 // It exists because of a specific, predictable thing: the moment a project has a
 // Telegram group filling up and referral links going around, somebody launches a
-// token on pump.fun with this site's address in its description. The people it
+// token with this site's address in its description. The people it
 // works on are the ones who found the real project first — they have every
 // reason to believe the link, and nothing on the site tells them otherwise.
 //
@@ -43,8 +49,8 @@ export function CopycatWarning() {
       <p className="mx-auto max-w-4xl text-dump">
         <span className="font-bold tracking-[0.16em]">$CROCARD HAS NOT LAUNCHED.</span>{" "}
         <span className="text-muted">
-          There is no contract address and no token. Anything on pump.fun using this name or this
-          site is not us.{" "}
+          There is no contract address and no token. Anything using this name or this site is not
+          us, on Cronos or anywhere else.{" "}
           <Link href="/burn" className="text-dump underline underline-offset-2 hover:text-fg">
             The only address that will ever be real
           </Link>{" "}

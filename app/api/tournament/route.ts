@@ -22,8 +22,8 @@ import { buildDeckPreferring, deckProblems } from "@/engine/deck";
 import { applyMove, newMatch } from "@/engine/match";
 import { RULES, type Move } from "@/engine/types";
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
-import { PUBLIC_RPCS, balances } from "@/lib/cronos";
-import { WALLETS } from "@/lib/revenue";
+import { PUBLIC_RPCS, tokenBalances } from "@/lib/cronos";
+import { CONTRACTS, CROCARD } from "@/lib/revenue";
 import { INDEX } from "@/lib/set";
 import { pastWeeks, record, standings, weekEnds, weekOf } from "@/lib/tournament";
 
@@ -44,21 +44,27 @@ export async function GET() {
 }
 
 /**
- * What is in the prize wallet, in wei, or null.
+ * What is in the prize pot, in the token's smallest unit, or null.
  *
- * Null covers two different things and the page has to say them differently:
- * nobody has told this project what the prize wallet is yet, or an RPC would not
- * answer. Neither is zero. A pot reading "0 CRO" because a request timed out is
- * the kind of number that makes somebody stop playing.
+ * IT IS A TOKEN BALANCE AND NOT A WALLET BALANCE. This asked `eth_getBalance` of
+ * a wallet once, from when a quarter of a mint arrived as CRO. It does not any
+ * more: the splitter buys $CROCARD and pays the pot in it, so the CRO balance of
+ * that address is the gas it was deployed with — a real number, and the wrong
+ * one to print under "IN THE POT".
+ *
+ * Null covers two different things and the page has to say them differently: the
+ * pot is not deployed yet, or an RPC would not answer. Neither is zero. A pot
+ * reading empty because a request timed out is the kind of number that makes
+ * somebody stop playing.
  */
 async function potNow(): Promise<{ wei: string | null; wallet: string | null }> {
-  const wallet = WALLETS.tournament.address;
-  if (wallet === null) return { wei: null, wallet: null };
+  const pot = CONTRACTS.pot;
+  if (pot === null) return { wei: null, wallet: null };
 
   const secret = env().CRONOS_RPC;
   const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
-  const [wei] = await balances(rpcs, [wallet]);
-  return { wei: wei?.toString() ?? null, wallet };
+  const [held] = await tokenBalances(rpcs, CROCARD, [pot]);
+  return { wei: held?.toString() ?? null, wallet: pot };
 }
 
 export async function POST(request: Request) {

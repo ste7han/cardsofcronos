@@ -148,15 +148,16 @@ export default function Landing() {
       <section className="mx-auto max-w-6xl px-4 pb-24">
         <div className="panel border border-line p-8">
           <Heading above="$CROCARD" title="TOKEN AND BURN" />
-          {/* This paragraph said the split was still open. It is not any more —
-              only the size of the cut on a staked match is, and saying "still
-              open" about a thing that has been decided is how a page stops being
-              worth reading. */}
+          {/* This paragraph counted four earners and gave one of them a
+              pump.fun creator fee, which is the economy of the project this
+              code came from and not of this one. It also said three quarters
+              burns, from before every share was bought in the token. */}
           <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
-            <span className="text-fg">Four things earn, and most of it burns.</span> Three quarters
-            of every paid mint and every royalty, a quarter of the pump.fun creator fee, and all of
-            the cut on a staked match. Every buy-and-burn runs through one wallet, so it lands
-            somewhere anybody can watch.
+            <span className="text-fg">Three things earn, and all of it is bought in the token.</span>{" "}
+            Paid mints, royalties on the cards that resell, and a cut of what is staked on a ranked
+            match. Every one of them is swapped for $CROCARD before it is divided — half to the
+            people holding it, a quarter burned, a quarter into the weekly pot. The contract that
+            does it has no owner and nothing to set.
           </p>
           <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
             What that cut on a staked match is has not been decided. Nothing is staked yet and
@@ -166,10 +167,14 @@ export default function Landing() {
 
           <BurnStrip />
 
+          {/* These said pump.fun and "every match", both inherited. $CROCARD is
+              on Cronos and has been since the first version, and a burn comes
+              from what the game earns rather than from playing it — nothing is
+              staked on a match yet, so "every match" burned nothing at all. */}
           <dl className="mt-3 grid border border-line sm:grid-cols-3">
             <Figure label="TICKER" value="$CROCARD" />
-            <Figure label="LAUNCH" value="pump.fun" />
-            <Figure label="BURN" value="every match" last />
+            <Figure label="CHAIN" value="Cronos" />
+            <Figure label="BURN" value="a quarter of it" last />
           </dl>
         </div>
       </section>

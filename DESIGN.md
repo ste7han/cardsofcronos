@@ -652,10 +652,18 @@ and 70 for a pack. `lib/revenue.ts` refuses at load a pack that is not cheaper
 per card than a single, because that is a button nobody has a reason to press and
 the mistake is one digit wide.
 
+**Nothing arrives in CRO.** `contracts/Splitter.sol` swaps the whole of a payment
+for $CROCARD on the EbisusBay pool and divides the tokens afterwards, so every
+share is buy pressure and the split only decides where the bought tokens go. One
+release spends at most 500 CRO to keep a single swap from walking the pool, and
+the contract counts the tokens it actually received rather than trusting the
+router's return value. It has no owner and no arguments: a stranger can call
+`release()` and it can only do the one thing.
+
 **Half of a mint goes back to the people already holding the token.** That is a
 different promise from burning and both are being made: a burn helps every holder
-by making the supply smaller, and this pays them in CRO. The creator takes
-nothing out of a mint.
+by making the supply smaller, and this hands them the token itself. The creator
+takes nothing out of a mint.
 
 **A quarter is the prize pot**, paid out weekly on high score, which is what TCG
 does. Paid out, never spent — it is the one wallet whose balance is somebody

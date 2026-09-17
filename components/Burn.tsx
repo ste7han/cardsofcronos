@@ -3,8 +3,8 @@
 // Where the money goes, and what has been burned with it.
 //
 // Both on one page, because they are one subject: the burn number only means
-// something if you can see what feeds it, and the splits only matter because of
-// where a quarter to three quarters of them ends up.
+// something if you can see what feeds it, and the splits only matter because
+// every one of them is bought in the token before it is divided.
 //
 // Every burn is a transaction signature and a link to an explorer. A burn
 // counter you cannot check is a number you should not believe, and this corner
@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 
-import { STREAMS, WALLETS, nameOf, receiverOf, walletFor, type Destination } from "@/lib/revenue";
+import { STREAMS, WALLETS, nameOf, receiverOf, type Destination } from "@/lib/revenue";
 import { EXPLORER, toCro, toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
 
@@ -131,9 +131,10 @@ export function Burn() {
 
         {answer !== null && answer.burns.length === 0 ? (
           <p className="mt-3 text-[11px] leading-relaxed text-gold">
-            None yet, and zero is the honest number. There is no token, so there is nothing to buy
-            and nothing to burn. Every burn that does happen turns up here with the transaction
-            that did it — a burn total you cannot check is a number you should not believe.
+            None yet, and zero is the honest number. Nothing has been minted, so nothing has been
+            earned, so nothing has been bought and nothing burned. Every burn that does happen
+            turns up here with the transaction that did it — a burn total you cannot check is a
+            number you should not believe.
           </p>
         ) : answer !== null ? (
           <div className="mt-4 overflow-x-auto border border-line">
@@ -184,9 +185,10 @@ export function Burn() {
       <section>
         <h2 className="display text-xl">WHERE THE MONEY GOES</h2>
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
-          Three things earn, and all three send most of what they earn into the token. Every
-          buy-and-burn runs through the deployer wallet, so all of it lands in one place anybody
-          can watch.
+          Three things earn, and none of what they earn stays in CRO. It is swapped for $CROCARD
+          first and divided afterwards, so the whole of it is a buy and the split only decides
+          where the tokens go. The swap is done by a contract with no owner and no settings —
+          anybody can trigger it, nobody can point it somewhere else.
         </p>
 
         <div className="mt-5 space-y-3">

@@ -27,6 +27,7 @@ export const CROCARD = normalise("0xECf3361441512c1e9F6A6e8734D86614D8e795BC");
  */
 export const BURN_ADDRESS = normalise("0x000000000000000000000000000000000000dEaD");
 
+
 /**
  * The team wallet the first version called a burn address.
  *
@@ -145,12 +146,6 @@ for (const wallet of Object.values(WALLETS)) {
 }
 
 /**
- * "burn" and "holders" are not wallets — they are what happens to the money once
- * a wallet has it. Both run through the deployer, which is why `walletFor` exists
- * at all: the page has to show an address somebody can watch, and neither of
- * these has one of its own.
- */
-/**
  * What a mint costs, in whole CRO.
  *
  * Two ways to buy and no others: one card, or ten. The pack is the cheaper way
@@ -250,10 +245,11 @@ export const STREAMS: readonly Stream[] = [
     id: "mints",
     name: "Paid mints",
     from: "Packs and cards of the new line.",
-    // Half of it goes back to the people already holding the token, which is a
-    // different promise from burning: a burn helps everyone holding it by making
-    // the supply smaller, and this pays them in CRO. The creator takes nothing
-    // out of a mint any more.
+    // Every share is bought as $CROCARD before it is split. The CRO that arrives
+    // goes through the market first, so the whole of a mint is buy pressure and
+    // each destination is paid in the thing the game is about — half back to the
+    // people already holding it, a quarter burned, a quarter into the pot. The
+    // creator takes nothing out of a mint any more.
     shares: [
       { to: "holders", percent: 50 },
       { to: "burn", percent: 25 },
@@ -324,24 +320,39 @@ for (const stream of STREAMS) {
  *
  * This is the reason the unknown addresses are null and not a stand-in. Flipping
  * `live` is one word in a diff and nobody reviewing it would think to check the
- * wallets four hundred lines away — so the check lives here, at load, where the
- * deploy fails instead of the payout.
+ * addresses four hundred lines away — so the check lives here, at load, where
+ * the deploy fails instead of the payout.
+ *
+ * IT ASKS WHAT RECEIVES THE MONEY, not what is responsible for it. It used to
+ * ask the latter, and for burn and holders that was the deployer — an address
+ * known since the day it was written down. So the guard passed while two of the
+ * three destinations were still null, which is the single case it exists to
+ * catch. What a stream needs is the thing that receives the money and the
+ * splitter that buys the token on the way, and both are checked here.
  */
 for (const stream of STREAMS) {
   if (!stream.live) continue;
+  if (CONTRACTS.splitter === null) {
+    throw new Error(`${stream.id} is live but the splitter that buys $CROCARD is not deployed.`);
+  }
   for (const share of stream.shares) {
-    if (walletFor(share.to).address === null) {
-      throw new Error(
-        `${stream.id} is live but the ${walletFor(share.to).id} wallet has no address yet.`,
-      );
+    if (receiverOf(share.to) === null) {
+      throw new Error(`${stream.id} is live but ${share.to} has nowhere to receive it yet.`);
     }
   }
 }
 
-/** What a destination is called on screen. */
+/**
+ * What a share is called on screen.
+ *
+ * All three are paid in $CROCARD: the splitter buys it before dividing anything,
+ * so "buy and burn" stopped being the name of one leg and became what happens to
+ * every one of them. Only the destination differs.
+ */
 export function nameOf(to: Destination): string {
-  if (to === "burn") return "Buy and burn $CROCARD";
-  if (to === "holders") return "Paid out to $CROCARD holders";
+  if (to === "burn") return "$CROCARD burned";
+  if (to === "holders") return "$CROCARD to the people holding it";
+  if (to === "tournament") return "$CROCARD into the weekly prize pot";
   return WALLETS[to].what;
 }
 
@@ -369,9 +380,4 @@ export function receiverOf(to: Destination): string | null {
     default:
       return WALLETS[to].address;
   }
-}
-
-/** Which wallet is responsible for a destination, for naming it on a page. */
-export function walletFor(to: Destination): Wallet {
-  return to === "burn" || to === "holders" ? WALLETS.deployer : WALLETS[to];
 }

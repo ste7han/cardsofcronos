@@ -51,27 +51,71 @@ export async function balances(
   rpcs: readonly string[],
   addresses: readonly string[],
 ): Promise<(bigint | null)[]> {
-  if (addresses.length === 0) return [];
+  return ask(
+    rpcs,
+    addresses.map((address) => ({ method: "eth_getBalance", params: [address, "latest"] })),
+  );
+}
+
+/** The four bytes of `balanceOf(address)`. */
+const BALANCE_OF = "0x70a08231";
+
+/**
+ * How much of one ERC20 each address holds, in the same shape as `balances`.
+ *
+ * Needed because the money stopped being CRO. The splitter buys $CROCARD and
+ * pays every share in it, so the prize pot and the drop hold a token balance and
+ * not a wallet balance — `eth_getBalance` on either reads the gas they were sent
+ * to deploy with, which is a real number and the wrong one.
+ *
+ * Same null rule: an address holding nothing answers zero, and an endpoint that
+ * would not answer is null. A pot reading empty because a request timed out is
+ * the number that makes somebody stop playing.
+ */
+export async function tokenBalances(
+  rpcs: readonly string[],
+  token: string,
+  addresses: readonly string[],
+): Promise<(bigint | null)[]> {
+  return ask(
+    rpcs,
+    addresses.map((address) => ({
+      method: "eth_call",
+      params: [
+        { to: token, data: BALANCE_OF + address.replace(/^0x/, "").toLowerCase().padStart(64, "0") },
+        "latest",
+      ],
+    })),
+  );
+}
+
+/** A JSON-RPC call with its id still to be assigned. */
+interface Call {
+  method: string;
+  params: unknown[];
+}
+
+/**
+ * One batch, tried against each endpoint until one answers.
+ *
+ * The method is a parameter because reading a token balance and reading a wallet
+ * balance differ in nothing else: same batch, same ordering trap, same fallback.
+ * Two copies would be two places to fix the next time an endpoint misbehaves.
+ */
+async function ask(rpcs: readonly string[], calls: readonly Call[]): Promise<(bigint | null)[]> {
+  if (calls.length === 0) return [];
 
   for (const rpc of rpcs) {
-    const answer = await askOne(rpc, addresses);
+    const answer = await askOne(rpc, calls);
     if (answer !== null) return answer;
   }
-  // Every address unknown rather than a partial answer nobody can interpret.
-  return addresses.map(() => null);
+  // Every call unknown rather than a partial answer nobody can interpret.
+  return calls.map(() => null);
 }
 
 /** One endpoint's attempt. Null means "this one did not answer" — try the next. */
-async function askOne(
-  rpc: string,
-  addresses: readonly string[],
-): Promise<(bigint | null)[] | null> {
-  const batch = addresses.map((address, i) => ({
-    jsonrpc: "2.0",
-    id: i,
-    method: "eth_getBalance",
-    params: [address, "latest"],
-  }));
+async function askOne(rpc: string, calls: readonly Call[]): Promise<(bigint | null)[] | null> {
+  const batch = calls.map((call, i) => ({ jsonrpc: "2.0", id: i, ...call }));
 
   let body: RpcResponse[];
   try {
@@ -100,14 +144,17 @@ async function askOne(
   for (const entry of body) {
     if (typeof entry.id === "number") byId.set(entry.id, entry);
   }
-  if (byId.size !== addresses.length) {
-    console.error(`Cronos RPC ${rpc} answered ${byId.size} of ${addresses.length} calls.`);
+  if (byId.size !== calls.length) {
+    console.error(`Cronos RPC ${rpc} answered ${byId.size} of ${calls.length} calls.`);
     return null;
   }
 
-  return addresses.map((_, i) => {
+  return calls.map((_, i) => {
     const entry = byId.get(i);
     if (!entry || entry.error || typeof entry.result !== "string") return null;
+    // "0x" is what a call to an address with no code returns. Reading it as zero
+    // would print an empty pot for a contract that is not there at all.
+    if (entry.result === "0x") return null;
     try {
       return BigInt(entry.result);
     } catch {

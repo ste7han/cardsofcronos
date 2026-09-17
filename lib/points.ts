@@ -117,8 +117,10 @@ export interface Reward {
 /**
  * What points buy. Spent, not scored.
  *
- * Nothing here can be handed over yet: there is no token, and a single-card mint
- * is a product that does not exist. The catalogue is published anyway, because
+ * Nothing here can be handed over yet. $CROCARD exists and has since the first
+ * version, so what is missing is not the token but the machinery: nothing mints
+ * on chain and no contract pays a reward out. The catalogue is published anyway,
+ * because
  * somebody deciding whether to bring people in is entitled to know what they are
  * working towards — and a claim that took the points and delivered nothing would
  * be worse than a button that is honestly switched off.

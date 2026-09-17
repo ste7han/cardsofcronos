@@ -104,7 +104,8 @@ export default function MintPage() {
           <Link href="/tournament" className="text-pump hover:underline">
             weekly prize pot
           </Link>
-          .
+          . None of it is divided as CRO: it buys $CROCARD first and the three shares are paid in
+          the token, so the whole of what is taken goes through the market on its way out.
         </p>
 
         <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">
