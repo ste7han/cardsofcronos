@@ -116,11 +116,30 @@ export function CardView({ card, compact = false, free = false, price, className
    * Every threshold here was measured by rendering all 445 and checking that
    * nothing overflows and no flavour falls off the bottom edge.
    */
-  // One width for every card. An adaptive ladder was tried — full width for the
-  // quiet cards, narrower for the busy ones — and it failed on 87 of the 445:
-  // the middle rung was guessed rather than measured. 74% is the number that was
-  // measured, by rendering all 445 and finding none that overflowed.
-  const artWidth = "w-[74%]";
+  /**
+   * How wide the picture is, from how much room the words need.
+   *
+   * One width for every card was tried and it was wrong in both directions.
+   * Sized for the busiest card at 74%, the three hundred quiet ones got a
+   * smaller picture AND a hole: metamask carries a single rule and had half a
+   * card of empty between it and the flavour. Sized for the quiet ones,
+   * twenty-two cut their last rule in half.
+   *
+   * So the card gives its room to whichever half needs it. Measured, not
+   * guessed — a first attempt at this ladder failed on 87 cards because the
+   * middle rung was a guess. Rendering all 445 against each width says 302 of
+   * them fit at full width, and the thresholds below are cut to match, then
+   * checked by rendering all 445 again.
+   */
+  // Rows and not characters. Two cards of 116 characters broke a threshold built
+  // on length alone: one wrapped into two long rows and the other was four short
+  // ones, and four rows take four rows' worth of height whatever they say. About
+  // 43 characters fit a row at full size, and a line always costs at least one.
+  const rulesRows = lines.reduce(
+    (total, line) => total + Math.max(1, Math.ceil(line.text.length / 43)),
+    0,
+  );
+  const artWidth = rulesRows <= 3 ? null : rulesRows <= 5 ? "w-[84%]" : "w-[74%]";
   const precious = card.rarity === "legendary" || card.rarity === "mythic";
 
   /**
