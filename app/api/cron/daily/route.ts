@@ -13,9 +13,17 @@ import { runDaily } from "@/lib/splitter";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // Falsy and not undefined. `wrangler secret put` accepts an empty value and
+  // reports success, `wrangler secret list` then shows the name like any other,
+  // and the binding arrives as a string of length zero — so "is it set" cannot
+  // be answered by asking whether it exists. It was set to nothing here once and
+  // every tick refused for a fortnight looking exactly like a tick that ran.
   const expected = env().CRON_SECRET;
   if (!expected) {
-    return Response.json({ error: "No CRON_SECRET is set, so nothing runs." }, { status: 503 });
+    return Response.json(
+      { error: "CRON_SECRET is missing or empty, so nothing runs." },
+      { status: 503 },
+    );
   }
   if (request.headers.get("x-cron-secret") !== expected) {
     return Response.json({ error: "No." }, { status: 401 });
