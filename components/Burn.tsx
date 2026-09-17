@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 
-import { STREAMS, WALLETS, nameOf, receiverOf, type Destination } from "@/lib/revenue";
+import { STREAMS, WALLETS, nameOf, receiverOf, sourceOf, type Destination } from "@/lib/revenue";
 import { EXPLORER, toCro, toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
 
@@ -157,7 +157,7 @@ export function Burn() {
                         month: "short",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-muted">{burn.stream}</td>
+                    <td className="px-4 py-3 text-[10px] text-muted">{sourceOf(burn.stream)}</td>
                     <td className="px-4 py-3 text-right text-[10px] tabular-nums text-muted">
                       {toCro(burn.wei).toFixed(2)}
                     </td>

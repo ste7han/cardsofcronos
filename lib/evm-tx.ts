@@ -146,6 +146,18 @@ export function selector(signature: string): string {
   return "0x" + bytesToHex(keccak_256(new TextEncoder().encode(signature))).slice(0, 8);
 }
 
+/**
+ * The topic an event with this signature is logged under.
+ *
+ * Same hash as `selector`, all thirty-two bytes of it instead of the first four.
+ * "Released(uint256,uint256,uint256,uint256)" — types only, no parameter names
+ * and no spaces, because the hash is of the canonical form and a stray space
+ * produces a topic that matches nothing and says nothing about why.
+ */
+export function topicOf(signature: string): string {
+  return "0x" + bytesToHex(keccak_256(new TextEncoder().encode(signature)));
+}
+
 /** A value left-padded to a thirty-two byte ABI word, without the 0x. */
 export function word(value: bigint | string): string {
   const hex =

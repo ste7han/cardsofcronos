@@ -15,6 +15,12 @@
 // holder scan, which needed it: Cronos' public RPCs go down often enough that a
 // single one is not a plan.
 
+import {
+  CRONOS_CHAIN_ID,
+  addressOfKey,
+  signTransaction,
+} from "@/lib/evm-tx";
+
 /** How long an answer is good for. A minute is fresh enough to be true. */
 export const BALANCE_TTL = 60;
 
@@ -161,4 +167,79 @@ async function askOne(rpc: string, calls: readonly Call[]): Promise<(bigint | nu
       return null;
     }
   });
+}
+
+export async function rpc<T = string>(
+  rpcs: readonly string[],
+  method: string,
+  params: unknown[],
+): Promise<T> {
+  let last = "no endpoint answered";
+  for (const url of rpcs) {
+    try {
+      const answer = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+      const found = (await answer.json()) as { result?: unknown; error?: { message?: string } };
+      if (found.error) {
+        // A revert is the chain's answer, not a broken endpoint: trying the next
+        // RPC would get the same answer and hide it behind a timeout.
+        throw new Error(found.error.message ?? "the call was rejected");
+      }
+      // Present rather than truthy. A receipt for a transaction nobody has mined
+      // yet is a real answer of null, and a log scan that found nothing is a
+      // real answer of []: treating either as "this endpoint is broken" would
+      // walk the whole list and then report a timeout for a working chain.
+      if ("result" in found) return found.result as T;
+      last = "an endpoint answered with nothing";
+    } catch (error) {
+      last = error instanceof Error ? error.message : String(error);
+      if (/revert|rejected|insufficient|nonce/i.test(last)) throw error;
+    }
+  }
+  throw new Error(last);
+}
+
+/**
+ * Signs one call to a contract and sends it. Returns the transaction hash.
+ *
+ * It lived in lib/publisher.ts while the weekly prize was the only thing that
+ * ever signed anything. The daily job signs too — `release()` on the splitter —
+ * and two copies of a transaction signer is two places to get a chain id or a
+ * gas bump wrong. One of them would be found by somebody else.
+ */
+export async function send(
+  rpcs: readonly string[],
+  key: Uint8Array,
+  to: string,
+  data: string,
+): Promise<string> {
+  const from = addressOfKey(key);
+  const [nonceHex, gasPriceHex] = await Promise.all([
+    rpc(rpcs, "eth_getTransactionCount", [from, "pending"]),
+    rpc(rpcs, "eth_gasPrice", []),
+  ]);
+
+  // Estimated rather than guessed, and estimating is also the cheapest way to
+  // find out that the call would revert — which is how "the week is already
+  // closed" is discovered without paying for it.
+  const gasHex = await rpc(rpcs, "eth_estimateGas", [{ from, to, data }]);
+
+  const raw = signTransaction(
+    {
+      nonce: BigInt(nonceHex),
+      gasPrice: (BigInt(gasPriceHex) * 12n) / 10n,
+      // A fifth over the estimate. An estimate that is exactly right fails on a
+      // block where anything about the state moved.
+      gasLimit: (BigInt(gasHex) * 12n) / 10n,
+      to,
+      value: 0n,
+      data,
+      chainId: CRONOS_CHAIN_ID,
+    },
+    key,
+  );
+  return rpc(rpcs, "eth_sendRawTransaction", [raw]);
 }

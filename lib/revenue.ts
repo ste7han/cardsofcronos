@@ -343,6 +343,20 @@ for (const stream of STREAMS) {
 }
 
 /**
+ * What a burn row's source is called on screen.
+ *
+ * The splitter does not know which stream paid it. Mints, royalties and a
+ * match's cut all arrive as CRO in one balance and leave in one swap, so a row
+ * recorded from its log is honestly "all three" and naming one of them would be
+ * a guess printed as a fact. A stream id still resolves, for anything recorded
+ * before the splitter existed or by hand.
+ */
+export function sourceOf(stream: string): string {
+  if (stream === "splitter") return "Mints, royalties and matches";
+  return STREAMS.find((one) => one.id === stream)?.name ?? stream;
+}
+
+/**
  * What a share is called on screen.
  *
  * All three are paid in $CROCARD: the splitter buys it before dividing anything,

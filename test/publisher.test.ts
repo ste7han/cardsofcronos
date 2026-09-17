@@ -12,9 +12,10 @@ const utc = (iso: string) => Date.parse(iso);
 
 describe("which week the cron is closing", () => {
   it("is the week that just ended, not the one running", () => {
-    // The cron fires Monday 00:10 UTC. The week that started ten minutes ago is
-    // not the one to pay out.
-    const tick = utc("2026-09-21T00:10:00Z");
+    // The cron fires Monday 00:20 UTC, after the daily one has released the
+    // week's last mint into the pot. The week that started twenty minutes ago
+    // is not the one to pay out.
+    const tick = utc("2026-09-21T00:20:00Z");
     expect(weekOf(tick)).toBe("2026-W39");
     expect(lastWeek(tick)).toBe("2026-W38");
   });

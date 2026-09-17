@@ -28,11 +28,18 @@
     { "pattern": "cardsofcronos.com", "custom_domain": true },
     { "pattern": "www.cardsofcronos.com", "custom_domain": true }
   ],
-  // Monday, ten past midnight UTC. The week closes at midnight — see
-  // lib/tournament.ts — and ten minutes is enough slack that a tick which fires
-  // a little early does not close the week that is still running.
+  // Two ticks, and worker/index.js decides which route each one goes to.
+  //
+  // Daily at 00:10 UTC: call release() on the splitter and write down what it
+  // burned. Nothing was calling it, so the CRO sat there and /burn read zero.
+  //
+  // Monday at 00:20 UTC: close the week and pay its winner. The week closes at
+  // midnight — see lib/tournament.ts — and twenty minutes is enough slack that
+  // a tick firing early does not close the week that is still running. It is
+  // also after the daily one, so the last release of the week has landed in the
+  // pot before the pot is handed over.
   "triggers": {
-    "crons": ["10 0 * * 1"]
+    "crons": ["10 0 * * *", "20 0 * * 1"]
   },
   "workers_dev": true,
   // Cloudflare's SQLite, on this account, free at this size. A match is a seed

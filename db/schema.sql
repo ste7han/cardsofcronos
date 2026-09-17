@@ -230,9 +230,11 @@ CREATE INDEX IF NOT EXISTS points_by_wallet ON points (wallet, voided_at);
 -- counted twice — which is the one mistake that would make the total wrong in
 -- the flattering direction.
 --
--- Nothing writes to this yet. $CROCARD exists, but nothing here buys it yet;
--- the table exists so that the first burn has somewhere to go rather than being
--- reconstructed later from memory.
+-- Written by the daily job in lib/splitter.ts, which reads the splitter's own
+-- Released log and records every one it finds — ours and anybody else's, since
+-- release() needs no permission. The stream column says "splitter" for those:
+-- mints, royalties and a match's cut all arrive in one balance and leave in one
+-- swap, so which of the three paid is not a thing the chain can be asked.
 CREATE TABLE IF NOT EXISTS burns (
   -- The Cronos transaction hash. Checkable, by anyone, forever. Lowercase, for
   -- the same reason wallets are: one transaction must not be two rows.
@@ -289,20 +291,46 @@ CREATE INDEX IF NOT EXISTS tournament_board ON tournament (week, mc DESC, at ASC
 -- paid twice — which is the one mistake that costs real money and leaves a
 -- perfectly ordinary-looking second row behind.
 --
--- Nothing writes to this yet. The prize pot is a quarter of every paid mint and
--- no mint has happened, so there is nothing to pay; the table exists so the
--- first payout has somewhere to go rather than being reconstructed later.
+-- Written by the weekly job in lib/publisher.ts, after the winner has been paid
+-- and from the amount the contract had allocated to them. The payout is what
+-- matters and the row is the record of it: a run that cannot write here logs
+-- that loudly and does not retry the payment.
 CREATE TABLE IF NOT EXISTS tournament_paid (
   week     TEXT PRIMARY KEY,
   wallet   TEXT NOT NULL
            CHECK (wallet = lower(wallet)),
-  -- CRO paid, in wei, as TEXT. Eighteen zeroes behind it: SQLite's INTEGER is
-  -- 64-bit signed and would wrap somewhere around nine CRO without erroring.
-  -- Same rule as the burns table.
+  -- $CROCARD paid, in the token's smallest unit, as TEXT. Eighteen zeroes
+  -- behind it: SQLite's INTEGER is 64-bit signed and would wrap somewhere
+  -- around nine of anything without erroring. Same rule as the burns table.
+  --
+  -- The column is called wei because that is what eighteen decimals are called.
+  -- It stopped being CRO when the splitter started buying the token before
+  -- paying anything out.
   wei      TEXT NOT NULL,
   -- The Cronos transaction. Checkable, by anyone, forever.
   tx_hash  TEXT NOT NULL
            CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
                   AND substr(tx_hash, 1, 2) = '0x'),
   at       INTEGER NOT NULL
+);
+
+-- How far a job has read the chain, one row per job.
+--
+-- The daily job records burns from the splitter's own log. To do that it has to
+-- know where it stopped, because Cronos answers eth_getLogs over at most two
+-- thousand blocks at a time and a block is 0.42 seconds — a day is a hundred
+-- chunks, and a job that started from the beginning every time would ask for
+-- the whole chain once a day and be rate-limited off it by lunchtime.
+--
+-- So the cursor is the job's memory and nothing else. It is not a source of
+-- truth about burns: the burns table is, keyed by transaction hash, and a chunk
+-- read twice writes no second row. Losing this table costs a rescan, not a
+-- number.
+CREATE TABLE IF NOT EXISTS cursors (
+  -- The job's name. "burns" is the only one today.
+  name  TEXT PRIMARY KEY,
+  -- The last block that has been read, inclusive. INTEGER is right here and
+  -- wrong two tables up: a block number is nine digits, not eighteen zeroes.
+  block INTEGER NOT NULL,
+  at    INTEGER NOT NULL
 );

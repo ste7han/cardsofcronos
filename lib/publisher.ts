@@ -7,6 +7,7 @@
 //      ranks by
 //   3. tell PrizePot who won, with the publisher key
 //   4. push the prize to them
+//   5. write down what was paid, so /tournament can show it
 //
 // Step three is the only one that needs a key, and that key may name a winner
 // and nothing else — see contracts/PrizePot.sol. Step four needs no permission
@@ -22,18 +23,12 @@
 // this file tracking what it has done, and a second source of truth about who
 // has been paid is the last thing this wants.
 
-import { PUBLIC_RPCS } from "@/lib/cronos";
+import { PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
 import { CONTRACTS } from "@/lib/revenue";
-import {
-  CRONOS_CHAIN_ID,
-  addressOfKey,
-  selector,
-  signTransaction,
-  word,
-} from "@/lib/evm-tx";
+import { selector, word } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
 import type { Database } from "@/lib/store";
-import { weekOf, winnerOf } from "@/lib/tournament";
+import { recordPayout, weekOf, winnerOf } from "@/lib/tournament";
 
 /** What a run did, in enough detail to read in a log a week later. */
 export interface Ran {
@@ -49,66 +44,6 @@ export interface Ran {
 /** The week that has just ended, given a moment inside the new one. */
 export function lastWeek(now: number): string {
   return weekOf(now - 7 * 86_400_000);
-}
-
-async function rpc(rpcs: readonly string[], method: string, params: unknown[]): Promise<string> {
-  let last = "no endpoint answered";
-  for (const url of rpcs) {
-    try {
-      const answer = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-      });
-      const found = (await answer.json()) as { result?: string; error?: { message?: string } };
-      if (found.error) {
-        // A revert is the chain's answer, not a broken endpoint: trying the next
-        // RPC would get the same answer and hide it behind a timeout.
-        throw new Error(found.error.message ?? "the call was rejected");
-      }
-      if (typeof found.result === "string") return found.result;
-      last = "an endpoint answered with nothing";
-    } catch (error) {
-      last = error instanceof Error ? error.message : String(error);
-      if (/revert|rejected|insufficient|nonce/i.test(last)) throw error;
-    }
-  }
-  throw new Error(last);
-}
-
-/** Signs one call to a contract and sends it. Returns the transaction hash. */
-async function send(
-  rpcs: readonly string[],
-  key: Uint8Array,
-  to: string,
-  data: string,
-): Promise<string> {
-  const from = addressOfKey(key);
-  const [nonceHex, gasPriceHex] = await Promise.all([
-    rpc(rpcs, "eth_getTransactionCount", [from, "pending"]),
-    rpc(rpcs, "eth_gasPrice", []),
-  ]);
-
-  // Estimated rather than guessed, and estimating is also the cheapest way to
-  // find out that the call would revert — which is how "the week is already
-  // closed" is discovered without paying for it.
-  const gasHex = await rpc(rpcs, "eth_estimateGas", [{ from, to, data }]);
-
-  const raw = signTransaction(
-    {
-      nonce: BigInt(nonceHex),
-      gasPrice: (BigInt(gasPriceHex) * 12n) / 10n,
-      // A fifth over the estimate. An estimate that is exactly right fails on a
-      // block where anything about the state moved.
-      gasLimit: (BigInt(gasHex) * 12n) / 10n,
-      to,
-      value: 0n,
-      data,
-      chainId: CRONOS_CHAIN_ID,
-    },
-    key,
-  );
-  return rpc(rpcs, "eth_sendRawTransaction", [raw]);
 }
 
 /** "2026-W38" as the bytes32 the contract keys weeks by. */
@@ -170,6 +105,22 @@ export async function runWeekly(
     }
   }
 
+  // Read before claiming, because claiming zeroes it. `prizes(bytes32)` returns
+  // the winner, the amount and whether it has been paid; the amount is the
+  // second word. Without this the payout happens and the board says NOT PAID
+  // YET forever, which is the row somebody checks first.
+  let amount: string | null = null;
+  try {
+    const prize = await rpc<string>(rpcs, "eth_call", [
+      { to: pot, data: selector("prizes(bytes32)") + label },
+      "latest",
+    ]);
+    amount = BigInt("0x" + prize.replace(/^0x/, "").slice(64, 128)).toString();
+  } catch {
+    // Not fatal. Paying the winner matters more than recording how much, and a
+    // run that stopped here would leave them unpaid to protect a table.
+  }
+
   let paid: string | null = null;
   try {
     paid = await send(rpcs, key, pot, selector("claim(bytes32)") + label);
@@ -177,6 +128,31 @@ export async function runWeekly(
     const said = error instanceof Error ? error.message : String(error);
     if (!/AlreadyPaid|already/i.test(said)) {
       return { week, winner: best.wallet, closed, paid: null, skipped: said };
+    }
+  }
+
+  if (paid !== null && amount !== null) {
+    try {
+      await recordPayout(db, {
+        week,
+        wallet: best.wallet,
+        wei: amount,
+        txHash: paid,
+        at: now,
+      });
+    } catch (error) {
+      // The week is the primary key, so a second run throws here rather than
+      // writing a second row. That is the table working and not a failure: the
+      // money moved once and it is written down once.
+      //
+      // Anything else is a failure and is said out loud. It cannot be raised —
+      // the winner has already been paid by this point and throwing would make
+      // the next run try to pay them again — so it goes to the log, which is
+      // where a scheduled job's problems have to be visible from.
+      const said = error instanceof Error ? error.message : String(error);
+      if (!/UNIQUE|constraint|PRIMARY/i.test(said)) {
+        console.error(`[weekly] ${week} was paid in ${paid} but not recorded: ${said}`);
+      }
     }
   }
 

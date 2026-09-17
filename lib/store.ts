@@ -878,6 +878,44 @@ export async function recordBurn(db: Database, burn: Burn): Promise<boolean> {
   return written !== null;
 }
 
+/**
+ * How far a job has read the chain, or null when it has never run.
+ *
+ * Null and zero are different answers and the caller has to tell them apart:
+ * never run means "start from wherever the chain is now", and block zero would
+ * mean "read the whole chain", which is a day of rate limits and no burns.
+ */
+export async function cursorOf(db: Database, name: string): Promise<number | null> {
+  const row = await db
+    .prepare(`SELECT block FROM cursors WHERE name = ?`)
+    .bind(name)
+    .first<{ block: number }>();
+  return row?.block ?? null;
+}
+
+/**
+ * Moves a cursor forward. Never backwards.
+ *
+ * A job that crashed halfway and restarted would otherwise write a lower block
+ * than it had already read, and the rescan that follows is harmless for burns —
+ * the transaction hash is the key — but it is wasted work every run forever.
+ * `MAX` in the upsert means the worst a bad call can do is nothing.
+ */
+export async function setCursor(
+  db: Database,
+  name: string,
+  block: number,
+  at: number,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO cursors (name, block, at) VALUES (?, ?, ?)
+       ON CONFLICT (name) DO UPDATE SET block = MAX(block, excluded.block), at = excluded.at`,
+    )
+    .bind(name, block, at)
+    .run();
+}
+
 /** The seed for a new match. Not from the engine: it is what the engine is given. */
 export function seedFor(id: string): number {
   // A hash of the id rather than a random number, so creating the same match
