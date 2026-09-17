@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Rescuable} from "./Rescuable.sol";
@@ -9,8 +10,12 @@ import {Rescuable} from "./Rescuable.sol";
  * The weekly prize, held where nobody can spend it.
  *
  * A quarter of every mint, every royalty and every ranked match arrives here
- * from Splitter.sol. Each week it is awarded to whoever posted the best verified
- * score, and paid out.
+ * from Splitter.sol, as $CROCARD — the splitter buys it on the way. Each week
+ * the pot is awarded to whoever posted the best verified score, and paid out.
+ *
+ * The prize is the token and not CRO, which is the maker's call: every stream in
+ * this game is denominated in $CROCARD now, and a prize paid in something else
+ * would be the one place that is not.
  *
  * ── THE ONE THING THAT CANNOT BE PUT ON THE CHAIN ────────────────────────────
  *
@@ -44,6 +49,9 @@ contract PrizePot is Rescuable {
         bool paid;
     }
 
+    /// @notice What the prize is paid in.
+    IERC20 public immutable card;
+
     /// @notice The only address that may name a winner. Rotatable by the owner.
     address public publisher;
 
@@ -68,15 +76,21 @@ contract PrizePot is Rescuable {
     error NoSuchWeek();
     error AlreadyPaid();
     error NothingToWin();
-    error TransferFailed();
 
-    constructor(address publisher_) Ownable(msg.sender) {
-        if (publisher_ == address(0)) revert ZeroAddress();
+    error TokenTransferFailed();
+
+    constructor(IERC20 card_, address publisher_) Ownable(msg.sender) {
+        if (address(card_) == address(0) || publisher_ == address(0)) revert ZeroAddress();
+        card = card_;
         publisher = publisher_;
     }
 
-    /// @notice Takes CRO from the splitter, or from anybody topping up the pot.
-    receive() external payable {}
+    /**
+     * Nothing to receive. Tokens arrive by being transferred here, which needs
+     * no code — and that is the difference from the CRO version: a payable
+     * receive() would now only let somebody strand CRO in a contract that has no
+     * way to pay it out. The rescue hatch is what gets that back if it happens.
+     */
 
     /**
      * @notice Names the winner of a week and sets that week's prize aside.
@@ -94,7 +108,7 @@ contract PrizePot is Rescuable {
         // would make the board worth less than the word of whoever holds the key.
         if (prizes[week].winner != address(0)) revert WeekAlreadyClosed();
 
-        uint256 amount = address(this).balance - allocated;
+        uint256 amount = card.balanceOf(address(this)) - allocated;
         if (amount == 0) revert NothingToWin();
 
         prizes[week] = Prize({winner: winner, amount: amount, paid: false});
@@ -119,8 +133,7 @@ contract PrizePot is Rescuable {
         uint256 amount = prize.amount;
         allocated -= amount;
 
-        (bool sent, ) = payable(prize.winner).call{value: amount}("");
-        if (!sent) revert TransferFailed();
+        if (!card.transfer(prize.winner, amount)) revert TokenTransferFailed();
         emit Paid(week, prize.winner, amount);
     }
 
@@ -140,6 +153,6 @@ contract PrizePot is Rescuable {
 
     /// @notice What the next week would pay, if it closed now.
     function unallocated() external view returns (uint256) {
-        return address(this).balance - allocated;
+        return card.balanceOf(address(this)) - allocated;
     }
 }

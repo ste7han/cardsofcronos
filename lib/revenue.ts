@@ -25,7 +25,31 @@ export const CROCARD = normalise("0xECf3361441512c1e9F6A6e8734D86614D8e795BC");
  * for 0x…dEaD, so that every burn this project has ever done lands on one
  * address anybody can watch in a single explorer page.
  */
-export const BURN_ADDRESS = normalise("0x42BCc1355808aDf2344773c54e364257911CcC99");
+export const BURN_ADDRESS = normalise("0x000000000000000000000000000000000000dEaD");
+
+/**
+ * The team wallet the first version called a burn address.
+ *
+ * It is not one, and that mattered enough to keep the name of it here rather
+ * than delete the line. It is an ordinary wallet the maker holds — 201 outgoing
+ * transactions and a live balance — so tokens sent there were never destroyed,
+ * only moved. The site said otherwise for a while.
+ *
+ * $CROCARD is actually burned at the dead address above, where 89 million of it
+ * already sits.
+ */
+export const TEAM_WALLET = normalise("0x42BCc1355808aDf2344773c54e364257911CcC99");
+
+/**
+ * The DEX every stream is bought through.
+ *
+ * EbisusBay's Ryoshi router, and it is the only one that can trade the token:
+ * the CROCARD/WCRO pool sits on factory 0x5f1d751f…, which is EbisusBay's.
+ * Obsidian's own factory has no CROCARD pair at all, and its documentation was
+ * what nearly sent this at a pool that does not exist. Verified by asking the
+ * router for its factory and getting a live quote back.
+ */
+export const ROUTER = normalise("0xa476c97d8d1ec7d263eafa0039645dbe0cc0a012");
 
 export interface Wallet {
   id: "creator" | "deployer" | "marketing" | "tournament";

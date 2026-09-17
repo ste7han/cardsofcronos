@@ -34,7 +34,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { normalise } from "@/lib/address";
 import { encodeParameters, type AbiType } from "@/lib/abi";
 import { PUBLIC_RPCS } from "@/lib/cronos";
-import { BURN_ADDRESS, CONTRACTS } from "@/lib/revenue";
+import { BURN_ADDRESS, CONTRACTS, CROCARD, ROUTER } from "@/lib/revenue";
 import { CRONOS_CHAIN_ID, addressOfKey, signTransaction } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
 
@@ -93,6 +93,20 @@ async function main(): Promise<void> {
         : "Pass --from 0x… for a dry run, or set DEPLOY_KEY to sign for real.",
     );
   }
+  // Loud on a key of the wrong length. hexToBytes takes it with or without the
+  // 0x and will happily turn anything even-numbered into bytes, so a truncated
+  // paste becomes a valid-looking key for an address nobody has ever funded —
+  // and the first sign of that is a deploy that fails for no money, from a
+  // wallet you were sure had ten CRO in it.
+  if (secret) {
+    const digits = secret.replace(/^0x/, "");
+    if (digits.length !== 64) {
+      throw new Error(
+        `DEPLOY_KEY is ${digits.length} hex digits and a private key is 64. ` +
+          `Check nothing was cut off the paste.`,
+      );
+    }
+  }
   const key = secret ? hexToBytes(secret) : new Uint8Array(32);
   const deployer = secret ? addressOfKey(key) : normalise(from!);
 
@@ -118,10 +132,14 @@ async function main(): Promise<void> {
   }
 
   const balance = BigInt(await rpc("eth_getBalance", [deployer, "latest"]));
+  // Said out loud before anything is sent. If this is not the wallet you meant,
+  // it is the last moment it costs nothing to find out.
   console.log(`deployer   ${deployer}`);
   console.log(`balance    ${balance / 10n ** 18n} CRO`);
   console.log(`publisher  ${publisher}`);
   console.log(`burn       ${BURN_ADDRESS}`);
+  console.log(`token      ${CROCARD}`);
+  console.log(`router     ${ROUTER}`);
   console.log(`chain      ${chainId}\n`);
   // Only when it matters. A dry run against an empty key is a perfectly good way
   // to check the encoding and the gas before funding anything.
@@ -202,9 +220,15 @@ async function main(): Promise<void> {
     throw new Error(`${what} was sent but no receipt came back: ${hash}`);
   }
 
-  found.drop = await deploy("HolderDrop", [publisher]);
-  found.pot = await deploy("PrizePot", [publisher]);
-  found.splitter = await deploy("Splitter", [found.drop, BURN_ADDRESS, found.pot]);
+  found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
+  found.pot = await deploy("PrizePot", [CROCARD, publisher]);
+  found.splitter = await deploy("Splitter", [
+    ROUTER,
+    CROCARD,
+    found.drop,
+    BURN_ADDRESS,
+    found.pot,
+  ]);
   found.nft = await deploy("CardsOfCronosSetOne", [
     name,
     symbol,

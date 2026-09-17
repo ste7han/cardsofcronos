@@ -2,6 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {FakeCard} from "./FakeCard.sol";
 
 import {HolderDrop} from "../HolderDrop.sol";
 import {Rescuable} from "../Rescuable.sol";
@@ -17,6 +20,7 @@ import {Rescuable} from "../Rescuable.sol";
  */
 contract HolderDropTest is Test {
     HolderDrop private drop;
+    FakeCard private card;
 
     address private publisher = address(0xBEEF);
     address private stranger = address(0x5A);
@@ -28,11 +32,12 @@ contract HolderDropTest is Test {
     address private b22 = 0x0000000000000000000000000000000000000b22;
 
     function setUp() public {
+        card = new FakeCard();
         fixtureJson = vm.readFile("data/drop-fixture.json");
         root = vm.parseJsonBytes32(fixtureJson, ".root");
 
-        drop = new HolderDrop(publisher);
-        vm.deal(address(drop), 10 ether);
+        drop = new HolderDrop(IERC20(address(card)), publisher);
+        card.mint(address(drop), 10 ether);
     }
 
     function proofFor(uint256 i) private view returns (bytes32[] memory) {
@@ -47,7 +52,7 @@ contract HolderDropTest is Test {
         drop.openRound(1, root);
 
         drop.claim(1, a11, 5 ether, proofFor(0));
-        assertEq(a11.balance, 5 ether, "the share the tree says, to the wei");
+        assertEq(card.balanceOf(a11), 5 ether, "the share the tree says, to the wei");
     }
 
     /** Everybody in the tree can take theirs, and together it is the round. */
@@ -60,7 +65,7 @@ contract HolderDropTest is Test {
         drop.claim(1, 0x0000000000000000000000000000000000000c33, 1.5 ether, proofFor(2));
         drop.claim(1, 0x0000000000000000000000000000000000000d44, 0.5 ether, proofFor(3));
 
-        assertEq(address(drop).balance, 0, "the round paid out exactly");
+        assertEq(card.balanceOf(address(drop)), 0, "the round paid out exactly");
         assertEq(drop.allocated(), 0);
     }
 
@@ -72,7 +77,7 @@ contract HolderDropTest is Test {
         vm.prank(stranger);
         drop.claim(1, a11, 5 ether, proofFor(0));
 
-        assertEq(a11.balance, 5 ether);
+        assertEq(card.balanceOf(a11), 5 ether);
         assertEq(stranger.balance, 0, "pushing somebody's share earns nothing");
     }
 
@@ -128,8 +133,8 @@ contract HolderDropTest is Test {
         // Six ether against a tree that promises ten. The first share fits and
         // the second does not, which is the moment that has to be caught — not
         // the first, which would fail for the ordinary reason of being too big.
-        drop = new HolderDrop(publisher);
-        vm.deal(address(drop), 6 ether);
+        drop = new HolderDrop(IERC20(address(card)), publisher);
+        card.mint(address(drop), 6 ether);
 
         vm.prank(publisher);
         drop.openRound(1, root);
@@ -167,7 +172,7 @@ contract HolderDropTest is Test {
     }
 
     function test_openingWithNothingToShare() public {
-        drop = new HolderDrop(publisher);
+        drop = new HolderDrop(IERC20(address(card)), publisher);
         vm.prank(publisher);
         vm.expectRevert(HolderDrop.NothingToShare.selector);
         drop.openRound(1, root);
@@ -189,12 +194,12 @@ contract HolderDropTest is Test {
         address safe = address(0x5AFE);
         drop.announceRescue(safe);
         vm.warp(block.timestamp + 2 days);
-        drop.rescue();
-        assertEq(safe.balance, 10 ether);
+        drop.rescueToken(IERC20(address(card)));
+        assertEq(card.balanceOf(safe), 10 ether);
     }
 
     function test_refusesAZeroPublisher() public {
         vm.expectRevert(Rescuable.ZeroAddress.selector);
-        new HolderDrop(address(0));
+        new HolderDrop(IERC20(address(card)), address(0));
     }
 }

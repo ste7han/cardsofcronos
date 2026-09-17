@@ -2,6 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {FakeCard} from "./FakeCard.sol";
 
 import {PrizePot} from "../PrizePot.sol";
 import {Rescuable} from "../Rescuable.sol";
@@ -24,9 +27,12 @@ contract RescuableTest is Test {
     address private safe = address(0x5AFE);
     address private stranger = address(0xDEAD);
 
+    FakeCard private card;
+
     function setUp() public {
-        pot = new PrizePot(publisher);
-        vm.deal(address(pot), 10 ether);
+        card = new FakeCard();
+        pot = new PrizePot(IERC20(address(card)), publisher);
+        card.mint(address(pot), 10 ether);
     }
 
     function test_waitsTwoDaysAndThenWorks() public {
@@ -37,19 +43,19 @@ contract RescuableTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Rescuable.RescueNotReady.selector, pot.rescueAt())
         );
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
 
         // One second short is still short.
         vm.warp(pot.rescueAt() - 1);
         vm.expectRevert(
             abi.encodeWithSelector(Rescuable.RescueNotReady.selector, pot.rescueAt())
         );
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
 
         vm.warp(pot.rescueAt());
-        pot.rescue();
-        assertEq(safe.balance, 10 ether);
-        assertEq(address(pot).balance, 0);
+        pot.rescueToken(IERC20(address(card)));
+        assertEq(card.balanceOf(safe), 10 ether);
+        assertEq(card.balanceOf(address(pot)), 0);
     }
 
     /**
@@ -74,7 +80,7 @@ contract RescuableTest is Test {
 
         vm.warp(block.timestamp + 3 days);
         vm.expectRevert(Rescuable.NoRescueAnnounced.selector);
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
     }
 
     /**
@@ -100,7 +106,7 @@ contract RescuableTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Rescuable.RescueNotReady.selector, pot.rescueAt())
         );
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
     }
 
     // ── who cannot do it ────────────────────────────────────────────────────
@@ -111,7 +117,7 @@ contract RescuableTest is Test {
         vm.expectRevert();
         pot.announceRescue(publisher);
         vm.expectRevert();
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
         vm.stopPrank();
     }
 
@@ -131,28 +137,28 @@ contract RescuableTest is Test {
 
     function test_rescuingWithNothingAnnounced() public {
         vm.expectRevert(Rescuable.NoRescueAnnounced.selector);
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
         vm.expectRevert(Rescuable.NoRescueAnnounced.selector);
         pot.cancelRescue();
     }
 
     function test_rescuingAnEmptyContract() public {
-        pot = new PrizePot(publisher);
+        pot = new PrizePot(IERC20(address(card)), publisher);
         pot.announceRescue(safe);
         vm.warp(block.timestamp + 2 days);
         vm.expectRevert(Rescuable.NothingToRescue.selector);
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
     }
 
     /** Rescuing clears the announcement, so it is not a standing licence. */
     function test_aRescueIsSpentWhenItIsUsed() public {
         pot.announceRescue(safe);
         vm.warp(block.timestamp + 2 days);
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
 
         assertEq(pot.rescueAt(), 0);
-        vm.deal(address(pot), 1 ether);
+        card.mint(address(pot), 1 ether);
         vm.expectRevert(Rescuable.NoRescueAnnounced.selector);
-        pot.rescue();
+        pot.rescueToken(IERC20(address(card)));
     }
 }

@@ -2,6 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {FakeCard} from "./FakeCard.sol";
 
 import {PrizePot} from "../PrizePot.sol";
 import {Rescuable} from "../Rescuable.sol";
@@ -24,9 +27,12 @@ contract PrizePotTest is Test {
     bytes32 private week38 = bytes32("2026-W38");
     bytes32 private week39 = bytes32("2026-W39");
 
+    FakeCard private card;
+
     function setUp() public {
-        pot = new PrizePot(publisher);
-        vm.deal(address(pot), 10 ether);
+        card = new FakeCard();
+        pot = new PrizePot(IERC20(address(card)), publisher);
+        card.mint(address(pot), 10 ether);
     }
 
     function test_closingAWeekAndPayingIt() public {
@@ -39,8 +45,8 @@ contract PrizePotTest is Test {
         assertFalse(paid);
 
         pot.claim(week38);
-        assertEq(winner.balance, 10 ether);
-        assertEq(address(pot).balance, 0);
+        assertEq(card.balanceOf(winner), 10 ether);
+        assertEq(card.balanceOf(address(pot)), 0);
     }
 
     /** The winner is paid even when somebody else does the calling. */
@@ -51,8 +57,8 @@ contract PrizePotTest is Test {
         vm.prank(stranger);
         pot.claim(week38);
 
-        assertEq(winner.balance, 10 ether, "it pays the winner, not the caller");
-        assertEq(stranger.balance, 0);
+        assertEq(card.balanceOf(winner), 10 ether, "it pays the winner, not the caller");
+        assertEq(card.balanceOf(stranger), 0);
     }
 
     // ── what the publisher cannot do ────────────────────────────────────────
@@ -84,7 +90,7 @@ contract PrizePotTest is Test {
         vm.prank(publisher);
         pot.closeWeek(week38, winner);
 
-        vm.deal(address(pot), address(pot).balance + 2 ether);
+        card.mint(address(pot), 2 ether);
 
         address thief = address(0xBAD);
         vm.prank(publisher);
@@ -94,7 +100,7 @@ contract PrizePotTest is Test {
         assertEq(stolen, 2 ether, "only what arrived after the last week closed");
 
         pot.claim(week38);
-        assertEq(winner.balance, 10 ether, "last week's winner is untouched");
+        assertEq(card.balanceOf(winner), 10 ether, "last week's winner is untouched");
     }
 
     function test_onlyThePublisherMayCloseAWeek() public {
@@ -133,24 +139,24 @@ contract PrizePotTest is Test {
         vm.prank(publisher);
         pot.closeWeek(week39, stranger);
 
-        vm.deal(address(pot), address(pot).balance + 4 ether);
+        card.mint(address(pot), 4 ether);
         vm.prank(publisher);
         pot.closeWeek(week39, stranger);
 
         pot.claim(week38);
         pot.claim(week39);
-        assertEq(winner.balance, 10 ether);
-        assertEq(stranger.balance, 4 ether);
-        assertEq(address(pot).balance, 0, "and the pot is empty, not short");
+        assertEq(card.balanceOf(winner), 10 ether);
+        assertEq(card.balanceOf(stranger), 4 ether);
+        assertEq(card.balanceOf(address(pot)), 0, "and the pot is empty, not short");
     }
 
     function test_aDepositAfterClosingBelongsToTheNextWeek() public {
         vm.prank(publisher);
         pot.closeWeek(week38, winner);
-        vm.deal(address(pot), address(pot).balance + 3 ether);
+        card.mint(address(pot), 3 ether);
 
         pot.claim(week38);
-        assertEq(winner.balance, 10 ether, "not 13: the prize was fixed when it closed");
+        assertEq(card.balanceOf(winner), 10 ether, "not 13: the prize was fixed when it closed");
         assertEq(pot.unallocated(), 3 ether);
     }
 
@@ -160,7 +166,7 @@ contract PrizePotTest is Test {
     }
 
     function test_closingAnEmptyPot() public {
-        pot = new PrizePot(publisher);
+        pot = new PrizePot(IERC20(address(card)), publisher);
         vm.prank(publisher);
         vm.expectRevert(PrizePot.NothingToWin.selector);
         pot.closeWeek(week38, winner);
@@ -188,7 +194,7 @@ contract PrizePotTest is Test {
 
         pot.setPublisher(address(0xFEED));
         pot.claim(week38);
-        assertEq(winner.balance, 10 ether, "being told you won is not reversible");
+        assertEq(card.balanceOf(winner), 10 ether, "being told you won is not reversible");
     }
 
     function test_onlyTheOwnerRotates() public {
@@ -199,7 +205,7 @@ contract PrizePotTest is Test {
 
     function test_refusesAZeroPublisher() public {
         vm.expectRevert(Rescuable.ZeroAddress.selector);
-        new PrizePot(address(0));
+        new PrizePot(IERC20(address(card)), address(0));
         vm.expectRevert(Rescuable.ZeroAddress.selector);
         pot.setPublisher(address(0));
     }

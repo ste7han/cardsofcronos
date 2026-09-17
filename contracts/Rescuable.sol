@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -83,6 +84,30 @@ abstract contract Rescuable is Ownable {
         emit RescueCancelled(rescueTo);
         rescueTo = address(0);
         rescueAt = 0;
+    }
+
+    /**
+     * @notice Sends a token balance to the announced destination, once the wait
+     *         is up. Same announcement, same two days.
+     *
+     * Added when the streams stopped being CRO. Splitter buys $CROCARD and the
+     * pot and the drop hold it, so a hatch that could only move CRO was a hatch
+     * with nothing behind it — the one asset these contracts actually carry
+     * would have been the one asset it could not reach.
+     */
+    function rescueToken(IERC20 token) external onlyOwner {
+        if (rescueAt == 0) revert NoRescueAnnounced();
+        if (block.timestamp < rescueAt) revert RescueNotReady(rescueAt);
+
+        uint256 amount = token.balanceOf(address(this));
+        if (amount == 0) revert NothingToRescue();
+
+        address to = rescueTo;
+        rescueTo = address(0);
+        rescueAt = 0;
+
+        if (!token.transfer(to, amount)) revert RescueFailed();
+        emit Rescued(to, amount);
     }
 
     /// @notice Sends everything to the announced destination, once the wait is up.

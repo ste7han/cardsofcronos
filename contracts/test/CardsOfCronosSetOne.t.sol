@@ -5,7 +5,6 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {CardsOfCronosSetOne} from "../CardsOfCronosSetOne.sol";
-import {Splitter} from "../Splitter.sol";
 
 /**
  * The contract, against the allowlist it will actually be deployed with.
@@ -20,7 +19,7 @@ import {Splitter} from "../Splitter.sol";
 contract AllowlistTest is Test {
     CardsOfCronosSetOne private nft;
     Fake private crocard;
-    Splitter private splitter;
+    address payable private splitter;
 
     bytes32 private root;
     string private allowlist;
@@ -29,9 +28,12 @@ contract AllowlistTest is Test {
         allowlist = vm.readFile("data/allowlist.json");
         root = vm.parseJsonBytes32(allowlist, ".root");
 
-        splitter = new Splitter(payable(address(0xA1)), payable(address(0xB2)), payable(address(0xC3)));
+        // Somewhere for release() to send to. Which contract it is does not
+        // matter here — what these tests check is that the NFT can only send
+        // there and nowhere else.
+        splitter = payable(address(0xA1));
         nft = new CardsOfCronosSetOne(
-            "Cards of Cronos Set 01", "COC1", 2000, "ipfs://x/", root, payable(address(splitter))
+            "Cards of Cronos Set 01", "COC1", 2000, "ipfs://x/", root, splitter
         );
         crocard = new Fake();
         nft.setDiscountToken(IERC20(address(crocard)));
@@ -188,7 +190,7 @@ contract AllowlistTest is Test {
 contract BuyingTest is Test {
     CardsOfCronosSetOne private nft;
     Fake private crocard;
-    Splitter private splitter;
+    address payable private splitter;
 
     address private buyer = address(0xB0B);
     address private holdersTo = address(0xA1);
@@ -196,9 +198,9 @@ contract BuyingTest is Test {
     address private potTo = address(0xC3);
 
     function setUp() public {
-        splitter = new Splitter(payable(holdersTo), payable(burnTo), payable(potTo));
+        splitter = payable(holdersTo);
         nft = new CardsOfCronosSetOne(
-            "Cards of Cronos Set 01", "COC1", 5, "ipfs://x/", bytes32(0), payable(address(splitter))
+            "Cards of Cronos Set 01", "COC1", 5, "ipfs://x/", bytes32(0), splitter
         );
         crocard = new Fake();
         nft.setDiscountToken(IERC20(address(crocard)));
@@ -341,7 +343,7 @@ contract BuyingTest is Test {
         nft.release();
 
         assertEq(address(nft).balance, 0, "the contract keeps nothing back");
-        assertEq(address(splitter).balance, price, "and it can only have gone one place");
+        assertEq(splitter.balance, price, "and it can only have gone one place");
     }
 
     function test_releasingNothingReverts() public {
@@ -356,7 +358,7 @@ contract BuyingTest is Test {
      */
     function test_royaltyGoesToTheSplitter() public {
         (address receiver, uint256 owed) = nft.royaltyInfo(1, 10_000 ether);
-        assertEq(receiver, address(splitter), "a royalty is divided like everything else");
+        assertEq(receiver, splitter, "a royalty is divided like everything else");
         assertEq(owed, 1_000 ether, "10% of the sale");
         assertEq(nft.ROYALTY_BPS(), 1_000);
         assertTrue(nft.supportsInterface(0x2a55205a), "ERC2981");
@@ -459,7 +461,7 @@ contract BuyingTest is Test {
 
     /** What the owner may do, and the one thing they may not: move the money. */
     function test_theOwnerCannotRedirectTheMoney() public view {
-        assertEq(nft.splitter(), address(splitter));
+        assertEq(nft.splitter(), splitter);
         // There is no setter. If one is ever added, this stops compiling, which
         // is the point of asserting on a thing that does not exist.
     }

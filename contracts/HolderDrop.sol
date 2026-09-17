@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import {Rescuable} from "./Rescuable.sol";
 
 /**
- * Half of everything, paid back to the people holding $CROCARD.
+ * Half of everything, paid back to the people holding $CROCARD — in $CROCARD.
+ *
+ * Splitter buys the token on the way, so what arrives here is already what the
+ * holders are owed. They are paid more of the thing they already hold, which is
+ * the maker's call and the reason every stream now goes through the market
+ * rather than around it.
  *
  * ── WHY A TREE AND NOT A LIST ────────────────────────────────────────────────
  *
@@ -60,6 +66,9 @@ contract HolderDrop is Rescuable {
     /// @notice How long a holder has to take their share before it is recycled.
     uint256 public constant CLAIM_WINDOW = 90 days;
 
+    /// @notice What a share is paid in.
+    IERC20 public immutable card;
+
     /// @notice The only address that may open a round. Rotatable by the owner.
     address public publisher;
 
@@ -84,15 +93,19 @@ contract HolderDrop is Rescuable {
     error NotExpiredYet(uint256 at);
     error AlreadySwept();
     error TooMuchClaimed();
-    error TransferFailed();
+    error TokenTransferFailed();
 
-    constructor(address publisher_) Ownable(msg.sender) {
-        if (publisher_ == address(0)) revert ZeroAddress();
+    constructor(IERC20 card_, address publisher_) Ownable(msg.sender) {
+        if (address(card_) == address(0) || publisher_ == address(0)) revert ZeroAddress();
+        card = card_;
         publisher = publisher_;
     }
 
-    /// @notice Takes CRO from the splitter, or from anybody topping it up.
-    receive() external payable {}
+    /**
+     * Nothing to receive. Tokens arrive by being transferred here, which needs no
+     * code — and a payable receive() would now only let somebody strand CRO in a
+     * contract with no way to pay it out. The rescue hatch gets that back.
+     */
 
     /**
      * @notice Sets aside everything unspoken-for and fixes who it belongs to.
@@ -106,7 +119,7 @@ contract HolderDrop is Rescuable {
         if (rounds[round].root != bytes32(0)) revert RoundAlreadyOpen();
         if (root == bytes32(0)) revert BadProof();
 
-        uint256 amount = address(this).balance - allocated;
+        uint256 amount = card.balanceOf(address(this)) - allocated;
         if (amount == 0) revert NothingToShare();
 
         rounds[round] = Round({
@@ -152,8 +165,7 @@ contract HolderDrop is Rescuable {
         one.taken += amount;
         allocated -= amount;
 
-        (bool sent, ) = payable(holder).call{value: amount}("");
-        if (!sent) revert TransferFailed();
+        if (!card.transfer(holder, amount)) revert TokenTransferFailed();
         emit Claimed(round, holder, amount);
     }
 
@@ -183,6 +195,6 @@ contract HolderDrop is Rescuable {
 
     /// @notice What the next round would share out, if it opened now.
     function unallocated() external view returns (uint256) {
-        return address(this).balance - allocated;
+        return card.balanceOf(address(this)) - allocated;
     }
 }
