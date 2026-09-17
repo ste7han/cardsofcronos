@@ -166,6 +166,17 @@ export default function MintPage() {
               come down. Without the key, it cannot, and what you own stops
               being sellable anywhere that honours a takedown.
             </dd>
+            {/* The mechanism, named. The paragraph above says what can change;
+                without this it is a promise about intentions, and this is the
+                half somebody can go and check for themselves. */}
+            <dd className="mt-3 text-[10px] leading-relaxed text-faint">
+              How: the images sit on IPFS and the contract holds the address of
+              the folder they are in. <span className="font-mono">setBaseURI</span>{" "}
+              changes that address and only the owner can call it. Read{" "}
+              <span className="font-mono">tokenURI</span> on the contract and you
+              can see where yours points right now — this is not a thing you have
+              to take our word for.
+            </dd>
           </div>
           <div className="bg-panel px-4 py-4">
             <dt className="text-[9px] tracking-[0.16em] text-pump">WILL NOT CHANGE</dt>
@@ -184,6 +195,15 @@ export default function MintPage() {
           in places for a long time after it is replaced. It is the answer to
           what we did not see coming, not a reason to ship art we already have
           doubts about.
+        </p>
+
+        <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">
+          Said plainly, because the sentence above is the polite version: a key
+          exists that can change the picture on a card you own, and it is ours.
+          A collection where that key had been thrown away would be a stronger
+          promise than this one. We kept it, on purpose, for the takedown case —
+          and you are entitled to weigh that before you buy rather than discover
+          it afterwards.
         </p>
       </section>
     </div>
