@@ -795,6 +795,17 @@ chain and the third is `taken(address)` on `contracts/HolderDrop.sol` — a tall
 the contract keeps precisely so that a profile page does not have to replay a
 year of logs to answer one question.
 
+**What was received is one figure, not one per stream**, and that was decided
+rather than skipped. The splitter cannot tell a mint from a royalty from a
+match's cut: CRO arrives in one balance, leaves in one swap, and is divided
+afterwards, so a share reaching a holder carries nothing that says where it came
+from. Splitting it would mean tagging deposits — `depositFrom(source)` for the
+paths that are ours and everything untagged counted as royalties — which is
+buildable and was turned down: it is more surface on a contract that currently
+does one thing, for a breakdown nobody needs to act on. The page says the three
+are pooled, so that somebody looking for the split finds out it does not exist
+instead of assuming it is kept somewhere they cannot see.
+
 ---
 
 ## Open

@@ -203,6 +203,14 @@ export function Profile() {
  * here has a third state. An RPC that would not answer must not print a zero
  * balance next to a tier calculated from it — that is a page telling somebody
  * they are on the retail rate when they are not.
+ *
+ * ONE FIGURE FOR WHAT WAS RECEIVED, and not three. The splitter cannot tell a
+ * mint from a royalty from a match's cut: CRO arrives in one balance, leaves in
+ * one swap, and is divided after that — so by the time a share reaches a holder
+ * there is nothing left in it that says where it came from. Three numbers here
+ * would be three guesses. Saying so on the page is the point: somebody looking
+ * for the breakdown should find out it does not exist rather than assume it is
+ * being kept somewhere they cannot see.
  */
 function Holding({ standing }: { standing: Standing | null }) {
   const held = standing?.held == null ? null : toTokens(standing.held);
@@ -219,6 +227,10 @@ function Holding({ standing }: { standing: Standing | null }) {
         shared out among the people holding it. Holding also decides what is taken from a win —
         the more you hold, the more of your own prize you keep.
       </p>
+      <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
+        What you have received is one figure and not three. The three streams are pooled before
+        anything is bought, so a share that reaches you no longer says which of them paid for it.
+      </p>
 
       <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-3">
         <Figure
@@ -234,7 +246,7 @@ function Holding({ standing }: { standing: Standing | null }) {
         <Figure
           label="RECEIVED"
           value={standing?.taken == null ? "—" : whole(toTokens(standing.taken))}
-          note={standing?.drop == null ? "Nothing pays out yet" : "$CROCARD, every round"}
+          note={standing?.drop == null ? "Nothing pays out yet" : "All rounds, all three streams"}
         />
       </dl>
 
