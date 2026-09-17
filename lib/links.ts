@@ -4,12 +4,15 @@
 // whatever handles the callbacks cannot end up with three different ideas of
 // what a network is.
 //
-// What linking is for: a referral system, points, and points spent on mints or
-// token. That only works if an account belongs to exactly one wallet. Which is
-// why none of this can be a handle somebody types — a typed handle is a claim,
-// and a referral system paying out on claims pays out to whoever claims most.
-// Both networks below can prove it instead, and both need the maker to register
-// something before they can:
+// What linking is for, now that the referral system it was built for is gone:
+// telling a person the same thing in two places. A Telegram link lets a bot say
+// it is your turn without asking who you are, and an X link is how the maker
+// reaches somebody about a match or a prize.
+//
+// It is still something the network confirms rather than a handle somebody
+// types. A typed handle is a claim, and one X account being ten wallets is ten
+// people to anything counting. Both networks below can prove it instead, and
+// both need the maker to register something first:
 //
 //   x         an app on the X developer portal. OAuth 2.0 with PKCE; the client
 //             id is public, the secret is a Worker secret and never in source.
@@ -84,7 +87,7 @@ export interface Linkable {
 export const LINKABLE: Record<Network, Linkable> = {
   x: {
     name: "X",
-    why: "Where the referrals happen. One X account, one wallet — that rule is the whole defence, because wallets are free and X accounts are not.",
+    why: "How the maker reaches you about a match or a prize. One X account, one wallet — wallets are free and X accounts are not.",
     env: "X_CLIENT_ID",
     built: true,
   },

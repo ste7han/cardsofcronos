@@ -431,9 +431,9 @@ function LinkedAccounts() {
     <section>
       <h2 className="display text-xl">LINKED ACCOUNTS</h2>
       <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
-        For the referral system: points for bringing people in, spent on mints and token. That only
-        works if an account can be attached to exactly one wallet, so linking is something the
-        network confirms rather than a handle you type. Anyone can type a handle.
+        So you can be reached about a match or a prize without anybody asking who you are. An
+        account attaches to exactly one wallet, and linking is something the network confirms
+        rather than a handle you type — anyone can type a handle.
       </p>
 
       {outcome && (

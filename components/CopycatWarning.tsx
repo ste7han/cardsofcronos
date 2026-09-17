@@ -9,7 +9,7 @@
 // true for that one or it is a trap for whoever sets it.
 //
 // It exists because of a specific, predictable thing: the moment a project has a
-// Telegram group filling up and referral links going around, somebody launches a
+// Telegram group filling up and its links going around, somebody launches a
 // token with this site's address in its description. The people it
 // works on are the ones who found the real project first — they have every
 // reason to believe the link, and nothing on the site tells them otherwise.

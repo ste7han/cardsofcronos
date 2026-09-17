@@ -8,7 +8,7 @@
 //
 // What is new here, and what base58 never had to deal with: **an EVM address is
 // the same address in any case**. `0xABC…` and `0xabc…` are one wallet. Left
-// alone that turns into two players, two referral rows and two sets of points
+// alone that turns into two players, two records and two holder balances
 // for one person, and nothing about it looks wrong until someone counts. So
 // there is exactly one stored form — lowercase — and `normalise` is the only
 // door into it.

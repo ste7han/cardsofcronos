@@ -101,9 +101,9 @@ export interface XIdentity {
  * Trade the code for a token, then ask who it belongs to.
  *
  * The id is what gets stored. A username is a display convenience and changes
- * whenever its owner feels like it; an account id does not, and a referral
- * system that keyed on the handle would hand somebody else's points to whoever
- * picked the name up next.
+ * whenever its owner feels like it; an account id does not, and a link that
+ * keyed on the handle would attach somebody else's wallet to whoever picked the
+ * name up next.
  */
 export async function identify(params: {
   code: string;

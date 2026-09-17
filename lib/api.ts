@@ -3,9 +3,10 @@
 // That rule: the server checks the wallet signature itself. Until linking there
 // was nothing at stake and the browser's own answer was good enough — it is
 // written in lib/session.ts that this would have to change the moment there was.
-// A referral system pays out, so this is that moment. A route that took the
-// wallet at its word would let anyone attach their X account to somebody else's
-// address, which is the only attack the whole design is arranged against.
+// What is attached to a wallet is that wallet's, so this is that moment. A route
+// that took the wallet at its word would let anyone attach their X account to
+// somebody else's address, which is the only attack the whole design is
+// arranged against.
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
@@ -37,7 +38,7 @@ export function walletFrom(body: unknown): string | null {
   // Normalised, not taken as written. An EVM address is the same wallet in any
   // case, so a proof signed with a checksummed address and one signed with a
   // lowercase one are the same person — and storing both spellings would make
-  // them two players, two referral rows and two sets of points. This is the door
+  // them two players with two records and two holder balances. This is the door
   // every wallet comes through, so this is where the spelling is settled.
   return normalise(proof.address);
 }
