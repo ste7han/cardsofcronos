@@ -33,7 +33,8 @@
     "contract": "forge test",
     "site-logo": "tsx scripts/site-logo.tsx",
     "trace-mark": "tsx scripts/trace-mark.ts",
-    "webp": "tsx scripts/nft/webp.ts"
+    "webp": "tsx scripts/nft/webp.ts",
+    "tokens": "tsx scripts/nft/tokens.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
