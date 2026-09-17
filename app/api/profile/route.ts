@@ -19,11 +19,10 @@
 // any address on an explorer and that is fine; this route answering for any
 // address handed to it would make the site the convenient way to do it in bulk.
 
-import { PUBLIC_RPCS, rpc, tokenBalances } from "@/lib/cronos";
+import { PUBLIC_RPCS, tokenBalances } from "@/lib/cronos";
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
-import { claimedOnChain, owedTo } from "@/lib/holders";
+import { owedTo, takenOnChain } from "@/lib/holders";
 import { playerOf } from "@/lib/store";
-import { selector, word } from "@/lib/evm-tx";
 import { CONTRACTS, CROCARD } from "@/lib/revenue";
 
 export const dynamic = "force-dynamic";
@@ -36,32 +35,25 @@ export async function POST(request: Request) {
   const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
   const drop = CONTRACTS.drop;
 
-  const [[held], taken, player, owed] = await Promise.all([
+  const [[held], player, owed] = await Promise.all([
     tokenBalances(rpcs, CROCARD, [wallet]),
-    // `taken(address)` is a tally the contract keeps so this does not have to
-    // read back every Claimed log ever emitted — Cronos answers eth_getLogs over
-    // two thousand blocks at a time and a block is 0.42 seconds.
-    drop === null
-      ? Promise.resolve(null)
-      : rpc<string>(rpcs, "eth_call", [
-          { to: drop, data: selector("taken(address)") + word(wallet) },
-          "latest",
-        ]).catch(() => null),
     playerOf(db(), wallet),
-    // Everything in an open round that this wallet has not claimed. Empty until
-    // the drop is deployed, which is also when the first round can exist.
-    drop === null ? Promise.resolve([]) : owedTo(db(), wallet, claimedOnChain(rpcs)),
+    // What the live tree says this wallet has earned, what the contract says it
+    // has taken, and the difference. Null until the drop is deployed and a tree
+    // has gone live, which is also the first moment either number can exist.
+    drop === null ? Promise.resolve(null) : owedTo(db(), wallet, takenOnChain(rpcs)),
   ]);
 
   return Response.json({
     // Null is "the chain would not answer", which is not zero. A balance page
     // that reads empty because a request timed out is the one wrong answer here.
     held: held?.toString() ?? null,
-    taken: taken === null ? null : BigInt(taken).toString(),
-    // Base units, as a string, and "0" rather than null when the drop exists and
-    // owes this wallet nothing — those are different facts.
-    claimable: drop === null ? null : owed.reduce((sum, one) => sum + BigInt(one.amount), 0n).toString(),
-    rounds: owed.length,
+    // Both in base units as strings. `taken` is what the contract has paid this
+    // wallet across its whole life; `claimable` is what pressing the button
+    // would pay now. Null is "not known", which is not zero.
+    taken: owed?.taken ?? null,
+    claimable: owed?.claimable ?? null,
+    earned: owed?.earned ?? null,
     // So the numbers above can be checked rather than believed.
     drop,
     token: CROCARD,

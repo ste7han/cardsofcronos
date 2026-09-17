@@ -30,9 +30,31 @@
 // one-directional: leaving somebody out costs them one round and they are in the
 // next, and paying a pool cannot be undone.
 //
+// ── WHAT A HOLDER SEES, AND WHY IT IS BUILT THIS WAY ─────────────────────────
+//
+// A number that goes up every day and one button. The tree says what somebody
+// has earned IN TOTAL, ever; the contract remembers what they have already
+// taken; a claim pays the difference. So publishing a bigger tree is the whole
+// of "you earned more", and a holder who is not watching loses nothing.
+//
+// This replaced one tree per round with a separate claim for each. That was
+// correct and nobody would have used it: a round a day meant ninety open rounds
+// and ninety transactions inside the ninety-day window, so rounds had to be
+// weekly to be bearable — and a reward that arrives on a schedule is a payday,
+// not something that accrues.
+//
+// ── THE DAY IS SHARED, THE TREE IS EVERYONE ──────────────────────────────────
+//
+// Two different questions and they have different answers. What arrived today is
+// shared between the people holding the token today. The tree contains everyone
+// who has ever earned anything, whatever they hold now — somebody who sold keeps
+// what they earned while they held it, and dropping them would both take back
+// money they were told was theirs and make the cumulative total go down, which
+// the contract refuses outright.
+//
 // ── WHY THE TREE IS NOT STORED ───────────────────────────────────────────────
 //
-// The rows are. A tree is rebuilt from them when somebody asks for a proof,
+// The leaves are. A tree is rebuilt from them when somebody asks for a proof,
 // which is cheap for a few thousand leaves — and it means there is one source of
 // truth rather than a blob that can quietly disagree with the rows it came from.
 
@@ -43,14 +65,18 @@ import { hexToBytes, normalise } from "@/lib/address";
 import { selector, word } from "@/lib/evm-tx";
 import { CONTRACTS, CROCARD, NOT_A_HOLDER } from "@/lib/revenue";
 import {
+  addEntitlements,
   cursorOf,
-  dropRounds,
+  earners,
+  liveTree,
+  markAdopted,
   markContracts,
   moveBalances,
   payableHolders,
-  recordRound,
-  roundEntries,
+  pendingTree,
+  recordTree,
   setCursor,
+  treeLeaves,
   unknownHolders,
   type Database,
 } from "@/lib/store";
@@ -87,39 +113,36 @@ const MOST_CHUNKS = 150;
 const CODE_CHECKS = 200;
 
 /**
- * Shares below this are left out of the tree.
+ * Entitlements below this stay out of the tree.
  *
- * A claim costs gas — about 0.034 CRO at the gas price this was written at — and
- * below some amount the transaction costs more than it moves. Putting those
- * holders in hands them a share they would lose money taking. What is left out
- * stays in the contract and is shared again next round, by which time it may be
- * worth taking.
+ * NOT DROPPED — the holder keeps what they earned, in the table, and goes into
+ * the tree the day it crosses this line. What this avoids is a leaf for somebody
+ * whose whole entitlement is worth less than the gas to claim it, on a tree that
+ * every holder's proof is rebuilt from.
+ *
+ * It is a threshold on the LIFETIME total rather than on a day's share, which is
+ * the other thing the cumulative design fixes: under rounds, a small holder fell
+ * under the dust line every single round and never accumulated past it.
  */
 export const DUST = 10_000_000_000_000_000n; // 0.01 of a token
 
 /**
- * The least a round may share out.
+ * The least that has to have arrived before a new tree is worth publishing.
  *
- * Below this every share is dust, the tree comes out empty and the transaction
- * is gas spent on nothing. What is not shared today is still in the contract
- * tomorrow, so waiting costs nobody anything.
+ * Below this the differences are noise and the transaction is gas spent on
+ * nothing. What is not shared out today is still in the contract tomorrow, so
+ * waiting costs nobody anything.
  */
 export const LEAST_WORTH_SHARING = 1_000n * 10n ** 18n;
 
 /**
- * How long between rounds.
+ * How long a proposed tree waits before it can be adopted.
  *
- * A WEEK AND NOT A DAY, and that is about the holder rather than about gas. Each
- * round is claimed separately — the contract keeps `claimed[round][holder]` — so
- * a round a day would mean a holder facing ninety open rounds inside the ninety
- * day claim window and ninety transactions to collect what they are owed. Nobody
- * does that, and the shares would expire unclaimed.
- *
- * Weekly gives thirteen inside the window and matches the rhythm the rest of the
- * game already has. The job still runs daily; it just has nothing to do on six
- * of the seven days, and the CRO it is not sharing out is not going anywhere.
+ * Mirrors PUBLISH_DELAY in contracts/HolderDrop.sol, which is what actually
+ * enforces it — this is only so the table can say when a tree is expected to go
+ * live without asking the chain. test/holders.test.ts checks the two agree.
  */
-export const BETWEEN_ROUNDS = 7 * 86_400_000;
+export const PUBLISH_DELAY = 24 * 60 * 60 * 1000;
 
 /** What a run did. */
 export interface RanHolders {
@@ -130,66 +153,73 @@ export interface RanHolders {
   moved: number;
   /** Addresses asked about for code this run. */
   checked: number;
-  /** The round opened, or null when none was. */
-  round: number | null;
-  tx: string | null;
-  /** How many holders it promised something to. */
-  paid: number;
+  /** The tree that went live this run, if one did. */
+  adopted: string | null;
+  /** The tree proposed this run, and what it promises in total. */
+  proposed: string | null;
+  promised: string | null;
+  /** How many holders are in it. */
+  holders: number;
   why?: string;
 }
 
 const topicToAddress = (topic: string) => normalise("0x" + topic.slice(26));
 
 /**
- * A round number that cannot collide and reads as a date: 20260918.
+ * What each holder earns from an amount that has just arrived.
  *
- * The contract refuses a round that is already open, so this is also what stops
- * two runs on the same day from opening two rounds — without a counter, and
- * without this file having an opinion about what the last round was.
- */
-export function roundFor(now: number): number {
-  const day = new Date(now);
-  return (
-    day.getUTCFullYear() * 10_000 + (day.getUTCMonth() + 1) * 100 + day.getUTCDate()
-  );
-}
-
-/**
- * Shares of `total`, floored, in the order the tree is built from.
+ * Their share of the token, at this moment, of what came in. Floored, so the
+ * shares always add up to a little UNDER what arrived — the remainder stays
+ * unpromised in the contract and goes into the next day, rather than being
+ * handed to whoever happened to sort last.
  *
- * Floored so the tree always promises a little UNDER the round rather than over:
- * the contract refuses a claim that would take more than the round holds, and a
- * tree that promised more would pay the first holders and fail the last. The few
- * wei left over stay in the contract and go into a later round.
- *
- * Sorted by address so the tree is the same tree for the same input, which is
- * what makes a proof rebuildable from the rows rather than from a stored blob.
+ * The denominator is what the PAYABLE holders hold between them and not the
+ * supply. The pool holds thirty-nine per cent of this token and is not a holder;
+ * dividing by the supply would quietly leave two fifths of every day unshared
+ * forever.
  */
 export function sharesOf(
   holders: readonly { address: string; balance: bigint }[],
-  total: bigint,
-): [string, string][] {
-  const supply = holders.reduce((sum, holder) => sum + holder.balance, 0n);
-  if (supply === 0n) return [];
+  arrived: bigint,
+): Map<string, bigint> {
+  const between = holders.reduce((sum, holder) => sum + holder.balance, 0n);
+  const shares = new Map<string, bigint>();
+  if (between === 0n || arrived <= 0n) return shares;
 
-  return [...holders]
-    .sort((a, b) => (a.address < b.address ? -1 : a.address > b.address ? 1 : 0))
-    .map(
-      (holder) => [holder.address, ((holder.balance * total) / supply).toString()] as [string, string],
-    )
-    .filter(([, share]) => BigInt(share) >= DUST);
+  for (const holder of holders) {
+    const share = (holder.balance * arrived) / between;
+    if (share > 0n) shares.set(holder.address, share);
+  }
+  return shares;
 }
 
-/** The tree for a set of shares. One place, so the builder and the prover agree. */
-export function treeOf(shares: readonly (readonly [string, string])[]): StandardMerkleTree<[string, string]> {
+/** The tree for a set of leaves. One place, so the builder and the prover agree. */
+export function treeOf(
+  leaves: readonly (readonly [string, string])[],
+): StandardMerkleTree<[string, string]> {
   return StandardMerkleTree.of(
-    shares.map((share) => [...share] as [string, string]),
+    leaves.map((leaf) => [...leaf] as [string, string]),
     ["address", "uint256"],
   );
 }
 
 /**
- * Brings the holder table up to date and opens a round if there is one to open.
+ * Sorted by address, so the same holders always give the same tree.
+ *
+ * That is what lets a proof be rebuilt from rows in a database instead of stored
+ * as a blob beside them. A query that came back in a different order would give
+ * a different root for the same facts.
+ */
+export function leavesOf(holders: readonly { address: string; entitlement: bigint }[]): [string, string][] {
+  return holders
+    .filter((holder) => holder.entitlement >= DUST)
+    .sort((a, b) => (a.address < b.address ? -1 : a.address > b.address ? 1 : 0))
+    .map((holder) => [holder.address, holder.entitlement.toString()] as [string, string]);
+}
+
+/**
+ * Brings the holder table up to date, adopts yesterday's tree and proposes
+ * today's.
  *
  * Returns what it did rather than throwing on the ordinary nothing-to-do cases,
  * for the same reason the rest of this cron does: a job that errors on "nobody
@@ -205,9 +235,10 @@ export async function runHolders(
     to: null,
     moved: 0,
     checked: 0,
-    round: null,
-    tx: null,
-    paid: 0,
+    adopted: null,
+    proposed: null,
+    promised: null,
+    holders: 0,
   };
 
   const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
@@ -220,12 +251,9 @@ export async function runHolders(
 
   // Never backfilled. Starting from the head here would give a table of whoever
   // happened to move some since — which looks like a holder list and is not one,
-  // and a round built on it would pay a handful of people everybody's share.
+  // and a tree built on it would pay a handful of people everybody's share.
   if (seen === null) {
-    return {
-      ...nothing,
-      why: "no holder snapshot yet — run scripts/holder-drop.ts once",
-    };
+    return { ...nothing, why: "no holder snapshot yet — run scripts/holder-drop.ts once" };
   }
 
   const head = Number(BigInt(await rpc<string>(rpcs, "eth_blockNumber", [])));
@@ -283,186 +311,210 @@ export async function runHolders(
       const code = await rpc<string>(rpcs, "eth_getCode", [address, "latest"]);
       answers.set(address, code !== "0x" && code !== "0x0");
     } catch {
-      // Left unknown, which means left out of the round. It is asked again next
-      // run; a holder waits one round rather than a pool being paid once.
+      // Left unknown, which means left out of the share-out. It is asked again
+      // next run; a holder waits a day rather than a pool being paid once.
     }
   }
   if (answers.size > 0) await markContracts(db, answers);
 
-  const so_far: RanHolders = {
+  const sofar: RanHolders = {
     ...nothing,
     from: read > seen ? seen + 1 : null,
     to: read > seen ? read : null,
     moved: deltas.size,
     checked: answers.size,
-    ...(why ? { why } : {}),
   };
 
-  const opened = await openRound(db, rpcs, secrets.publisherKey, now);
-  return { ...so_far, ...opened, why: [why, opened.why].filter(Boolean).join("; ") || undefined };
+  const tree = await keepTheTreeMoving(db, rpcs, secrets.publisherKey, now);
+  const reasons = [why, tree.why].filter(Boolean).join("; ");
+  return { ...sofar, ...tree, ...(reasons ? { why: reasons } : {}) };
 }
 
-/** Opens a round for whatever the drop is holding and nobody is owed yet. */
-async function openRound(
+/**
+ * Adopts what has waited, then proposes what has accrued since.
+ *
+ * In that order and in one run, which is what makes the delay cost nothing: the
+ * tree proposed yesterday goes live today, and today's goes live tomorrow. The
+ * live tree is always a day behind, which is a day of accrual on a balance that
+ * has been accruing for weeks.
+ */
+async function keepTheTreeMoving(
   db: Database,
   rpcs: readonly string[],
   publisherKey: string | undefined,
   now: number,
-): Promise<{ round: number | null; tx: string | null; paid: number; why?: string }> {
+): Promise<{
+  adopted: string | null;
+  proposed: string | null;
+  promised: string | null;
+  holders: number;
+  why?: string;
+}> {
   const drop = CONTRACTS.drop;
-  const none = { round: null, tx: null, paid: 0 };
+  const none = { adopted: null, proposed: null, promised: null, holders: 0 };
   if (drop === null) return { ...none, why: "no drop contract yet" };
-  if (!publisherKey) return { ...none, why: "no key to open a round with" };
+  if (!publisherKey) return { ...none, why: "no key to publish with" };
 
-  // Asked of our own table rather than the chain. The contract refuses a round
-  // number that is already open, which stops a duplicate, but it has no opinion
-  // about how often — that is this file's decision and this is where it lives.
-  const [newest] = await dropRounds(db, 1);
-  if (newest !== undefined && now - newest.openedAt < BETWEEN_ROUNDS) {
-    const days = Math.ceil((BETWEEN_ROUNDS - (now - newest.openedAt)) / 86_400_000);
-    return { ...none, why: `round ${newest.round} was opened less than a week ago; ${days}d to go` };
-  }
+  const key = hexToBytes(publisherKey);
+  const why: string[] = [];
+  let adopted: string | null = null;
 
-  // What the contract would allocate. Read rather than assumed, and read as late
-  // as possible: anything that lands between this and the transaction is
-  // allocated to the round without being in the tree, and comes back through
-  // sweep() when the round expires rather than being paid twice.
-  const free = BigInt(
-    await rpc<string>(rpcs, "eth_call", [
-      { to: drop, data: selector("unallocated()") },
-      "latest",
-    ]),
+  // 1. Anything waiting that has waited long enough. Asked of the chain rather
+  //    than of our own table: the owner can throw a pending root away, and a
+  //    table that had not noticed would keep reporting it as on its way.
+  const pendingAt = Number(
+    BigInt(await rpc<string>(rpcs, "eth_call", [{ to: drop, data: selector("pendingAt()") }, "latest"])),
   );
-  if (free < LEAST_WORTH_SHARING) {
-    return { ...none, why: `only ${free} to share, which is not worth a round` };
+  if (pendingAt === 0) {
+    const waiting = await pendingTree(db);
+    if (waiting !== null) {
+      // The chain has no pending root and we think one is waiting. Either it was
+      // adopted by somebody else or the owner dropped it; either way our row is
+      // stale and saying so beats silently proposing on top of it.
+      why.push(`tree ${waiting.id} is no longer pending on chain`);
+    }
+  } else if (now >= pendingAt * 1000) {
+    adopted = await send(rpcs, key, drop, selector("adopt()"));
+    const waiting = await pendingTree(db);
+    if (waiting !== null) await markAdopted(db, waiting.id, now);
+  } else {
+    why.push(`a tree is waiting until ${new Date(pendingAt * 1000).toISOString()}`);
+    // Nothing else to do: the contract takes one pending root at a time.
+    return { ...none, adopted, why: why.join("; ") };
   }
 
-  const holders = await payableHolders(db);
-  if (holders.length === 0) return { ...none, why: "no payable holders in the table" };
+  // 2. What has arrived and is promised to nobody. Read after the adopt, so the
+  //    tree that just went live is counted as promised and its amount is not
+  //    handed out a second time.
+  const arrived = BigInt(
+    await rpc<string>(rpcs, "eth_call", [{ to: drop, data: selector("unpromised()") }, "latest"]),
+  );
+  if (arrived < LEAST_WORTH_SHARING) {
+    why.push(`only ${arrived} has arrived, which is not worth a tree`);
+    return { ...none, adopted, why: why.join("; ") };
+  }
 
-  const shares = sharesOf(holders, free);
-  if (shares.length === 0) return { ...none, why: "every share would be dust" };
+  // 3. Share it between the people holding the token now.
+  const holding = await payableHolders(db);
+  if (holding.length === 0) {
+    why.push("no payable holders in the table");
+    return { ...none, adopted, why: why.join("; ") };
+  }
+  await addEntitlements(db, sharesOf(holding, arrived), now);
 
-  const round = roundFor(now);
-  const tree = treeOf(shares);
+  // 4. And build the tree from everybody who has ever earned anything, which is
+  //    a longer list: somebody who sold keeps what they earned while they held.
+  const leaves = leavesOf(await earners(db));
+  if (leaves.length === 0) {
+    why.push("nobody is over the dust line yet");
+    return { ...none, adopted, why: why.join("; ") };
+  }
 
-  const tx = await send(
+  const promised = leaves.reduce((sum, [, amount]) => sum + BigInt(amount), 0n);
+  const tree = treeOf(leaves);
+  const proposed = await send(
     rpcs,
-    hexToBytes(publisherKey),
+    key,
     drop,
-    selector("openRound(uint256,bytes32)") + word(BigInt(round)) + word(tree.root),
+    selector("propose(bytes32,uint256)") + word(tree.root) + word(promised),
   );
 
-  const promised = shares.reduce((sum, [, share]) => sum + BigInt(share), 0n);
-  await recordRound(
+  const liveAt = now + PUBLISH_DELAY;
+  await recordTree(
     db,
-    { round, root: tree.root, promised, holders: shares.length, txHash: tx, openedAt: now },
-    shares.map(([address, share]) => [address, BigInt(share)] as const),
+    { root: tree.root, promised, proposedAt: now, liveAt, txHash: proposed },
+    leaves.map(([address, amount]) => [address, BigInt(amount)] as const),
   );
 
-  return { round, tx, paid: shares.length };
+  return {
+    adopted,
+    proposed,
+    promised: promised.toString(),
+    holders: leaves.length,
+    ...(why.length > 0 ? { why: why.join("; ") } : {}),
+  };
 }
 
-/** One round's share, with what is needed to take it. */
+/** What a holder can take right now, and the proof for it. */
 export interface Owed {
-  round: number;
-  /** Base units, as a decimal string. */
-  amount: string;
+  /** Everything they have earned, as the live tree says it. */
+  earned: string;
+  /** What they have already taken, as the contract says it. */
+  taken: string;
+  /** The difference, which is what a claim would pay. */
+  claimable: string;
   proof: string[];
   root: string;
-  openedAt: number;
 }
 
 /**
- * How many rounds back to look for what a wallet is owed.
- *
- * A round a week and a claim window of ninety days means thirteen can be open at
- * once. Twenty is room for the window to be lengthened without this quietly
- * dropping the oldest — which would look, to the holder it happened to, exactly
- * like a share that was never theirs.
- */
-const LOOK_BACK = 20;
-
-/**
- * What a wallet can still take, round by round, with the proof for each.
+ * What one wallet can claim, against the tree that is live on chain.
  *
  * Here rather than in a route because two of them ask: the profile wants the
- * total and the claim page wants the proofs, and two copies of "which rounds
- * does this wallet still have something in" is two answers that can disagree
- * about somebody's money.
+ * number and the claim button wants the proof, and two copies of "what is this
+ * wallet owed" is two answers that can disagree about somebody's money.
  *
- * The tree is rebuilt from the rows rather than stored. That is cheap for a few
- * thousand leaves and means a proof cannot disagree with the entry it came from.
+ * `taken` is asked of the chain and not of a table. It is the one number here
+ * that changes without this project doing anything — a holder claims from a
+ * wallet, whenever they like — and a cached copy of it would show somebody money
+ * they have already had.
  */
 export async function owedTo(
   db: Database,
   wallet: string,
-  claimed: (round: number, wallet: string) => Promise<boolean>,
-): Promise<Owed[]> {
-  const rounds = await dropRounds(db, LOOK_BACK);
-  const owed: Owed[] = [];
+  takenBy: (wallet: string) => Promise<bigint | null>,
+): Promise<Owed | null> {
+  const live = await liveTree(db);
+  if (live === null) return null;
 
-  for (const round of rounds) {
-    const entries = await roundEntries(db, round.round);
-    const mine = entries.find(([address]) => address === wallet);
-    if (mine === undefined) continue;
+  const leaves = await treeLeaves(db, live.id);
+  const mine = leaves.find(([address]) => address === wallet);
+  if (mine === undefined) return null;
 
-    const tree = treeOf(entries);
-    // Matched on what the leaf contains rather than on its index. The rows come
-    // back in the order the tree was built from, but a proof handed out against
-    // the wrong leaf is a claim that reverts with BadProof and tells the holder
-    // nothing about why.
-    let proof: string[] | null = null;
-    for (const [i, leaf] of tree.entries()) {
-      if (leaf[0] === mine[0] && leaf[1] === mine[1]) {
-        proof = tree.getProof(i);
-        break;
-      }
+  const tree = treeOf(leaves);
+  // Matched on what the leaf contains rather than on its index. The rows come
+  // back in the order the tree was built from, but a proof handed out against
+  // the wrong leaf is a claim that reverts with BadProof and tells the holder
+  // nothing about why.
+  let proof: string[] | null = null;
+  for (const [i, leaf] of tree.entries()) {
+    if (leaf[0] === mine[0] && leaf[1] === mine[1]) {
+      proof = tree.getProof(i);
+      break;
     }
-    if (proof === null) continue;
-
-    // Already taken is not owed. Without this a holder is shown money they have
-    // had for weeks, and the claim they make on it reverts and says nothing.
-    if (await claimed(round.round, wallet)) continue;
-
-    owed.push({
-      round: round.round,
-      amount: mine[1],
-      proof,
-      root: round.root,
-      openedAt: round.openedAt,
-    });
   }
+  if (proof === null) return null;
 
-  return owed;
+  const had = await takenBy(wallet);
+  // Unknown is treated as "everything is already taken". An endpoint that would
+  // not answer must not put a number on the page that the chain is going to
+  // refuse: the holder cannot tell those two apart, and only one is worth gas.
+  const taken = had ?? BigInt(mine[1]);
+  const earned = BigInt(mine[1]);
+
+  return {
+    earned: earned.toString(),
+    taken: taken.toString(),
+    claimable: (earned > taken ? earned - taken : 0n).toString(),
+    proof,
+    root: live.root,
+  };
 }
 
-/**
- * Whether a wallet has already taken a round, asked of the chain.
- *
- * Here rather than in a route so both routes ask the same question the same way
- * — and because a route file that exports something other than its HTTP methods
- * is a route file the framework has opinions about.
- *
- * UNKNOWN COUNTS AS CLAIMED. An endpoint that would not answer must not put a
- * share on the page that the chain is going to refuse: the holder cannot tell
- * those two apart, and only one of them is worth their gas.
- */
-export function claimedOnChain(rpcs: readonly string[]) {
-  return async (round: number, wallet: string): Promise<boolean> => {
+/** What a wallet has taken from the drop, asked of the chain. Null if unreadable. */
+export function takenOnChain(rpcs: readonly string[]) {
+  return async (wallet: string): Promise<bigint | null> => {
     const drop = CONTRACTS.drop;
-    if (drop === null) return false;
+    if (drop === null) return null;
     try {
-      const answer = await rpc<string>(rpcs, "eth_call", [
-        {
-          to: drop,
-          data: selector("claimed(uint256,address)") + word(BigInt(round)) + word(wallet),
-        },
-        "latest",
-      ]);
-      return BigInt(answer) !== 0n;
+      return BigInt(
+        await rpc<string>(rpcs, "eth_call", [
+          { to: drop, data: selector("taken(address)") + word(wallet) },
+          "latest",
+        ]),
+      );
     } catch {
-      return true;
+      return null;
     }
   };
 }

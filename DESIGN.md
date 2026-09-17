@@ -691,36 +691,69 @@ more gas than the smallest shares are worth. So a round is published as one
 number — a root — and each share is proved when it is taken. A holder who never
 takes theirs costs nothing to have included.
 
-**A round opens by itself, weekly.** The daily cron releases what the splitter is
-holding, records the burns, brings the holder table up to date and then opens a
-round over whatever the drop is holding and nobody is owed yet — see
-`lib/holders.ts`. Three things decide whether it actually opens: a week since the
-last one, at least a thousand $CROCARD to share, and a holder table that has been
-filled in.
+**A holder sees a number that goes up every day and one button.** Press it
+whenever you like and everything accrued so far arrives. Leave it a year and it
+is still there, and pressing it once collects the year. Nothing expires.
 
-**Weekly and not daily, and that is about the holder.** Each round is claimed
-separately — the contract keeps `claimed[round][holder]` — so a round a day would
-face a holder with ninety open rounds inside the ninety-day window and ninety
-transactions to collect. Nobody does that and the shares would expire. Thirteen
-is a number somebody actually works through.
+**That works because the tree is cumulative.** A leaf does not say "your share of
+this week", it says WHAT YOU HAVE EARNED IN TOTAL, ever; the contract remembers
+what you have already taken; a claim pays the difference. Publishing a bigger
+tree is the whole of "you earned more".
+
+This replaced one tree per round with a separate claim for each. That design was
+correct and nobody would have used it — a round a day meant ninety open rounds
+and ninety transactions inside the ninety-day window, so the rounds had to be
+weekly to be bearable, and a reward that arrives on a schedule is a payday rather
+than something that accrues. Asked about it on 2026-09-17 the maker said weekly
+"is niet zo heel nice", which it was not.
+
+**A day is shared between today's holders; the tree contains everyone who has
+ever earned.** Two different questions with different answers. Somebody who sold
+keeps what they earned while they held — dropping them would take back money they
+were told was theirs, and would make the cumulative total go down, which the
+contract refuses outright.
+
+**Publishing waits a day, on purpose.** A cumulative tree is more dangerous than a
+per-round one: a stolen publisher key still cannot take anything, but it could
+publish a tree moving everybody's unclaimed entitlement to an address of its
+choosing, where the old design reached one round's worth. So `propose` only sets
+a pending root; `adopt` makes it live after `PUBLISH_DELAY`, and the owner — the
+cold wallet — throws it away with `dropPending`. A thief has to publish and then
+wait a day in full view of the person who can cancel.
+
+The daily job adopts yesterday's and proposes today's in the same run, so the
+live tree is always a day behind. That is a day of accrual on a balance that has
+been accruing for weeks.
+
+**The invariant:** `promised <= paidOut + balanceOf(this)`, checked when a root is
+proposed. The tree never promises more than has actually arrived, and it holds
+forever once true — a claim moves the same amount from the balance to `paidOut`,
+so the right-hand side cannot fall. Which means the last holder to press the
+button gets the same as the first.
 
 **Who holds it is a table, not a scan.** An ERC20 has no list of its holders: the
 balances are a mapping, a mapping needs its keys, and the keys only exist in the
 Transfer log. Replaying that from the token's first block — 18,857,956, 2 April
 2025 — is 37,822 `eth_getLogs` calls, because Cronos answers two thousand blocks
-at a time and a block is 0.42 seconds. Twelve at once against publicnode does it
-in ten minutes; a cron doing a hundred and fifty a day would take eight months.
+at a time and a block is 0.42 seconds. So `scripts/holder-drop.ts` does it once
+and the daily job keeps it current, one day being about a hundred calls.
 
-So `scripts/holder-drop.ts` does it once and writes SQL, and the daily job keeps
-it current from there — one day is a hundred calls. **The table is a cache of the
-chain**: everything in it is derived, losing it costs a rescan rather than a
-fact, and `runHolders` refuses to open a round while the cursor is unset rather
-than paying whoever happened to transact lately.
+**The table is a cache of the chain**: everything in it is derived, losing it
+costs a rescan rather than a fact, and `runHolders` refuses to publish while the
+cursor is unset rather than paying whoever happened to transact lately.
+
+**Only endpoints that actually serve logs are asked for logs.** `lib/cronos.ts`
+keeps a second, shorter list for that. publicnode answers historical
+`eth_getLogs` with an empty array — not an error, not a truncation, `[]` with a
+200 — and the first full scan came back with 17 holders and 238 million of a
+billion, missing the pool and the burn address. A script that gets this wrong
+produces a file somebody notices; the daily job moves a cursor, so one failover
+would skip a day permanently and say nothing.
 
 **Nothing with code on it is paid.** The pool holds thirty-nine per cent of the
-supply. Unknown counts as not paid too — an address nobody has asked about is
-left out of this round and is in the next, and that asymmetry is deliberate:
-leaving somebody out is recoverable and paying a pool is not.
+supply. Unknown counts as not paid too — an address nobody has asked about waits
+a day and is in tomorrow's share-out, and that asymmetry is deliberate: leaving
+somebody out is recoverable and paying a pool is not.
 
 `claim` pays the holder named in the proof rather than the caller, so a holder
 can take their own or anything can push it to them. The publisher may open a

@@ -10,13 +10,18 @@ import {HolderDrop} from "../HolderDrop.sol";
 import {Rescuable} from "../Rescuable.sol";
 
 /**
- * The half that goes back to $CROCARD holders.
+ * The cumulative drop.
  *
- * Proofs come from a tree built by OpenZeppelin's own merkle-tree package, read
- * off disk rather than reproduced here — the same arrangement the allowlist test
- * uses and for the same reason. The leaf shape in the contract was written to
- * match what that package produces, and "written to match" is a claim this
- * project does not accept anywhere else.
+ * Two trees against the same contract, built by OpenZeppelin's merkle-tree
+ * package rather than by hand: the proofs have to match what it produces, and
+ * "written to match" is a claim this project does not accept anywhere else. The
+ * second tree is the first one grown, which is the whole mechanism: a holder's
+ * leaf is everything they have ever earned, and a claim pays the difference.
+ *
+ * What is worth testing is what would be wrong in a way nobody sees: a tree
+ * promising more than has arrived, a republish taking back what somebody has
+ * already been paid, a second claim paying twice, and a stolen publisher key
+ * getting past the delay.
  */
 contract HolderDropTest is Test {
     HolderDrop private drop;
@@ -25,177 +30,271 @@ contract HolderDropTest is Test {
     address private publisher = address(0xBEEF);
     address private stranger = address(0x5A);
 
-    string private fixtureJson;
-    bytes32 private root;
+    string private first;
+    string private grown;
 
     address private a11 = 0x0000000000000000000000000000000000000a11;
     address private b22 = 0x0000000000000000000000000000000000000b22;
 
     function setUp() public {
         card = new FakeCard();
-        fixtureJson = vm.readFile("data/drop-fixture.json");
-        root = vm.parseJsonBytes32(fixtureJson, ".root");
+        first = vm.readFile("data/drop-fixture.json");
+        grown = vm.readFile("data/drop-fixture-grown.json");
 
         drop = new HolderDrop(IERC20(address(card)), publisher);
         card.mint(address(drop), 10 ether);
     }
 
-    function proofFor(uint256 i) private view returns (bytes32[] memory) {
-        return vm.parseJsonBytes32Array(
-            fixtureJson,
-            string.concat(".entries[", vm.toString(i), "].proof")
-        );
+    function rootOf(string memory json) private pure returns (bytes32) {
+        return vm.parseJsonBytes32(json, ".root");
     }
 
-    function test_aRealProofIsAccepted() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
-
-        drop.claim(1, a11, 5 ether, proofFor(0));
-        assertEq(card.balanceOf(a11), 5 ether, "the share the tree says, to the wei");
+    function totalOf(string memory json) private pure returns (uint256) {
+        return vm.parseJsonUint(json, ".total");
     }
 
-    /** Everybody in the tree can take theirs, and together it is the round. */
-    function test_everyShareAddsUpToTheRound() public {
+    function proofFor(string memory json, uint256 i) private pure returns (bytes32[] memory) {
+        return
+            vm.parseJsonBytes32Array(json, string.concat(".entries[", vm.toString(i), "].proof"));
+    }
+
+    /** Proposes a tree and lets the delay run out. */
+    function makeLive(string memory json) private {
         vm.prank(publisher);
-        drop.openRound(1, root);
+        drop.propose(rootOf(json), totalOf(json));
+        vm.warp(block.timestamp + drop.PUBLISH_DELAY());
+        drop.adopt();
+    }
 
-        drop.claim(1, a11, 5 ether, proofFor(0));
-        drop.claim(1, b22, 3 ether, proofFor(1));
-        drop.claim(1, 0x0000000000000000000000000000000000000c33, 1.5 ether, proofFor(2));
-        drop.claim(1, 0x0000000000000000000000000000000000000d44, 0.5 ether, proofFor(3));
+    // ── THE ORDINARY PATH ───────────────────────────────────────────────────
 
-        assertEq(card.balanceOf(address(drop)), 0, "the round paid out exactly");
-        assertEq(drop.allocated(), 0);
+    function test_aHolderTakesWhatTheTreeSaysTheyHaveEarned() public {
+        makeLive(first);
+
+        drop.claim(a11, 5 ether, proofFor(first, 0));
+        assertEq(card.balanceOf(a11), 5 ether, "the amount the tree says, to the wei");
+        assertEq(drop.taken(a11), 5 ether);
+        assertEq(drop.paidOut(), 5 ether);
+    }
+
+    /** Everybody in the tree can take theirs, and together it is the whole of it. */
+    function test_everyShareAddsUpToWhatWasPromised() public {
+        makeLive(first);
+
+        drop.claim(a11, 5 ether, proofFor(first, 0));
+        drop.claim(b22, 3 ether, proofFor(first, 1));
+        drop.claim(0x0000000000000000000000000000000000000c33, 1.5 ether, proofFor(first, 2));
+        drop.claim(0x0000000000000000000000000000000000000d44, 0.5 ether, proofFor(first, 3));
+
+        assertEq(card.balanceOf(address(drop)), 0, "it paid out exactly");
+        assertEq(drop.outstanding(), 0);
     }
 
     /** It pays the holder in the proof, never the caller. */
     function test_anybodyMayPushAShare() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
+        makeLive(first);
 
         vm.prank(stranger);
-        drop.claim(1, a11, 5 ether, proofFor(0));
+        drop.claim(a11, 5 ether, proofFor(first, 0));
 
         assertEq(card.balanceOf(a11), 5 ether);
-        assertEq(stranger.balance, 0, "pushing somebody's share earns nothing");
+        assertEq(card.balanceOf(stranger), 0, "the caller gets nothing for calling");
     }
 
-    function test_aShareIsTakenOnce() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
-        drop.claim(1, a11, 5 ether, proofFor(0));
+    // ── WHAT MAKES IT CUMULATIVE ────────────────────────────────────────────
 
-        vm.expectRevert(HolderDrop.AlreadyClaimed.selector);
-        drop.claim(1, a11, 5 ether, proofFor(0));
+    /**
+     * The point of the whole design: a holder who waits claims once and gets
+     * everything, and a holder who claimed early gets only what is new.
+     */
+    function test_asecondTreePaysTheDifferenceAndNotTheWhole() public {
+        makeLive(first);
+        drop.claim(a11, 5 ether, proofFor(first, 0));
+
+        // More arrives and the tree grows: a11 has now earned nine in total.
+        card.mint(address(drop), 8 ether);
+        makeLive(grown);
+
+        drop.claim(a11, 9 ether, proofFor(grown, 0));
+        assertEq(card.balanceOf(a11), 9 ether, "nine earned, nine held");
+        assertEq(drop.taken(a11), 9 ether);
+
+        // And b22, who never claimed the first tree, takes all five at once.
+        drop.claim(b22, 5 ether, proofFor(grown, 1));
+        assertEq(card.balanceOf(b22), 5 ether, "one transaction, both trees' worth");
     }
 
-    /** An amount that is not the one in the tree is not in the tree. */
-    function test_inflatingTheAmountBreaksTheProof() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
+    /** Claiming twice against the same tree pays nothing and says so. */
+    function test_thesameProofTwiceIsRefused() public {
+        makeLive(first);
+        drop.claim(a11, 5 ether, proofFor(first, 0));
+
+        vm.expectRevert(HolderDrop.NothingToClaim.selector);
+        drop.claim(a11, 5 ether, proofFor(first, 0));
+        assertEq(card.balanceOf(a11), 5 ether, "and it did not pay twice");
+    }
+
+    /** A proof from an old tree is refused once a new one is live. */
+    function test_anOldProofStopsWorkingWhenTheTreeMoves() public {
+        makeLive(first);
+        card.mint(address(drop), 8 ether);
+        makeLive(grown);
 
         vm.expectRevert(HolderDrop.BadProof.selector);
-        drop.claim(1, a11, 6 ether, proofFor(0));
+        drop.claim(a11, 5 ether, proofFor(first, 0));
     }
 
     function test_somebodyElsesProof() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
-
+        makeLive(first);
         vm.expectRevert(HolderDrop.BadProof.selector);
-        drop.claim(1, stranger, 5 ether, proofFor(0));
+        drop.claim(stranger, 5 ether, proofFor(first, 0));
     }
 
-    // ── what the publisher cannot do ────────────────────────────────────────
-
-    function test_onlyThePublisherOpensARound() public {
-        vm.prank(stranger);
-        vm.expectRevert(HolderDrop.NotThePublisher.selector);
-        drop.openRound(1, root);
+    function test_inflatingTheAmountBreaksTheProof() public {
+        makeLive(first);
+        vm.expectRevert(HolderDrop.BadProof.selector);
+        drop.claim(a11, 6 ether, proofFor(first, 0));
     }
 
-    function test_aRoundIsOpenedOnce() public {
-        vm.startPrank(publisher);
-        drop.openRound(1, root);
-        vm.expectRevert(HolderDrop.RoundAlreadyOpen.selector);
-        drop.openRound(1, bytes32(uint256(1)));
-        vm.stopPrank();
-    }
+    // ── THE INVARIANT ───────────────────────────────────────────────────────
 
     /**
-     * A tree that promises more than the round holds cannot drain the next one.
+     * `promised <= paidOut + balance`, checked when a root is proposed.
      *
-     * The tree is built off chain and this is the only thing between a mistake
-     * there and holders in a later round finding their share already spent.
+     * Without it a tree could promise ten times what is here, the early claimers
+     * would be paid out of the late claimers' share, and the last holder to press
+     * the button would find an empty contract and a valid proof.
      */
-    function test_aTreeThatPromisesTooMuchIsCutOff() public {
-        // Six ether against a tree that promises ten. The first share fits and
-        // the second does not, which is the moment that has to be caught — not
-        // the first, which would fail for the ordinary reason of being too big.
-        drop = new HolderDrop(IERC20(address(card)), publisher);
-        card.mint(address(drop), 6 ether);
-
+    function test_atreeCannotPromiseWhatHasNotArrived() public {
+        // Ten in the contract, a tree that says eighteen.
         vm.prank(publisher);
-        drop.openRound(1, root);
-
-        drop.claim(1, a11, 5 ether, proofFor(0));
-        vm.expectRevert(HolderDrop.TooMuchClaimed.selector);
-        drop.claim(1, b22, 3 ether, proofFor(1));
+        vm.expectRevert(
+            abi.encodeWithSelector(HolderDrop.PromisesWhatIsNotHere.selector, 18 ether, 10 ether)
+        );
+        drop.propose(rootOf(grown), totalOf(grown));
     }
 
-    // ── what nobody takes comes back ────────────────────────────────────────
+    /** What has been paid out still counts as arrived. */
+    function test_whatWasPaidOutStillCountsTowardsWhatMayBePromised() public {
+        makeLive(first);
+        drop.claim(a11, 5 ether, proofFor(first, 0));
+        assertEq(card.balanceOf(address(drop)), 5 ether, "half of it has left");
 
-    function test_unclaimedSharesReturnToThePool() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
-        drop.claim(1, a11, 5 ether, proofFor(0));
+        // Eight more arrives, so thirteen has ever been here plus the five paid:
+        // eighteen, which is exactly what the grown tree promises.
+        card.mint(address(drop), 8 ether);
+        makeLive(grown);
+        assertEq(drop.promised(), 18 ether);
 
-        vm.expectRevert(abi.encodeWithSelector(HolderDrop.NotExpiredYet.selector, block.timestamp + 90 days));
-        drop.sweep(1);
-
-        vm.warp(block.timestamp + 90 days);
-        drop.sweep(1);
-
-        assertEq(drop.allocated(), 0, "nothing is spoken for any more");
-        assertEq(drop.unallocated(), 5 ether, "and it is in the next round");
+        // And everybody can still be paid in full.
+        drop.claim(a11, 9 ether, proofFor(grown, 0));
+        drop.claim(b22, 5 ether, proofFor(grown, 1));
+        drop.claim(0x0000000000000000000000000000000000000c33, 2.5 ether, proofFor(grown, 2));
+        drop.claim(0x0000000000000000000000000000000000000d44, 1.5 ether, proofFor(grown, 3));
+        assertEq(card.balanceOf(address(drop)), 0);
     }
 
-    function test_aRoundIsSweptOnce() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
-        vm.warp(block.timestamp + 90 days);
-        drop.sweep(1);
+    /** A cumulative total cannot go down. */
+    function test_atreeCannotPromiseLessThanTheOneBeforeIt() public {
+        card.mint(address(drop), 8 ether);
+        makeLive(grown);
 
-        vm.expectRevert(HolderDrop.AlreadySwept.selector);
-        drop.sweep(1);
+        vm.prank(publisher);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                HolderDrop.PromisesLessThanBefore.selector, 10 ether, 18 ether
+            )
+        );
+        drop.propose(rootOf(first), totalOf(first));
     }
 
-    function test_openingWithNothingToShare() public {
-        drop = new HolderDrop(IERC20(address(card)), publisher);
+    // ── THE DELAY ───────────────────────────────────────────────────────────
+
+    /**
+     * What a stolen publisher key is worth, which is the reason for the delay.
+     *
+     * It can propose. It cannot make anything live, and the owner — a wallet
+     * that never touches a server — throws it away in one transaction.
+     */
+    function test_apendingRootDoesNothingUntilItHasWaited() public {
         vm.prank(publisher);
-        vm.expectRevert(HolderDrop.NothingToShare.selector);
-        drop.openRound(1, root);
+        drop.propose(rootOf(first), totalOf(first));
+
+        assertEq(drop.root(), bytes32(0), "nothing is live yet");
+        vm.expectRevert(
+            abi.encodeWithSelector(HolderDrop.NotReadyYet.selector, block.timestamp + 24 hours)
+        );
+        drop.adopt();
+
+        vm.warp(block.timestamp + 24 hours);
+        drop.adopt();
+        assertEq(drop.root(), rootOf(first), "and now it is");
     }
 
-    function test_claimingFromARoundThatDoesNotExist() public {
-        vm.expectRevert(HolderDrop.NoSuchRound.selector);
-        drop.claim(7, a11, 5 ether, proofFor(0));
+    function test_theOwnerCanThrowAwayAPendingRoot() public {
+        vm.prank(publisher);
+        drop.propose(rootOf(first), totalOf(first));
+
+        drop.dropPending();
+        assertEq(drop.pendingAt(), 0);
+
+        vm.warp(block.timestamp + 48 hours);
+        vm.expectRevert(HolderDrop.NothingPending.selector);
+        drop.adopt();
+        assertEq(drop.root(), bytes32(0), "the thief's tree never went live");
+    }
+
+    function test_thePublisherCannotThrowAwayARoot() public {
+        vm.prank(publisher);
+        drop.propose(rootOf(first), totalOf(first));
+
+        vm.prank(publisher);
+        vm.expectRevert();
+        drop.dropPending();
+    }
+
+    function test_onlyThePublisherProposes() public {
+        vm.prank(stranger);
+        vm.expectRevert(HolderDrop.NotThePublisher.selector);
+        drop.propose(rootOf(first), totalOf(first));
+    }
+
+    /** One at a time, so a second proposal cannot quietly replace a pending one. */
+    function test_onePendingRootAtATime() public {
+        vm.prank(publisher);
+        drop.propose(rootOf(first), totalOf(first));
+
+        card.mint(address(drop), 8 ether);
+        vm.prank(publisher);
+        vm.expectRevert();
+        drop.propose(rootOf(grown), totalOf(grown));
+    }
+
+    /** Anyone may adopt. There is nothing left to decide by the time they can. */
+    function test_anybodyMayAdoptOnceItHasWaited() public {
+        vm.prank(publisher);
+        drop.propose(rootOf(first), totalOf(first));
+        vm.warp(block.timestamp + 24 hours);
+
+        vm.prank(stranger);
+        drop.adopt();
+        assertEq(drop.root(), rootOf(first));
+    }
+
+    // ── THE REST ────────────────────────────────────────────────────────────
+
+    function test_nothingCanBeClaimedBeforeThereIsATree() public {
+        vm.expectRevert(HolderDrop.NoRoot.selector);
+        drop.claim(a11, 5 ether, proofFor(first, 0));
     }
 
     function test_theOwnerCanRotateThePublisher() public {
         drop.setPublisher(stranger);
+        assertEq(drop.publisher(), stranger);
+
         vm.prank(publisher);
         vm.expectRevert(HolderDrop.NotThePublisher.selector);
-        drop.openRound(1, root);
-    }
-
-    function test_theRescueHatchIsHereToo() public {
-        address safe = address(0x5AFE);
-        drop.announceRescue(safe);
-        vm.warp(block.timestamp + 2 days);
-        drop.rescueToken(IERC20(address(card)));
-        assertEq(card.balanceOf(safe), 10 ether);
+        drop.propose(rootOf(first), totalOf(first));
     }
 
     function test_refusesAZeroPublisher() public {
@@ -203,48 +302,20 @@ contract HolderDropTest is Test {
         new HolderDrop(IERC20(address(card)), address(0));
     }
 
-    /**
-     * The running tally the profile page reads.
-     *
-     * It must follow the transfers exactly, across rounds, and it must never be
-     * what decides a claim — that is `claimed`, per round. A tally that drifted
-     * from what was actually sent would be a number on somebody's profile that
-     * their own wallet disagrees with.
-     */
-    function test_whatAHolderHasBeenPaidAddsUpAcrossRounds() public {
-        assertEq(drop.taken(a11), 0, "nothing before anything is claimed");
+    /** What is here and promised to nobody yet is what the next tree may add. */
+    function test_whatIsNotPromisedYet() public {
+        assertEq(drop.unpromised(), 10 ether, "all of it, before any tree");
+        makeLive(first);
+        assertEq(drop.unpromised(), 0, "and none of it after");
 
-        vm.prank(publisher);
-        drop.openRound(1, root);
-        drop.claim(1, a11, 5 ether, proofFor(0));
-
-        assertEq(drop.taken(a11), 5 ether);
-        assertEq(drop.taken(a11), card.balanceOf(a11), "it is what the wallet actually got");
-        assertEq(drop.taken(b22), 0, "and it is per holder");
-
-        // A second round with the same tree. `claimed` is keyed by round, so a11
-        // is owed again — which is the case the tally has to add up rather than
-        // overwrite.
-        card.mint(address(drop), 10 ether);
-        vm.prank(publisher);
-        drop.openRound(2, root);
-        drop.claim(2, a11, 5 ether, proofFor(0));
-
-        assertEq(drop.taken(a11), 10 ether, "a second round adds to it");
-        assertEq(drop.taken(a11), card.balanceOf(a11), "and it still matches the wallet");
+        card.mint(address(drop), 4 ether);
+        assertEq(drop.unpromised(), 4 ether, "what arrived since");
     }
 
-    /** A claim that is refused must not move the tally. */
-    function test_arefusedClaimLeavesTheTallyAlone() public {
-        vm.prank(publisher);
-        drop.openRound(1, root);
-        drop.claim(1, a11, 5 ether, proofFor(0));
-
-        vm.expectRevert(HolderDrop.AlreadyClaimed.selector);
-        drop.claim(1, a11, 5 ether, proofFor(0));
-
-        assertEq(drop.taken(a11), 5 ether, "the second attempt added nothing");
-        assertEq(drop.taken(a11), card.balanceOf(a11));
+    function test_theRescueHatchIsHereToo() public {
+        drop.announceRescue(stranger);
+        vm.warp(block.timestamp + 2 days);
+        drop.rescueToken(IERC20(address(card)));
+        assertEq(card.balanceOf(stranger), 10 ether);
     }
-
 }

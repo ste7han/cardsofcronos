@@ -579,6 +579,8 @@ export async function setCursor(
 export interface Holder {
   address: string;
   balance: bigint;
+  /** Everything they have ever earned from the drop. Never goes down. */
+  entitlement: bigint;
   /** Null until somebody has asked the chain whether there is code on it. */
   isContract: boolean | null;
 }
@@ -587,13 +589,14 @@ export interface Holder {
  * Applies what a batch of Transfer logs moved.
  *
  * DELTAS AND NOT BALANCES. The log says what moved; adding it up is what makes
- * the table right for every address at once. Asking the chain for a balance
- * per address would be right for the addresses asked about and quietly stale
- * for every other one, and the ones that go stale are exactly the ones nobody
+ * the table right for every address at once. Asking the chain for a balance per
+ * address would be right for the addresses asked about and quietly stale for
+ * every other one, and the ones that go stale are exactly the ones nobody
  * thought to ask about.
  *
- * `is_contract` is left alone on an address that already has a row. Whether an
- * address has code is asked once and remembered; see `unknownHolders`.
+ * `is_contract` and `entitlement` are left alone on an address that already has
+ * a row: whether an address has code is asked once and remembered, and what it
+ * has earned is not a function of what it holds today.
  *
  * THE ADDITION HAPPENS IN JAVASCRIPT, not in SQL. `balance + delta` inside the
  * statement would be SQLite arithmetic, and SQLite's INTEGER is 64-bit signed:
@@ -632,7 +635,8 @@ export async function moveBalances(
       rows.slice(i, i + 50).map(([address, delta]) =>
         db
           .prepare(
-            `INSERT INTO holders (address, balance, is_contract, at) VALUES (?, ?, NULL, ?)
+            `INSERT INTO holders (address, balance, is_contract, entitlement, at)
+             VALUES (?, ?, NULL, '0', ?)
              ON CONFLICT (address) DO UPDATE SET balance = excluded.balance, at = excluded.at`,
           )
           .bind(address, ((had.get(address) ?? 0n) + delta).toString(), at)
@@ -645,25 +649,92 @@ export async function moveBalances(
 /**
  * Everyone with a positive balance who is known not to be a contract.
  *
- * Unknown is excluded rather than included. The largest holder of this token is
- * a liquidity pool, so "we have not checked" has to mean "not paid" — the other
- * way round pays two fifths of a round to nobody, once, before anybody notices.
+ * This is who a day's arrivals are shared between. Unknown is excluded rather
+ * than included: the largest holder of this token is a liquidity pool, so "we
+ * have not checked" has to mean "not paid" — the other way round pays two fifths
+ * of a day to nobody, once, before anybody notices.
  */
 export async function payableHolders(db: Database): Promise<Holder[]> {
   const { results } = await db
     .prepare(
-      `SELECT address, balance, is_contract FROM holders
+      `SELECT address, balance, entitlement, is_contract FROM holders
         WHERE is_contract = 0 AND balance <> '0'`,
     )
-    .all<{ address: string; balance: string; is_contract: number | null }>();
+    .all<{ address: string; balance: string; entitlement: string; is_contract: number | null }>();
 
   return results
     .map((row) => ({
       address: row.address,
       balance: BigInt(row.balance),
+      entitlement: BigInt(row.entitlement),
       isContract: row.is_contract === null ? null : row.is_contract === 1,
     }))
     .filter((holder) => holder.balance > 0n);
+}
+
+/**
+ * Everyone who has earned anything, whatever they hold now.
+ *
+ * This is what goes in the tree, and it is a different question from who a day
+ * is shared between. Somebody who sold keeps what they earned while they held
+ * it — dropping them from the tree would take back money they were already told
+ * was theirs, and would make the cumulative total go down, which the contract
+ * refuses outright.
+ */
+export async function earners(db: Database): Promise<Holder[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT address, balance, entitlement, is_contract FROM holders
+        WHERE entitlement <> '0'`,
+    )
+    .all<{ address: string; balance: string; entitlement: string; is_contract: number | null }>();
+
+  return results
+    .map((row) => ({
+      address: row.address,
+      balance: BigInt(row.balance),
+      entitlement: BigInt(row.entitlement),
+      isContract: row.is_contract === null ? null : row.is_contract === 1,
+    }))
+    .filter((holder) => holder.entitlement > 0n);
+}
+
+/** Adds to what holders have earned. Never subtracts — see the column's comment. */
+export async function addEntitlements(
+  db: Database,
+  earned: ReadonlyMap<string, bigint>,
+  at: number,
+): Promise<void> {
+  const rows = [...earned].filter(([, amount]) => amount > 0n);
+  if (rows.length === 0) return;
+
+  // Read then write, with bigints, for the same reason moveBalances does.
+  const had = new Map<string, bigint>();
+  for (let i = 0; i < rows.length; i += 50) {
+    const slice = rows.slice(i, i + 50);
+    const found = await Promise.all(
+      slice.map(([address]) =>
+        db
+          .prepare(`SELECT entitlement FROM holders WHERE address = ?`)
+          .bind(address)
+          .first<{ entitlement: string }>(),
+      ),
+    );
+    for (const [j, row] of found.entries()) {
+      if (row !== null) had.set(slice[j]![0], BigInt(row.entitlement));
+    }
+  }
+
+  for (let i = 0; i < rows.length; i += 50) {
+    await Promise.all(
+      rows.slice(i, i + 50).map(([address, amount]) =>
+        db
+          .prepare(`UPDATE holders SET entitlement = ?, at = ? WHERE address = ?`)
+          .bind(((had.get(address) ?? 0n) + amount).toString(), at, address)
+          .run(),
+      ),
+    );
+  }
 }
 
 /** Addresses holding something that nobody has checked for code yet. */
@@ -694,94 +765,137 @@ export async function markContracts(
   );
 }
 
-/** A round that has been opened, and what it promised. */
-export interface DropRound {
-  round: number;
+/** A cumulative tree that has been proposed to the drop. */
+export interface DropTree {
+  id: number;
   root: string;
   promised: bigint;
   holders: number;
+  proposedAt: number;
+  /** When the chain will let it be adopted. */
+  liveAt: number;
+  /** Null while it is still waiting. */
+  adoptedAt: number | null;
   txHash: string;
-  openedAt: number;
 }
 
 /**
- * Writes a round and everything it promised.
+ * Writes a proposed tree and every leaf in it.
  *
- * The entries go in first. A round row with no entries is a round nobody can
- * prove a share against, and the order is the difference between that and a
- * round that is simply not there yet.
+ * The leaves go in first. A tree row with no leaves is a tree nobody can prove
+ * anything against, and the order is the difference between that and a tree that
+ * is simply not there yet.
  */
-export async function recordRound(
+export async function recordTree(
   db: Database,
-  round: DropRound,
-  entries: readonly (readonly [string, bigint])[],
-): Promise<void> {
-  for (let i = 0; i < entries.length; i += 50) {
+  tree: { root: string; promised: bigint; proposedAt: number; liveAt: number; txHash: string },
+  leaves: readonly (readonly [string, bigint])[],
+): Promise<number> {
+  const row = await db
+    .prepare(
+      `INSERT INTO drop_trees (root, promised, holders, proposed_at, live_at, adopted_at, tx_hash)
+       VALUES (?, ?, ?, ?, ?, NULL, ?) RETURNING id`,
+    )
+    .bind(
+      tree.root,
+      tree.promised.toString(),
+      leaves.length,
+      tree.proposedAt,
+      tree.liveAt,
+      tree.txHash.toLowerCase(),
+    )
+    .first<{ id: number }>();
+
+  const id = row!.id;
+  for (let i = 0; i < leaves.length; i += 50) {
     await Promise.all(
-      entries.slice(i, i + 50).map(([address, amount]) =>
+      leaves.slice(i, i + 50).map(([address, amount]) =>
         db
           .prepare(
-            `INSERT INTO drop_entries (round, address, amount) VALUES (?, ?, ?)
-             ON CONFLICT (round, address) DO NOTHING`,
+            `INSERT INTO drop_leaves (tree, address, amount) VALUES (?, ?, ?)
+             ON CONFLICT (tree, address) DO NOTHING`,
           )
-          .bind(round.round, address, amount.toString())
+          .bind(id, address, amount.toString())
           .run(),
       ),
     );
   }
+  return id;
+}
 
+/** Marks a tree as the live one. */
+export async function markAdopted(db: Database, id: number, at: number): Promise<void> {
   await db
-    .prepare(
-      `INSERT INTO drop_rounds (round, root, promised, holders, tx_hash, opened_at)
-       VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT (round) DO NOTHING`,
-    )
-    .bind(
-      round.round,
-      round.root,
-      round.promised.toString(),
-      round.holders,
-      round.txHash.toLowerCase(),
-      round.openedAt,
-    )
+    .prepare(`UPDATE drop_trees SET adopted_at = ? WHERE id = ? AND adopted_at IS NULL`)
+    .bind(at, id)
     .run();
 }
 
-/** Every round that has been opened, newest first. */
-export async function dropRounds(db: Database, limit = 12): Promise<DropRound[]> {
-  const { results } = await db
+/** The tree the chain is currently paying against, or null before the first one. */
+export async function liveTree(db: Database): Promise<DropTree | null> {
+  const row = await db
     .prepare(
-      `SELECT round, root, promised, holders, tx_hash, opened_at
-         FROM drop_rounds ORDER BY round DESC LIMIT ?`,
+      `SELECT id, root, promised, holders, proposed_at, live_at, adopted_at, tx_hash
+         FROM drop_trees WHERE adopted_at IS NOT NULL ORDER BY id DESC LIMIT 1`,
     )
-    .bind(limit)
-    .all<{
-      round: number;
+    .first<{
+      id: number;
       root: string;
       promised: string;
       holders: number;
+      proposed_at: number;
+      live_at: number;
+      adopted_at: number | null;
       tx_hash: string;
-      opened_at: number;
     }>();
-
-  return results.map((row) => ({
-    round: row.round,
+  if (row === null) return null;
+  return {
+    id: row.id,
     root: row.root,
     promised: BigInt(row.promised),
     holders: row.holders,
+    proposedAt: row.proposed_at,
+    liveAt: row.live_at,
+    adoptedAt: row.adopted_at,
     txHash: row.tx_hash,
-    openedAt: row.opened_at,
-  }));
+  };
 }
 
-/** Everything one round promised, in the order the tree was built from. */
-export async function roundEntries(
-  db: Database,
-  round: number,
-): Promise<[string, string][]> {
+/** The tree that is waiting out its delay, if there is one. */
+export async function pendingTree(db: Database): Promise<DropTree | null> {
+  const row = await db
+    .prepare(
+      `SELECT id, root, promised, holders, proposed_at, live_at, adopted_at, tx_hash
+         FROM drop_trees WHERE adopted_at IS NULL ORDER BY id DESC LIMIT 1`,
+    )
+    .first<{
+      id: number;
+      root: string;
+      promised: string;
+      holders: number;
+      proposed_at: number;
+      live_at: number;
+      adopted_at: number | null;
+      tx_hash: string;
+    }>();
+  if (row === null) return null;
+  return {
+    id: row.id,
+    root: row.root,
+    promised: BigInt(row.promised),
+    holders: row.holders,
+    proposedAt: row.proposed_at,
+    liveAt: row.live_at,
+    adoptedAt: row.adopted_at,
+    txHash: row.tx_hash,
+  };
+}
+
+/** Every leaf of one tree, in the order it was built from. */
+export async function treeLeaves(db: Database, tree: number): Promise<[string, string][]> {
   const { results } = await db
-    .prepare(`SELECT address, amount FROM drop_entries WHERE round = ? ORDER BY address ASC`)
-    .bind(round)
+    .prepare(`SELECT address, amount FROM drop_leaves WHERE tree = ? ORDER BY address ASC`)
+    .bind(tree)
     .all<{ address: string; amount: string }>();
   return results.map((row) => [row.address, row.amount]);
 }

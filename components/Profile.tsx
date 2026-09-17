@@ -45,11 +45,12 @@ interface Standing {
   record: { wins: number; losses: number; draws: number };
   /** Base units as decimal strings, or null when the chain would not answer. */
   held: string | null;
+  /** What the contract has paid this wallet across its whole life. */
   taken: string | null;
-  /** Sitting in open rounds and not taken yet. Null while the drop is not live. */
+  /** What pressing the button would pay right now. */
   claimable: string | null;
-  /** How many open rounds that is spread over. */
-  rounds: number;
+  /** Everything the live tree says they have earned. */
+  earned: string | null;
   drop: string | null;
 }
 
@@ -241,6 +242,7 @@ function Holding({ standing }: { standing: Standing | null }) {
       <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
         What you have received is one figure and not three. The three streams are pooled before
         anything is bought, so a share that reaches you no longer says which of them paid for it.
+        It builds up day by day and you collect it in one go, whenever you want to.
       </p>
 
       <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-3">
@@ -257,7 +259,7 @@ function Holding({ standing }: { standing: Standing | null }) {
         <Figure
           label="RECEIVED"
           value={standing?.taken == null ? "—" : whole(toTokens(standing.taken))}
-          note={standing?.drop == null ? "Nothing pays out yet" : "All rounds, all three streams"}
+          note={standing?.drop == null ? "Nothing pays out yet" : "Paid out so far, all three streams"}
         />
       </dl>
 
@@ -282,9 +284,8 @@ function Holding({ standing }: { standing: Standing | null }) {
           week it is not zero. */}
       {waiting !== null ? (
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-pump">
-          {waiting} $CROCARD is waiting for you across {standing!.rounds}{" "}
-          {standing!.rounds === 1 ? "round" : "rounds"}. It is yours whenever you take it; a round
-          is open for ninety days and what nobody takes goes back into the next one.
+          {waiting} $CROCARD is waiting for you. It keeps going up every day and it does not
+          expire — take it whenever you like, in one go, however long you leave it.
         </p>
       ) : null}
 

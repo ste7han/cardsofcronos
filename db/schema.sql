@@ -282,6 +282,13 @@ CREATE TABLE IF NOT EXISTS holders (
   -- that had none, except by a deploy to a counterfactual address, which is
   -- not a thing that happens to a holder by accident.
   is_contract INTEGER,
+  -- Everything this address has ever earned from the drop, in base units, as
+  -- TEXT. Cumulative and it never goes down — that is what makes the tree in
+  -- contracts/HolderDrop.sol work: the leaf says what somebody has earned in
+  -- total, the contract remembers what they have taken, and a claim is the
+  -- difference. So a holder who sells keeps what they earned while they held,
+  -- and a holder who never claims loses nothing by waiting.
+  entitlement TEXT NOT NULL DEFAULT '0',
   at          INTEGER NOT NULL
 );
 
@@ -290,35 +297,40 @@ CREATE TABLE IF NOT EXISTS holders (
 -- balance and nothing else.
 CREATE INDEX IF NOT EXISTS holders_positive ON holders (balance) WHERE balance <> '0';
 
--- What each round promised whom, so a proof can be rebuilt on demand.
+-- Every cumulative tree that has been proposed, newest last.
 --
--- The tree itself is not stored. It is rebuilt from these rows when somebody
--- asks for their proof, which is cheap for a few thousand leaves and means
--- there is one source of truth rather than a blob that can disagree with the
--- rows it was made from.
-CREATE TABLE IF NOT EXISTS drop_entries (
-  round   INTEGER NOT NULL,
+-- One row per `propose` on contracts/HolderDrop.sol. A tree waits a day before
+-- it can be adopted — that delay is what makes a stolen publisher key worth
+-- almost nothing — so at any moment there is a live tree and possibly one
+-- waiting behind it, and proofs have to come from the live one.
+CREATE TABLE IF NOT EXISTS drop_trees (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  root        TEXT NOT NULL,
+  -- What every leaf in it adds up to, in base units, as TEXT.
+  promised    TEXT NOT NULL,
+  holders     INTEGER NOT NULL,
+  proposed_at INTEGER NOT NULL,
+  -- When the chain will let it be adopted, and when it actually was.
+  live_at     INTEGER NOT NULL,
+  adopted_at  INTEGER,
+  tx_hash     TEXT NOT NULL
+              CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
+                     AND substr(tx_hash, 1, 2) = '0x')
+);
+
+-- What each tree said each holder had earned.
+--
+-- The tree itself is not stored; it is rebuilt from these rows when somebody
+-- asks for a proof, which is cheap for a few thousand leaves and means one
+-- source of truth rather than a blob that can disagree with the rows it came
+-- from. Old trees are kept: a proof against a tree that is no longer live is
+-- refused by the contract, and being able to read what it said is worth more
+-- than the rows cost.
+CREATE TABLE IF NOT EXISTS drop_leaves (
+  tree    INTEGER NOT NULL,
   address TEXT NOT NULL
           CHECK (address = lower(address) AND length(address) = 42
                  AND substr(address, 1, 2) = '0x'),
-  -- The share, in base units, as TEXT. Same rule as everywhere else.
   amount  TEXT NOT NULL,
-  PRIMARY KEY (round, address)
-);
-
--- One row per round opened, so the site can say what is open without asking the
--- chain for something it already knows.
-CREATE TABLE IF NOT EXISTS drop_rounds (
-  round     INTEGER PRIMARY KEY,
-  root      TEXT NOT NULL,
-  -- What the tree promises in total. The contract allocates whatever is
-  -- unallocated at the moment the transaction lands, which can be a little more
-  -- if something arrived in between; the difference is swept back after the
-  -- round expires rather than being paid twice.
-  promised  TEXT NOT NULL,
-  holders   INTEGER NOT NULL,
-  tx_hash   TEXT NOT NULL
-            CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
-                   AND substr(tx_hash, 1, 2) = '0x'),
-  opened_at INTEGER NOT NULL
+  PRIMARY KEY (tree, address)
 );

@@ -1,20 +1,24 @@
-// The round that pays the holders.
+// The cumulative drop, on the TypeScript side.
 //
-// What is worth testing here is what would be wrong in a way nobody sees: a tree
-// that promises more than the round holds, a pool paid because nobody asked
-// whether it was a pool, a proof that does not verify against the root it was
-// built beside, and a round opened over a table that was never filled in.
+// What is worth testing here is what would be wrong in a way nobody sees: a
+// pool paid because nobody asked whether it was a pool, a total that goes down
+// when somebody sells, a tree built over a table that was never filled in, and a
+// proof that does not verify against the root published beside it.
+
+import { readFileSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 
+import { selector } from "@/lib/evm-tx";
+
 import {
-  BETWEEN_ROUNDS,
   DUST,
   HOLDER_CURSOR,
   LEAST_WORTH_SHARING,
-  roundFor,
+  PUBLISH_DELAY,
+  leavesOf,
   runHolders,
   sharesOf,
   treeOf,
@@ -28,26 +32,40 @@ const KEY = "0x" + "11".repeat(32);
 const wallet = (n: number) => "0x" + n.toString(16).padStart(40, "0");
 const tokens = (n: number) => BigInt(n) * 10n ** 18n;
 
-/** A fake holding the two tables this touches, matched on the shape of the SQL. */
+interface Seeded {
+  address: string;
+  balance: bigint;
+  entitlement?: bigint;
+  isContract: boolean | null;
+}
+
+/** A fake holding the tables this touches, matched on the shape of the SQL. */
 function fakeDb(seed?: {
-  holders?: { address: string; balance: bigint; isContract: boolean | null }[];
+  holders?: Seeded[];
   cursor?: number;
-  rounds?: { round: number; openedAt: number }[];
-}): Database & { entries: Map<string, string>; opened: number[] } {
+  /** A tree already live, so a run adopts nothing and proposes the next. */
+  live?: { id: number; leaves: [string, string][] };
+}): Database & { holders: Map<string, { balance: string; entitlement: string; code: number | null }>; trees: { root: string; promised: string }[]; leaves: Map<string, string> } {
   const holders = new Map(
     (seed?.holders ?? []).map((h) => [
       h.address,
-      { balance: h.balance.toString(), is_contract: h.isContract === null ? null : h.isContract ? 1 : 0 },
+      {
+        balance: h.balance.toString(),
+        entitlement: (h.entitlement ?? 0n).toString(),
+        code: h.isContract === null ? null : h.isContract ? 1 : 0,
+      },
     ]),
   );
-  const cursors = new Map<string, number>(seed?.cursor === undefined ? [] : [[HOLDER_CURSOR, seed.cursor]]);
-  const rounds = [...(seed?.rounds ?? [])];
-  const entries = new Map<string, string>();
-  const opened: number[] = [];
+  const cursors = new Map<string, number>(
+    seed?.cursor === undefined ? [] : [[HOLDER_CURSOR, seed.cursor]],
+  );
+  const trees: { root: string; promised: string }[] = [];
+  const leaves = new Map<string, string>();
 
   const db = {
-    entries,
-    opened,
+    holders,
+    trees,
+    leaves,
     prepare(sql: string): Statement {
       let bound: unknown[] = [];
       const self: Statement = {
@@ -64,40 +82,71 @@ function fakeDb(seed?: {
             const row = holders.get(bound[0] as string);
             return (row ? { balance: row.balance } : null) as T | null;
           }
+          if (sql.includes("SELECT entitlement FROM holders")) {
+            const row = holders.get(bound[0] as string);
+            return (row ? { entitlement: row.entitlement } : null) as T | null;
+          }
+          if (sql.includes("INSERT INTO drop_trees")) {
+            trees.push({ root: bound[0] as string, promised: bound[1] as string });
+            return { id: trees.length } as T;
+          }
+          if (sql.includes("FROM drop_trees WHERE adopted_at IS NOT NULL")) {
+            if (seed?.live === undefined) return null as T | null;
+            return {
+              id: seed.live.id,
+              root: "0x" + "1".repeat(64),
+              promised: "0",
+              holders: seed.live.leaves.length,
+              proposed_at: 0,
+              live_at: 0,
+              adopted_at: 1,
+              tx_hash: "0x" + "2".repeat(64),
+            } as T;
+          }
+          if (sql.includes("FROM drop_trees WHERE adopted_at IS NULL")) return null as T | null;
           throw new Error(`The fake was not asked for this: ${sql}`);
         },
         async all<T>() {
           if (sql.includes("is_contract = 0")) {
             return {
               results: [...holders]
-                .filter(([, row]) => row.is_contract === 0 && row.balance !== "0")
-                .map(([address, row]) => ({ address, balance: row.balance, is_contract: 0 })) as T[],
+                .filter(([, row]) => row.code === 0 && row.balance !== "0")
+                .map(([address, row]) => ({
+                  address,
+                  balance: row.balance,
+                  entitlement: row.entitlement,
+                  is_contract: 0,
+                })) as T[],
+            };
+          }
+          if (sql.includes("entitlement <> '0'")) {
+            return {
+              results: [...holders]
+                .filter(([, row]) => row.entitlement !== "0")
+                .map(([address, row]) => ({
+                  address,
+                  balance: row.balance,
+                  entitlement: row.entitlement,
+                  is_contract: row.code,
+                })) as T[],
             };
           }
           if (sql.includes("is_contract IS NULL")) {
             return {
               results: [...holders]
-                .filter(([, row]) => row.is_contract === null && row.balance !== "0")
+                .filter(([, row]) => row.code === null && row.balance !== "0")
                 .slice(0, bound[0] as number)
                 .map(([address]) => ({ address })) as T[],
             };
           }
-          if (sql.includes("FROM drop_rounds")) {
+          if (sql.includes("FROM drop_leaves")) {
             return {
-              results: [...rounds]
-                .sort((a, b) => b.round - a.round)
-                .slice(0, bound[0] as number)
-                .map((r) => ({
-                  round: r.round,
-                  root: "0x" + "1".repeat(64),
-                  promised: "0",
-                  holders: 0,
-                  tx_hash: "0x" + "2".repeat(64),
-                  opened_at: r.openedAt,
-                })) as T[],
+              results: (seed?.live?.leaves ?? []).map(([address, amount]) => ({
+                address,
+                amount,
+              })) as T[],
             };
           }
-          if (sql.includes("FROM drop_entries")) return { results: [] as T[] };
           throw new Error(`The fake was not asked for this: ${sql}`);
         },
         async run() {
@@ -109,24 +158,30 @@ function fakeDb(seed?: {
           if (sql.includes("INSERT INTO holders")) {
             const [address, balance] = bound as [string, string];
             const had = holders.get(address);
-            holders.set(address, { balance, is_contract: had?.is_contract ?? null });
+            holders.set(address, {
+              balance,
+              entitlement: had?.entitlement ?? "0",
+              code: had?.code ?? null,
+            });
+            return null;
+          }
+          if (sql.includes("UPDATE holders SET entitlement")) {
+            const [entitlement, , address] = bound as [string, number, string];
+            const had = holders.get(address);
+            if (had) holders.set(address, { ...had, entitlement });
             return null;
           }
           if (sql.includes("UPDATE holders SET is_contract")) {
-            const [isContract, address] = bound as [number, string];
+            const [code, address] = bound as [number, string];
             const had = holders.get(address);
-            if (had) holders.set(address, { ...had, is_contract: isContract });
+            if (had) holders.set(address, { ...had, code });
             return null;
           }
-          if (sql.includes("INSERT INTO drop_entries")) {
-            entries.set(`${bound[0]}:${bound[1]}`, bound[2] as string);
+          if (sql.includes("INSERT INTO drop_leaves")) {
+            leaves.set(bound[1] as string, bound[2] as string);
             return null;
           }
-          if (sql.includes("INSERT INTO drop_rounds")) {
-            opened.push(bound[0] as number);
-            rounds.push({ round: bound[0] as number, openedAt: bound[5] as number });
-            return null;
-          }
+          if (sql.includes("UPDATE drop_trees SET adopted_at")) return null;
           throw new Error(`The fake was not asked for this: ${sql}`);
         },
       };
@@ -136,10 +191,9 @@ function fakeDb(seed?: {
   return db;
 }
 
-/** A chain that answers. `free` is what the drop has unallocated. */
-function fakeChain(chain: { head: number; free?: bigint; code?: Record<string, string> }) {
+/** A chain that answers. */
+function fakeChain(chain: { head: number; unpromised?: bigint; pendingAt?: number }) {
   const asked: { method: string; params: unknown[] }[] = [];
-
   vi.stubGlobal("fetch", async (_url: string, init: { body: string }) => {
     const { method, params } = JSON.parse(init.body) as { method: string; params: unknown[] };
     asked.push({ method, params });
@@ -155,9 +209,20 @@ function fakeChain(chain: { head: number; free?: bigint; code?: Record<string, s
       case "eth_getLogs":
         return reply([]);
       case "eth_getCode":
-        return reply(chain.code?.[(params[0] as string).toLowerCase()] ?? "0x");
-      case "eth_call":
-        return reply("0x" + (chain.free ?? 0n).toString(16));
+        return reply("0x");
+      case "eth_call": {
+        // Told apart by the selector, because this contract is asked two
+        // different questions in one run and answering both with one number is
+        // how a test passes while the job does the wrong thing.
+        const data = (params[0] as { data: string }).data;
+        if (data.startsWith(selector("pendingAt()"))) {
+          return reply("0x" + (chain.pendingAt ?? 0).toString(16));
+        }
+        if (data.startsWith(selector("unpromised()"))) {
+          return reply("0x" + (chain.unpromised ?? 0n).toString(16));
+        }
+        return reply("0x0");
+      }
       case "eth_getTransactionCount":
         return reply("0x1");
       case "eth_gasPrice":
@@ -188,8 +253,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("what each holder is owed", () => {
-  it("is their share of the supply that is being paid", () => {
+describe("sharing out what arrived", () => {
+  it("gives each holder their share of the token, at this moment", () => {
     const shares = sharesOf(
       [
         { address: wallet(1), balance: tokens(750) },
@@ -197,100 +262,130 @@ describe("what each holder is owed", () => {
       ],
       tokens(100),
     );
-    expect(Object.fromEntries(shares)).toEqual({
-      [wallet(1)]: tokens(75).toString(),
-      [wallet(2)]: tokens(25).toString(),
-    });
+    expect(shares.get(wallet(1))).toBe(tokens(75));
+    expect(shares.get(wallet(2))).toBe(tokens(25));
   });
 
-  it("never promises more than the round holds", () => {
-    // Floored, so the tree comes out a few wei under. Over is the one that
-    // matters: the contract refuses a claim that would take more than the round
-    // has, so an over-promising tree pays the first holders and fails the last.
-    // Three thirds of ten is the smallest case where flooring has to happen.
+  it("divides by what the holders hold, not by the supply", () => {
+    // The pool holds thirty-nine per cent of this token and is not a holder. If
+    // the denominator were the supply, two fifths of every day would go
+    // unshared forever — quietly, and looking exactly like a rounding.
+    const shares = sharesOf([{ address: wallet(1), balance: tokens(1) }], tokens(100));
+    expect(shares.get(wallet(1))).toBe(tokens(100));
+  });
+
+  it("never shares out more than arrived", () => {
+    // Floored, so three thirds of ten comes to nine. The remainder stays
+    // unpromised in the contract and goes into the next day.
     const holders = [1, 2, 3].map((n) => ({ address: wallet(n), balance: tokens(1) }));
-    const total = 10n;
-    const shares = sharesOf(holders, total);
-    const promised = shares.reduce((sum, [, share]) => sum + BigInt(share), 0n);
-    expect(promised).toBeLessThanOrEqual(total);
+    const shares = sharesOf(holders, 10n);
+    const given = [...shares.values()].reduce((sum, share) => sum + share, 0n);
+    expect(given).toBeLessThanOrEqual(10n);
   });
 
-  it("leaves out shares too small to be worth the gas to take", () => {
-    // One holder with almost everything and one with a sliver. The sliver's
-    // share is under the dust line: putting it in the tree hands somebody a
-    // share that costs more to claim than it is worth.
-    const shares = sharesOf(
-      [
-        { address: wallet(1), balance: tokens(1_000_000) },
-        { address: wallet(2), balance: 1n },
-      ],
-      tokens(10),
-    );
-    expect(shares).toHaveLength(1);
-    expect(shares[0]![0]).toBe(wallet(1));
-    for (const [, share] of shares) expect(BigInt(share)).toBeGreaterThanOrEqual(DUST);
+  it("gives nothing to nobody", () => {
+    expect(sharesOf([], tokens(100)).size).toBe(0);
+    expect(sharesOf([{ address: wallet(1), balance: tokens(1) }], 0n).size).toBe(0);
+  });
+});
+
+describe("the tree", () => {
+  it("holds everyone who has ever earned, whatever they hold now", () => {
+    // Somebody who sold keeps what they earned while they held it. Dropping
+    // them would take back money they were told was theirs — and would make the
+    // cumulative total go down, which the contract refuses outright.
+    const leaves = leavesOf([
+      { address: wallet(1), entitlement: tokens(5) },
+      { address: wallet(2), entitlement: tokens(3) },
+    ]);
+    expect(leaves).toHaveLength(2);
+  });
+
+  it("leaves out an entitlement too small to be worth the gas to claim", () => {
+    // Left out of the tree, not dropped: the row keeps growing and the holder is
+    // in the tree the day it crosses the line. Under the old per-round design a
+    // small holder fell under the dust line every round and never accumulated.
+    const leaves = leavesOf([
+      { address: wallet(1), entitlement: tokens(5) },
+      { address: wallet(2), entitlement: DUST - 1n },
+    ]);
+    expect(leaves.map(([address]) => address)).toEqual([wallet(1)]);
   });
 
   it("is the same tree for the same holders, whatever order they arrive in", () => {
     // The proof is rebuilt from rows later rather than stored, so the tree has
     // to be a function of the holders and not of the order a query returned.
-    const holders = [3, 1, 2].map((n) => ({ address: wallet(n), balance: tokens(n) }));
-    const forwards = treeOf(sharesOf(holders, tokens(100)));
-    const backwards = treeOf(sharesOf([...holders].reverse(), tokens(100)));
-    expect(forwards.root).toBe(backwards.root);
+    const holders = [3, 1, 2].map((n) => ({ address: wallet(n), entitlement: tokens(n) }));
+    expect(treeOf(leavesOf(holders)).root).toBe(
+      treeOf(leavesOf([...holders].reverse())).root,
+    );
   });
 
   it("makes a proof that verifies against its own root", () => {
     // The whole mechanism in one assertion: the root goes on chain, the proof is
     // rebuilt from rows in a database, and the contract checks one against the
     // other. Verified with the same library the contract's MerkleProof matches.
-    const shares = sharesOf(
-      [1, 2, 3, 4, 5].map((n) => ({ address: wallet(n), balance: tokens(n * 100) })),
-      tokens(1000),
+    const tree = treeOf(
+      leavesOf([1, 2, 3, 4, 5].map((n) => ({ address: wallet(n), entitlement: tokens(n * 100) }))),
     );
-    const tree = treeOf(shares);
 
     for (const [i, leaf] of tree.entries()) {
       const proof = tree.getProof(i);
       expect(StandardMerkleTree.verify(tree.root, ["address", "uint256"], leaf, proof)).toBe(true);
-      // And a proof for somebody else's leaf does not.
       const other = i === 0 ? 1 : 0;
       expect(
         StandardMerkleTree.verify(tree.root, ["address", "uint256"], tree.at(other)!, proof),
       ).toBe(false);
     }
   });
+
+  it("only ever grows, which is what the contract requires", () => {
+    // A cumulative total that fell would be refused on chain with
+    // PromisesLessThanBefore. It can only fall if an entitlement falls, and the
+    // only thing that writes them adds.
+    const before = leavesOf([{ address: wallet(1), entitlement: tokens(5) }]);
+    const after = leavesOf([
+      { address: wallet(1), entitlement: tokens(5) },
+      { address: wallet(2), entitlement: tokens(2) },
+    ]);
+    const sum = (leaves: [string, string][]) =>
+      leaves.reduce((total, [, amount]) => total + BigInt(amount), 0n);
+    expect(sum(after)).toBeGreaterThan(sum(before));
+  });
 });
 
-describe("which round it is", () => {
-  it("reads as the date in UTC", () => {
-    expect(roundFor(Date.parse("2026-09-18T00:10:00Z"))).toBe(20_260_918);
-    expect(roundFor(Date.parse("2027-01-01T23:59:00Z"))).toBe(20_270_101);
-  });
-
-  it("is a different number on a different day", () => {
-    const monday = Date.parse("2026-09-21T00:10:00Z");
-    expect(roundFor(monday)).not.toBe(roundFor(monday + 86_400_000));
+describe("the delay", () => {
+  it("is the same here as in the contract", () => {
+    // Two files holding one number. lib/holders.ts only uses it to say when a
+    // tree is expected to go live; the chain is what enforces it, and a
+    // disagreement would be a page promising a day that is not the day.
+    const source = readFileSync(
+      new URL("../contracts/HolderDrop.sol", import.meta.url),
+      "utf8",
+    );
+    const found = source.match(/PUBLISH_DELAY\s*=\s*(\d+)\s*hours\s*;/);
+    expect(found, "PUBLISH_DELAY is not in the contract").toBeTruthy();
+    expect(Number(found![1]) * 60 * 60 * 1000).toBe(PUBLISH_DELAY);
   });
 });
 
 describe("before there is a snapshot", () => {
-  it("refuses to open a round rather than paying whoever moved some lately", () => {
+  it("refuses to publish rather than paying whoever moved some lately", async () => {
     // The trap this closes: starting the cursor at the head gives a table of
     // whoever has transacted since, which looks like a holder list and is not
-    // one — and a round built on it pays a handful of people everybody's share.
-    return withDrop(async () => {
-      const asked = fakeChain({ head: 1_000_000, free: tokens(100_000) });
+    // one — and a tree built on it pays a handful of people everybody's share.
+    await withDrop(async () => {
+      const asked = fakeChain({ head: 1_000_000, unpromised: tokens(100_000) });
       const ran = await runHolders(fakeDb(), { publisherKey: KEY }, 0);
 
-      expect(ran.round).toBeNull();
+      expect(ran.proposed).toBeNull();
       expect(ran.why).toMatch(/no holder snapshot/i);
       expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
     });
   });
 });
 
-describe("who ends up in a round", () => {
+describe("who a day is shared between", () => {
   it("leaves out anything with code on it, pool included", async () => {
     await withDrop(async () => {
       const db = fakeDb({
@@ -300,86 +395,92 @@ describe("who ends up in a round", () => {
           { address: POOL, balance: tokens(900), isContract: true },
         ],
       });
-      fakeChain({ head: 1_000_000, free: tokens(100_000) });
+      fakeChain({ head: 1_000_000, unpromised: tokens(100_000) });
       const ran = await runHolders(db, { publisherKey: KEY }, 0);
 
-      expect(ran.round).not.toBeNull();
-      expect(ran.paid).toBe(1);
-      // And the one holder took the whole round rather than a tenth of it: the
+      expect(ran.proposed).not.toBeNull();
+      expect(ran.holders).toBe(1);
+      // And the one holder earned the whole day rather than a tenth of it: the
       // pool is not in the denominator either.
-      const written = [...db.entries.values()];
-      expect(written).toHaveLength(1);
-      expect(BigInt(written[0]!)).toBeGreaterThan(tokens(99_000));
+      expect(BigInt(db.holders.get(wallet(1))!.entitlement)).toBe(tokens(100_000));
+      expect(db.holders.get(POOL)!.entitlement).toBe("0");
     });
   });
 
-  it("leaves out anything nobody has asked about yet", async () => {
-    // Unknown is not paid. Leaving somebody out costs them one round and they
-    // are in the next; paying a pool cannot be undone.
+  it("waits rather than spending gas on a tree over nothing", async () => {
     await withDrop(async () => {
       const db = fakeDb({
         cursor: 1_000_000,
-        holders: [
-          { address: wallet(1), balance: tokens(100), isContract: false },
-          { address: wallet(2), balance: tokens(100), isContract: null },
-        ],
+        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
       });
-      // eth_getCode answers "0x" for wallet(2), so it becomes known this run —
-      // but the round is built from what was known when it was built.
-      fakeChain({ head: 1_000_000, free: tokens(100_000) });
+      const asked = fakeChain({ head: 1_000_000, unpromised: LEAST_WORTH_SHARING - 1n });
       const ran = await runHolders(db, { publisherKey: KEY }, 0);
-      expect(ran.checked).toBe(1);
-      expect(ran.paid).toBe(2);
+
+      expect(ran.proposed).toBeNull();
+      expect(ran.why).toMatch(/not worth a tree/i);
+      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
+    });
+  });
+
+  it("does not propose on top of a tree that is still waiting", async () => {
+    // The contract takes one pending root at a time, so a second propose would
+    // revert — and the entitlements would already have been written, which is
+    // the half of the job that has no transaction to roll back.
+    await withDrop(async () => {
+      const db = fakeDb({
+        cursor: 1_000_000,
+        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+      });
+      const now = Date.parse("2026-09-18T00:10:00Z");
+      const asked = fakeChain({
+        head: 1_000_000,
+        unpromised: tokens(100_000),
+        pendingAt: Math.floor((now + 3_600_000) / 1000),
+      });
+      const ran = await runHolders(db, { publisherKey: KEY }, now);
+
+      expect(ran.proposed).toBeNull();
+      expect(ran.why).toMatch(/waiting until/i);
+      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
+      expect(db.holders.get(wallet(1))!.entitlement).toBe("0");
+    });
+  });
+
+  it("adopts what has waited, then publishes what has accrued since", async () => {
+    await withDrop(async () => {
+      const db = fakeDb({
+        cursor: 1_000_000,
+        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+      });
+      const now = Date.parse("2026-09-18T00:10:00Z");
+      const asked = fakeChain({
+        head: 1_000_000,
+        unpromised: tokens(100_000),
+        pendingAt: Math.floor((now - 3_600_000) / 1000),
+      });
+      const ran = await runHolders(db, { publisherKey: KEY }, now);
+
+      expect(ran.adopted).not.toBeNull();
+      expect(ran.proposed).not.toBeNull();
+      // Two transactions: the adopt and the propose, in that order.
+      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(2);
     });
   });
 });
 
-describe("how often a round opens", () => {
-  it("is weekly, so a holder is not asked to claim ninety times", async () => {
-    await withDrop(async () => {
-      const now = Date.parse("2026-09-18T00:10:00Z");
-      const db = fakeDb({
-        cursor: 1_000_000,
-        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
-        rounds: [{ round: 20_260_915, openedAt: now - 3 * 86_400_000 }],
-      });
-      const asked = fakeChain({ head: 1_000_000, free: tokens(100_000) });
-      const ran = await runHolders(db, { publisherKey: KEY }, now);
-
-      expect(ran.round).toBeNull();
-      expect(ran.why).toMatch(/less than a week/i);
-      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
-    });
-  });
-
-  it("opens once the week is up", async () => {
-    await withDrop(async () => {
-      const now = Date.parse("2026-09-18T00:10:00Z");
-      const db = fakeDb({
-        cursor: 1_000_000,
-        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
-        rounds: [{ round: 20_260_910, openedAt: now - BETWEEN_ROUNDS - 1 }],
-      });
-      fakeChain({ head: 1_000_000, free: tokens(100_000) });
-      const ran = await runHolders(db, { publisherKey: KEY }, now);
-
-      expect(ran.round).toBe(20_260_918);
-      expect(db.opened).toEqual([20_260_918]);
-    });
-  });
-
-  it("waits rather than spending gas on a round of dust", async () => {
+describe("what somebody has already earned", () => {
+  it("is added to and never replaced", async () => {
     await withDrop(async () => {
       const db = fakeDb({
         cursor: 1_000_000,
-        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+        holders: [
+          { address: wallet(1), balance: tokens(100), entitlement: tokens(7), isContract: false },
+        ],
       });
-      const asked = fakeChain({ head: 1_000_000, free: LEAST_WORTH_SHARING - 1n });
-      const ran = await runHolders(db, { publisherKey: KEY }, 0);
+      fakeChain({ head: 1_000_000, unpromised: tokens(1_000) });
+      await runHolders(db, { publisherKey: KEY }, 0);
 
-      expect(ran.round).toBeNull();
-      expect(ran.why).toMatch(/not worth a round/i);
-      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
+      expect(BigInt(db.holders.get(wallet(1))!.entitlement)).toBe(tokens(1_007));
     });
   });
 });
