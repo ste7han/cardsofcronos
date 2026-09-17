@@ -120,9 +120,20 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
     /// @notice The royalty, in basis points out of 10_000. Settled by the maker.
     uint96 public constant ROYALTY_BPS = 1_000;
 
+    /**
+     * @notice May move the metadata and do nothing else. Zero until set.
+     *
+     * Zero is a fine resting state: the owner can always reveal, so a collection
+     * with no revealer is one where every reveal is done by hand. Setting it is
+     * the decision to let a schedule do it.
+     */
+    address public revealer;
+
     event Released(uint256 amount);
+    event RevealerChanged(address indexed from, address indexed to);
 
     error NothingToRelease();
+    error NotAllowedToReveal();
 
     constructor(
         string memory name_,
@@ -246,9 +257,35 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
 
     // -------------------------------------------------------------- the levers
 
-    function setBaseURI(string calldata baseURI_) external onlyOwner {
+    /**
+     * @notice Moves the metadata. The owner or the revealer.
+     *
+     * The mint runs with every token face down, so that nobody can read ahead
+     * and buy only the good ones — the order was fixed before the first sale and
+     * a hash of it published, and showing it early would make the odds stop
+     * being odds. Turning tokens face up as they sell means calling this often,
+     * and often means a key on a server.
+     *
+     * The owner key cannot be that. It can reach the money through the rescue
+     * hatch, so it belongs on a wallet that never touches one. Hence a second
+     * address that may do this and nothing else.
+     *
+     * WHAT A STOLEN REVEALER COSTS: it can point every token's metadata at
+     * rubbish. That is defacement and it is bad, and it is not theft — it cannot
+     * mint, cannot move CRO, cannot change what a card does, and the owner
+     * rotates it and sets the address back. Weighed against a mint that takes
+     * months while every card stays face down, that is the better risk.
+     */
+    function setBaseURI(string calldata baseURI_) external {
+        if (msg.sender != owner() && msg.sender != revealer) revert NotAllowedToReveal();
         _base = baseURI_;
         emit BaseURISet(baseURI_);
+    }
+
+    /// @notice Replaces the revealer. The answer to a leaked key.
+    function setRevealer(address revealer_) external onlyOwner {
+        emit RevealerChanged(revealer, revealer_);
+        revealer = revealer_;
     }
 
     function setAllowlistRoot(bytes32 root) external onlyOwner {

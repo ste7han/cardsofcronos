@@ -363,6 +363,79 @@ contract BuyingTest is Test {
         assertTrue(nft.supportsInterface(0x80ac58cd), "ERC721");
     }
 
+    // ── the revealer ────────────────────────────────────────────────────────
+
+    /**
+     * A key that may move the metadata and touch nothing else.
+     *
+     * It exists so that turning tokens face up as they sell can run on a
+     * schedule without the owner key — which can reach the money — living on a
+     * server. So what these check is mostly the "and nothing else".
+     */
+    function test_theRevealerMayMoveTheMetadata() public {
+        address revealer = address(0xFEED);
+        nft.setRevealer(revealer);
+
+        vm.prank(revealer);
+        nft.setBaseURI("ipfs://revealed/");
+
+        // The price first. vm.prank applies to the next call, and reading it
+        // inside the value expression spends the prank on priceFor — the mint
+        // then comes from this test contract, which cannot receive an ERC721.
+        uint256 price = nft.priceFor(buyer);
+        vm.prank(buyer);
+        nft.buy{value: price}(1);
+        assertEq(nft.tokenURI(1), "ipfs://revealed/1");
+    }
+
+    function test_theOwnerCanStillReveal() public {
+        // Setting a revealer does not hand the job away. The takedown case is
+        // the owner's and it cannot depend on a second key being available.
+        nft.setBaseURI("ipfs://byowner/");
+        uint256 price = nft.priceFor(buyer);
+        vm.prank(buyer);
+        nft.buy{value: price}(1);
+        assertEq(nft.tokenURI(1), "ipfs://byowner/1");
+    }
+
+    function test_nobodyElseMayReveal() public {
+        vm.prank(buyer);
+        vm.expectRevert(CardsOfCronosSetOne.NotAllowedToReveal.selector);
+        nft.setBaseURI("ipfs://mine/");
+    }
+
+    /** The whole point: what a stolen revealer key cannot do. */
+    function test_theRevealerCannotDoAnythingElse() public {
+        address revealer = address(0xFEED);
+        nft.setRevealer(revealer);
+        vm.startPrank(revealer);
+
+        vm.expectRevert();
+        nft.setMintPrice(1);
+        vm.expectRevert();
+        nft.setAllowlistRoot(bytes32(uint256(1)));
+        vm.expectRevert();
+        nft.setSaleOpen(false);
+        vm.expectRevert();
+        nft.setRevealer(revealer);
+        vm.expectRevert();
+        nft.announceRescue(revealer);
+
+        vm.stopPrank();
+    }
+
+    function test_onlyTheOwnerRotatesTheRevealer() public {
+        vm.prank(buyer);
+        vm.expectRevert();
+        nft.setRevealer(buyer);
+    }
+
+    function test_noRevealerByDefault() public view {
+        // Zero is a fine resting state: every reveal is the owner's until
+        // somebody decides a schedule should do it.
+        assertEq(nft.revealer(), address(0));
+    }
+
     /**
      * The mint proceeds can be got out if release() ever stops working.
      *

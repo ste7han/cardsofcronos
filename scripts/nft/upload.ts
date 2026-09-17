@@ -36,6 +36,8 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 import {
+  CreateBucketCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   PutBucketTaggingCommand,
   PutObjectCommand,
@@ -91,6 +93,16 @@ async function main(): Promise<void> {
     },
     { step: "deserialize", name: "keepHeaders" },
   );
+
+  // Made if it is not there. One less thing to do by hand in a dashboard, and
+  // one less way for a typo to end up as a second bucket nobody notices.
+  try {
+    await s3.send(new HeadBucketCommand({ Bucket: BUCKET }));
+    console.log(`  bucket ${BUCKET} is there already`);
+  } catch {
+    await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
+    console.log(`  bucket ${BUCKET} made`);
+  }
 
   // Files directly in the folder. Sub-folders are their own bucket and their own
   // CID on purpose: the images and the token files are referenced separately, and

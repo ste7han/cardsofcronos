@@ -35,7 +35,9 @@
     "trace-mark": "tsx scripts/trace-mark.ts",
     "webp": "tsx scripts/nft/webp.ts",
     "tokens": "tsx scripts/nft/tokens.ts",
-    "upload": "tsx scripts/nft/upload.ts"
+    "upload": "tsx --env-file=.env.local scripts/nft/upload.ts",
+    "reveal": "tsx --env-file=.env.local scripts/nft/reveal.ts",
+    "placeholder": "tsx scripts/nft/placeholder.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
