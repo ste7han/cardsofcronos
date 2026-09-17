@@ -79,10 +79,22 @@ const flag = (name: string): string | null => {
 async function main(): Promise<void> {
   const broadcast = process.argv.includes("--broadcast");
 
+  // A dry run needs an address and not a key. Everything before --broadcast is
+  // arithmetic — what the arguments encode to, what the node says the gas is,
+  // what that costs — and none of it is signed. Requiring a key to find that out
+  // would mean handing one over to ask a question, which is the shape of a bad
+  // habit rather than a safe one.
   const secret = process.env.DEPLOY_KEY;
-  if (!secret) throw new Error("Set DEPLOY_KEY in the environment. Never as an argument.");
-  const key = hexToBytes(secret);
-  const deployer = addressOfKey(key);
+  const from = flag("from");
+  if (!secret && (broadcast || !from)) {
+    throw new Error(
+      broadcast
+        ? "Set DEPLOY_KEY in the environment. Never as an argument."
+        : "Pass --from 0x… for a dry run, or set DEPLOY_KEY to sign for real.",
+    );
+  }
+  const key = secret ? hexToBytes(secret) : new Uint8Array(32);
+  const deployer = secret ? addressOfKey(key) : normalise(from!);
 
   const publisher = normalise(flag("publisher") ?? "");
   if (publisher === deployer) {
