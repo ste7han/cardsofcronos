@@ -117,29 +117,14 @@ export function CardView({ card, compact = false, free = false, price, className
    * nothing overflows and no flavour falls off the bottom edge.
    */
   /**
-   * How wide the picture is, from how much room the words need.
+   * THE PICTURE ALWAYS FILLS ITS WINDOW. The maker's rule, and the reason the
+   * room for text had to come from somewhere else.
    *
-   * One width for every card was tried and it was wrong in both directions.
-   * Sized for the busiest card at 74%, the three hundred quiet ones got a
-   * smaller picture AND a hole: metamask carries a single rule and had half a
-   * card of empty between it and the flavour. Sized for the quiet ones,
-   * twenty-two cut their last rule in half.
-   *
-   * So the card gives its room to whichever half needs it. Measured, not
-   * guessed — a first attempt at this ladder failed on 87 cards because the
-   * middle rung was a guess. Rendering all 445 against each width says 302 of
-   * them fit at full width, and the thresholds below are cut to match, then
-   * checked by rendering all 445 again.
+   * A ladder that narrowed the window on busy cards was built and thrown away:
+   * it worked, and it shrank the art on 57% of the set, which is not a trade
+   * this game makes. What replaced it is a taller card — see the aspect ratio on
+   * the frame below.
    */
-  // Rows and not characters. Two cards of 116 characters broke a threshold built
-  // on length alone: one wrapped into two long rows and the other was four short
-  // ones, and four rows take four rows' worth of height whatever they say. About
-  // 43 characters fit a row at full size, and a line always costs at least one.
-  const rulesRows = lines.reduce(
-    (total, line) => total + Math.max(1, Math.ceil(line.text.length / 43)),
-    0,
-  );
-  const artWidth = rulesRows <= 3 ? null : rulesRows <= 5 ? "w-[84%]" : "w-[74%]";
   const precious = card.rarity === "legendary" || card.rarity === "mythic";
 
   /**
@@ -162,7 +147,23 @@ export function CardView({ card, compact = false, free = false, price, className
   return (
     <article
       className={cx(
-        "@container card-frame card-grain relative flex aspect-[5/7] flex-col overflow-hidden",
+        "@container card-frame card-grain relative flex flex-col overflow-hidden",
+        // 5:7 in hand, taller at full size.
+        //
+        // 5:7 is the shape of a playing card and it is what this was, everywhere.
+        // It stopped holding the cards: with the picture at full width — which it
+        // has to be — 112 of the 445 rendered with a rule cut mid-word and the
+        // flavour pushed off the bottom edge. Not twenty-two, which was an
+        // estimate from character counts; 112 is what rendering all of them
+        // says.
+        //
+        // The room could only come from the picture or from the card, and the
+        // picture is not available. 5:7.8 is where all 445 fit with nothing
+        // clipped, found by rendering the set against each shape.
+        //
+        // Only at full size. The hand is a row of thumbnails beside a board and
+        // a taller card there would cost the table its height.
+        compact ? "aspect-[5/7]" : "aspect-[5/7.8]",
         precious && "card-foil",
         className,
       )}
@@ -285,7 +286,7 @@ export function CardView({ card, compact = false, free = false, price, className
         <div
           className={cx(
             "card-window relative overflow-hidden border",
-            !compact && artWidth !== null && `mx-auto ${artWidth}`,
+
           )}
           style={{ borderColor: "rgba(0,0,0,0.75)", background: "#05070a" }}
         >

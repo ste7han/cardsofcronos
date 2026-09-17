@@ -19,12 +19,13 @@
 // the second is why this script also exists as the errata tool: a card that has
 // to be corrected is re-rendered here and its metadata updated.
 //
-// Scale is the device pixel ratio, so 4 gives 1072x1504 from a 268x376 card.
+// Scale is the device pixel ratio, so 4 gives 1072x1672 from a 268x418 card.
 //
-// 376 and not 375: the card is aspect-[5/7] on a 268px width, which is 375.2,
-// and the browser lays that out as 376. This said 1500 until all 445 came out
-// at 1504 — consistently, so the collection is uniform and only the arithmetic
-// in this comment was wrong.
+// The card was aspect-[5/7] and is 5:7.8 at full size. It had to grow: with the
+// picture filling its window — which is the maker's rule and not negotiable —
+// 112 of the 445 rendered with a rule cut mid-word and the flavour pushed off
+// the bottom edge. The room could come from the picture or from the card, and
+// the picture was not available.
 // That is a real 4x render rather than a small one blown up.
 
 import { existsSync, statSync } from "node:fs";
