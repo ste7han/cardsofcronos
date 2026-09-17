@@ -15,6 +15,7 @@ import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { byDeck, history, tally, type DeckRow, type MatchOutcome } from "@/lib/history";
 import { LINKABLE, type Network } from "@/lib/links";
+import { Claim } from "@/components/Claim";
 import { HOLDER_TIERS, nextTier, tierFor } from "@/data/holder-tiers";
 import { toTokens } from "@/lib/units";
 import { TelegramLink } from "@/components/TelegramLink";
@@ -116,7 +117,7 @@ export function Profile() {
         </div>
       </section>
 
-      <Holding standing={standing} />
+      <Holding standing={standing} wallet={wallet} />
 
       {/* Rank after holding, because holding is the thing that pays and rank is
           the thing that will. Empty is the honest answer for both today. */}
@@ -217,19 +218,12 @@ export function Profile() {
  * for the breakdown should find out it does not exist rather than assume it is
  * being kept somewhere they cannot see.
  */
-function Holding({ standing }: { standing: Standing | null }) {
+function Holding({ standing, wallet }: { standing: Standing | null; wallet: string | null }) {
   const held = standing?.held == null ? null : toTokens(standing.held);
   const tier = tierFor(held);
   const next = nextTier(held);
 
   const whole = (value: number) => Math.round(value).toLocaleString("en-US");
-
-  // Null when there is nothing waiting, so the sentence below can simply not be
-  // there. Zero and "the drop is not deployed" both mean nothing to say.
-  const waiting =
-    standing?.claimable != null && BigInt(standing.claimable) > 0n
-      ? whole(toTokens(standing.claimable))
-      : null;
 
   return (
     <section>
@@ -279,15 +273,9 @@ function Holding({ standing }: { standing: Standing | null }) {
         </p>
       ) : null}
 
-      {/* Only when there is something to take. A line saying "0 waiting" every
-          week is a line people stop reading, and this one has to be read the
-          week it is not zero. */}
-      {waiting !== null ? (
-        <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-pump">
-          {waiting} $CROCARD is waiting for you. It keeps going up every day and it does not
-          expire — take it whenever you like, in one go, however long you leave it.
-        </p>
-      ) : null}
+      {/* The button says what is waiting and offers to move it, so a sentence
+          saying the same thing above it would be the same fact twice. */}
+      <Claim wallet={wallet} />
 
       <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">
         {standing?.drop == null
