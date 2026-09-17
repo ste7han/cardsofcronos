@@ -38,7 +38,7 @@
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 
-import { PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
+import { LOG_RPCS, PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
 import { hexToBytes, normalise } from "@/lib/address";
 import { selector, word } from "@/lib/evm-tx";
 import { CONTRACTS, CROCARD, NOT_A_HOLDER } from "@/lib/revenue";
@@ -211,6 +211,11 @@ export async function runHolders(
   };
 
   const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
+  // Logs come from a shorter list, for the reason written at LOG_RPCS: an
+  // endpoint that answers an empty array rather than the truth would move the
+  // cursor past a day of transfers and the balances would be quietly wrong from
+  // then on, with nothing anywhere saying which day it was.
+  const logRpcs = secrets.rpc ? [secrets.rpc, ...LOG_RPCS] : LOG_RPCS;
   const seen = await cursorOf(db, HOLDER_CURSOR);
 
   // Never backfilled. Starting from the head here would give a table of whoever
@@ -233,7 +238,7 @@ export async function runHolders(
     const to = Math.min(from + CHUNK - 1, head);
     let logs;
     try {
-      logs = await rpc<{ topics: string[]; data: string }[]>(rpcs, "eth_getLogs", [
+      logs = await rpc<{ topics: string[]; data: string }[]>(logRpcs, "eth_getLogs", [
         {
           address: CROCARD,
           topics: [TRANSFER],

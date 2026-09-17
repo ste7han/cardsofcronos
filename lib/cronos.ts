@@ -36,6 +36,40 @@ export const PUBLIC_RPCS: readonly string[] = [
   "https://cronos.drpc.org",
 ];
 
+/**
+ * Endpoints that may be asked for LOGS. Not the same list, and not a preference.
+ *
+ * ── WHAT HAPPENED ────────────────────────────────────────────────────────────
+ *
+ * publicnode answers eth_getLogs over historical ranges with an empty array. Not
+ * an error, not a truncated answer, not a "range too wide" — `[]`, with a 200.
+ * Asked for the $CROCARD Transfers in the token's own first blocks, where
+ * evm.cronos.org finds thirty-seven, it finds none.
+ *
+ * A scan of the whole token's history against it came back with 17 holders and
+ * 238 million of a billion, missing the liquidity pool and the burn address
+ * entirely — an answer that cannot be true, which is a fact about the
+ * measurement rather than about the token.
+ *
+ * ── WHY IT MATTERS MORE TO THE CRON THAN TO THE SCRIPT ───────────────────────
+ *
+ * A script that gets this wrong is a wrong file somebody notices. The daily job
+ * moves a cursor: it reads a range, believes the answer, and writes down how far
+ * it has read. One failover to an endpoint that answers `[]` and a day of burns
+ * and balance changes is skipped permanently, with nothing anywhere saying so.
+ *
+ * ── WHY A LIST AND NOT A CHECK ───────────────────────────────────────────────
+ *
+ * Because there is nothing to check. An empty range is a real answer — most
+ * ranges are empty — so "this came back empty" cannot distinguish a quiet
+ * fourteen minutes from an endpoint that does not keep logs. The only thing that
+ * separates them is knowing which endpoints serve history, so that is written
+ * down rather than inferred.
+ *
+ * drpc is out too, for a duller reason: it answers eth_getLogs with HTTP 400.
+ */
+export const LOG_RPCS: readonly string[] = ["https://evm.cronos.org"];
+
 interface RpcResponse {
   id?: unknown;
   result?: unknown;

@@ -34,7 +34,7 @@
 // reason nobody can see. The log is the whole truth about the contract and this
 // reads that.
 
-import { PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
+import { LOG_RPCS, PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
 import { hexToBytes } from "@/lib/address";
 import { addressOfKey, selector, topicOf } from "@/lib/evm-tx";
 import { CONTRACTS } from "@/lib/revenue";
@@ -261,6 +261,10 @@ export async function runDaily(
   if (splitter === null) return { ...nothing, skipped: "no splitter contract yet" };
 
   const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
+  // Logs come from a shorter list. An endpoint that answers eth_getLogs with an
+  // empty array instead of the truth would move the cursor past a day of burns
+  // that then never come back — see LOG_RPCS.
+  const logRpcs = secrets.rpc ? [secrets.rpc, ...LOG_RPCS] : LOG_RPCS;
 
   let released: string | null = null;
   let why: string | undefined;
@@ -295,7 +299,7 @@ export async function runDaily(
     const to = Math.min(from + CHUNK - 1, head);
     let found: Released[];
     try {
-      found = await releasedBetween(rpcs, splitter, from, to);
+      found = await releasedBetween(logRpcs, splitter, from, to);
     } catch (error) {
       // Stop where it stopped. The cursor is saved below at the last chunk that
       // was actually read, so the next run starts here rather than past it.
