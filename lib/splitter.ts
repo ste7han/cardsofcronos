@@ -36,7 +36,7 @@
 
 import { PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
 import { hexToBytes } from "@/lib/address";
-import { selector, topicOf } from "@/lib/evm-tx";
+import { addressOfKey, selector, topicOf } from "@/lib/evm-tx";
 import { CONTRACTS } from "@/lib/revenue";
 import { cursorOf, recordBurn, setCursor, type Database } from "@/lib/store";
 
@@ -95,6 +95,18 @@ export interface RanDaily {
   from: number | null;
   to: number | null;
   /**
+   * Which wallet the key in the environment belongs to, or null when there is no
+   * usable key.
+   *
+   * An address and never the key — it is derived from it, and it is public the
+   * moment anything is signed with it. It is here because the failure it catches
+   * is silent: a key that is perfectly valid but belongs to the wrong wallet
+   * signs perfectly good transactions that the contracts refuse with
+   * NotThePublisher, once a day, in a log nobody reads. Seeing the address in the
+   * run's own answer turns that into something checkable in one look.
+   */
+  signer: string | null;
+  /**
    * Why nothing happened, when nothing did. Every reason, not the first one.
    *
    * The two halves of this job skip for their own reasons and both are worth
@@ -146,6 +158,10 @@ async function releaseNow(
     return { tx: null, why: `only ${waiting} wei waiting, which is not worth a swap` };
   }
   if (!publisherKey) return { tx: null, why: "no key to send with" };
+  if (signerOf(publisherKey) === null) {
+    // Set but unusable. Silence here would look exactly like a quiet day.
+    return { tx: null, why: "PUBLISHER_KEY is set but is not a usable private key" };
+  }
 
   return { tx: await send(rpcs, hexToBytes(publisherKey), splitter, selector("release()")) };
 }
@@ -233,7 +249,15 @@ export async function runDaily(
   now: number,
 ): Promise<RanDaily> {
   const splitter = CONTRACTS.splitter;
-  const nothing: RanDaily = { released: null, spent: null, recorded: 0, from: null, to: null };
+  const signer = signerOf(secrets.publisherKey);
+  const nothing: RanDaily = {
+    released: null,
+    spent: null,
+    recorded: 0,
+    from: null,
+    to: null,
+    signer,
+  };
   if (splitter === null) return { ...nothing, skipped: "no splitter contract yet" };
 
   const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
@@ -305,10 +329,28 @@ export async function runDaily(
     released,
     spent,
     recorded,
+    signer,
     from: read > seen ? seen + 1 : null,
     to: read > seen ? read : null,
     ...(why ? { skipped: why } : {}),
   };
+}
+
+/**
+ * The address a key belongs to, or null when there is no usable key.
+ *
+ * Null covers a key that is missing and a key that is not a key — a truncated
+ * paste, a stray quote, an empty secret that every listing shows as set. Both
+ * are worth reporting as "no signer" rather than as a crash in a scheduled job,
+ * and which of the two it was is in the reasons.
+ */
+function signerOf(key: string | undefined): string | null {
+  if (!key) return null;
+  try {
+    return addressOfKey(hexToBytes(key));
+  } catch {
+    return null;
+  }
 }
 
 /** Both reasons, when there are two. */

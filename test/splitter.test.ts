@@ -443,3 +443,29 @@ describe("the event it listens for", () => {
     expect(RELEASED).toHaveLength(66);
   });
 });
+
+describe("the key it signs with", () => {
+  it("reports the wallet it belongs to, so the wrong one is visible", async () => {
+    // A key that is valid and belongs to the wrong wallet is the silent failure
+    // here: the transactions are well formed and the contracts refuse them.
+    const ran = await runDaily(fakeDb(), { publisherKey: KEY }, 0);
+    expect(ran.signer).toMatch(/^0x[0-9a-f]{40}$/);
+    // Derived, not stored: the same key gives the same address every time.
+    const again = await runDaily(fakeDb(), { publisherKey: KEY }, 0);
+    expect(again.signer).toBe(ran.signer);
+  });
+
+  it("says no signer rather than throwing on something that is not a key", async () => {
+    // A truncated paste. wrangler takes it, every listing shows the name, and a
+    // scheduled job that crashed on it would report nothing at all.
+    for (const broken of ["", "0x", "0xnothex", "0x1234"]) {
+      const ran = await runDaily(fakeDb(), { publisherKey: broken }, 0);
+      expect(ran.signer).toBeNull();
+    }
+  });
+
+  it("never puts the key itself in what it returns", async () => {
+    const ran = await runDaily(fakeDb(), { publisherKey: KEY }, 0);
+    expect(JSON.stringify(ran)).not.toContain(KEY.slice(2));
+  });
+});
