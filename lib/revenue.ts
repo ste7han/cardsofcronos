@@ -39,6 +39,24 @@ export const BURN_ADDRESS = normalise("0x000000000000000000000000000000000000dEa
  *
  * $CROCARD is actually burned at the dead address above, where 89 million of it
  * already sits.
+ *
+ * ── IT IS DELIBERATELY NOT IN `NOT_A_HOLDER` ─────────────────────────────────
+ *
+ * It held 182 million — eighteen per cent of the supply — when the holder table
+ * was first filled in on 2026-09-17, so a wallet this size sitting outside the
+ * exclusions looks exactly like something somebody forgot. It is not.
+ *
+ * That eighteen per cent is being given away to people on Cronos, so the wallet
+ * is on its way to nothing. Excluding it would be a rule about a balance that is
+ * about to stop existing, and the rule would outlive the balance — which is how
+ * a project ends up not paying somebody for a reason nobody can remember.
+ *
+ * WHAT TO WATCH is the order. The drop is cumulative: whatever this wallet holds
+ * on the day of a share-out earns its proportion for good, and selling or giving
+ * away afterwards does not hand it back — the same rule that lets an ordinary
+ * holder sell without losing what they earned. Finish the giveaway before the
+ * mint opens and this costs nothing. The other way round and the team wallet
+ * earns a fifth of everything that arrives in between.
  */
 export const TEAM_WALLET = normalise("0x42BCc1355808aDf2344773c54e364257911CcC99");
 
