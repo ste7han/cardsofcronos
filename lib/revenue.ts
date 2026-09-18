@@ -96,6 +96,21 @@ export const POOL = normalise("0xce7AE1d9dB768bfCccD3E7acAC2C0E563c25caEA");
 export const LION = normalise("0x9D8c68F185A04314DDC8B8216732455e8dbb7E45");
 
 /**
+ * The key the nightly jobs sign with, named because it is on chain.
+ *
+ * Not a wallet in WALLETS: those are places money goes, and nothing is ever paid
+ * to this one. It is the publisher of contracts/PrizePot.sol and
+ * contracts/HolderDrop.sol, which means it can name a week's winners and propose
+ * what holders have earned, and cannot withdraw anything from anything.
+ *
+ * It is here rather than read back off the chain because the page that lists it
+ * has to be able to say who it is before it can ask, and because a constant that
+ * disagrees with the deployed contract is a thing a test can catch. Verified
+ * against both contracts on 18 September 2026.
+ */
+export const PUBLISHER = normalise("0x60F84405917a456527744A40B3B64B63aB5E007c");
+
+/**
  * Addresses that hold $CROCARD and are not holders.
  *
  * Named so they can be checked, and not the whole rule — scripts/holder-drop.ts

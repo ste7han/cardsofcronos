@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { TELEGRAM_CHANNEL, X_ACCOUNT, X_HANDLE } from "@/lib/links";
@@ -41,6 +42,15 @@ export function Footer() {
           {/* rel on an outbound link, always. noopener is the one that matters —
               without it the page it opens gets a handle on this one. */}
           <span className="flex items-center gap-5">
+          {/* First in the row and not behind a social account that may not
+              exist: it is the link somebody goes looking for when they want to
+              check rather than to follow. */}
+          <Link
+            href="/contracts"
+            className="tracking-[0.16em] transition-colors hover:text-pump"
+          >
+            CONTRACTS
+          </Link>
           {/* Hidden rather than dead. An account that does not exist yet is a gap
               somebody can see; a link to the wrong one is not. See lib/links.ts. */}
           {X_ACCOUNT !== null && (

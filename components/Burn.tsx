@@ -12,6 +12,7 @@
 // anybody can go and look at, and when there are none it says zero rather than
 // something rounder.
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { STREAMS, WALLETS, nameOf, receiverOf, sourceOf, type Destination } from "@/lib/revenue";
@@ -188,7 +189,11 @@ export function Burn() {
           Three things earn, and none of what they earn stays in CRO. It is swapped for $CROCARD
           first and divided afterwards, so the whole of it is a buy and the split only decides
           where the tokens go. The swap is done by a contract with no owner and no settings —
-          anybody can trigger it, nobody can point it somewhere else.
+          anybody can trigger it, nobody can point it somewhere else.{" "}
+          <Link href="/contracts" className="text-pump hover:underline">
+            Every address is here
+          </Link>
+          , with what each key attached to it can do.
         </p>
 
         <div className="mt-5 space-y-3">
