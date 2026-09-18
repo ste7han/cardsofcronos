@@ -393,13 +393,20 @@ async function main(): Promise<void> {
     ["pot", found.pot],
     ["nft", found.nft],
   ] as const) {
+    // Skipped rather than written as the string "undefined", which is what a
+    // --money-only run produced: the file then held `nft: "undefined"` and
+    // every import of it threw on load, because that is not an address.
+    if (address === undefined) continue;
     const was = new RegExp(`(${key_}: )null`);
     if (!was.test(source)) throw new Error(`Could not find ${key_} in ${file} to fill in.`);
     source = source.replace(was, `$1"${address}"`);
   }
   writeFileSync(file, source);
 
-  console.log(`All four written into ${file}.`);
+  console.log(
+    `${moneyOnly ? "The three" : "All four"} written into ${file}.` +
+      (moneyOnly ? " nft is left null until the collection is deployed." : ""),
+  );
   console.log(`\nStill to do: set the wallets in ${file}, and the two Worker secrets.`);
 }
 

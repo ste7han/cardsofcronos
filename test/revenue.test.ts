@@ -225,9 +225,10 @@ describe("what is still open", () => {
     // to look at the addresses a hundred lines away — so lib/revenue.ts refuses
     // at load, and this is that rule written down where it can be read.
     //
-    // Stated as an implication so it keeps meaning something after the first
-    // stream goes live, and paired with the line below so it means something
-    // now: while every stream is off, a loop over the live ones checks nothing.
+    // Stated as an implication, which is what keeps it meaning something as the
+    // project moves. It was paired with three assertions that the contracts were
+    // still null — true when it was written and false the morning they were
+    // deployed, which is a test measuring the date rather than the rule.
     for (const stream of STREAMS) {
       if (!stream.live) continue;
       expect(CONTRACTS.splitter).not.toBeNull();
@@ -236,12 +237,15 @@ describe("what is still open", () => {
       }
     }
 
-    // And today the guard has something to refuse: two of the three
-    // destinations have no contract yet, so flipping any `live` throws at load
-    // rather than paying into nothing.
-    expect(receiverOf("holders")).toBeNull();
-    expect(receiverOf("tournament")).toBeNull();
-    expect(CONTRACTS.splitter).toBeNull();
+    // What makes it more than an empty loop is the other side: every address a
+    // live stream would need exists, so the only thing still holding the streams
+    // shut is the flag, which is the thing above that is being checked.
+    expect(CONTRACTS.splitter).not.toBeNull();
+    for (const stream of STREAMS) {
+      for (const share of stream.shares) {
+        expect(receiverOf(share.to), `${stream.id} pays ${share.to}`).not.toBeNull();
+      }
+    }
   });
 });
 

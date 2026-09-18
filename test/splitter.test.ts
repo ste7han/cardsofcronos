@@ -185,14 +185,22 @@ afterEach(() => {
 
 describe("before anything is deployed", () => {
   it("does nothing and says why, rather than calling a null address", async () => {
-    // CONTRACTS.splitter is null today and this is the state the job runs in
-    // every day until it is not. It must not reach for the chain at all.
-    const asked = fakeChain({ head: 100 });
-    const ran = await runDaily(fakeDb(), {}, 0);
+    // Set to null for the length of this test rather than relying on it being
+    // null, which it was until the splitter was deployed on 18 September 2026.
+    // A test that reads the world instead of arranging it passes until the
+    // world moves, and then fails for a reason that is not a fault.
+    const had = CONTRACTS.splitter;
+    CONTRACTS.splitter = null;
+    try {
+      const asked = fakeChain({ head: 100 });
+      const ran = await runDaily(fakeDb(), {}, 0);
 
-    expect(ran.skipped).toMatch(/no splitter/i);
-    expect(ran.recorded).toBe(0);
-    expect(asked).toHaveLength(0);
+      expect(ran.skipped).toMatch(/no splitter/i);
+      expect(ran.recorded).toBe(0);
+      expect(asked).toHaveLength(0);
+    } finally {
+      CONTRACTS.splitter = had;
+    }
   });
 });
 

@@ -266,9 +266,9 @@ export function croPerCard(option: MintOption): number {
  * what scripts/deploy-contracts.ts exists to get right.
  */
 export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | null> = {
-  drop: null,
-  splitter: null,
-  pot: null,
+  drop: "0x09e4d4bf527ddcff1ea38e550573a15c490043c6",
+  splitter: "0xbb658915095d90fe7892d642ea1e6d223ae5fa75",
+  pot: "0xafe431c0c6b2cde0888e0dff74d22be08c981025",
   nft: null,
 };
 
