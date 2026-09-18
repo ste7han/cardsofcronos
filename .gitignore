@@ -34,6 +34,7 @@ public/art/*
 # The source NFTs a family's art is cut from. Dropped in by hand, kept out for
 # the same reason: they are the originals and they are megabytes each.
 public/crooks/
+public/wolfswap/
 
 # The originals, kept as the master for anything printed or re-rendered later.
 # npm run art:optimise moves them here as it converts.
