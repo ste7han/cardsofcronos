@@ -68,3 +68,8 @@ yarn-error.log*
 # it is not something a diff should ever be read.
 data/holders.sql
 data/holders-progress.json
+
+# De leeuwen om uit te kiezen en het voorstel ernaast. Opgehaald uit
+# github.com/LoadedLions/OpenLicense, dus opnieuw op te halen en niets om te
+# bewaren in de geschiedenis.
+lions-keuze/

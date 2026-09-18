@@ -38,14 +38,47 @@ worth holding about somebody else's intellectual property.
 
 ## What we use
 
-| card | file | source |
-|---|---|---|
-| `lions-*` | `public/art/loadedlions.webp` | `characters/loaded-lions/LoadedLion-5.png` |
-| `darklion` | `public/art/darklion.webp` | `characters/dark-lions/DarkLion-7.png` |
+Eight of the licensed lions, one per card, chosen against what the card does
+rather than against its rarity.
 
-Both are the licensed render, unaltered, on a blurred enlargement of itself to
-reach the 16:9 the card window wants. Cropping a square to 16:9 takes the mane
-off the top and the chin off the bottom, which is most of what a lion is.
+| card | source | why that one |
+|---|---|---|
+| `lions-i` | `LoadedLion-15.png` | points you in with both hands — an arrival |
+| `lions-ii` | `LoadedLion-5.png` | tongue out, paws forward; budget is wanting more |
+| `lions-iii` | `LoadedLion-19.png` | straightens the glasses; multiplies without fuss |
+| `lions-iv` | `LoadedLion-17.png` | fingertips together — the card pays for waiting |
+| `lions-v` | `LoadedLion-16.png` | straight ahead, unmoved; something that stays |
+| `lions-vi` | `LoadedLion-13.png` | lightning and fists; the family's biggest payoff |
+| `lions-vii` | `LoadedLion-3.png` | grin and purple eyes; confident and dangerous |
+| `lions-viii` | `LoadedLion-20.png` | steaming, clawing; it pays for the damage |
+| `darklion` | `characters/dark-lions/DarkLion-7.png` | unchanged |
+
+## Getting a square lion into a 16:9 window
+
+The renders are 1024×1024 and every one of them fills its square top to bottom —
+mane against the upper edge, shoulders against the lower. The card's art window
+is `aspect-video`, so at full width it is 1024×576. **About 440 rows have to go
+whatever you do**, and the only question is which.
+
+This file used to say cropping "takes the mane off the top and the chin off the
+bottom, which is most of what a lion is", and used a blurred enlargement of the
+render as a backdrop instead. That was true of a crop taken from the middle and
+not of a crop placed deliberately. Four ways were rendered side by side and
+looked at:
+
+- **blurred backdrop** — the lion at full height with wide soft bands beside it.
+- **crop high** — the whole mane, no mouth. The expression is the mouth.
+- **crop low, on the face** — the whole head and the hands, mane points clipped.
+- **stretching the background outward** — works where the edge is flat and smears
+  an arm into horizontal streaks where it is not, which is half of them.
+
+The maker picked the third, at 40% down. It keeps what the pictures are for: the
+faces look straight out, and the gestures that tell them apart — a hand on the
+glasses, two fists, a pointing claw — survive.
+
+Filling the frame *and* keeping the full mane is not possible from a square
+source. It would need the sides painted in, which is a different tool and a
+decision nobody has had to make yet.
 
 ## What we must not do
 
