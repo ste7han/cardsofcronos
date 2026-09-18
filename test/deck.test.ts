@@ -6,6 +6,7 @@ import { PRESET_DECKS } from "@/data/preset-decks";
 import {
   buildDeck,
   buildDeckPreferring,
+  buildFamilyDeck,
   countProjects,
   deckProblems,
   isLegalDeck,
@@ -266,6 +267,50 @@ describe("a project across several cards", () => {
       for (const [project, n] of held) {
         expect(n, `seed ${seed} stacked ${n} cards of ${project}`).toBeLessThanOrEqual(2);
       }
+    }
+  });
+});
+
+describe("a deck built for one family", () => {
+  /**
+   * The family stacks and nothing else does.
+   *
+   * `fill` has capped a generated deck at two cards of any one project since it
+   * was written, and calls it the generator declining to build a bad deck.
+   * buildFamilyDeck exempts the family it is built for — that is the whole point
+   * of it — and simply did not have the rule for everything else. It bit on
+   * 11.7% of seeds, up to four of one supporting project.
+   */
+  it("takes at most two cards of any project that is not the family", () => {
+    for (const family of ["lions", "chimps", "howlers"]) {
+      for (const seed of [1_925, 21_275, 4_242, 99]) {
+        const deck = buildFamilyDeck(CARDS, family, seed);
+        const per = new Map<string, number>();
+        for (const id of deck) {
+          const card = index.get(id)!;
+          if (card.type !== "project" || card.project === family) continue;
+          per.set(card.project, (per.get(card.project) ?? 0) + 1);
+        }
+        for (const [project, held] of per) {
+          expect(held, `${family} on seed ${seed} took ${held} of ${project}`).toBeLessThanOrEqual(2);
+        }
+      }
+    }
+  });
+
+  it("still takes every card of the family it is built for", () => {
+    // The exemption, which the cap must not have swallowed. A deck for the
+    // lions that holds two of them is the thing this builder exists to avoid.
+    const deck = buildFamilyDeck(CARDS, "lions", 21_275);
+    const own = CARDS.filter((card) => card.type === "project" && card.project === "lions");
+    for (const card of own) expect(deck).toContain(card.id);
+  });
+
+  it("builds a legal deck for every family in the set", () => {
+    for (const family of new Set(
+      CARDS.filter((card) => card.type === "project").map((card) => card.project),
+    )) {
+      expect(deckProblems(buildFamilyDeck(CARDS, family, 4_242), index), family).toEqual([]);
     }
   });
 });

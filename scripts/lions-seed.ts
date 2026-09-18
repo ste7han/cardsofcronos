@@ -39,6 +39,14 @@
 // which have no morePositions at all, and reported a clean -8. Worth writing
 // down: it was a plausible number for a wrong question.
 //
+// ── ONE THING CHANGED UNDER THIS MEASUREMENT, AND IT DID NOT MOVE IT ─────────
+//
+// buildFamilyDeck had no cap on how many cards it took of a supporting project,
+// where `fill` has capped every other deck in the game at two since it was
+// written. It bit on 11.7% of seeds, up to four of one project. The cap is there
+// now — and seed 21275 builds the same forty cards either way, byte for byte, so
+// the table above still describes the opponent that ships.
+//
 // The same question data/preset-decks.ts already answered for the other three,
 // and for the same reason: within one theme the seed is worth 8 to 34 points of
 // win rate, which is more than the themes differ from each other. An unmeasured

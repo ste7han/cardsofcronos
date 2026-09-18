@@ -176,11 +176,25 @@ export function buildFamilyDeck(
 
   // Projects to the cap. The family is already in, so this is the supporting
   // board around it rather than the deck itself.
+  //
+  // AND NO MORE THAN TWO OF ANY ONE OF THEM. `fill`, which builds every other
+  // deck in the game, has said that since it was written and calls it the
+  // generator declining to build a bad deck: a second copy cannot hold a
+  // position while the first one does, and handing somebody four of the same
+  // thing is making a decision on their behalf. This loop simply did not have
+  // the rule, and it bit on 11.7% of seeds, up to four of one project.
+  //
+  // The family itself is exempt and that is the whole point of this builder —
+  // see the note above about the cap being right there and wrong here.
   let projects = deck.length;
+  const perProject = new Map<string, number>();
   for (const card of shuffled) {
     if (projects >= PROJECTS_WHEN_GENERATING) break;
     if (seen.has(card.id) || card.type !== "project") continue;
     if (card.project === family) continue;
+    const held = perProject.get(card.project) ?? 0;
+    if (held >= STACK_WHEN_GENERATING) continue;
+    perProject.set(card.project, held + 1);
     deck.push(card.id);
     seen.add(card.id);
     projects++;
