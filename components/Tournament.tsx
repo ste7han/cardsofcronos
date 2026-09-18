@@ -133,9 +133,19 @@ export function Tournament() {
       </div>
 
       <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
-        Beat the bot and your market cap goes on the board. Your best of the week counts, not your
-        last — a board where playing again can cost you your place is a board that tells you to stop
-        playing. Weeks run Monday 00:00 UTC to Sunday midnight.
+        Beat an opponent and your market cap goes on that opponent&rsquo;s board. Your best of the
+        week counts, not your last — a board where playing again can cost you your place is a board
+        that tells you to stop playing. Weeks run Monday 00:00 UTC to Sunday midnight.
+      </p>
+
+      {/* Said once, at the top, because it is the thing that is easiest to get
+          wrong by looking: the figure under each board is that board's share and
+          not the pot. They stopped being the same number the day there were
+          two. */}
+      <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
+        There is one pot and several boards, each playing for a share of it. What is not shared out
+        stays in the pot and grows — so a quiet week makes every board&rsquo;s prize bigger, and a
+        board nobody beats keeps its share for the week after.
       </p>
 
       {/* Only when the two differ. While the pot is under the ceiling this
@@ -161,8 +171,8 @@ export function Tournament() {
           every ranked match. It arrives as $CROCARD: the CRO buys the token first and the pot is
           paid in it. One week pays at most one percent of the supply — {ONE_PERCENT} $CROCARD —
           and whatever is over that stays in the pot as next week&rsquo;s prize. Nothing has been
-          minted yet and the pot is not deployed, so there is nothing in it to win — the board
-          runs anyway, because the scores are the part that has to be real first.
+          minted yet and the pot is not deployed, so there is nothing in it to win — the boards
+          run anyway, because the scores are the part that has to be real first.
         </p>
       )}
 
