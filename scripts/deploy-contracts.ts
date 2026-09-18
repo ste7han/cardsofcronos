@@ -80,6 +80,20 @@ const flag = (name: string): string | null => {
 
 async function main(): Promise<void> {
   const broadcast = process.argv.includes("--broadcast");
+  /**
+   * The three money contracts and not the collection.
+   *
+   * They are independent of the artwork: the drop, the pot and the splitter
+   * never see a card. The collection is the one that takes a baseURI, and a
+   * baseURI is a promise about images — changing it afterwards is the power the
+   * mint page warns holders about, which is a fine thing to use before anybody
+   * owns anything and a poor thing to lean on after.
+   *
+   * So the money can go first and start accruing while the art is still being
+   * decided. The collection needs the splitter's address, which this run leaves
+   * behind in lib/revenue.ts, so the second run has it.
+   */
+  const moneyOnly = process.argv.includes("--money-only");
 
   // A dry run needs an address and not a key. Everything before --broadcast is
   // arithmetic — what the arguments encode to, what the node says the gas is,
@@ -155,9 +169,36 @@ async function main(): Promise<void> {
   const allowlist = JSON.parse(readFileSync("data/allowlist.json", "utf8")) as { root: string };
   const name = flag("name") ?? "Cards of Cronos Set 01";
   const symbol = flag("symbol") ?? "COC1";
-  const maxSupply = BigInt(flag("max-supply") ?? "2000");
+  /**
+   * How many there will ever be, read from the shuffle rather than defaulted.
+   *
+   * IT IS IMMUTABLE ON CHAIN. Set once in the constructor, and a collection
+   * deployed with the wrong number cannot be corrected — the only fix is a new
+   * contract, which throws away the provenance hash and anything already minted.
+   *
+   * This was `?? "2000"` while data/shuffle.json committed to 5555, so the
+   * default would have made 3,555 tokens of a published sequence permanently
+   * unmintable. Nothing would have complained: the deploy succeeds, the mint
+   * works, and it stops at token 2000 months later.
+   *
+   * So the number comes from the file that decided it. An override is still
+   * allowed, and refused if it disagrees with that file — see below.
+   */
+  const shuffled = JSON.parse(readFileSync("data/shuffle.json", "utf8")) as {
+    tokens: number;
+    hash: string;
+  };
+  const maxSupply = BigInt(flag("max-supply") ?? shuffled.tokens);
+  if (maxSupply !== BigInt(shuffled.tokens)) {
+    throw new Error(
+      `--max-supply ${maxSupply} disagrees with data/shuffle.json, which commits to ` +
+        `${shuffled.tokens} tokens under hash ${shuffled.hash}. One of the two is wrong, ` +
+        `and the chain is where being wrong is permanent.`,
+    );
+  }
+
   const baseURI = flag("base-uri") ?? "";
-  if (!baseURI && broadcast) {
+  if (!baseURI && broadcast && !moneyOnly) {
     throw new Error("Pass --base-uri. A collection deployed without one has no art.");
   }
 
@@ -279,14 +320,19 @@ async function main(): Promise<void> {
     BURN_ADDRESS,
     found.pot,
   ]);
-  found.nft = await deploy("CardsOfCronosSetOne", [
-    name,
-    symbol,
-    maxSupply,
-    baseURI,
-    allowlist.root,
-    found.splitter,
-  ]);
+  if (moneyOnly) {
+    console.log("--money-only: the collection is not deployed. Run again without it once the");
+    console.log("art is final and uploaded, and pass --base-uri.\n");
+  } else {
+    found.nft = await deploy("CardsOfCronosSetOne", [
+      name,
+      symbol,
+      maxSupply,
+      baseURI,
+      allowlist.root,
+      found.splitter,
+    ]);
+  }
 
   // ── AND THE BOARDS GET THEIR SHARES ────────────────────────────────────────
   //
@@ -315,7 +361,8 @@ async function main(): Promise<void> {
 
   const cost = spent * gasPrice;
   console.log(
-    `all four: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO at ${gasPrice / 10n ** 9n} gwei`,
+    `${moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
+      `at ${gasPrice / 10n ** 9n} gwei`,
   );
 
   if (!broadcast) {
