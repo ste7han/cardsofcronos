@@ -139,48 +139,14 @@ export function Tournament() {
       </div>
 
       <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
-        Beat an opponent and your market cap goes on that opponent&rsquo;s board. Your best of the
-        week counts, not your last — a board where playing again can cost you your place is a board
-        that tells you to stop playing. Weeks run Monday 00:00 UTC to Sunday midnight.
+        Beat an opponent and your best market cap of the week goes on that opponent&rsquo;s board.
+        Each board plays for its own share of the pot. Weeks run Monday 00:00 UTC to Sunday
+        midnight, and the prize is paid out on the Monday.
       </p>
 
-      {/* Said once, at the top, because it is the thing that is easiest to get
-          wrong by looking: the figure under each board is that board's share and
-          not the pot. They stopped being the same number the day there were
-          two. */}
-      <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
-        There is one pot and several boards, each playing for a share of it. What is not shared out
-        stays in the pot and grows — so a quiet week makes every board&rsquo;s prize bigger, and a
-        board nobody beats keeps its share for the week after.
-      </p>
-
-      {/* Only when the two differ. While the pot is under the ceiling this
-          sentence would be a rule about nothing, and a page that explains a cap
-          that is not biting reads as a page looking for reasons to pay less. */}
-      {holdingBack !== null ? (
-        <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
-          There is {holdingBack} $CROCARD in the pot and the boards play for part of it. The rest
-          is not held back from anybody — it stays here, grows, and is what next week plays for.
-        </p>
-      ) : null}
-
-      <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
-        Scores are replayed, not reported. You hand over the seed, the deck and every move, and the
-        server plays the match through its own engine and records what that produced. A number typed
-        into a request is not a score.
-      </p>
-
-      {answer?.pot.wallet === null && (
-        <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-gold">
-          {share ?? 25}% of every paid mint feeds the pot, and the same share of every royalty and
-          every ranked match. It arrives as $CROCARD: the CRO buys the token first and the pot is
-          paid in it. One week pays at most one percent of the supply — {ONE_PERCENT} $CROCARD —
-          and whatever is over that stays in the pot as next week&rsquo;s prize. Nothing has been
-          minted yet and the pot is not deployed, so there is nothing in it to win — the boards
-          run anyway, because the scores are the part that has to be real first.
-        </p>
-      )}
-
+      {/* The boards come next and not after five paragraphs of explanation. They
+          are what somebody opened this page for; how it all works is underneath,
+          for whoever wants it. */}
       {failed ? (
         <p className="mt-10 text-[11px] text-dump">
           The boards would not load. That is this page failing, not an empty week.
@@ -190,6 +156,67 @@ export function Tournament() {
       ) : (
         answer.boards.map((board) => <OneBoard key={board.id} board={board} />)
       )}
+
+      {/* Underneath, and always — not only before the pot was deployed, which is
+          what the old version did. The page hid its own explanation of where the
+          money comes from on the morning the contracts went live. */}
+      <section className="mt-14 border-t border-line pt-8">
+        <h2 className="display text-xl">HOW IT WORKS</h2>
+
+        <dl className="mt-5 space-y-5">
+          <div>
+            <dt className="display text-sm text-gold">Where the money comes from</dt>
+            <dd className="mt-1.5 max-w-2xl text-[11px] leading-relaxed text-muted">
+              {share ?? 25}% of every paid mint feeds the pot, and the same share of every royalty
+              and every ranked match. It arrives as $CROCARD — the CRO buys the token first, so the
+              prize and the buying are the same act.
+            </dd>
+          </div>
+
+          <div>
+            <dt className="display text-sm text-gold">One pot, several boards</dt>
+            <dd className="mt-1.5 max-w-2xl text-[11px] leading-relaxed text-muted">
+              Each board plays for a share of the pot rather than for the pot. What is not shared
+              out stays here and grows, so a quiet week makes every prize bigger and a board nobody
+              beats keeps its share for the week after.
+              {holdingBack !== null && (
+                <> There is {holdingBack} $CROCARD in it right now.</>
+              )}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="display text-sm text-gold">What one week can pay</dt>
+            <dd className="mt-1.5 max-w-2xl text-[11px] leading-relaxed text-muted">
+              At most one percent of the supply — {ONE_PERCENT} $CROCARD — however full the pot is.
+              A quarter of every mint lands here and the mint is the busiest this game will ever be,
+              so without a ceiling the first week after it would hand one player a tenth of the
+              supply for beating a bot once. Whatever is over stays in the pot.
+            </dd>
+          </div>
+
+          <div>
+            <dt className="display text-sm text-gold">Scores are replayed, not reported</dt>
+            <dd className="mt-1.5 max-w-2xl text-[11px] leading-relaxed text-muted">
+              You hand over the seed, the deck and every move, and the server plays the match
+              through its own engine and records what that produced. A number typed into a request
+              is not a score.
+            </dd>
+          </div>
+
+          <div>
+            <dt className="display text-sm text-gold">Nobody decides who won</dt>
+            <dd className="mt-1.5 max-w-2xl text-[11px] leading-relaxed text-muted">
+              The winner is the best verified score, and paying them is a transaction anybody can
+              read.{" "}
+              <Link href="/contracts" className="text-pump hover:underline">
+                The contract that holds the pot
+              </Link>{" "}
+              cannot be withdrawn from by the key that names the winners.
+            </dd>
+          </div>
+        </dl>
+      </section>
     </div>
   );
 }
@@ -216,26 +243,38 @@ function OneBoard({ board }: { board: BoardRow }) {
 
   return (
     <section className="mt-10">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
         <div className="min-w-0">
           <h2 className="display text-xl">{board.name}</h2>
           <p className="mt-1 text-[11px] leading-relaxed text-muted">{board.blurb}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-[8px] tracking-[0.18em] text-faint">PLAYS FOR</p>
-          <p className="display text-lg tabular-nums">
+          <p className="text-[8px] tracking-[0.18em] text-faint">THIS WEEK PAYS</p>
+          <p className="display text-lg tabular-nums text-gold">
             {board.prize === null ? "—" : `${whole(board.prize)} $CROCARD`}
           </p>
         </div>
       </div>
 
-      {/* Said on the board itself and not only on the page that locks it: this
-          is where somebody decides whether it is worth holding. */}
-      {board.needs !== null && (
-        <p className="mt-2 text-[10px] leading-relaxed text-gold">
-          Open to wallets holding {board.needs.whole.toLocaleString("en-US")} $LION or more.
-        </p>
-      )}
+      {/* What to do about it, on the board itself. Somebody reading a
+          leaderboard is deciding whether to join it, and the page used to leave
+          them to work out where. */}
+      <p className="mt-3 text-[11px] leading-relaxed text-muted">
+        <Link href="/play" className="text-pump hover:underline">
+          Play this one
+        </Link>{" "}
+        and beat it, and your best of the week goes on the board.
+        {board.needs !== null && (
+          <>
+            {" "}
+            A score counts here while the wallet holds{" "}
+            <span className="text-gold">
+              {board.needs.whole.toLocaleString("en-US")} $LION
+            </span>{" "}
+            — anybody can play it, but only a holder&rsquo;s score is entered.
+          </>
+        )}
+      </p>
 
       {board.standings.length === 0 ? (
         <p className="mt-3 text-[11px] text-muted">
