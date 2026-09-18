@@ -16,7 +16,7 @@
 // the code does. A page that lists contracts by hand is a page that eventually
 // lists the wrong ones.
 
-import { KEYS, NOT_OURS, OURS, type Listed } from "@/lib/addresses";
+import { KEYS, NOT_OURS, OURS, RENOUNCED, type Listed } from "@/lib/addresses";
 import { EXPLORER } from "@/lib/units";
 
 export function Contracts() {
@@ -31,6 +31,19 @@ export function Contracts() {
         </p>
         <div className="mt-5 space-y-3">
           {OURS.map((one) => (
+            <Entry key={one.id} one={one} />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="display text-xl">OURS, AND NOBODY&rsquo;S</h2>
+        <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
+          Launched by this project and out of everybody&rsquo;s hands, including ours. No owner to
+          rotate, no function to pause it with, and no way to make more.
+        </p>
+        <div className="mt-5 space-y-3">
+          {RENOUNCED.map((one) => (
             <Entry key={one.id} one={one} />
           ))}
         </div>

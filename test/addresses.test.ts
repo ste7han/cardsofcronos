@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { KEYS, NOT_OURS, OURS } from "@/lib/addresses";
+import { KEYS, NOT_OURS, OURS, RENOUNCED } from "@/lib/addresses";
 import { BURN_ADDRESS, CONTRACTS, CROCARD, LION, POOL, PUBLISHER, ROUTER, WALLETS } from "@/lib/revenue";
 
 const solidity = (name: string) =>
@@ -23,14 +23,14 @@ const solidity = (name: string) =>
 
 describe("the contracts page", () => {
   it("lists an address in the one form everything else compares against", () => {
-    for (const one of [...OURS, ...NOT_OURS, ...KEYS]) {
+    for (const one of [...OURS, ...RENOUNCED, ...NOT_OURS, ...KEYS]) {
       if (one.address === null) continue;
       expect(one.address, one.name).toMatch(/^0x[0-9a-f]{40}$/);
     }
   });
 
   it("names no address twice", () => {
-    const seen = [...OURS, ...NOT_OURS, ...KEYS]
+    const seen = [...OURS, ...RENOUNCED, ...NOT_OURS, ...KEYS]
       .map((one) => one.address)
       .filter((address): address is string => address !== null);
     expect(new Set(seen).size).toBe(seen.length);
@@ -40,7 +40,8 @@ describe("the contracts page", () => {
     // The failure this prevents: a page that keeps showing the old splitter
     // after a redeploy, which is somebody sending money to a contract that has
     // been replaced.
-    const find = (id: string) => [...OURS, ...NOT_OURS, ...KEYS].find((one) => one.id === id)!;
+    const find = (id: string) =>
+      [...OURS, ...RENOUNCED, ...NOT_OURS, ...KEYS].find((one) => one.id === id)!;
     expect(find("splitter").address).toBe(CONTRACTS.splitter);
     expect(find("drop").address).toBe(CONTRACTS.drop);
     expect(find("pot").address).toBe(CONTRACTS.pot);
@@ -64,6 +65,26 @@ describe("the contracts page", () => {
       expect(one.powers, one.name).toEqual([]);
       expect(one.theirs, `${one.name} should say whose it is`).toBeTruthy();
     }
+  });
+
+  it("says of a renounced contract what nobody can do, rather than nothing", () => {
+    // The category exists to make a strong claim, so an empty entry in it is
+    // worse than no entry: it reads as "we have nothing to say about this".
+    for (const one of RENOUNCED) {
+      expect(one.powers.length, one.name).toBeGreaterThan(0);
+      expect(one.theirs, `${one.name} should say how that was checked`).toMatch(/chain|checked/i);
+    }
+  });
+
+  it("puts the first collection where its owner is, not where it is convenient", () => {
+    // It was under "not ours" with a line saying the contract is left exactly as
+    // it was. Its owner can still change the art over all 515 and withdraw what
+    // it holds, which is a live power over something people hold — and the page
+    // exists to name those rather than to be comfortable.
+    const first = OURS.find((one) => one.id === "first");
+    expect(first, "the first collection belongs among the ones with keys").toBeDefined();
+    expect(first!.powers.join(" ")).toMatch(/art is served from/i);
+    expect(first!.powers.join(" ")).toMatch(/withdraw/i);
   });
 });
 

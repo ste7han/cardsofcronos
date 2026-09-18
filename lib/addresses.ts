@@ -97,6 +97,24 @@ export const OURS: readonly Listed[] = [
     ],
   },
   {
+    id: "first",
+    name: "The first collection",
+    address: "0x10b47dabfeacbd87dd2bad5f6d489c5082181902",
+    what:
+      "The 2025 collection. 515 were minted, and holding one earns a free mint of the new line.",
+    powers: [
+      "No more can be minted. There is no mint function left in the deployed bytecode.",
+      "The owner can still change where its art is served from, over all 515. That is a live " +
+        "power over something people hold, and it is listed here because it is real rather than " +
+        "because it is comfortable.",
+      "The owner can withdraw anything the contract is holding, and can hand the ownership on or " +
+        "give it up entirely.",
+    ],
+    theirs:
+      "Owned by the team wallet, not by the wallet that owns everything else on this page. " +
+      "Checked on chain on 18 September 2026.",
+  },
+  {
     id: "nft",
     name: "Cards of Cronos Set 01",
     address: CONTRACTS.nft,
@@ -111,16 +129,36 @@ export const OURS: readonly Listed[] = [
   },
 ];
 
-/** Addresses the game reads or pays, and did not deploy. */
-export const NOT_OURS: readonly Listed[] = [
+/**
+ * Ours, and beyond anybody's reach — including ours.
+ *
+ * A category of its own because it is the strongest thing that can be said about
+ * a contract and it would be lost inside either of the other two lists. "Not
+ * ours" undersells it and reads like distance; "ours" invites the question of
+ * what we can do with it, and the answer is nothing at all.
+ */
+export const RENOUNCED: readonly Listed[] = [
   {
     id: "crocard",
     name: "$CROCARD",
     address: CROCARD,
-    what: "The token the game is denominated in. A billion of them, launched with the first version.",
-    powers: [],
-    theirs: "Deployed in April 2025, before any of this. Nothing here can mint or move it.",
+    what:
+      "The token this game is denominated in, launched with the first version in April 2025. " +
+      "A billion of them and there will never be more.",
+    powers: [
+      "Nobody owns it. `owner()` answers with the zero address — the ownership was given up — " +
+        "so there is no key to rotate, pause with or point anywhere.",
+      "No more can be made. There is no mint function in the deployed bytecode, so the supply is " +
+        "the supply for good.",
+    ],
+    theirs:
+      "Ours in the sense that this project launched it, and nobody's in the sense that matters: " +
+      "checked on chain on 18 September 2026 by asking the contract itself.",
   },
+];
+
+/** Addresses the game reads or pays, and did not deploy. */
+export const NOT_OURS: readonly Listed[] = [
   {
     id: "lion",
     name: "$LION",
@@ -159,16 +197,6 @@ export const NOT_OURS: readonly Listed[] = [
       "Nobody's in particular. Listed because it is the largest holder of $CROCARD by a long way " +
       "and it is not a holder — it is left out of every payout, along with anything else that has " +
       "code on it.",
-  },
-  {
-    id: "first",
-    name: "The first collection",
-    address: "0x10b47dabfeacbd87dd2bad5f6d489c5082181902",
-    what: "The 2025 collection. 515 were minted; holding one earns a free mint of the new line.",
-    powers: [],
-    theirs:
-      "Ours, and finished. Nothing here can mint another and the contract is left exactly as it " +
-      "was.",
   },
 ];
 
