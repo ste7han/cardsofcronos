@@ -82,6 +82,20 @@ export const ROUTER = normalise("0xa476c97d8d1ec7d263eafa0039645dbe0cc0a012");
 export const POOL = normalise("0xce7AE1d9dB768bfCccD3E7acAC2C0E563c25caEA");
 
 /**
+ * Loaded Lions' own token, which this game reads and never buys.
+ *
+ * Verified on 18 September 2026 by asking it: name "Loaded Lions", symbol LION,
+ * 18 decimals, a hundred billion supply. Holding it unlocks a board — see
+ * data/boards.ts — and that is the whole of its role here.
+ *
+ * IT IS NOT BOUGHT WITH ANYTHING. Paying part of a mint into $LION was
+ * considered and dropped: its pair on the router this project trades through
+ * holds zero WCRO, so every purchase would have to route somewhere else and pay
+ * for the privilege. A token that gates something costs nothing to read.
+ */
+export const LION = normalise("0x9D8c68F185A04314DDC8B8216732455e8dbb7E45");
+
+/**
  * Addresses that hold $CROCARD and are not holders.
  *
  * Named so they can be checked, and not the whole rule — scripts/holder-drop.ts

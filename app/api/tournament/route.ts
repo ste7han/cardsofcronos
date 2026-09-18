@@ -17,13 +17,15 @@
 // bot everybody else is beating, which is the game rather than a way past it.
 
 import { CARDS } from "@/data/cards";
-import { PRESET_DECKS } from "@/data/preset-decks";
-import { buildDeckPreferring, deckProblems } from "@/engine/deck";
+import { BOARDS, boardOf, opponentDeck, type Board } from "@/data/boards";
+import { deckProblems } from "@/engine/deck";
 import { applyMove, newMatch } from "@/engine/match";
 import { RULES, type Move } from "@/engine/types";
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { PUBLIC_RPCS, rpc, tokenBalances } from "@/lib/cronos";
 import { selector } from "@/lib/evm-tx";
+import { asWord } from "@/lib/publisher";
+import { lockedOut } from "@/lib/gate";
 import { CONTRACTS, CROCARD } from "@/lib/revenue";
 import { INDEX } from "@/lib/set";
 import { pastWeeks, record, standings, weekEnds, weekOf } from "@/lib/tournament";
@@ -36,12 +38,46 @@ const MOST_MOVES = 400;
 export async function GET() {
   const now = Date.now();
   const week = weekOf(now);
-  const [board, past, pot] = await Promise.all([
-    standings(db(), week),
-    pastWeeks(db(), week),
-    potNow(),
-  ]);
-  return Response.json({ week, closes: weekEnds(now), standings: board, past, pot });
+
+  // Every board, because the page shows them side by side and one request is
+  // one round trip. A board with nothing on it is an empty table rather than a
+  // missing one — "nobody has played this yet" is a real answer.
+  const boards = await Promise.all(
+    BOARDS.map(async (board) => ({
+      id: board.id,
+      name: board.name,
+      blurb: board.blurb,
+      needs: board.needs === null ? null : { token: board.needs.token, whole: board.needs.whole },
+      standings: await standings(db(), week, board.id),
+      past: await pastWeeks(db(), week, board.id),
+      prize: await prizeFor(board.id),
+    })),
+  );
+
+  return Response.json({ week, closes: weekEnds(now), boards, pot: await potNow() });
+}
+
+/**
+ * What one board would pay if the week closed now, in base units, or null.
+ *
+ * Its share of the pot and not the pot — those stopped being the same number
+ * the day there was more than one board, and the pot is the bigger one.
+ */
+async function prizeFor(board: string): Promise<string | null> {
+  const pot = CONTRACTS.pot;
+  if (pot === null) return null;
+
+  const secret = env().CRONOS_RPC;
+  const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
+  try {
+    const answer = await rpc<string>(rpcs, "eth_call", [
+      { to: pot, data: selector("nextPrize(bytes32)") + asWord(board) },
+      "latest",
+    ]);
+    return BigInt(answer).toString();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -94,10 +130,11 @@ async function potNow(): Promise<{
 
 export async function POST(request: Request) {
   const body = await request.clone().json().catch(() => null);
-  const { seed, deck, moves } = (body ?? {}) as {
+  const { seed, deck, moves, board: boardId } = (body ?? {}) as {
     seed?: unknown;
     deck?: unknown;
     moves?: unknown;
+    board?: unknown;
   };
 
   if (!Number.isInteger(seed) || !Array.isArray(moves) || !Array.isArray(deck)) {
@@ -113,8 +150,22 @@ export async function POST(request: Request) {
     return Response.json({ error: "A deck is a list of card ids." }, { status: 400 });
   }
 
+  // Missing means the board that existed before there were boards, so an old
+  // client keeps working rather than having every entry refused.
+  const board = boardOf(typeof boardId === "string" ? boardId : "bot");
+  if (board === undefined) {
+    return Response.json({ error: "There is no such board." }, { status: 400 });
+  }
+
   const wallet = await signedInWallet(request);
   if (wallet === null) return UNAUTHORISED;
+
+  // THE LOCK IS HERE AND NOT ONLY ON THE SCREEN. engine/deck.ts says it about a
+  // different rule and it is the same rule: in the first version of this game
+  // the card check was a UI filter, so a direct call could play anything. A
+  // board held back for people who hold $LION has to read the chain.
+  const shut = await lockedOut(board, wallet);
+  if (shut !== null) return Response.json({ error: shut }, { status: 403 });
 
   // The deck has to be a legal deck. What is NOT checked is whether it is
   // yours: a collection lives in the player's browser here, so there is nothing
@@ -126,17 +177,14 @@ export async function POST(request: Request) {
     return Response.json({ error: wrong.join(" ") }, { status: 400 });
   }
 
-  // The bot's deck comes from the seed and nothing else, which is what makes a
-  // match replayable at all. Reproduced exactly as components/game/Game.tsx
-  // builds it — a different offset or a different theme here would fail every
-  // honest submission and tell nobody why.
-  const theme = PRESET_DECKS[(seed as number) % PRESET_DECKS.length]!;
-
   let state;
   try {
     state = newMatch(CARDS, seed as number, {
       you: deck,
-      opponent: buildDeckPreferring(CARDS, (seed as number) + 7919, theme.prefer),
+      // Built by data/boards.ts, which is also what the browser built it with.
+      // Two copies of this rule is every honest submission refused for a reason
+      // nobody can see, and it was two copies until boards arrived.
+      opponent: opponentDeck(CARDS, board, seed as number),
     });
     for (const move of moves as Move[]) state = applyMove(state, move, INDEX);
   } catch (error) {
@@ -168,7 +216,8 @@ export async function POST(request: Request) {
       at: now,
     },
     weekOf(now),
+    board.id,
   );
 
-  return Response.json({ ok: true, best, mc: state.players.you.mc });
+  return Response.json({ ok: true, best, board: board.id, mc: state.players.you.mc });
 }

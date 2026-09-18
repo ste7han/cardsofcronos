@@ -669,6 +669,55 @@ takes nothing out of a mint.
 does. Paid out, never spent — it is the one wallet whose balance is somebody
 else's.
 
+**There is more than one leaderboard, and one pot.** Beating the ordinary bot is
+one board; beating a Loaded Lions deck is another, and more can follow. Each has
+a share of the pot in basis points that the OWNER sets — not the publisher, which
+only ever names winners. A key on a server that could also decide how the money
+is divided is a key worth stealing.
+
+The shares are not meant to add up to a hundred. What is left unassigned stays in
+the pot and grows; twenty-five and twenty-five is the starting position, so half
+of it compounds. `scripts/deploy-contracts.ts` sets them in the same run as the
+deploy, because a pot with no shares refuses every week and that failure would
+otherwise surface once a week, in a cron, after everybody had played.
+
+**Every board closes in one transaction**, and that is the whole reason
+`closeWeek` takes arrays. Closed one at a time the order decides the money: board
+A takes 25% and leaves 75%, then board B's "25%" is a quarter of what is left —
+18.75%. Two equal shares, two unequal prizes, nothing on screen saying why. A
+board nobody won is left out of the call and keeps its share for later.
+
+**The Loaded Lions board is held back for people holding $LION.** A hundred
+thousand of a hundred billion, which is low on purpose: the point is that holding
+the token opens something, not that only whales play. Raising it later locks
+people out of a board they have been playing, so it starts low and means it.
+
+`lib/gate.ts` reads the balance off the chain before a score is accepted.
+engine/deck.ts already says why about a different rule — in the first version the
+card check was a UI filter, so a direct call could play anything, and a rule that
+only the screen enforces is not a rule. Reading nothing counts as locked out: an
+endpoint that will not answer cannot tell a holder from anybody else, and a board
+opened because a request timed out is a prize anybody can enter for.
+
+**$LION is read and never bought.** Paying part of a mint into it was considered
+and dropped — its pair on the router this project trades through holds zero WCRO,
+so every purchase would route elsewhere and pay for the privilege. A token that
+gates something costs nothing to read.
+
+**The opponent's deck is built in one place**, `data/boards.ts`. The browser
+builds it to play against and the server builds it again to replay the match, and
+forty different cards means every honest score refused with nothing saying why.
+It was written out twice before boards existed, with a comment in the route
+asking the next person to keep them in step by hand.
+
+The Loaded Lions deck is a family deck and not a preset: the generator a preset
+uses caps a deck at two cards of any one project, and this one has to hold all
+eight lions. Its support is chosen by `engine/affinity.ts` from what those cards
+do — which picked the Dark Lion and ten other nft auras without being told to.
+And it ignores the match seed: the seed it was measured on is worth forty points,
+so letting a match reshuffle it would hand back exactly the variance the
+measurement removed. See `scripts/lions-seed.ts`.
+
 **A week pays at most one percent of supply**, which is 10 million $CROCARD. A
 quarter of every mint lands in the pot and the mint is the busiest this game will
 ever be, so without a ceiling the first week after it hands one player a tenth of

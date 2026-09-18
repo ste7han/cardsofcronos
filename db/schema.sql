@@ -187,6 +187,14 @@ CREATE TABLE IF NOT EXISTS tournament (
               CHECK (wallet = lower(wallet)),
   -- ISO-ish week, "2026-W38". Weeks run Monday 00:00 UTC to Sunday midnight.
   week        TEXT NOT NULL,
+  -- Which opponent this score was posted against. An id from data/boards.ts,
+  -- and the same string contracts/PrizePot.sol keys a prize by.
+  --
+  -- It is part of the primary key, so one wallet has one best score PER BOARD
+  -- per week rather than one overall. Without that, beating the Loaded Lions
+  -- deck would overwrite a better score against the ordinary bot, and the
+  -- player would watch their own entry disappear for winning.
+  board       TEXT NOT NULL DEFAULT 'bot',
   -- The market cap this wallet finished on. The score.
   mc          INTEGER NOT NULL,
   -- What the bot finished on, kept because beating it is the entry requirement
@@ -195,10 +203,12 @@ CREATE TABLE IF NOT EXISTS tournament (
               CHECK (opponent_mc < mc),
   seed        INTEGER NOT NULL,
   at          INTEGER NOT NULL,
-  PRIMARY KEY (wallet, week)
+  PRIMARY KEY (wallet, week, board)
 );
 
-CREATE INDEX IF NOT EXISTS tournament_board ON tournament (week, mc DESC, at ASC);
+-- How a board is read: one week, one board, best first, and the earliest of a
+-- tie ahead of the later one.
+CREATE INDEX IF NOT EXISTS tournament_board ON tournament (week, board, mc DESC, at ASC);
 
 -- What a closed week paid out, one row per week.
 --
@@ -211,7 +221,9 @@ CREATE INDEX IF NOT EXISTS tournament_board ON tournament (week, mc DESC, at ASC
 -- matters and the row is the record of it: a run that cannot write here logs
 -- that loudly and does not retry the payment.
 CREATE TABLE IF NOT EXISTS tournament_paid (
-  week     TEXT PRIMARY KEY,
+  week     TEXT NOT NULL,
+  -- Which board was paid. One week now has a winner per board.
+  board    TEXT NOT NULL DEFAULT 'bot',
   wallet   TEXT NOT NULL
            CHECK (wallet = lower(wallet)),
   -- $CROCARD paid, in the token's smallest unit, as TEXT. Eighteen zeroes
@@ -226,7 +238,10 @@ CREATE TABLE IF NOT EXISTS tournament_paid (
   tx_hash  TEXT NOT NULL
            CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
                   AND substr(tx_hash, 1, 2) = '0x'),
-  at       INTEGER NOT NULL
+  at       INTEGER NOT NULL,
+  -- A week is paid once per board. Two rows for one board is either a mistake
+  -- or a story, and both want a loud failure rather than a second row.
+  PRIMARY KEY (week, board)
 );
 
 -- How far a job has read the chain, one row per job.

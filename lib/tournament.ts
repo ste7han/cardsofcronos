@@ -74,30 +74,40 @@ export function weekEnds(now: number): number {
  *
  * Returns whether this became the wallet's score for the week.
  */
-export async function record(db: Database, score: Score, week: string): Promise<boolean> {
+export async function record(
+  db: Database,
+  score: Score,
+  week: string,
+  board: string,
+): Promise<boolean> {
   const written = await db
     .prepare(
-      `INSERT INTO tournament (wallet, week, mc, opponent_mc, seed, at)
-       VALUES (?, ?, ?, ?, ?, ?)
-       ON CONFLICT (wallet, week) DO UPDATE SET
+      `INSERT INTO tournament (wallet, week, board, mc, opponent_mc, seed, at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (wallet, week, board) DO UPDATE SET
          mc = excluded.mc, opponent_mc = excluded.opponent_mc,
          seed = excluded.seed, at = excluded.at
        WHERE excluded.mc > tournament.mc
        RETURNING wallet`,
     )
-    .bind(score.wallet, week, score.mc, score.opponentMC, score.seed, score.at)
+    .bind(score.wallet, week, board, score.mc, score.opponentMC, score.seed, score.at)
     .first<{ wallet: string }>();
   return written !== null;
 }
 
-/** This week's table, best first. */
-export async function standings(db: Database, week: string, limit = 25): Promise<Score[]> {
+/** One board's table for a week, best first. */
+export async function standings(
+  db: Database,
+  week: string,
+  board: string,
+  limit = 25,
+): Promise<Score[]> {
   const { results } = await db
     .prepare(
       `SELECT wallet, mc, opponent_mc AS opponentMC, seed, at
-         FROM tournament WHERE week = ? ORDER BY mc DESC, at ASC LIMIT ?`,
+         FROM tournament WHERE week = ? AND board = ? ORDER BY mc DESC, at ASC LIMIT ?`,
     )
-    .bind(week, limit)
+    .bind(week, board, limit)
     .all<Score>();
   return results;
 }
@@ -132,34 +142,46 @@ export interface PastWeek {
  * missing payout rather than not appearing. Hiding it would turn an unpaid week
  * into an invisible one, which is the failure worth being loud about.
  */
-export async function pastWeeks(db: Database, thisWeek: string, limit = 12): Promise<PastWeek[]> {
+export async function pastWeeks(
+  db: Database,
+  thisWeek: string,
+  board: string,
+  limit = 12,
+): Promise<PastWeek[]> {
   const { results } = await db
     .prepare(
       `SELECT t.week        AS week,
               t.wallet      AS wallet,
               t.mc          AS mc,
               t.opponent_mc AS opponentMC,
-              (SELECT COUNT(*) FROM tournament e WHERE e.week = t.week) AS entries,
+              (SELECT COUNT(*) FROM tournament e
+                WHERE e.week = t.week AND e.board = t.board) AS entries,
               p.wei         AS wei,
               p.tx_hash     AS txHash,
               p.at          AS paidAt
          FROM tournament t
-         LEFT JOIN tournament_paid p ON p.week = t.week
+         LEFT JOIN tournament_paid p ON p.week = t.week AND p.board = t.board
         WHERE t.week <> ?
-          AND t.mc = (SELECT MAX(m.mc) FROM tournament m WHERE m.week = t.week)
+          AND t.board = ?
+          AND t.mc = (SELECT MAX(m.mc) FROM tournament m
+                       WHERE m.week = t.week AND m.board = t.board)
           AND t.at = (SELECT MIN(m.at) FROM tournament m
-                       WHERE m.week = t.week AND m.mc = t.mc)
+                       WHERE m.week = t.week AND m.board = t.board AND m.mc = t.mc)
         ORDER BY t.week DESC
         LIMIT ?`,
     )
-    .bind(thisWeek, limit)
+    .bind(thisWeek, board, limit)
     .all<PastWeek>();
   return results;
 }
 
 /** Who won a closed week, by the same rule the board ranks by. */
-export async function winnerOf(db: Database, week: string): Promise<Score | null> {
-  const rows = await standings(db, week, 1);
+export async function winnerOf(
+  db: Database,
+  week: string,
+  board: string,
+): Promise<Score | null> {
+  const rows = await standings(db, week, board, 1);
   return rows[0] ?? null;
 }
 
@@ -171,12 +193,20 @@ export async function winnerOf(db: Database, week: string): Promise<Score | null
  */
 export async function recordPayout(
   db: Database,
-  paid: { week: string; wallet: string; wei: string; txHash: string; at: number },
+  paid: {
+    week: string;
+    board: string;
+    wallet: string;
+    wei: string;
+    txHash: string;
+    at: number;
+  },
 ): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO tournament_paid (week, wallet, wei, tx_hash, at) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO tournament_paid (week, board, wallet, wei, tx_hash, at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
     )
-    .bind(paid.week, paid.wallet, paid.wei, paid.txHash.toLowerCase(), paid.at)
+    .bind(paid.week, paid.board, paid.wallet, paid.wei, paid.txHash.toLowerCase(), paid.at)
     .run();
 }

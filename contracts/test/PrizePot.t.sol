@@ -25,6 +25,42 @@ contract PrizePotTest is Test {
     address private stranger = address(0x5A);
 
     bytes32 private week38 = bytes32("2026-W38");
+    /** The board the old tests were written against, before there were boards. */
+    bytes32 private bot = bytes32("bot");
+    bytes32 private lions = bytes32("lions");
+
+    /** One board as the array the contract wants, for the tests that prank themselves. */
+    function one(bytes32 board) private pure returns (bytes32[] memory boards) {
+        boards = new bytes32[](1);
+        boards[0] = board;
+    }
+
+    function to(address winner) private pure returns (address[] memory winners) {
+        winners = new address[](1);
+        winners[0] = winner;
+    }
+
+    /** One board and one winner, which is what most of these are about. */
+    function close(bytes32 week, bytes32 board, address winner) private {
+        bytes32[] memory boards = new bytes32[](1);
+        address[] memory winners = new address[](1);
+        boards[0] = board;
+        winners[0] = winner;
+        vm.prank(publisher);
+        pot.closeWeek(week, boards, winners);
+    }
+
+    /** Two boards in one call, which is the case the ordering bug lived in. */
+    function closeBoth(bytes32 week, address first, address second) private {
+        bytes32[] memory boards = new bytes32[](2);
+        address[] memory winners = new address[](2);
+        boards[0] = bot;
+        boards[1] = lions;
+        winners[0] = first;
+        winners[1] = second;
+        vm.prank(publisher);
+        pot.closeWeek(week, boards, winners);
+    }
     bytes32 private week39 = bytes32("2026-W39");
 
     FakeCard private card;
@@ -32,30 +68,31 @@ contract PrizePotTest is Test {
     function setUp() public {
         card = new FakeCard();
         pot = new PrizePot(IERC20(address(card)), publisher);
+        // The whole pot to one board, so every test written before boards
+        // existed keeps measuring what it measured.
+        pot.setShare(bot, 10_000);
         card.mint(address(pot), 10 ether);
     }
 
     function test_closingAWeekAndPayingIt() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
-        (address named, uint256 amount, bool paid) = pot.prizes(week38);
+        (address named, uint256 amount, bool paid) = pot.prizes(week38, bot);
         assertEq(named, winner);
         assertEq(amount, 10 ether, "the prize is everything not already spoken for");
         assertFalse(paid);
 
-        pot.claim(week38);
+        pot.claim(week38, bot);
         assertEq(card.balanceOf(winner), 10 ether);
         assertEq(card.balanceOf(address(pot)), 0);
     }
 
     /** The winner is paid even when somebody else does the calling. */
     function test_anybodyMayPushThePrize() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
         vm.prank(stranger);
-        pot.claim(week38);
+        pot.claim(week38, bot);
 
         assertEq(card.balanceOf(winner), 10 ether, "it pays the winner, not the caller");
         assertEq(card.balanceOf(stranger), 0);
@@ -71,12 +108,12 @@ contract PrizePotTest is Test {
 
     function test_thePublisherCannotReopenAWeek() public {
         vm.startPrank(publisher);
-        pot.closeWeek(week38, winner);
+        pot.closeWeek(week38, one(bot), to(winner));
         vm.expectRevert(PrizePot.WeekAlreadyClosed.selector);
-        pot.closeWeek(week38, publisher);
+        pot.closeWeek(week38, one(bot), to(publisher));
         vm.stopPrank();
 
-        (address named, , ) = pot.prizes(week38);
+        (address named, , ) = pot.prizes(week38, bot);
         assertEq(named, winner, "a week announced is a week decided");
     }
 
@@ -87,41 +124,38 @@ contract PrizePotTest is Test {
      * cannot touch what previous weeks are owed.
      */
     function test_aStolenKeyCannotReachWhatIsAlreadyOwed() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
         card.mint(address(pot), 2 ether);
 
         address thief = address(0xBAD);
-        vm.prank(publisher);
-        pot.closeWeek(week39, thief);
+        close(week39, bot, thief);
 
-        (, uint256 stolen, ) = pot.prizes(week39);
+        (, uint256 stolen, ) = pot.prizes(week39, bot);
         assertEq(stolen, 2 ether, "only what arrived after the last week closed");
 
-        pot.claim(week38);
+        pot.claim(week38, bot);
         assertEq(card.balanceOf(winner), 10 ether, "last week's winner is untouched");
     }
 
     function test_onlyThePublisherMayCloseAWeek() public {
         vm.prank(stranger);
         vm.expectRevert(PrizePot.NotThePublisher.selector);
-        pot.closeWeek(week38, winner);
+        pot.closeWeek(week38, one(bot), to(winner));
 
         // Not even the owner, who is a different job.
         vm.expectRevert(PrizePot.NotThePublisher.selector);
-        pot.closeWeek(week38, winner);
+        pot.closeWeek(week38, one(bot), to(winner));
     }
 
     // ── the money cannot be handed out twice ────────────────────────────────
 
     function test_aWeekIsPaidOnce() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
-        pot.claim(week38);
+        close(week38, bot, winner);
+        pot.claim(week38, bot);
 
         vm.expectRevert(PrizePot.AlreadyPaid.selector);
-        pot.claim(week38);
+        pot.claim(week38, bot);
     }
 
     /**
@@ -132,44 +166,44 @@ contract PrizePotTest is Test {
      * both were told they had won.
      */
     function test_twoOpenWeeksDoNotShareTheSameMoney() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
         vm.expectRevert(PrizePot.NothingToWin.selector);
-        vm.prank(publisher);
-        pot.closeWeek(week39, stranger);
+        close(week39, bot, stranger);
 
         card.mint(address(pot), 4 ether);
-        vm.prank(publisher);
-        pot.closeWeek(week39, stranger);
+        close(week39, bot, stranger);
 
-        pot.claim(week38);
-        pot.claim(week39);
+        pot.claim(week38, bot);
+        pot.claim(week39, bot);
         assertEq(card.balanceOf(winner), 10 ether);
         assertEq(card.balanceOf(stranger), 4 ether);
         assertEq(card.balanceOf(address(pot)), 0, "and the pot is empty, not short");
     }
 
     function test_aDepositAfterClosingBelongsToTheNextWeek() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
         card.mint(address(pot), 3 ether);
 
-        pot.claim(week38);
+        pot.claim(week38, bot);
         assertEq(card.balanceOf(winner), 10 ether, "not 13: the prize was fixed when it closed");
         assertEq(pot.unallocated(), 3 ether);
     }
 
     function test_claimingAWeekNobodyWon() public {
         vm.expectRevert(PrizePot.NoSuchWeek.selector);
-        pot.claim(week38);
+        pot.claim(week38, bot);
     }
 
     function test_closingAnEmptyPot() public {
         pot = new PrizePot(IERC20(address(card)), publisher);
+        // The board has to exist before "there is nothing in it" is the answer.
+        // Without this the revert is NoSuchBoard, which is a different sentence
+        // and the right one for a board name nobody ever set.
+        pot.setShare(bot, 10_000);
         vm.prank(publisher);
         vm.expectRevert(PrizePot.NothingToWin.selector);
-        pot.closeWeek(week38, winner);
+        pot.closeWeek(week38, one(bot), to(winner));
     }
 
     // ── rotating a leaked key ───────────────────────────────────────────────
@@ -180,20 +214,19 @@ contract PrizePotTest is Test {
 
         vm.prank(publisher);
         vm.expectRevert(PrizePot.NotThePublisher.selector);
-        pot.closeWeek(week38, winner);
+        pot.closeWeek(week38, one(bot), to(winner));
 
         vm.prank(fresh);
-        pot.closeWeek(week38, winner);
-        (address named, , ) = pot.prizes(week38);
+        pot.closeWeek(week38, one(bot), to(winner));
+        (address named, , ) = pot.prizes(week38, bot);
         assertEq(named, winner);
     }
 
     function test_rotatingDoesNotTakeBackAWeekAlreadyWon() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
         pot.setPublisher(address(0xFEED));
-        pot.claim(week38);
+        pot.claim(week38, bot);
         assertEq(card.balanceOf(winner), 10 ether, "being told you won is not reversible");
     }
 
@@ -213,7 +246,7 @@ contract PrizePotTest is Test {
     function test_refusesAZeroWinner() public {
         vm.prank(publisher);
         vm.expectRevert(Rescuable.ZeroAddress.selector);
-        pot.closeWeek(week38, address(0));
+        pot.closeWeek(week38, one(bot), to(address(0)));
     }
 
     // ── THE CEILING ─────────────────────────────────────────────────────────
@@ -228,10 +261,9 @@ contract PrizePotTest is Test {
         // mint produces.
         card.mint(address(pot), pot.DEFAULT_MOST_PER_WEEK() * 4);
 
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
-        (, uint256 amount,) = pot.prizes(week38);
+        (, uint256 amount,) = pot.prizes(week38, bot);
         assertEq(amount, pot.DEFAULT_MOST_PER_WEEK(), "a week cannot take more than the ceiling");
     }
 
@@ -246,31 +278,27 @@ contract PrizePotTest is Test {
         pot.setMostPerWeek(4 ether);
         bytes32 week40 = bytes32("2026-W40");
 
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
-        pot.claim(week38);
+        close(week38, bot, winner);
+        pot.claim(week38, bot);
         assertEq(card.balanceOf(winner), 4 ether);
 
-        vm.prank(publisher);
-        pot.closeWeek(week39, stranger);
-        pot.claim(week39);
+        close(week39, bot, stranger);
+        pot.claim(week39, bot);
         assertEq(card.balanceOf(stranger), 4 ether);
 
-        vm.prank(publisher);
-        pot.closeWeek(week40, winner);
-        (, uint256 tail,) = pot.prizes(week40);
+        close(week40, bot, winner);
+        (, uint256 tail,) = pot.prizes(week40, bot);
         assertEq(tail, 2 ether, "the last of it is paid whole rather than held back");
 
-        pot.claim(week40);
+        pot.claim(week40, bot);
         assertEq(card.balanceOf(address(pot)), 0, "nothing is stranded by the ceiling");
     }
 
     /** Under the ceiling nothing changes: a small pot is paid whole. */
     function test_asmallPotIsStillPaidWhole() public {
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
-        (, uint256 amount,) = pot.prizes(week38);
+        (, uint256 amount,) = pot.prizes(week38, bot);
         assertEq(amount, 10 ether, "the ceiling is a ceiling, not an amount");
     }
 
@@ -285,10 +313,9 @@ contract PrizePotTest is Test {
         assertEq(pot.mostPerWeek(), 1 ether);
 
         card.mint(address(pot), 100 ether);
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
+        close(week38, bot, winner);
 
-        (, uint256 amount,) = pot.prizes(week38);
+        (, uint256 amount,) = pot.prizes(week38, bot);
         assertEq(amount, 1 ether, "the new ceiling applies to the next week closed");
     }
 
@@ -315,24 +342,175 @@ contract PrizePotTest is Test {
     function test_movingTheCeilingDoesNotTakeBackAWeekAlreadyClosed() public {
         card.mint(address(pot), pot.DEFAULT_MOST_PER_WEEK() * 2);
 
-        vm.prank(publisher);
-        pot.closeWeek(week38, winner);
-        (, uint256 promised,) = pot.prizes(week38);
+        close(week38, bot, winner);
+        (, uint256 promised,) = pot.prizes(week38, bot);
 
         pot.setMostPerWeek(1 ether);
 
-        pot.claim(week38);
+        pot.claim(week38, bot);
         assertEq(card.balanceOf(winner), promised, "what was promised is what is paid");
     }
 
     /** What the site shows as the next prize is the capped figure, not the balance. */
     function test_nextPrizeIsWhatAWinnerWouldActuallyGet() public {
-        assertEq(pot.nextPrize(), 10 ether, "under the ceiling it is the whole balance");
+        assertEq(pot.nextPrize(bot), 10 ether, "under the ceiling it is the whole balance");
         assertEq(pot.unallocated(), 10 ether);
 
         card.mint(address(pot), pot.DEFAULT_MOST_PER_WEEK() * 3);
-        assertEq(pot.nextPrize(), pot.DEFAULT_MOST_PER_WEEK(), "over it, it is the ceiling");
-        assertGt(pot.unallocated(), pot.nextPrize(), "and the balance is the larger number");
+        assertEq(pot.nextPrize(bot), pot.DEFAULT_MOST_PER_WEEK(), "over it, it is the ceiling");
+        assertGt(pot.unallocated(), pot.nextPrize(bot), "and the balance is the larger number");
+    }
+
+
+    // ── BOARDS ──────────────────────────────────────────────────────────────
+
+    /**
+     * The bug this whole shape exists to prevent.
+     *
+     * Two boards on a quarter each must get the same prize. Closed one at a
+     * time, the second takes a quarter of what the first one left — 18.75% of
+     * the pot against 25% — and the boards look identical on screen.
+     */
+    function test_twoBoardsOnEqualSharesGetEqualPrizes() public {
+        pot.setShare(bot, 2_500);
+        pot.setShare(lions, 2_500);
+
+        closeBoth(week38, winner, stranger);
+
+        (, uint256 first,) = pot.prizes(week38, bot);
+        (, uint256 second,) = pot.prizes(week38, lions);
+        assertEq(first, 2.5 ether, "a quarter of ten");
+        assertEq(second, first, "and the same quarter, not a quarter of what is left");
+    }
+
+    /** What is not shared out stays in the pot and grows. */
+    function test_whatIsNotSharedOutStaysInThePot() public {
+        pot.setShare(bot, 2_500);
+        pot.setShare(lions, 2_500);
+
+        closeBoth(week38, winner, stranger);
+        pot.claim(week38, bot);
+        pot.claim(week38, lions);
+
+        assertEq(card.balanceOf(address(pot)), 5 ether, "half of it never left");
+        assertEq(pot.unallocated(), 5 ether, "and it is what next week plays for");
+    }
+
+    /** A board nobody won is simply left out, and keeps its share for later. */
+    function test_aBoardNobodyWonKeepsItsShare() public {
+        pot.setShare(bot, 2_500);
+        pot.setShare(lions, 2_500);
+
+        close(week38, bot, winner);
+        pot.claim(week38, bot);
+
+        assertEq(card.balanceOf(address(pot)), 7.5 ether, "the lions' quarter stayed");
+        // And it is still closeable the following week, at the new pot's size.
+        close(week39, lions, stranger);
+        (, uint256 amount,) = pot.prizes(week39, lions);
+        assertEq(amount, 1.875 ether, "a quarter of what is there now");
+    }
+
+    function test_aBoardWithNoShareIsNotABoard() public {
+        vm.prank(publisher);
+        vm.expectRevert(abi.encodeWithSelector(PrizePot.NoSuchBoard.selector, lions));
+        pot.closeWeek(week38, one(lions), to(winner));
+    }
+
+    /** Retiring a board frees its share for everybody else. */
+    function test_settingAShareToZeroRetiresABoard() public {
+        pot.setShare(bot, 7_500);
+        pot.setShare(lions, 2_500);
+        assertEq(pot.sharedOut(), 10_000);
+
+        pot.setShare(bot, 0);
+        assertEq(pot.sharedOut(), 2_500, "only the lions are left");
+
+        vm.prank(publisher);
+        vm.expectRevert(abi.encodeWithSelector(PrizePot.NoSuchBoard.selector, bot));
+        pot.closeWeek(week38, one(bot), to(winner));
+    }
+
+    function test_sharesCannotAddUpToMoreThanEverything() public {
+        vm.expectRevert(abi.encodeWithSelector(PrizePot.SharesOverAHundred.selector, 10_001));
+        pot.setShare(lions, 1);
+    }
+
+    /** Lowering one board's share makes room for another. */
+    function test_loweringOneShareMakesRoomForAnother() public {
+        pot.setShare(bot, 5_000);
+        pot.setShare(lions, 5_000);
+        assertEq(pot.sharedOut(), 10_000);
+    }
+
+    function test_onlyTheOwnerSetsShares() public {
+        vm.prank(publisher);
+        vm.expectRevert();
+        pot.setShare(lions, 2_500);
+
+        vm.prank(stranger);
+        vm.expectRevert();
+        pot.setShare(lions, 2_500);
+    }
+
+    /**
+     * The same board twice in one call is refused, and by something subtle.
+     *
+     * There is no check for it. The write inside the loop means the second
+     * appearance reads a winner the first one already set, so the ordinary
+     * "closed once" guard fires. A check for it was written and then deleted as
+     * unreachable — this test is what stands in its place, because what makes it
+     * safe is an assignment rather than a guard, and an assignment can move.
+     */
+    function test_aBoardCannotAppearTwiceInOneCall() public {
+        bytes32[] memory boards = new bytes32[](2);
+        address[] memory winners = new address[](2);
+        boards[0] = bot;
+        boards[1] = bot;
+        winners[0] = winner;
+        winners[1] = stranger;
+
+        vm.prank(publisher);
+        vm.expectRevert(PrizePot.WeekAlreadyClosed.selector);
+        pot.closeWeek(week38, boards, winners);
+
+        // And nothing was paid to either of them.
+        (address named,,) = pot.prizes(week38, bot);
+        assertEq(named, address(0), "the whole call reverted, so no board closed");
+    }
+
+    function test_everyBoardNeedsAWinner() public {
+        bytes32[] memory boards = new bytes32[](2);
+        address[] memory winners = new address[](1);
+        boards[0] = bot;
+        boards[1] = lions;
+        winners[0] = winner;
+
+        vm.prank(publisher);
+        vm.expectRevert(PrizePot.NotTheSameNumberOfWinners.selector);
+        pot.closeWeek(week38, boards, winners);
+    }
+
+    /** Each board's prize is claimed on its own. */
+    function test_claimingOneBoardLeavesTheOther() public {
+        pot.setShare(bot, 2_500);
+        pot.setShare(lions, 2_500);
+        closeBoth(week38, winner, stranger);
+
+        pot.claim(week38, bot);
+        assertEq(card.balanceOf(winner), 2.5 ether);
+        assertEq(card.balanceOf(stranger), 0, "the other board is untouched");
+
+        pot.claim(week38, lions);
+        assertEq(card.balanceOf(stranger), 2.5 ether);
+    }
+
+    function test_whatOneBoardWouldPayNow() public {
+        pot.setShare(bot, 2_500);
+        pot.setShare(lions, 1_000);
+        assertEq(pot.nextPrize(bot), 2.5 ether);
+        assertEq(pot.nextPrize(lions), 1 ether);
+        assertEq(pot.nextPrize(bytes32("nothing")), 0, "a board that does not exist pays nothing");
     }
 
 }

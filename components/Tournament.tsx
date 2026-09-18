@@ -33,11 +33,23 @@ interface PastWeek {
   paidAt: number | null;
 }
 
-interface Board {
-  week: string;
-  closes: number;
+/** One leaderboard: an opponent, who is on it, and what it pays. */
+interface BoardRow {
+  id: string;
+  name: string;
+  blurb: string;
+  /** Whole $LION needed to play it, or null when it is open to everybody. */
+  needs: { token: string; whole: number } | null;
   standings: Standing[];
   past: PastWeek[];
+  /** This board's share of the pot, in base units, or null. */
+  prize: string | null;
+}
+
+interface Answer {
+  week: string;
+  closes: number;
+  boards: BoardRow[];
   pot: { wei: string | null; most: string | null; wallet: string | null };
 }
 
@@ -55,7 +67,7 @@ function until(closes: number, now: number): string {
 }
 
 export function Tournament() {
-  const [board, setBoard] = useState<Board | null>(null);
+  const [answer, setAnswer] = useState<Answer | null>(null);
   // Null until the first answer, so "nobody has played yet" is never shown to
   // somebody whose request has not come back.
   const [failed, setFailed] = useState(false);
@@ -64,7 +76,7 @@ export function Tournament() {
   useEffect(() => {
     void fetch("/api/tournament")
       .then((answer) => (answer.ok ? answer.json() : Promise.reject(new Error())))
-      .then((found: Board) => setBoard(found))
+      .then((found: Answer) => setAnswer(found))
       .catch(() => setFailed(true));
   }, []);
 
@@ -92,22 +104,22 @@ export function Tournament() {
    * the larger number as the prize, which is the flattering direction to be
    * wrong in and the one this page is written against.
    */
-  const shown = board?.pot.most ?? board?.pot.wei ?? null;
+  const shown = answer?.pot.most ?? answer?.pot.wei ?? null;
   const prize =
     shown === null ? "—" : `${Math.round(toTokens(shown)).toLocaleString("en-US")} $CROCARD`;
 
   // The balance, but only when it is more than a week can pay. Equal means the
   // ceiling is not biting and there is nothing to explain.
   const holdingBack =
-    board?.pot.wei != null && board.pot.most != null && BigInt(board.pot.wei) > BigInt(board.pot.most)
-      ? Math.round(toTokens(board.pot.wei)).toLocaleString("en-US")
+    answer?.pot.wei != null && answer.pot.most != null && BigInt(answer.pot.wei) > BigInt(answer.pot.most)
+      ? Math.round(toTokens(answer.pot.wei)).toLocaleString("en-US")
       : null;
 
   return (
     <div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <Figure label="THIS WEEK" value={board?.week ?? "—"} />
-        <Figure label="CLOSES IN" value={board ? until(board.closes, now) : "—"} />
+        <Figure label="THIS WEEK" value={answer?.week ?? "—"} />
+        <Figure label="CLOSES IN" value={answer ? until(answer.closes, now) : "—"} />
         {/* $CROCARD and not CRO. The pot holds the token, because every share is
             bought before it is paid — and the two have eighteen decimals each,
             so the figure was right and only the unit was wrong.
@@ -117,7 +129,7 @@ export function Tournament() {
             the balance would be the bigger number and the wrong promise. The
             balance is said underneath instead, where it cannot be misread as
             the prize. */}
-        <Figure label={board?.pot.most != null ? "TO BE WON" : "IN THE POT"} value={prize} />
+        <Figure label={answer?.pot.most != null ? "TO BE WON" : "IN THE POT"} value={prize} />
       </div>
 
       <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
@@ -143,7 +155,7 @@ export function Tournament() {
         into a request is not a score.
       </p>
 
-      {board?.pot.wallet === null && (
+      {answer?.pot.wallet === null && (
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-gold">
           {share ?? 25}% of every paid mint feeds the pot, and the same share of every royalty and
           every ranked match. It arrives as $CROCARD: the CRO buys the token first and the pot is
@@ -154,16 +166,65 @@ export function Tournament() {
         </p>
       )}
 
-      <h2 className="display mt-10 text-xl">THE BOARD</h2>
       {failed ? (
-        <p className="mt-3 text-[11px] text-dump">
-          The board would not load. That is this page failing, not an empty week.
+        <p className="mt-10 text-[11px] text-dump">
+          The boards would not load. That is this page failing, not an empty week.
         </p>
-      ) : board === null ? (
-        <p className="mt-3 text-[11px] text-muted">Reading the board…</p>
-      ) : board.standings.length === 0 ? (
+      ) : answer === null ? (
+        <p className="mt-10 text-[11px] text-muted">Reading the boards…</p>
+      ) : (
+        answer.boards.map((board) => <OneBoard key={board.id} board={board} />)
+      )}
+    </div>
+  );
+}
+
+function Figure({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="panel border border-line p-5">
+      <p className="text-[8px] tracking-[0.18em] text-faint">{label}</p>
+      <p className="display mt-1.5 text-2xl tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+/**
+ * One leaderboard, with its prize and its history.
+ *
+ * Drawn even when nobody is on it. An empty board says the prize is unclaimed
+ * and the week is open, which is an invitation; leaving it out would say nothing
+ * at all, and for the locked board it would mean a player never learns it is
+ * there.
+ */
+function OneBoard({ board }: { board: BoardRow }) {
+  const whole = (value: string) => Math.round(toTokens(value)).toLocaleString("en-US");
+
+  return (
+    <section className="mt-10">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="display text-xl">{board.name}</h2>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted">{board.blurb}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[8px] tracking-[0.18em] text-faint">PLAYS FOR</p>
+          <p className="display text-lg tabular-nums">
+            {board.prize === null ? "—" : `${whole(board.prize)} $CROCARD`}
+          </p>
+        </div>
+      </div>
+
+      {/* Said on the board itself and not only on the page that locks it: this
+          is where somebody decides whether it is worth holding. */}
+      {board.needs !== null && (
+        <p className="mt-2 text-[10px] leading-relaxed text-gold">
+          Open to wallets holding {board.needs.whole.toLocaleString("en-US")} $LION or more.
+        </p>
+      )}
+
+      {board.standings.length === 0 ? (
         <p className="mt-3 text-[11px] text-muted">
-          Nobody has beaten the bot this week.{" "}
+          Nobody has beaten this one yet.{" "}
           <Link href="/play" className="text-pump hover:underline">
             Be first
           </Link>
@@ -177,9 +238,7 @@ export function Tournament() {
               className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-3"
             >
               <span className="flex min-w-0 items-baseline gap-3">
-                <span className="display w-6 shrink-0 text-sm text-faint tabular-nums">
-                  {i + 1}
-                </span>
+                <span className="display w-6 shrink-0 text-sm text-faint tabular-nums">{i + 1}</span>
                 <span className="truncate font-mono text-[11px]">{short(one.wallet)}</span>
               </span>
               <span className="shrink-0 text-right">
@@ -195,52 +254,40 @@ export function Tournament() {
         </ol>
       )}
 
-      {board !== null && board.past.length > 0 && (
-        <>
-          <h2 className="display mt-10 text-xl">WEEKS THAT HAVE CLOSED</h2>
-          <ol className="mt-3 divide-y divide-line border border-line">
-            {board.past.map((week) => (
-              <li
-                key={week.week}
-                className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-3"
-              >
-                <span className="min-w-0">
-                  <span className="display block text-sm">{week.week}</span>
-                  <span className="block truncate font-mono text-[10px] text-muted">
-                    {short(week.wallet)} · {formatMCExact(week.mc)} ·{" "}
-                    {week.entries === 1 ? "1 entry" : `${week.entries} entries`}
-                  </span>
+      {board.past.length > 0 && (
+        <ol className="mt-3 divide-y divide-line border border-line">
+          {board.past.map((week) => (
+            <li
+              key={week.week}
+              className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-3"
+            >
+              <span className="min-w-0">
+                <span className="display block text-sm">{week.week}</span>
+                <span className="block truncate font-mono text-[10px] text-muted">
+                  {short(week.wallet)} · {formatMCExact(week.mc)} ·{" "}
+                  {week.entries === 1 ? "1 entry" : `${week.entries} entries`}
                 </span>
-                <span className="shrink-0 text-right">
-                  {week.wei === null ? (
-                    // Loud rather than hidden. A week that has been won and not
-                    // paid is exactly the row somebody needs to be able to see.
-                    <span className="text-[10px] tracking-[0.14em] text-dump">NOT PAID YET</span>
-                  ) : (
-                    <a
-                      href={`${EXPLORER}/tx/${week.txHash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[10px] tracking-[0.14em] text-pump hover:underline"
-                    >
-                      {Math.round(toTokens(week.wei)).toLocaleString("en-US")} $CROCARD
-                    </a>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </>
+              </span>
+              <span className="shrink-0 text-right">
+                {week.wei === null ? (
+                  // Loud rather than hidden. A week that has been won and not
+                  // paid is exactly the row somebody needs to be able to see.
+                  <span className="text-[10px] tracking-[0.14em] text-dump">NOT PAID YET</span>
+                ) : (
+                  <a
+                    href={`${EXPLORER}/tx/${week.txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] tracking-[0.14em] text-pump hover:underline"
+                  >
+                    {whole(week.wei)} $CROCARD
+                  </a>
+                )}
+              </span>
+            </li>
+          ))}
+        </ol>
       )}
-    </div>
-  );
-}
-
-function Figure({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="panel border border-line p-5">
-      <p className="text-[8px] tracking-[0.18em] text-faint">{label}</p>
-      <p className="display mt-1.5 text-2xl tabular-nums">{value}</p>
-    </div>
+    </section>
   );
 }

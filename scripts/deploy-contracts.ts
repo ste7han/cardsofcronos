@@ -32,10 +32,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { normalise } from "@/lib/address";
+import { BOARDS } from "@/data/boards";
+import { asWord } from "@/lib/publisher";
 import { encodeParameters, type AbiType } from "@/lib/abi";
 import { PUBLIC_RPCS } from "@/lib/cronos";
 import { BURN_ADDRESS, CONTRACTS, CROCARD, ROUTER } from "@/lib/revenue";
-import { CRONOS_CHAIN_ID, addressOfKey, signTransaction } from "@/lib/evm-tx";
+import { CRONOS_CHAIN_ID, addressOfKey, selector, signTransaction, word } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
 
 const rpcs = process.env.CRONOS_RPC ? [process.env.CRONOS_RPC, ...PUBLIC_RPCS] : PUBLIC_RPCS;
@@ -220,6 +222,54 @@ async function main(): Promise<void> {
     throw new Error(`${what} was sent but no receipt came back: ${hash}`);
   }
 
+  /**
+   * One call to a contract that already exists, in the same run.
+   *
+   * Deploying leaves things to set, and a setting nobody made is a contract that
+   * refuses at the moment it is needed rather than at the moment it was wrong.
+   * So it happens here, with the deployer's key, which is also the owner's.
+   *
+   * On a dry run it prints and sends nothing, like everything else — but note
+   * that the gas cannot be estimated against a contract that does not exist yet,
+   * so a dry run does not price these. They are two storage writes each.
+   */
+  async function call(to: string, what: string, data: string): Promise<void> {
+    console.log(`${what}`);
+    if (!broadcast) {
+      console.log(`  would call ${to}\n`);
+      return;
+    }
+
+    const gas = BigInt(await rpc("eth_estimateGas", [{ from: deployer, to, data }]));
+    spent += (gas * 13n) / 10n;
+
+    const raw = signTransaction(
+      {
+        nonce: BigInt(nonce++),
+        gasPrice,
+        gasLimit: (gas * 13n) / 10n,
+        to,
+        value: 0n,
+        data,
+        chainId: CRONOS_CHAIN_ID,
+      },
+      key,
+    );
+    const hash = (await rpc("eth_sendRawTransaction", [raw])) as string;
+    console.log(`  sent  ${hash}`);
+
+    for (let tries = 0; tries < 60; tries++) {
+      const receipt = await rpc("eth_getTransactionReceipt", [hash]);
+      if (receipt) {
+        if (BigInt(receipt.status) !== 1n) throw new Error(`${what} reverted: ${hash}`);
+        console.log(`  done\n`);
+        return;
+      }
+      await new Promise((wake) => setTimeout(wake, 3_000));
+    }
+    throw new Error(`${what} was sent but no receipt came back: ${hash}`);
+  }
+
   found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
   found.pot = await deploy("PrizePot", [CROCARD, publisher]);
   found.splitter = await deploy("Splitter", [
@@ -237,6 +287,31 @@ async function main(): Promise<void> {
     allowlist.root,
     found.splitter,
   ]);
+
+  // ── AND THE BOARDS GET THEIR SHARES ────────────────────────────────────────
+  //
+  // A pot with no shares set cannot close any week: closeWeek refuses a board
+  // whose share is zero, which is every board until this runs. That failure is
+  // once a week, in a cron, after everybody has played — so it happens here,
+  // while somebody is watching, and in the same run as the deploy that caused it.
+  //
+  // Only the owner may do this, and the owner is whoever deployed, which is this
+  // key. The publisher key on the server never can.
+  //
+  // A quarter each is the maker's starting position. The other half stays in the
+  // pot and grows, and `setShare` moves any of it later without a redeploy.
+  const SHARES: [string, number][] = BOARDS.map((board) => [board.id, 2_500]);
+  for (const [board, bps] of SHARES) {
+    await call(
+      found.pot!,
+      `setShare(${board}, ${bps} bps)`,
+      selector("setShare(bytes32,uint256)") + asWord(board) + word(BigInt(bps)),
+    );
+  }
+  console.log(
+    `  boards: ${SHARES.map(([b, v]) => `${b} ${v / 100}%`).join(", ")}` +
+      `, ${(10_000 - SHARES.reduce((sum, [, v]) => sum + v, 0)) / 100}% stays in the pot\n`,
+  );
 
   const cost = spent * gasPrice;
   console.log(

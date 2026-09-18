@@ -42,6 +42,29 @@ import {Rescuable} from "./Rescuable.sol";
  * a cron pushes it the moment a week closes, and if the cron is down, anybody
  * can. A prize that has to be fetched is a prize somebody forgets to fetch.
  *
+ * ── MORE THAN ONE BOARD ──────────────────────────────────────────────────────
+ *
+ * There is one pot and several leaderboards: beating the ordinary bot is one,
+ * beating the Loaded Lions deck is another, and more can follow. Each board has
+ * a share of the pot, in basis points, that the OWNER sets — not the publisher,
+ * which only ever names winners. A key on a server that could also decide how
+ * the money is divided is a key worth stealing.
+ *
+ * The shares do not have to add up to a hundred per cent and should not: what is
+ * left unassigned stays in the pot and grows. Twenty-five and twenty-five leaves
+ * half of it compounding, which is the maker's starting position.
+ *
+ * ── WHY EVERY BOARD CLOSES IN ONE TRANSACTION ────────────────────────────────
+ *
+ * Because otherwise the order decides the money. Close board A for 25% and the
+ * pot is down to 75%; close board B for 25% and it takes a quarter of what is
+ * left, which is 18.75%. Two equal shares, two unequal prizes, and nothing on
+ * screen saying why.
+ *
+ * So `closeWeek` takes every board at once and divides them all from the same
+ * reading of the pot. A board nobody won is left out of the call, and its share
+ * simply stays where it is.
+ *
  * ── WHY ONE WEEK CANNOT TAKE EVERYTHING ──────────────────────────────────────
  *
  * A quarter of every mint lands here and the mint is the busiest this game will
@@ -72,8 +95,26 @@ contract PrizePot is Rescuable {
     /// @notice The only address that may name a winner. Rotatable by the owner.
     address public publisher;
 
-    /// @notice Weeks that have been closed, keyed by "2026-W38".
-    mapping(bytes32 => Prize) public prizes;
+    /**
+     * @notice Weeks that have been closed, keyed by week AND board.
+     *
+     * Two dimensions because one week now has several winners — one per board.
+     * `prizes[week][board]`, where a board is a short name like "bot" or
+     * "lions" and a week is "2026-W38".
+     */
+    mapping(bytes32 => mapping(bytes32 => Prize)) public prizes;
+
+    /**
+     * @notice What share of the pot each board plays for, in basis points.
+     *
+     * Zero for a board nobody has set, which means a board that does not exist
+     * cannot be closed for anything. Set by the owner and never by the
+     * publisher — see the note at the top about which key is worth stealing.
+     */
+    mapping(bytes32 => uint256) public shareOf;
+
+    /// @notice Every board's share added up, so one check can stop it passing 100%.
+    uint256 public sharedOut;
 
     /**
      * @notice What is spoken for and must not be handed out twice.
@@ -96,10 +137,11 @@ contract PrizePot is Rescuable {
     /// @notice The default ceiling: 1% of a supply of one billion, at 18 decimals.
     uint256 public constant DEFAULT_MOST_PER_WEEK = 10_000_000 ether;
 
-    event WeekClosed(bytes32 indexed week, address indexed winner, uint256 amount);
+    event WeekClosed(bytes32 indexed week, bytes32 indexed board, address indexed winner, uint256 amount);
     event MostPerWeekChanged(uint256 from, uint256 to);
-    event Paid(bytes32 indexed week, address indexed winner, uint256 amount);
+    event Paid(bytes32 indexed week, bytes32 indexed board, address indexed winner, uint256 amount);
     event PublisherChanged(address indexed from, address indexed to);
+    event ShareChanged(bytes32 indexed board, uint256 from, uint256 to);
 
     error NotThePublisher();
     error WeekAlreadyClosed();
@@ -107,6 +149,10 @@ contract PrizePot is Rescuable {
     error AlreadyPaid();
     error NothingToWin();
     error CeilingOfNothing();
+    error NoSuchBoard(bytes32 board);
+    error SharesOverAHundred(uint256 wanted);
+    error NotTheSameNumberOfWinners();
+    error NoBoards();
 
     error TokenTransferFailed();
 
@@ -125,31 +171,87 @@ contract PrizePot is Rescuable {
      */
 
     /**
-     * @notice Names the winner of a week and sets that week's prize aside.
+     * @notice Names the winner of every board for a week and sets the prizes aside.
      *
-     * The prize is whatever has arrived and is not already spoken for, up to
-     * `mostPerWeek`. It is fixed at this moment rather than read at payout, so a
-     * deposit that lands between closing and paying belongs to the next week and
-     * not to a week that has already been decided.
+     * ALL THE BOARDS AT ONCE, from one reading of the pot. Closing them one at a
+     * time would make the order decide the money: a second board taking "25%"
+     * after the first has taken its quarter is taking a quarter of what is left.
      *
-     * What the ceiling holds back is not refused and not lost. It stays in the
-     * balance, is not allocated to anybody, and is therefore the next week's pot.
+     * A board nobody won is left out of the call. Its share stays in the pot and
+     * is part of what the next week plays for.
+     *
+     * Each prize is that board's share of what has arrived and is not already
+     * spoken for, capped at `mostPerWeek`. It is fixed here rather than read at
+     * payout, so a deposit landing between closing and paying belongs to the next
+     * week and not to a week that has already been decided.
      */
-    function closeWeek(bytes32 week, address winner) external {
+    function closeWeek(
+        bytes32 week,
+        bytes32[] calldata boards,
+        address[] calldata winners
+    ) external {
         if (msg.sender != publisher) revert NotThePublisher();
-        if (winner == address(0)) revert ZeroAddress();
-        // A week is closed once. Without this the publisher could rename the
-        // winner of a week it had already announced, which is the one thing that
-        // would make the board worth less than the word of whoever holds the key.
-        if (prizes[week].winner != address(0)) revert WeekAlreadyClosed();
+        if (boards.length != winners.length) revert NotTheSameNumberOfWinners();
+        if (boards.length == 0) revert NoBoards();
 
-        uint256 amount = card.balanceOf(address(this)) - allocated;
-        if (amount > mostPerWeek) amount = mostPerWeek;
-        if (amount == 0) revert NothingToWin();
+        // One reading, before anything is taken out of it. This is the whole
+        // reason the boards arrive together.
+        uint256 pot = card.balanceOf(address(this)) - allocated;
+        uint256 given;
 
-        prizes[week] = Prize({winner: winner, amount: amount, paid: false});
-        allocated += amount;
-        emit WeekClosed(week, winner, amount);
+        for (uint256 i = 0; i < boards.length; i++) {
+            bytes32 board = boards[i];
+            address winner = winners[i];
+
+            if (winner == address(0)) revert ZeroAddress();
+            // A board with no share is not a board. Without this, a typo in a
+            // board name closes a week for nothing and the real board can never
+            // be closed for that week again.
+            if (shareOf[board] == 0) revert NoSuchBoard(board);
+            // A week is closed once per board. Without it the publisher could
+            // rename a winner it had already announced, which is the one thing
+            // that would make the board worth less than the word of whoever
+            // holds the key.
+            //
+            // It also covers the same board twice in ONE call, which is not
+            // obvious and was nearly given its own check and its own error: the
+            // write below happens inside this loop, so the second appearance
+            // reads a winner that the first appearance already set. A test asks
+            // for that case by name, because the thing keeping it safe is an
+            // assignment eight lines down rather than anything that looks like a
+            // guard.
+            if (prizes[week][board].winner != address(0)) revert WeekAlreadyClosed();
+
+            uint256 amount = (pot * shareOf[board]) / 10_000;
+            if (amount > mostPerWeek) amount = mostPerWeek;
+            if (amount == 0) revert NothingToWin();
+
+            prizes[week][board] = Prize({winner: winner, amount: amount, paid: false});
+            given += amount;
+            emit WeekClosed(week, board, winner, amount);
+        }
+
+        allocated += given;
+    }
+
+    /**
+     * @notice Sets what share of the pot a board plays for, in basis points.
+     *
+     * The owner's to decide and nobody else's. Setting it to zero retires a
+     * board: it can no longer be closed, and what it used to play for goes back
+     * into what the pot holds for everybody.
+     *
+     * The total may not pass a hundred per cent, and is not meant to reach it.
+     * What is left unassigned is what the pot keeps and grows on.
+     */
+    function setShare(bytes32 board, uint256 bps) external onlyOwner {
+        uint256 was = shareOf[board];
+        uint256 wanted = sharedOut - was + bps;
+        if (wanted > 10_000) revert SharesOverAHundred(wanted);
+
+        emit ShareChanged(board, was, bps);
+        shareOf[board] = bps;
+        sharedOut = wanted;
     }
 
     /**
@@ -158,8 +260,8 @@ contract PrizePot is Rescuable {
      * It pays the winner and not the caller, so there is nothing to gain by
      * being the one to call it and nothing to lose by being slow.
      */
-    function claim(bytes32 week) external {
-        Prize storage prize = prizes[week];
+    function claim(bytes32 week, bytes32 board) external {
+        Prize storage prize = prizes[week][board];
         if (prize.winner == address(0)) revert NoSuchWeek();
         if (prize.paid) revert AlreadyPaid();
 
@@ -170,7 +272,7 @@ contract PrizePot is Rescuable {
         allocated -= amount;
 
         if (!card.transfer(prize.winner, amount)) revert TokenTransferFailed();
-        emit Paid(week, prize.winner, amount);
+        emit Paid(week, board, prize.winner, amount);
     }
 
     /**
@@ -212,13 +314,14 @@ contract PrizePot is Rescuable {
     }
 
     /**
-     * @notice What the next week would pay, if it closed now.
+     * @notice What one board would pay, if the week closed now.
      *
-     * Not the same as `unallocated` once the pot is fuller than a week may pay,
-     * and that is exactly when somebody looking at the balance would guess wrong.
+     * Not the same as `unallocated` and not the same for every board, which is
+     * exactly when somebody looking at the balance would guess wrong.
      */
-    function nextPrize() external view returns (uint256) {
+    function nextPrize(bytes32 board) external view returns (uint256) {
         uint256 free = card.balanceOf(address(this)) - allocated;
-        return free > mostPerWeek ? mostPerWeek : free;
+        uint256 amount = (free * shareOf[board]) / 10_000;
+        return amount > mostPerWeek ? mostPerWeek : amount;
     }
 }

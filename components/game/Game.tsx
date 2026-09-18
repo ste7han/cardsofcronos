@@ -18,8 +18,7 @@ import { musicOn, start as startMusic, stop as stopMusic } from "@/lib/audio/mus
 import { Log } from "@/components/game/Log";
 import { MCCounter } from "@/components/game/MCCounter";
 import { chooseMove } from "@/engine/bot";
-import { buildDeckPreferring } from "@/engine/deck";
-import { PRESET_DECKS } from "@/data/preset-decks";
+import { BOARDS, opponentDeck, type Board } from "@/data/boards";
 import { cardLabel, formatMC, formatMCExact, formatMCPair, plural } from "@/engine/format";
 import { cardById } from "@/engine/helpers";
 import {
@@ -91,7 +90,7 @@ interface Aiming {
   closed?: number;
 }
 
-export function Game() {
+export function Game({ board = BOARDS[0]! }: { board?: Board }) {
   // Whose deck this is. Signing in or out mid-visit has to restart the table:
   // the deck it dealt from belongs to an address, and carrying on with the last
   // one would be playing somebody else's cards.
@@ -191,9 +190,6 @@ export function Game() {
       setState(null);
       return;
     }
-    const theme = asDemo
-      ? demoOpponentTheme(seed)
-      : PRESET_DECKS[seed % PRESET_DECKS.length]!;
     const fresh = newMatch(
       SET,
       seed,
@@ -201,7 +197,10 @@ export function Game() {
         ? demoDecks(seed)
         : {
             you: yours.cardIds,
-            opponent: buildDeckPreferring(SET, seed + 7919, theme.prefer),
+            // From data/boards.ts, which is also what the server replays the
+            // match with. Two copies of this rule would refuse every honest
+            // score and say nothing about why.
+            opponent: opponentDeck(SET, board, seed),
           },
     );
     played.current = { seed, moves: [] };
@@ -394,6 +393,7 @@ export function Game() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         proof,
+        board: board.id,
         seed: played.current.seed,
         deck: deckInfo?.cardIds ?? [],
         moves: played.current.moves,

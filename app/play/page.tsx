@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Game } from "@/components/game/Game";
+import { PlayArea } from "@/components/game/PlayArea";
 
 export const metadata: Metadata = {
   title: "Play — Cards of Cronos",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function PlayPage() {
-  return <Game />;
+  return <PlayArea />;
 }
