@@ -111,8 +111,12 @@ in `data/cards.ts` and nowhere else.
 **Never a key in the source.** An RPC key ended up in this project's history and
 there is no getting it out again.
 
-**Large art stays out of git.** `public/NFTCARDS/` is 734 MB. It is gitignored
-now; it was one `git add .` away from being permanent.
+**Large art stays out of git, and out of `public/`.** `art-source/NFTCARDS/` is
+734 MB. It is gitignored; it was one `git add .` away from being permanent. It
+sat in `public/` until September 2026, which is worse than it sounds: everything
+under `public/` is uploaded to the site verbatim, so 800 MB of source art was
+being served from cardsofcronos.com and only 16 MB of it was ever used. Source
+art goes in `art-source/`. `public/` is what the site serves.
 
 ---
 

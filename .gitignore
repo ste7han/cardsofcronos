@@ -24,22 +24,21 @@ id.json
 keypair*.json
 wallet*.json
 
-# Card art. 734 MB of finished NFT renders sit in public/NFTCARDS, untracked.
-# That works right up until someone runs `git add .`, and then it is in the
-# history for good. Large art belongs in storage with a CDN in front of it.
-public/NFTCARDS/
+# Card art. The finished art the site actually serves. The originals it is cut
+# from are under art-source/ instead — see below. Untracked either way: that
+# works right up until someone runs `git add .`, and then it is in the history
+# for good. Large art belongs in storage with a CDN in front of it.
 public/art/*
 !public/art/README.md
 
-# The source NFTs a family's art is cut from. Dropped in by hand, kept out for
-# the same reason: they are the originals and they are megabytes each.
-public/crooks/
-public/wolfies/
-public/howlers/
-public/Reckless Robots/
-
 # The originals, kept as the master for anything printed or re-rendered later.
-# npm run art:optimise moves them here as it converts.
+# npm run art:optimise moves them here as it converts, and the NFT collections a
+# family's card art is cut from live here too.
+#
+# NOT in public/. Everything under public/ is uploaded to the site as-is, so the
+# source art was being served from cardsofcronos.com and counted against the
+# deploy: 813 MB of which 16 MB was actually used. A 43 MB zip in there is what
+# finally broke the deploy, because Cloudflare refuses an asset over 25 MiB.
 art-source/
 
 # Heavy files

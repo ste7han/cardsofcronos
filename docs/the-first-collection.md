@@ -184,7 +184,7 @@ What does have to be settled is the burn address: 10 of those tokens sit at
 
 ## The art
 
-`public/NFTCARDS/` — 236 PNGs, about 3 MB each, **734 MB in total**. 235 of them
+`art-source/NFTCARDS/` — 236 PNGs, about 3 MB each, **734 MB in total**. 235 of them
 match a card id one for one; `mystery.png` is the placeholder and is zero bytes.
 
 Untracked, and gitignored on purpose. It was one `git add .` away from being in
