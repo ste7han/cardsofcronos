@@ -35,6 +35,7 @@ public/art/*
 # the same reason: they are the originals and they are megabytes each.
 public/crooks/
 public/wolfies/
+public/howlers/
 
 # The originals, kept as the master for anything printed or re-rendered later.
 # npm run art:optimise moves them here as it converts.
