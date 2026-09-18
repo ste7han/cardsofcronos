@@ -36,6 +36,7 @@ public/art/*
 public/crooks/
 public/wolfies/
 public/howlers/
+public/Reckless Robots/
 
 # The originals, kept as the master for anything printed or re-rendered later.
 # npm run art:optimise moves them here as it converts.
