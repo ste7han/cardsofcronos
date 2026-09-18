@@ -15,6 +15,11 @@ const LINKS = [
   { href: "/mint", label: "MINT" },
   { href: "/tournament", label: "WEEKLY" },
   { href: "/burn", label: "BURN" },
+  // Next to BURN because they are one subject: where the money goes, and what
+  // is able to touch it on the way. It was only in the footer, and a page that
+  // exists to be checked is a page that has to be findable without scrolling to
+  // the bottom of something first.
+  { href: "/contracts", label: "CONTRACTS" },
   { href: "/profile", label: "PROFILE" },
 ];
 
