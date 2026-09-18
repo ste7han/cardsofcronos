@@ -90,7 +90,20 @@ interface Aiming {
   closed?: number;
 }
 
-export function Game({ board = BOARDS[0]! }: { board?: Board }) {
+export function Game({
+  board = BOARDS[0]!,
+  onMatch,
+}: {
+  board?: Board;
+  /**
+   * Told when a match starts and when there is none.
+   *
+   * So the page above can put the opponent picker away: leaving it over the
+   * table while somebody is playing says the choice is still open when it is
+   * not, and the table is sized to the viewport with no room to spare.
+   */
+  onMatch?: (playing: boolean) => void;
+}) {
   // Whose deck this is. Signing in or out mid-visit has to restart the table:
   // the deck it dealt from belongs to an address, and carrying on with the last
   // one would be playing somebody else's cards.
@@ -194,7 +207,7 @@ export function Game({ board = BOARDS[0]! }: { board?: Board }) {
       SET,
       seed,
       asDemo
-        ? demoDecks(seed)
+        ? demoDecks(seed, board)
         : {
             you: yours.cardIds,
             // From data/boards.ts, which is also what the server replays the
@@ -432,6 +445,13 @@ export function Game({ board = BOARDS[0]! }: { board?: Board }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [aiming]);
+
+  // Reported from the render rather than from start(), because the table also
+  // empties on signing out and on a deck being rejected — and the picker has to
+  // come back for those too.
+  useEffect(() => {
+    onMatch?.(state !== null);
+  }, [state, onMatch]);
 
   if (!state) {
     if (deckInfo && deckInfo.cardIds.length === 0) {

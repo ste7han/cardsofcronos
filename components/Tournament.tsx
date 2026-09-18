@@ -50,7 +50,7 @@ interface Answer {
   week: string;
   closes: number;
   boards: BoardRow[];
-  pot: { wei: string | null; most: string | null; wallet: string | null };
+  pot: { wei: string | null; wallet: string | null };
 }
 
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -104,14 +104,20 @@ export function Tournament() {
    * the larger number as the prize, which is the flattering direction to be
    * wrong in and the one this page is written against.
    */
-  const shown = answer?.pot.most ?? answer?.pot.wei ?? null;
+  const shown = answer?.pot.wei ?? null;
   const prize =
     shown === null ? "—" : `${Math.round(toTokens(shown)).toLocaleString("en-US")} $CROCARD`;
 
-  // The balance, but only when it is more than a week can pay. Equal means the
-  // ceiling is not biting and there is nothing to explain.
+  // What the boards add up to against what is in the pot. Said only when they
+  // differ, which is the week somebody would otherwise read the pot as the
+  // prize — and the pot is always the bigger number now that a board plays for
+  // a share of it.
+  const shares = answer?.boards.reduce(
+    (sum, board) => (board.prize === null ? sum : sum + BigInt(board.prize)),
+    0n,
+  );
   const holdingBack =
-    answer?.pot.wei != null && answer.pot.most != null && BigInt(answer.pot.wei) > BigInt(answer.pot.most)
+    answer?.pot.wei != null && shares != null && BigInt(answer.pot.wei) > shares
       ? Math.round(toTokens(answer.pot.wei)).toLocaleString("en-US")
       : null;
 
@@ -129,7 +135,7 @@ export function Tournament() {
             the balance would be the bigger number and the wrong promise. The
             balance is said underneath instead, where it cannot be misread as
             the prize. */}
-        <Figure label={answer?.pot.most != null ? "TO BE WON" : "IN THE POT"} value={prize} />
+        <Figure label="IN THE POT" value={prize} />
       </div>
 
       <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
@@ -153,9 +159,8 @@ export function Tournament() {
           that is not biting reads as a page looking for reasons to pay less. */}
       {holdingBack !== null ? (
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
-          There is {holdingBack} $CROCARD in the pot, and a week pays at most one percent of the
-          supply. The rest is not held back from anybody — it stays in the pot and is next
-          week&rsquo;s prize.
+          There is {holdingBack} $CROCARD in the pot and the boards play for part of it. The rest
+          is not held back from anybody — it stays here, grows, and is what next week plays for.
         </p>
       ) : null}
 

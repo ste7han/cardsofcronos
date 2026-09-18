@@ -25,7 +25,7 @@ import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { PUBLIC_RPCS, rpc, tokenBalances } from "@/lib/cronos";
 import { selector } from "@/lib/evm-tx";
 import { asWord } from "@/lib/publisher";
-import { lockedOut } from "@/lib/gate";
+import { lockedOut, prizeFor } from "@/lib/gate";
 import { CONTRACTS, CROCARD } from "@/lib/revenue";
 import { INDEX } from "@/lib/set";
 import { pastWeeks, record, standings, weekEnds, weekOf } from "@/lib/tournament";
@@ -58,74 +58,27 @@ export async function GET() {
 }
 
 /**
- * What one board would pay if the week closed now, in base units, or null.
+ * What the pot is holding, in the token's smallest unit, or null.
  *
- * Its share of the pot and not the pot — those stopped being the same number
- * the day there was more than one board, and the pot is the bigger one.
- */
-async function prizeFor(board: string): Promise<string | null> {
-  const pot = CONTRACTS.pot;
-  if (pot === null) return null;
-
-  const secret = env().CRONOS_RPC;
-  const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
-  try {
-    const answer = await rpc<string>(rpcs, "eth_call", [
-      { to: pot, data: selector("nextPrize(bytes32)") + asWord(board) },
-      "latest",
-    ]);
-    return BigInt(answer).toString();
-  } catch {
-    return null;
-  }
-}
-
-/**
- * What is in the prize pot, in the token's smallest unit, or null.
- *
- * IT IS A TOKEN BALANCE AND NOT A WALLET BALANCE. This asked `eth_getBalance` of
- * a wallet once, from when a quarter of a mint arrived as CRO. It does not any
- * more: the splitter buys $CROCARD and pays the pot in it, so the CRO balance of
- * that address is the gas it was deployed with — a real number, and the wrong
- * one to print under "IN THE POT".
+ * THE POT AND NOT A PRIZE. It used to return both, with `most` reading
+ * `nextPrize()` — a function that took no board back when there was only one.
+ * There are several now and each has its own share, so a single "most" is a
+ * number that belongs to nobody. Each board carries its own; this is the pool
+ * they come out of.
  *
  * Null covers two different things and the page has to say them differently: the
- * pot is not deployed yet, or an RPC would not answer. Neither is zero. A pot
+ * pot is not deployed, or an RPC would not answer. Neither is zero. A pot
  * reading empty because a request timed out is the kind of number that makes
  * somebody stop playing.
- *
- * TWO NUMBERS, BECAUSE THEY STOPPED BEING THE SAME. A week pays at most one
- * percent of supply and what is over that rolls into the next week, so once the
- * pot is fuller than a week may pay, the balance is no longer what a winner
- * takes home. `most` is what they would actually get — `nextPrize()` on the
- * contract, which is the contract's own answer rather than this route doing the
- * arithmetic with a ceiling it assumed.
  */
-async function potNow(): Promise<{
-  wei: string | null;
-  most: string | null;
-  wallet: string | null;
-}> {
+async function potNow(): Promise<{ wei: string | null; wallet: string | null }> {
   const pot = CONTRACTS.pot;
-  if (pot === null) return { wei: null, most: null, wallet: null };
+  if (pot === null) return { wei: null, wallet: null };
 
   const secret = env().CRONOS_RPC;
   const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
-
-  const [[held], most] = await Promise.all([
-    tokenBalances(rpcs, CROCARD, [pot]),
-    rpc<string>(rpcs, "eth_call", [{ to: pot, data: selector("nextPrize()") }, "latest"]).catch(
-      // The balance is worth showing on its own. A ceiling this route could not
-      // read is a missing sentence, not a missing pot.
-      () => null,
-    ),
-  ]);
-
-  return {
-    wei: held?.toString() ?? null,
-    most: most === null ? null : BigInt(most).toString(),
-    wallet: pot,
-  };
+  const [held] = await tokenBalances(rpcs, CROCARD, [pot]);
+  return { wei: held?.toString() ?? null, wallet: pot };
 }
 
 export async function POST(request: Request) {

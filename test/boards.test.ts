@@ -13,6 +13,8 @@ import { describe, expect, it } from "vitest";
 import { CARDS } from "@/data/cards";
 import { BOARDS, boardOf, opponentDeck } from "@/data/boards";
 import { deckProblems } from "@/engine/deck";
+import { RULES } from "@/engine/types";
+import { demoDecks } from "@/lib/demo";
 import { asWord, closeWeekData } from "@/lib/publisher";
 import { selector } from "@/lib/evm-tx";
 import { INDEX } from "@/lib/set";
@@ -162,5 +164,38 @@ describe("the contract and the boards agree", () => {
     // The publisher is what lives on a server. A key that could also decide how
     // the money is divided is a key worth stealing.
     expect(source).not.toMatch(/setShare[^}]*msg\.sender != publisher/);
+  });
+});
+
+describe("a demo match", () => {
+  it("faces the opponent that was picked, not one of its own", () => {
+    // It built its own opponent regardless of the board, so somebody who chose
+    // Loaded Lions and pressed the demo button played something else with
+    // nothing on the page saying so.
+    const lions = boardOf("lions")!;
+    const { opponent } = demoDecks(1, lions);
+    expect(opponent.filter((id) => id.startsWith("lions-"))).toHaveLength(8);
+    expect(opponent).toEqual(opponentDeck(CARDS, lions, 1));
+  });
+
+  it("still refuses to be a mirror match on the plain board", () => {
+    // The reason demoDecks existed at all: the borrowed deck has a theme, and
+    // the opponent is drawn from the themes that are not it. A family board has
+    // one deck by design and that rule does not apply to it.
+    const bot = boardOf("bot")!;
+    const { you, opponent } = demoDecks(3, bot);
+    expect(you.length).toBe(RULES.deckSize);
+    expect(opponent.length).toBe(RULES.deckSize);
+    expect(opponent).not.toEqual(you);
+  });
+
+  it("deals two legal decks either way", () => {
+    for (const board of BOARDS) {
+      for (const seed of [0, 5, 77]) {
+        const { you, opponent } = demoDecks(seed, board);
+        expect(deckProblems(you, INDEX), `${board.id} your deck`).toEqual([]);
+        expect(deckProblems(opponent, INDEX), `${board.id} the opponent`).toEqual([]);
+      }
+    }
   });
 });

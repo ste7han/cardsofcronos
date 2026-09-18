@@ -16,6 +16,7 @@
 // data/preset-decks.ts, where the seeds are measured rather than picked.
 
 import { PRESET_DECKS } from "@/data/preset-decks";
+import { BOARDS, opponentDeck, type Board } from "@/data/boards";
 import { buildDeckPreferring } from "@/engine/deck";
 import { SET } from "@/lib/set";
 
@@ -70,11 +71,26 @@ export function demoOpponentTheme(seed: number) {
  * day they drifted every submitted demo would fail to replay with nothing to
  * point at.
  */
-export function demoDecks(seed: number): { you: string[]; opponent: string[] } {
+export function demoDecks(
+  seed: number,
+  board: Board = BOARDS[0]!,
+): { you: string[]; opponent: string[] } {
   return {
     you: demoDeck(),
+    // THE BOARD DECIDES THE OPPONENT, even in a demo. It did not, and a player
+    // who picked Loaded Lions and pressed the demo button faced something else
+    // entirely with nothing saying so.
+    //
+    // The plain board keeps its own rule, which is the reason this function
+    // existed in the first place: the opponent is drawn from the themes that are
+    // NOT the borrowed deck's, so a demo is never a mirror match. A family
+    // board has one deck by design and that does not apply to it.
+    //
     // The same +7919 the table has always used. It is here rather than there
-    // now, because the server has to reproduce it exactly.
-    opponent: buildDeckPreferring(SET, seed + 7919, demoOpponentTheme(seed).prefer),
+    // because the server has to reproduce it exactly.
+    opponent:
+      board.opponent.kind === "family"
+        ? opponentDeck(SET, board, seed)
+        : buildDeckPreferring(SET, seed + 7919, demoOpponentTheme(seed).prefer),
   };
 }
