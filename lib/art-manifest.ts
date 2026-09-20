@@ -403,6 +403,14 @@ export const ART_FILES: Record<string, string> = {
   "wolfies-vii": "/art/wolfies-vii.webp?v=32698130",
   "wolfies-viii": "/art/wolfies-viii.webp?v=424fd51f",
   "wolfies": "/art/wolfies.webp?v=d551a28c",
+  "wolfswap-fees": "/art/wolfswap-fees.webp?v=cfed102f",
+  "wolfswap-hunt": "/art/wolfswap-hunt.webp?v=cf48e4ca",
+  "wolfswap-liquidity": "/art/wolfswap-liquidity.webp?v=3c18e7a3",
+  "wolfswap-lowest": "/art/wolfswap-lowest.webp?v=32698130",
+  "wolfswap-pack": "/art/wolfswap-pack.webp?v=8c0ce2de",
+  "wolfswap-pool": "/art/wolfswap-pool.webp?v=ae30bc7e",
+  "wolfswap-teeth": "/art/wolfswap-teeth.webp?v=b51ff6cb",
+  "wolfswap-two": "/art/wolfswap-two.webp?v=424fd51f",
   "wolfswap": "/art/wolfswap.webp?v=29be5739",
   "zwangtun": "/art/zwangtun.webp?v=b8d2437a"
 };
