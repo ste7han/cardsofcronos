@@ -190,9 +190,9 @@ const FAMILIES: Family[] = [
   },
   // =========================================================================
   {
-    key: "elmo",
-    name: "ELMO",
-    ticker: "ELMO",
+    key: "troll",
+    name: "Trollfam",
+    ticker: "TROLL",
     sector: "meme",
     sectorWhy: "its own account calls it a Cronos meme token",
     intentWhy:
@@ -214,7 +214,7 @@ const FAMILIES: Family[] = [
         moment: "III", rarity: "rare", launch: 26_000, pump: 15_000, holders: 3,
         flavour: "It built a dashboard so you could watch its own wallets.",
         effect: { kind: "unbankedMC", percentage: 20 },
-        why: "elmo-cro.com tracks project wallets, holders, transactions and treasury",
+        why: "troll-cro.com tracks project wallets, holders, transactions and treasury",
       },
       {
         moment: "IV", rarity: "rare", launch: 26_000, pump: 15_000, holders: 3,
@@ -250,9 +250,9 @@ const FAMILIES: Family[] = [
   },
   // =========================================================================
   {
-    key: "ganggang",
-    name: "Gang Gang",
-    ticker: "GG",
+    key: "sloth",
+    name: "Sloth Gang",
+    ticker: "SLOTH",
     sector: "meme",
     sectorWhy: "a CroFam memecoin and nothing else, by its own description",
     intentWhy:
@@ -371,9 +371,9 @@ const FAMILIES: Family[] = [
   },
   // =========================================================================
   {
-    key: "crodraw",
-    name: "CroDraw",
-    ticker: "CRODRAW",
+    key: "croginal",
+    name: "Croginal",
+    ticker: "CROGINAL",
     sector: "infra",
     sectorWhy: "a venue. You pass through a lottery, you do not hold a position in it",
     intentWhy: "money: it is a machine for paying out, and it says what share goes where.",

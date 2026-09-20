@@ -197,9 +197,9 @@ export const FAMILY_INTENT: Record<string, Intent> = {
   bored: "momentum",
   scrap: "momentum",
   imperium: "takes",
-  elmo: "money",
-  crodraw: "money",
-  ganggang: "community",
+  troll: "money",
+  croginal: "money",
+  sloth: "community",
 
   // Added by hand rather than from the orders, 2026-09-12.
   //
@@ -212,7 +212,7 @@ export const FAMILY_INTENT: Record<string, Intent> = {
   // is nothing else to call a token whose product is education and collaboration.
   // It adds to the style that leads the field at 53.7%, and filing it elsewhere to
   // avoid that would be a lie about what the project is.
-  wolfies: "momentum",
+  phenix: "momentum",
   fftb: "community",
 };
 

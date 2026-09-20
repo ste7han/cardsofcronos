@@ -44,7 +44,7 @@ interface Change {
 
 const PLAN: Record<string, Change> = {
   // --- the three that were their own legendary ----------------------------
-  ganggang: {
+  sloth: {
     effect: { kind: "healHolders", target: "allOwnProjects", amount: "full" },
     why: "a gang is a group that decided to be one, and it brings everybody back whole",
   },
@@ -105,7 +105,7 @@ const PLAN: Record<string, Change> = {
     standing: { kind: "extraBudget", target: "self", mc: 40_000 },
     why: "the front door of the chain takes a toll on everything that walks through",
   },
-  wolfies: {
+  phenix: {
     payoff: {
       when: { kind: "bankedAtLeast", count: 1 },
       effect: { kind: "directMC", target: "self", mc: 190_000 },
@@ -116,7 +116,7 @@ const PLAN: Record<string, Change> = {
     standing: { kind: "drawCards", amount: 1 },
     why: "a nation with no borders keeps letting people in",
   },
-  crodraw: {
+  croginal: {
     payoff: {
       when: { kind: "turnAtLeast", turn: 7 },
       effect: { kind: "directMC", target: "self", mc: 210_000 },
@@ -130,7 +130,7 @@ const PLAN: Record<string, Change> = {
     },
     why: "a game of pure chance, and the jackpot lands on the wreckage",
   },
-  elmo: {
+  troll: {
     standing: { kind: "directMC", target: "self", mc: 36_000 },
     why: "it published its own books, and a dashboard that keeps counting keeps paying",
   },
