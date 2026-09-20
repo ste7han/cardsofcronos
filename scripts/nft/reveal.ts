@@ -140,7 +140,11 @@ async function main(): Promise<void> {
   const cid = lastHeaders["x-amz-meta-cid"];
   if (!cid) throw new Error("No bucket CID came back in x-amz-meta-cid.");
 
-  console.log(`  ${sent} turned over, ${5555 - upto} still face down`);
+  // The size of the collection is whatever the shuffle settled on, not a number
+  // typed in here. It was 5555 until three cards came back into the set and it
+  // became 5603; a literal would have quietly printed the wrong count.
+  const { tokens } = JSON.parse(await readFile("data/shuffle.json", "utf8")) as { tokens: number };
+  console.log(`  ${sent} turned over, ${tokens - upto} still face down`);
   console.log(`\n  new folder CID  ${cid}`);
   console.log(`  setBaseURI to   ipfs://${cid}/`);
   console.log(`\n  Nothing has changed for anybody until that is on chain.\n`);

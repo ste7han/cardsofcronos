@@ -6,14 +6,14 @@
 // anybody buys token 7. The contract cannot decide it — tokenURI is base + id
 // and nothing more — so the whole sequence is drawn here, hashed, and the hash
 // is published ahead of the mint. Afterwards anybody can rerun this with the
-// same seed, get the same 5555 lines, and check the hash against what was
+// same seed, get the same lines back, and check the hash against what was
 // promised. That is the whole of the guarantee: not that the order is fair,
 // but that it was fixed before the first sale and has not moved since.
 //
 // ── HOW MANY OF EACH ─────────────────────────────────────────────────────────
 //
 // Settled by the maker: 21 of every common, 16 of every rare, 8 of every epic,
-// 5 of every legendary, 3 of every mythic. Across 445 cards that is 5555, and
+// 5 of every legendary, 3 of every mythic. Across the set that is 5603 today,
 // every card exists — which the alternative did not: at 2000 tokens on the
 // printed odds, 25 of the 45 mythics would never have been minted at all.
 //

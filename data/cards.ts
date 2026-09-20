@@ -6830,6 +6830,19 @@ const TOOLS: ToolCard[] = [
     effect: { kind: "cancel", target: "opponent", count: 1 },
     flavour: "Eleven wallets, one cluster, and a founder with nothing to say.",
   },
+  {
+    id: "elmo-books",
+    type: "tool",
+    name: "ELMO",
+    ticker: "ELMO",
+    rarity: "rare",
+    // It was a family of eight until the project stopped existing. What it
+    // actually built survives as one card: a dashboard over its own wallets,
+    // holders and treasury. So it pays what your own books say you are holding
+    // and have not realised yet — the number the dashboard existed to show.
+    effect: { kind: "unbankedMC", percentage: 18 },
+    flavour: "It published its own books, which almost nothing does.",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -7384,6 +7397,34 @@ const TACTICS: TacticCard[] = [
     flavour:
       "They were never going to tell you when. You were the reason it worked.",
   },
+  {
+    id: "gang-gang",
+    type: "tactic",
+    name: "Gang Gang",
+    ticker: "GG",
+    rarity: "rare",
+    // The only one-off in the set priced per project you hold. A gang is a group
+    // that decided to be one, so the card is worth whatever the group is: nothing
+    // on an empty board, and more the more of it there is.
+    effect: { kind: "directMC", target: "self", mc: 24_000, per: "any" },
+    flavour: "Are you Gang Gang? That was the entire entry requirement.",
+  },
+  {
+    id: "crodraw",
+    type: "tactic",
+    name: "CroDraw",
+    ticker: "CRODRAW",
+    rarity: "rare",
+    // A weekly draw that rolled over when too few tickets sold. The rollover is
+    // the mechanic worth keeping: a small certain payout now, and the pot only
+    // when the match has run long enough for a draw to have come round.
+    effect: { kind: "directMC", target: "self", mc: 30_000 },
+    payoff: {
+      when: { kind: "turnAtLeast", turn: 7 },
+      effect: { kind: "directMC", target: "self", mc: 120_000 },
+    },
+    flavour: "Every Wednesday, and it rolled over until somebody won it.",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -7929,7 +7970,11 @@ export const CARDS: readonly Card[] = [
 /** The spread the set is supposed to keep to. The test guards this. */
 export const EXPECTED_DISTRIBUTION = {
   common: 111,
-  rare: 120,
+  // 120 until Gang Gang, ELMO and CroDraw came back. Their projects are gone —
+  // the three shut down — but what each one actually did survives as a single
+  // rare: a dashboard over its own books, a group that pays for its own size,
+  // and a weekly draw that rolls over.
+  rare: 123,
   epic: 108,
   legendary: 61,
   mythic: 45,
