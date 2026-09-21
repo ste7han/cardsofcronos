@@ -1,6 +1,6 @@
 "use client";
 
-// Opening a pack, or the one card you bought.
+// Opening the cards you just bought.
 //
 // Before this the cards simply appeared: you loaded the deck page and a deck was
 // there. That is the one moment a trading card game has that nothing else does,
@@ -25,42 +25,56 @@ import { cx } from "@/lib/cx";
 import { RARITY } from "@/lib/rarity";
 import { INDEX } from "@/lib/set";
 
-export type PackKind = "pack" | "single";
-
-const COPY: Record<
-  PackKind,
-  { eyebrow: string; sealed: string; blurb: string; done: string; stack: number }
-> = {
-  pack: {
-    eyebrow: "SET 01 — PACK",
-    sealed: "A PACK",
+/**
+ * What to call the thing being opened.
+ *
+ * Taken from how many cards there are rather than from a label passed in. It
+ * used to be a `kind` of "pack" or "single", and those were two products with
+ * two prices; there is one now — a number of cards — so a label alongside the
+ * count was a second source for the same fact, and the pack's copy still
+ * promised a guaranteed rare for a while after the guarantee was gone.
+ *
+ * The stack behind the seal follows the same number. One card is not a stack:
+ * three sealed cards fanned behind a single is the pack's picture borrowed for
+ * something that is not one.
+ */
+function copyFor(count: number): {
+  eyebrow: string;
+  sealed: string;
+  blurb: string;
+  done: string;
+  stack: number;
+} {
+  if (count === 1) {
+    return {
+      eyebrow: "SET 01 — ONE CARD",
+      sealed: "ONE CARD",
+      blurb:
+        "One card, drawn at the printed odds. Nothing is promised and nothing needs to be — one card at 50/35/9/5/1 is exactly what the page says it is.",
+      done: "KEEP IT",
+      stack: 1,
+    };
+  }
+  return {
+    eyebrow: `SET 01 — ${count} CARDS`,
+    sealed: `${count} CARDS`,
     blurb:
-      "Ten cards, drawn. One of them is rare or better and that is the only promise; the rest is the odds. Nothing you already own comes out of it twice.",
+      `${count} cards, drawn at the printed odds. Nothing is promised on top of them — the order ` +
+      "they come out in was settled before the mint opened. None of them repeats inside this one " +
+      "purchase.",
     done: "KEEP THEM",
-    stack: 3,
-  },
-  single: {
-    eyebrow: "SET 01 — ONE CARD",
-    sealed: "ONE CARD",
-    blurb:
-      "One card, drawn at the printed odds. Nothing is promised and nothing needs to be — one card at 50/35/9/5/1 is exactly what the page says it is.",
-    done: "KEEP IT",
-    // One card is not a stack. Three sealed cards fanned behind a single is the
-    // pack's picture borrowed for a product that is not a pack.
-    stack: 1,
-  },
-};
+    stack: Math.min(count, 3),
+  };
+}
 
-export function PackOpening({
+export function CardsOpening({
   cardIds,
   onDone,
-  kind = "pack",
 }: {
   cardIds: readonly string[];
   onDone: () => void;
-  kind?: PackKind;
 }) {
-  const copy = COPY[kind];
+  const copy = copyFor(cardIds.length);
   const [opened, setOpened] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [turned, setTurned] = useState<ReadonlySet<number>>(new Set());

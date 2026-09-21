@@ -37,7 +37,7 @@ export default function MintPage() {
             <Link href="/deck" className="text-pump hover:underline">
               Until then the whole set is open to build from
             </Link>{" "}
-            — no pack to open first, because there is no pack worth opening yet.
+            — nothing to buy first, because there is nothing worth buying yet.
           </p>
         </div>
       </div>
@@ -47,8 +47,8 @@ export default function MintPage() {
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
           One rule sits above the rest:{" "}
           <span className="text-fg">holding never changes what you may put in a deck.</span> No
-          amount of token buys a card, a slot or a rule. What you deck comes out of packs, and a
-          pack is the same pack for everyone.
+          amount of token buys a card, a slot or a rule. What you deck is what you drew, and the
+          odds are the same odds for everyone.
         </p>
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
           That was measured before it was decided. When decks did have a points budget, one built on
@@ -119,8 +119,8 @@ export default function MintPage() {
       <section className="mt-16">
         <h2 className="display text-xl">THE SET IN TIERS</h2>
         <p className="mt-2 max-w-xl text-[11px] leading-relaxed text-muted">
-          This is how set 01 is put together. The spread is settled and a pack's pull rates follow
-          from it — they are printed above the pack.
+          This is how set 01 is put together. The spread is settled and the pull rates follow from
+          it — they are printed beside the price.
         </p>
 
         <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-5">

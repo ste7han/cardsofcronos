@@ -316,19 +316,23 @@ somebody one and calling it a starting point.
 
 ## Collecting
 
-**A pack is 10 cards**, one slot guaranteed rare or better. The only other way
-to buy is **one card**, at the printed odds with nothing promised.
+**You buy a number of cards**, at the printed odds, with nothing promised on top
+of them. Up to **50 in one transaction**, which is what the contract allows.
 
-One card needs no guarantee and a pack does. Ten cards with no floor is a wrapper
-somebody opens and feels robbed by; one card at 50/35/9/5/1 is exactly what the
-page says it is, with no bad slot hidden inside a good one. That floor is what
-the pack sells, and it is why a pack is worth a third less per card.
+**The pack is gone**, and not over its price. It was ten cards for 100 CRO where
+ten singles were 150, and what the third off was buying was a floor: one slot
+guaranteed rare or better. Which card each token is was settled before the mint
+opened and published as a hash, and a sequence fixed in advance cannot promise
+what is inside any ten tokens somebody buys together — the contract has nothing
+in it that draws, `buy(amount)` mints the next `amount` in the published order.
+So the floor could not have been honoured. A floor that cannot be honoured is not
+a product, and the guarantee came out of `engine/pack.ts` with it rather than
+being left in to enforce a promise no page makes.
 
-**The 60-card deck mint is gone.** It handed over sixty in one go — twenty more
-than a deck, so there was something left to build — and it was a third product on
-a page that now has two. `scripts/collection-packs.ts` still models a player who
-starts with sixty cards, spelled as six packs, so its rows stay comparable with
-every run before this.
+**The 60-card deck mint went before that.** It handed over sixty in one go —
+twenty more than a deck, so there was something left to build.
+`scripts/collection-packs.ts` still models a player who starts with sixty cards,
+drawn ten at a time, so its rows stay comparable with every run before this.
 
 Pull weights, the same table for both:
 
@@ -565,10 +569,10 @@ This replaced three tiers that said so themselves — "no bag", "a bag", "a seri
 bag", burning 10/7/4 — and none of those numbers had been settled.
 
 **A collection buys choice, not power.** A card is the same card however you got
-it, and packs run 44.6% common and 31.7% rare against this set — measured over
-four thousand packs — so a bigger collection is mostly a bigger pile of the cheap
-tiers. What no pack fixes is that two collections drawn on these rules play
-out a long way apart; that spread *is* what opening packs is, and the rewards
+it, and a draw runs 44.6% common and 31.7% rare against this set — measured over
+four thousand purchases — so a bigger collection is mostly a bigger pile of the
+cheap tiers. What no draw fixes is that two collections built on these rules play
+out a long way apart; that spread *is* what buying cards is, and the rewards
 ladder is what absorbs it.
 
 What that spread is worth in win rate has not been measured for this set.
@@ -644,13 +648,13 @@ royalties in the first version, and both moved. That is the settled position and
 oversight, so the wallet stays in the file saying so — deleting it would make
 paying the maker a new decision rather than a visible one.
 
-**A mint is one card or ten, and nothing else.** A card is 15 CRO and a pack of
-ten is 100, so the pack is a third off — ten singles would be 150. The $CROCARD
-discount carried over from the first collection comes off on top, one percent per
-million held and capped at thirty, which puts the floor at 10.5 CRO for a card
-and 70 for a pack. `lib/revenue.ts` refuses at load a pack that is not cheaper
-per card than a single, because that is a button nobody has a reason to press and
-the mistake is one digit wide.
+**A mint is a number of cards at one price.** A card is 15 CRO, ten are 150, and
+there is no second product — see *Collecting* above for why the pack went. The
+$CROCARD discount carried over from the first collection comes off on top, one
+percent per million held and capped at thirty, which puts the floor at 10.5 CRO a
+card. `lib/revenue.ts` holds the price and the per-transaction cap, and
+`test/revenue.test.ts` reads both back out of the Solidity — a page quoting a
+price the chain refuses is a buyer who signs and gets a revert.
 
 **Nothing arrives in CRO.** `contracts/Splitter.sol` swaps the whole of a payment
 for $CROCARD on the EbisusBay pool and divides the tokens afterwards, so every

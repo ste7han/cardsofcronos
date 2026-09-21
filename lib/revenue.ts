@@ -221,50 +221,39 @@ for (const wallet of Object.values(WALLETS)) {
 /**
  * What a mint costs, in whole CRO.
  *
- * Two ways to buy and no others: one card, or ten. The pack is the cheaper way
- * in per card and that is the whole reason it exists — ten singles are 150 CRO
- * and the pack is 100, so a pack is a third off. Checked at load, because a pack
- * that is not cheaper than its cards is a button nobody has a reason to press
- * and the mistake is one digit wide.
+ * One price, per card, however many you buy. It is the price the contract
+ * charges and there is no second product: `buy(amount)` on
+ * contracts/CardsOfCronosSetOne.sol multiplies, so ten cards are ten times one
+ * card and nothing on a page can make that a third cheaper.
  *
- * These are the list prices. The $CROCARD discount carried over from the first
+ * There was a pack until September 2026 — ten for 100 where ten singles were
+ * 150 — and the reason it went is that the sequence is settled in advance. A
+ * pack sells a floor, "one slot rare or better", and a fixed published order
+ * cannot promise the contents of any ten tokens somebody happens to buy
+ * together. Selling a floor that cannot be honoured is worse than selling ten
+ * cards, so what is left is ten cards. See lib/provenance.ts.
+ *
+ * This is the list price. The $CROCARD discount carried over from the first
  * collection comes off on top — one percent per million held, capped at thirty —
- * so the most anybody pays less is 10.5 CRO for a card and 70 for a pack.
+ * so the least anybody pays is 10.5 CRO a card.
  */
-export interface MintOption {
-  id: "single" | "pack";
-  /** How many cards it hands over. */
-  cards: number;
-  /** List price in whole CRO, before the $CROCARD discount. */
-  cro: number;
-}
+export const MINT_PRICE_CRO = 15;
 
-export const MINT_OPTIONS: readonly MintOption[] = [
-  { id: "single", cards: 1, cro: 15 },
-  { id: "pack", cards: 10, cro: 100 },
-];
-
-/** CRO per card, for comparing the two ways to buy. */
-export function croPerCard(option: MintOption): number {
-  return option.cro / option.cards;
-}
+/**
+ * Most cards one transaction may buy.
+ *
+ * `MAX_MINT_PER_TX` on the contract, repeated here so the page cannot offer a
+ * quantity the chain will reject. It is a constant there, so this is the one
+ * place it can drift, and test/revenue.test.ts reads it back out of the Solidity.
+ */
+export const MAX_PER_TX = 50;
 
 {
-  const single = MINT_OPTIONS.find((option) => option.id === "single")!;
-  const pack = MINT_OPTIONS.find((option) => option.id === "pack")!;
-  if (croPerCard(pack) >= croPerCard(single)) {
-    throw new Error(
-      `A pack costs ${croPerCard(pack)} CRO a card and a single costs ${croPerCard(single)}. ` +
-        `Nobody would buy the pack.`,
-    );
+  if (!Number.isInteger(MINT_PRICE_CRO) || MINT_PRICE_CRO <= 0) {
+    throw new Error(`A card costs ${MINT_PRICE_CRO} CRO, which is not a price.`);
   }
-  for (const option of MINT_OPTIONS) {
-    if (!Number.isInteger(option.cro) || option.cro <= 0) {
-      throw new Error(`The ${option.id} price is ${option.cro} CRO, which is not a price.`);
-    }
-    if (!Number.isInteger(option.cards) || option.cards <= 0) {
-      throw new Error(`The ${option.id} hands over ${option.cards} cards.`);
-    }
+  if (!Number.isInteger(MAX_PER_TX) || MAX_PER_TX <= 0) {
+    throw new Error(`${MAX_PER_TX} is not a number of cards.`);
   }
 }
 
@@ -329,7 +318,7 @@ export const STREAMS: readonly Stream[] = [
   {
     id: "mints",
     name: "Paid mints",
-    from: "Packs and cards of the new line.",
+    from: "Cards of the new line.",
     // Every share is bought as $CROCARD before it is split. The CRO that arrives
     // goes through the market first, so the whole of a mint is buy pressure and
     // each destination is paid in the thing the game is about — half of it

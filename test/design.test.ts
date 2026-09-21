@@ -19,9 +19,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { STREAMS } from "@/lib/revenue";
+import { MAX_PER_TX, MINT_PRICE_CRO, STREAMS } from "@/lib/revenue";
 import { MARKETING_COST, RULES, SECTORS, TURN_ACTION_COST } from "@/engine/types";
-import { PACK_SIZE } from "@/engine/pack";
 import { PULL_WEIGHTS } from "@/engine/draw";
 
 const DESIGN = readFileSync("DESIGN.md", "utf8");
@@ -75,8 +74,12 @@ describe("the design document still describes this game", () => {
     }
   });
 
-  it("describes the packs the code opens", () => {
-    expect(DESIGN).toContain(`**A pack is ${PACK_SIZE} cards**`);
+  it("quotes the price and the cap the code holds", () => {
+    // It said "**A pack is 10 cards**" until the pack went. The check moved to
+    // the two numbers that replaced it rather than being deleted, because the
+    // price is the figure on the document most worth being right.
+    expect(DESIGN).toContain(`A card is ${MINT_PRICE_CRO} CRO`);
+    expect(DESIGN).toContain(`**${MAX_PER_TX} in one transaction**`);
     const weights = Object.entries(PULL_WEIGHTS)
       .map(([rarity, weight]) => `${rarity} ${weight}`)
       .join(" · ");

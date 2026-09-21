@@ -16,9 +16,9 @@ import {
   BURN_ADDRESS,
   CONTRACTS,
   CROCARD,
-  croPerCard,
   KNOWN_ADDRESSES,
-  MINT_OPTIONS,
+  MAX_PER_TX,
+  MINT_PRICE_CRO,
   MOST_PER_WEEK,
   NOT_A_HOLDER,
   POOL,
@@ -257,23 +257,30 @@ describe("what is still open", () => {
 });
 
 describe("what a mint costs", () => {
-  it("is one card or ten and nothing else", () => {
-    expect(MINT_OPTIONS.map((option) => option.id)).toEqual(["single", "pack"]);
-    expect(MINT_OPTIONS.map((option) => option.cards)).toEqual([1, 10]);
-  });
-
   it("is the price the maker settled", () => {
-    const price = (id: string) => MINT_OPTIONS.find((option) => option.id === id)!.cro;
-    expect(price("single")).toBe(15);
-    expect(price("pack")).toBe(100);
+    expect(MINT_PRICE_CRO).toBe(15);
   });
 
-  it("makes the pack the cheaper way in, which is the only reason it exists", () => {
-    const [single, pack] = MINT_OPTIONS;
-    expect(croPerCard(pack!)).toBeLessThan(croPerCard(single!));
-    // Ten singles are 150 and a pack is 100: a third off, not a rounding.
-    expect(croPerCard(pack!)).toBe(10);
-    expect(pack!.cards * single!.cro - pack!.cro).toBe(50);
+  it("is one price a card, because that is all the contract can charge", () => {
+    // There was a pack until September 2026: ten for 100 where ten singles were
+    // 150. `buy(amount)` multiplies `priceFor(msg.sender)` and has no volume
+    // rule in it, so a page offering a third off ten would have been a page
+    // quoting a price the chain refuses. Read out of the Solidity rather than
+    // asserted from memory, because the contract is deployed and this is the
+    // half that can still drift.
+    const source = readFileSync(new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url), "utf8");
+    expect(source).toMatch(/uint256 owed = priceFor\(msg\.sender\) \* amount;/);
+    expect(source).not.toMatch(/function buyPack|packPrice|PACK_/);
+  });
+
+  it("offers no quantity the chain would reject", () => {
+    // MAX_MINT_PER_TX is a constant on the contract, so this is the only place
+    // the two can disagree — and the way they would disagree is a buyer picking
+    // a number, signing, and having it revert.
+    const source = readFileSync(new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url), "utf8");
+    const onChain = /uint256 public constant MAX_MINT_PER_TX = (\d+);/.exec(source);
+    expect(onChain, "the contract no longer caps a transaction").not.toBeNull();
+    expect(MAX_PER_TX).toBe(Number(onChain![1]));
   });
 });
 

@@ -1,48 +1,73 @@
+// What a purchase has to prove.
+//
+// Cards are bought, so the draw has to be honest enough to be worth trusting:
+// the odds it prints are the odds it draws, at any collection size, and the same
+// seed gives the same cards back so a complaint about one can be looked at.
+//
+// It used to have a guarantee to prove as well — one slot rare or better in a
+// pack of ten. That went with the pack in September 2026, because the token
+// order is settled before the mint opens and a fixed sequence cannot promise
+// what is inside any ten of it. The tests for the guarantee went with it rather
+// than being loosened, since a weakened test for a removed promise is worse than
+// no test: it reads as though the promise is still being checked.
+
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { countProjects, deckProblems } from "@/engine/deck";
 import { buildIndex } from "@/engine/match";
-import {
-  PACK_PULL_WEIGHTS,
-  PACK_SIZE,
-  isBackbone,
-  openPack,
-  openSingle,
-} from "@/engine/pack";
-import { RARITIES, RULES } from "@/engine/types";
+import { MINT_PULL_WEIGHTS, isBackbone, openCards } from "@/engine/pack";
+import { RARITIES } from "@/engine/types";
 
 const index = buildIndex(CARDS);
 
-/**
- * A pack is bought, not given. What it has to prove is that it stays stingy
- * enough to be worth buying and honest enough to be worth trusting: the odds it
- * prints are the odds it draws, and the one slot it promises is always there.
- */
-describe("opening an ordinary pack", () => {
-  const packs = Array.from({ length: 400 }, (_, seed) => openPack(CARDS, seed));
+describe("buying cards", () => {
+  const BUY = 10;
+  const buys = Array.from({ length: 400 }, (_, seed) => openCards(CARDS, seed, BUY));
 
-  it("is eight cards", () => {
-    packs.forEach((pack, seed) => {
-      expect(pack.length, `seed ${seed}`).toBe(PACK_SIZE);
+  it("hands over exactly what was asked for", () => {
+    buys.forEach((bought, seed) => {
+      expect(bought.length, `seed ${seed}`).toBe(BUY);
+    });
+    for (const count of [1, 2, 7, 25, 50]) {
+      expect(openCards(CARDS, 9, count)).toHaveLength(count);
+    }
+  });
+
+  it("hands over cards that exist", () => {
+    for (const id of buys[0]!) expect(index.get(id), id).toBeTruthy();
+  });
+
+  it("refuses a quantity that is not one", () => {
+    // Loud rather than returning an empty array. A caller asking for zero or
+    // for half a card has a bug, and an empty array looks like a sold-out set.
+    for (const bad of [0, -1, 1.5, Number.NaN]) {
+      expect(() => openCards(CARDS, 1, bad), `${bad}`).toThrow(/not a number of cards/i);
+    }
+  });
+
+  it("never gives the same card twice in one purchase", () => {
+    // Ten of the same card in one transaction is a bug however you argue it.
+    buys.forEach((bought, seed) => {
+      expect(new Set(bought).size, `seed ${seed} has a duplicate`).toBe(bought.length);
     });
   });
 
-  it("never gives the same card twice in one pack", () => {
-    packs.forEach((pack, seed) => {
-      expect(new Set(pack).size, `seed ${seed} has a duplicate`).toBe(pack.length);
-    });
+  it("promises nothing above the odds", () => {
+    // The replacement for "always has at least one rare or better". The
+    // guarantee is gone, and the way to show it is gone is that its opposite
+    // happens: ten straight commons, which the old draw made impossible.
+    //
+    // Four thousand purchases, not four hundred, and the number is arithmetic
+    // rather than taste. Commons are half of every pull, so ten of them is
+    // 0.5^10 — about one purchase in a thousand. At four hundred the expected
+    // count is 0.4 and this test would fail for being unlucky; at four thousand
+    // it is about four, and it finds five.
+    const many = Array.from({ length: 4000 }, (_, seed) => openCards(CARDS, seed, BUY));
+    const allCommon = many.filter((bought) =>
+      bought.every((id) => index.get(id)!.rarity === "common"),
+    );
+    expect(allCommon.length, "not one purchase of ten commons in four thousand").toBeGreaterThan(0);
   });
-
-  it("always has at least one rare or better", () => {
-    // The one guarantee. Without it a pack can be eight commons, and eight
-    // commons is the moment somebody stops buying packs.
-    packs.forEach((pack, seed) => {
-      const hit = pack.some((id) => index.get(id)!.rarity !== "common");
-      expect(hit, `seed ${seed} opened eight commons`).toBe(true);
-    });
-  });
-
 
   it("draws the rarities the table says it does", () => {
     // Written against the table rather than against numbers copied out of it.
@@ -51,21 +76,20 @@ describe("opening an ordinary pack", () => {
     // being right, and a test that has to be edited to agree with a decision is
     // not checking the decision at all.
     //
-    // One slot in every pack is guaranteed rare or better, so commons come out
-    // below their own weight and everything else above it. That is the pack
-    // working, so the guarantee is taken out of the count rather than fudged
-    // into the tolerance.
+    // Every slot counts now. While a pack guaranteed one, that slot had to be
+    // taken out of the count or it pulled the common share below its weight.
     const counts = Object.fromEntries(RARITIES.map((r) => [r, 0])) as Record<string, number>;
-    for (const pack of packs) for (const id of pack.slice(1)) counts[index.get(id)!.rarity]!++;
-    const total = packs.length * (PACK_SIZE - 1);
-    const weight = RARITIES.reduce((sum, r) => sum + PACK_PULL_WEIGHTS[r], 0);
+    for (const bought of buys) for (const id of bought) counts[index.get(id)!.rarity]!++;
+    const total = buys.length * BUY;
+    const weight = RARITIES.reduce((sum, r) => sum + MINT_PULL_WEIGHTS[r], 0);
 
     for (const rarity of RARITIES) {
-      const expected = PACK_PULL_WEIGHTS[rarity] / weight;
+      const expected = MINT_PULL_WEIGHTS[rarity] / weight;
       const actual = counts[rarity]! / total;
-      expect(Math.abs(actual - expected), `${rarity}: table says ${expected}, drew ${actual}`).toBeLessThan(
-        0.03,
-      );
+      expect(
+        Math.abs(actual - expected),
+        `${rarity}: table says ${expected}, drew ${actual}`,
+      ).toBeLessThan(0.03);
     }
 
     // And the order the tiers are named in is the order they arrive in.
@@ -74,83 +98,47 @@ describe("opening an ordinary pack", () => {
     }
   });
 
-  it("is the same pack twice from the same seed", () => {
-    expect(openPack(CARDS, 77)).toEqual(openPack(CARDS, 77));
-    expect(openPack(CARDS, 77)).not.toEqual(openPack(CARDS, 78));
+  it("is the same cards twice from the same seed", () => {
+    expect(openCards(CARDS, 77, 10)).toEqual(openCards(CARDS, 77, 10));
+    expect(openCards(CARDS, 77, 10)).not.toEqual(openCards(CARDS, 78, 10));
   });
 
   it("draws against the whole set, however much you already own", () => {
-    // This used to check the opposite: that a pack never repeats a card you
+    // This used to check the opposite: that a purchase never repeats a card you
     // have. It was dropped because it silently broke the odds. Commons are half
-    // of every draw, so a collection holds all 202 of them by about 460 cards
-    // and all the rares by 550, and from there a pack could only hand over what
-    // was left — the printed 50/35/9/5/1 quietly became 0/0/40/50/10.
-    // scripts/pack-drift.ts walks a collection up and shows the table drifting.
-    const everything = CARDS.map((c) => c.id);
-    const pack = openPack(CARDS, 31);
-    expect(pack).toHaveLength(PACK_SIZE);
-    expect(pack.every((id) => everything.includes(id))).toBe(true);
+    // of every draw, so a collection holds all of them by about 460 cards and
+    // all the rares by 550, and from there a draw could only hand over what was
+    // left — the printed 50/35/9/5/1 quietly became 0/0/40/50/10.
+    // scripts/pack-drift.ts walks a collection up and shows the table holding.
+    const everything = new Set(CARDS.map((c) => c.id));
+    const bought = openCards(CARDS, 31, BUY);
+    expect(bought).toHaveLength(BUY);
+    expect(bought.every((id) => everything.has(id))).toBe(true);
   });
-
-  it("still never repeats a card inside one pack", () => {
-    // Ten of the same card in one wrapper is a bug however you argue it.
-    for (let seed = 0; seed < 200; seed++) {
-      const pack = openPack(CARDS, seed * 71 + 3);
-      expect(new Set(pack).size, `seed ${seed}`).toBe(pack.length);
-    }
-  });
-
 
   it("weights every rarity, so none is unreachable", () => {
     for (const rarity of RARITIES) {
-      expect(PACK_PULL_WEIGHTS[rarity], `${rarity} can never be drawn`).toBeGreaterThan(0);
+      expect(MINT_PULL_WEIGHTS[rarity], `${rarity} can never be drawn`).toBeGreaterThan(0);
     }
+  });
+
+  it("can reach every rarity in practice, not only in the table", () => {
+    const seen = new Set(
+      Array.from({ length: 4000 }, (_, seed) => index.get(openCards(CARDS, seed, 1)[0]!)!.rarity),
+    );
+    expect(seen.size).toBe(RARITIES.length);
   });
 });
 
-/**
- * Cards leave the set. When BONK became eight cards the single `bonk` card
- * stopped existing, every stored pack holding it failed validation, and the
- * caller drew a fresh pack over the top — so a player lost forty cards without
- * being told. These are the tests for the repair.
- */
-
-describe("buying one card", () => {
-  it("hands over exactly one card, and one that exists", () => {
-    for (let seed = 0; seed < 200; seed++) {
-      const drawn = openSingle(CARDS, seed);
-      expect(drawn).toHaveLength(1);
-      expect(index.get(drawn[0]!)).toBeTruthy();
+describe("what counts as a card worth having", () => {
+  it("is epic and up, which is what the opening screen glows for", () => {
+    // isBackbone outlived the guarantee that used it. It is what PackOpening
+    // lights a card up for, so it is still load-bearing — just not for a promise
+    // any more.
+    for (const card of CARDS) {
+      expect(isBackbone(card), card.id).toBe(
+        card.rarity === "epic" || card.rarity === "legendary" || card.rarity === "mythic",
+      );
     }
-  });
-
-  it("replays the same seed and differs on a different one", () => {
-    expect(openSingle(CARDS, 4242)).toEqual(openSingle(CARDS, 4242));
-    const spread = new Set(Array.from({ length: 200 }, (_, s) => openSingle(CARDS, s)[0]));
-    expect(spread.size).toBeGreaterThan(20);
-  });
-
-  it("promises nothing, unlike a pack", () => {
-    // The pack guarantees a rare or better and this deliberately does not. If a
-    // single ever stopped producing commons, the two products would have become
-    // the same product at two prices — which is the one thing the split of 15
-    // against 10 a card cannot survive.
-    const rarities = Array.from(
-      { length: 4000 },
-      (_, seed) => index.get(openSingle(CARDS, seed)[0]!)!.rarity,
-    );
-    expect(rarities.filter((r) => r === "common").length).toBeGreaterThan(0);
-    expect(new Set(rarities).size).toBe(RARITIES.length);
-  });
-
-  it("draws at the printed odds rather than flat", () => {
-    // 50/35/9/5/1 over four thousand draws: commons have to be the biggest pile
-    // by a distance, and mythics the smallest.
-    const count = (want: string) =>
-      Array.from({ length: 4000 }, (_, seed) => index.get(openSingle(CARDS, seed)[0]!)!.rarity)
-        .filter((r) => r === want).length;
-    expect(count("common")).toBeGreaterThan(count("rare"));
-    expect(count("rare")).toBeGreaterThan(count("epic"));
-    expect(count("mythic")).toBeLessThan(count("legendary"));
   });
 });

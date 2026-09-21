@@ -1,9 +1,9 @@
 // What this player owns.
 //
-// Your collection is everything you have minted: single cards, or packs of ten.
+// Your collection is everything you have minted: cards, however many at a time.
 // It only ever grows, and every product is drawn against it rather than
 // against the set, so you are never handed a card you already have. A player who
-// has minted nothing owns nothing — there is no free pack underneath this.
+// has minted nothing owns nothing — there is nothing free underneath this.
 //
 // A collection belongs to a wallet, not to a browser. That is the difference
 // between "cards" and "cards in this Chrome": the same wallet on a laptop and a
@@ -18,7 +18,7 @@
 //
 // The mint is shut, by the maker's call, and the second follows from the first.
 // Owning-what-you-deck is what makes a mint a mint: if everyone can deck
-// everything, opening one is a screensaver, and renting cards out later would be
+// everything, minting is a screensaver, and renting cards out later would be
 // renting nothing. But with nothing to mint there is nothing to own, so the rule
 // has to stand down with it.
 //
@@ -26,18 +26,19 @@
 // what you may deck, measured back when decks had a points budget and one built
 // on 110 beat one built on 80 in 86% of matches. Card ownership is that argument
 // in different clothes. What makes it survivable is that a collection buys
-// *choice*, not power: a card is the same card however you got it, and packs run
+// *choice*, not power: a card is the same card however you got it, and a draw runs
 // 44.6% common and 31.7% rare against this set, so a bigger collection is mostly
 // a bigger pile of the cheap tiers. That split is measured over four thousand
-// packs; DESIGN.md has the argument, and scripts/collection-packs.ts is what
+// purchases; DESIGN.md has the argument, and scripts/collection-packs.ts is what
 // would put a number on what the spread costs in win rate — it has not been run
 // against this set.
 //
 // Opening the mint again is one constant below and nothing else.
 import { provenAdmin } from "@/lib/admin";
+import { MAX_PER_TX } from "@/lib/revenue";
 import { signedIn } from "@/lib/session";
 
-import { PACK_SIZE, openPack as drawPack, openSingle as drawSingle } from "@/engine/pack";
+import { openCards } from "@/engine/pack";
 import type { Card } from "@/engine/types";
 import { SET } from "@/lib/set";
 
@@ -45,13 +46,13 @@ import { SET } from "@/lib/set";
  * Is the mint open?
  *
  * Off, by the maker's call. There is no token and no chain behind it yet, so
- * every pack opened today is free and local, and a free mint that looks like the
+ * every card drawn today is free and local, and a free mint that looks like the
  * real one is the worst kind of placeholder: somebody builds a collection,
  * believes they own it, and finds out on launch day that they owned a line in a
  * browser they have since cleared.
  *
  * This is the switch, not the button. The buttons on /mint read it, and so do
- * buyPack and buyDeckMint below — which throw rather than quietly hand out
+ * buyCards below — which throws rather than quietly handing out
  * cards, because turning off a button only stops the people who use buttons.
  *
  * One wallet gets through anyway: see mayMint below.
@@ -120,7 +121,7 @@ export function lostFromSet(): readonly string[] {
 /**
  * Everything this player holds, duplicates and all, in the order it arrived.
  *
- * Packs draw against the whole set now rather than against the collection, so a
+ * A purchase draws against the whole set now rather than against the collection, so a
  * card can turn up twice and the second copy is a real thing to hold — it is
  * what you trade. A deck still takes one of each, which is a rule about decks
  * and not about ownership; those two were the same list until now and are not
@@ -177,7 +178,7 @@ export function poolCards(): Card[] {
   return SET.filter((c) => pool.has(c.id));
 }
 
-export interface PackResult {
+export interface Bought {
   /** What came out, in draw order. Empty when there was nothing left to pull. */
   cardIds: string[];
   /** Cards in the set this player has still never seen. */
@@ -187,31 +188,30 @@ export interface PackResult {
 }
 
 /**
- * Opens an ordinary pack and keeps it.
+ * Buys cards and keeps them.
  *
- * Unlike the starter this happens as often as you like, so nothing here refuses
- * a second one — the only thing that stops it is running out of set, which it
- * reports rather than papering over with duplicates.
+ * One product, one price a card, any number up to what a transaction holds. It
+ * was two — a single and a pack of ten with a guaranteed rare — and the pack
+ * went when the token order was settled in advance, because a fixed sequence
+ * cannot promise what is in any ten of it. engine/pack.ts has the whole of that.
+ *
+ * Nothing here refuses a second purchase. The only thing that stops it is
+ * running out of set, which it reports rather than papering over with
+ * duplicates.
  */
-export function buyPack(): PackResult {
+export function buyCards(count: number): Bought {
   refuseWhenShut();
-  return keep(PACK_SIZE, (seed) => drawPack(SET, seed));
+  if (!Number.isInteger(count) || count < 1 || count > MAX_PER_TX) {
+    // Loud. The UI offers a slider between 1 and MAX_PER_TX, so anything else
+    // arrived from a console — and a quantity the chain would reject must not
+    // become cards in a browser that look exactly like bought ones.
+    throw new Error(`${count} is not a number of cards anybody can buy in one go.`);
+  }
+  return keep(count, (seed) => openCards(SET, seed, count));
 }
 
 /**
- * Buys one card.
- *
- * The other product on /mint, and the cheaper way to find out what a card costs
- * without buying ten. No guarantee on it — see openSingle for why one card does
- * not need one.
- */
-export function buySingle(): PackResult {
-  refuseWhenShut();
-  return keep(1, (seed) => drawSingle(SET, seed));
-}
-
-/**
- * Both products go through here first.
+ * Every purchase goes through here first.
  *
  * A closed mint that only hides its buttons is not closed. Anyone with a console
  * open can call these, and the cards they get would be written to the same
@@ -227,9 +227,9 @@ function refuseWhenShut(): void {
 }
 
 /** Draws against the collection and stores what came out. */
-function keep(asked: number, draw: (seed: number) => string[]): PackResult {
+function keep(asked: number, draw: (seed: number) => string[]): Bought {
 
-  // Math.random is fine here: this is which pack you got, not anything the
+  // Math.random is fine here: this is which cards you got, not anything the
   // engine has to replay. The seed is not kept, the cards are.
   const cardIds = draw(Math.floor(Math.random() * 2_147_483_647));
 

@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 
 import { SOLO_A, SOLO_B } from "./one-per-project";
 
-import { DECK_FROM_COLLECTION, MINT_OPEN, buyPack, buySingle, collection, ownedForRules } from "@/lib/collection";
+import { DECK_FROM_COLLECTION, MINT_OPEN, buyCards, collection, ownedForRules } from "@/lib/collection";
 import { loadDeck, saveDeck } from "@/lib/deck-storage";
 
 describe("the mint", () => {
@@ -21,12 +21,22 @@ describe("the mint", () => {
     // console can call these, and what came out would be written to the same
     // collection as a real mint and be indistinguishable from it afterwards.
     if (MINT_OPEN) {
-      expect(() => buyPack()).not.toThrow();
-      expect(() => buySingle()).not.toThrow();
+      expect(() => buyCards(1)).not.toThrow();
+      expect(() => buyCards(10)).not.toThrow();
       return;
     }
-    expect(() => buyPack()).toThrow(/mint is closed/i);
-    expect(() => buySingle()).toThrow(/mint is closed/i);
+    expect(() => buyCards(1)).toThrow(/mint is closed/i);
+    expect(() => buyCards(10)).toThrow(/mint is closed/i);
+  });
+
+  it("checks that it is shut before it checks the quantity", () => {
+    // Order matters here and it is not cosmetic. A shut mint that complained
+    // about the number first would tell a caller which quantities it would have
+    // accepted, and the answer to a console poking at a closed mint is the same
+    // sentence every time.
+    if (MINT_OPEN) return;
+    expect(() => buyCards(0)).toThrow(/mint is closed/i);
+    expect(() => buyCards(9_999)).toThrow(/mint is closed/i);
   });
 });
 

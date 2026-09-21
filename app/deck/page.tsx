@@ -19,7 +19,7 @@ export default function DeckPage() {
         <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
           {RULES.deckSize} cards, one copy of each.{" "}
           {DECK_FROM_COLLECTION
-            ? `The set has ${SET.length}; what you can put in a deck is what came out of your packs.`
+            ? `The set has ${SET.length}; what you can put in a deck is what you have minted.`
             : `All ${SET.length} of them are open to you — the mint is not running, so nothing has to be pulled before it can be played.`}{" "}
           There is no budget on the deck — a card is paid for when you play it, out of the marketing
           budget you are given that turn. So the question is not what you can afford to own, it is

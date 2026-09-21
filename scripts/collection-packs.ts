@@ -14,7 +14,7 @@ import { PRESET_DECKS } from "../data/preset-decks";
 import { chooseMove } from "../engine/bot";
 import { buildDeckPreferring, deckProblems } from "../engine/deck";
 import { applyMove, buildIndex, newMatch } from "../engine/match";
-import { openPack } from "../engine/pack";
+import { openCards } from "../engine/pack";
 import { MARKETING_COST, RARITIES, RULES } from "../engine/types";
 
 const index = buildIndex(CARDS);
@@ -30,31 +30,33 @@ const PLAYERS = 40;
 const PAIRS = 40;
 
 /**
- * How many packs a player is assumed to start with.
+ * How many cards a player is assumed to start with, and in what batches.
  *
- * Six, because the deck mint this script was written around handed over sixty
- * cards in one go and six packs is the same sixty. That product is gone — the
- * mint is one card or ten and nothing else — so the starter is spelled out in
- * the only thing you can still buy. The number is the old one on purpose: it
- * keeps every row this script has ever printed comparable with the next.
+ * Sixty, because the deck mint this script was written around handed over sixty
+ * in one go. That product is gone, and so is the pack that replaced it — the
+ * mint is a number of cards at one price now — but the number stays sixty and
+ * the batches stay ten. Not because ten means anything any more: because every
+ * row this script has ever printed was drawn that way, and changing the shape of
+ * the draw would make the next run incomparable with all of them.
  */
-const STARTER_PACKS = 6;
+const BUY = 10;
+const STARTER_BUYS = 6;
 
-/** A player's cards after opening the starter and then `packs` more. */
-function collectionAfter(packs: number, seed: number): string[] {
+/** A player's cards after the starter and then `buys` more of BUY cards each. */
+function collectionAfter(buys: number, seed: number): string[] {
   const owned: string[] = [];
-  for (let i = 0; i < STARTER_PACKS + packs; i++) {
-    // A different seed per pack, and the collection so far, so no pack repeats a
-    // card — the same rule the shop plays by.
-    owned.push(...openPack(CARDS, seed * 7919 + i * 104_729 + 1));
+  for (let i = 0; i < STARTER_BUYS + buys; i++) {
+    // A different seed per purchase. Cards do not repeat inside one purchase,
+    // the same rule the shop plays by, and they may across purchases.
+    owned.push(...openCards(CARDS, seed * 7919 + i * 104_729 + 1, BUY));
   }
   return owned;
 }
 
 /**
- * What the player began with, which is the deck they keep if no pack improves on
- * it. The first STARTER_PACKS packs of the same seed, so it is always a subset of
- * whatever collectionAfter hands back for that player.
+ * What the player began with, which is the deck they keep if no purchase
+ * improves on it. The first STARTER_BUYS purchases of the same seed, so it is
+ * always a subset of whatever collectionAfter hands back for that player.
  */
 const starter = (seed: number): string[] => collectionAfter(0, seed);
 
