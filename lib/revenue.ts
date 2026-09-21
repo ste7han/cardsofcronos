@@ -299,18 +299,24 @@ export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | nul
   // burn, 3000 holders, 2000 pot, paying the same drop and the same pot.
   splitter: "0x8a687588c78f5af713ce196619a48a8432f574c9",
   pot: "0xafe431c0c6b2cde0888e0dff74d22be08c981025",
-  // Being replaced, 21 September 2026, the same day it went up. The first one is
-  // at 0x2d1783a4cf9cc3db85ef0dd3a619ad1394847e10 — it discounted a mint by one
-  // percent per million $CROCARD held, capped at thirty, carried over from the
-  // first collection. That is a curve nobody can read off a page, and the game
-  // already has a ladder: retail, bagholder, holder, whale. `discountFor` is
-  // code, not storage, so moving to the ladder means new bytecode.
+  // Deployed 21 September 2026. Replaced 0x2d1783a4cf9cc3db85ef0dd3a619ad1394847e10
+  // the same day it went up: that one discounted a mint by one percent per
+  // million $CROCARD held and capped it at thirty, carried over from the first
+  // collection, and `discountFor` is code rather than storage — so moving to the
+  // holder ladder meant new bytecode. Nothing was minted against it and nothing
+  // was ever routed to it, so nothing was stranded.
   //
-  // Nothing was minted against it and nothing was ever routed to it, so nothing
-  // is stranded and nothing has to be migrated. Null until the new one is
-  // deployed, deliberately: scripts/deploy-contracts.ts refuses --nft-only while
-  // this names an address, so a half-done swap cannot leave the old one behind.
-  nft: null,
+  // Read back off chain before being recorded here: maxSupply 5603, matching
+  // data/shuffle.json and fixed for good; mintPrice 15 CRO, this game's price
+  // rather than the 150 the old one inherited; the allowlist root over the 49
+  // addresses holding the first collection; royalties to the splitter above at
+  // 10%; $CROCARD as the discount token; and the ladder itself, every rung,
+  // against real balances — a wallet holding 793,485 pays 13.5, which under the
+  // old formula was the full 15.
+  //
+  // It starts with both doors shut and its baseURI on the face-down art, so
+  // every token looks the same until the set is revealed.
+  nft: "0xe08c69c02d7f9a695466741f9f83391167db3da1",
 };
 
 for (const [name, address] of Object.entries(CONTRACTS)) {
