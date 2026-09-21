@@ -134,12 +134,30 @@ async function main(): Promise<void> {
     );
   }
 
-  const already = Object.entries(CONTRACTS).filter(([, address]) => address !== null);
-  if (already.length > 0 && !process.argv.includes("--replace")) {
-    throw new Error(
-      `lib/revenue.ts already names ${already.map(([n]) => n).join(", ")}. ` +
-        `Deploying again makes a second set nothing points at. Pass --replace if that is the intention.`,
-    );
+  // Replacing only the splitter is its own mode, because it is the one that has
+  // to be replaced rather than adjusted: its three shares are constants with no
+  // setter, so changing the split means new bytecode at a new address. The drop
+  // and the pot it pays are reused exactly as they are — redeploying those would
+  // throw away a pot balance and every board share set on it.
+  const splitterOnly = process.argv.includes("--splitter-only");
+  if (splitterOnly) {
+    if (CONTRACTS.splitter !== null) {
+      throw new Error(
+        `lib/revenue.ts already names a splitter (${CONTRACTS.splitter}). ` +
+          `Set it to null first, so the old address cannot be left behind in a half-done swap.`,
+      );
+    }
+    if (CONTRACTS.drop === null || CONTRACTS.pot === null) {
+      throw new Error("--splitter-only reuses the drop and the pot, and one of them is not deployed.");
+    }
+  } else {
+    const already = Object.entries(CONTRACTS).filter(([, address]) => address !== null);
+    if (already.length > 0 && !process.argv.includes("--replace")) {
+      throw new Error(
+        `lib/revenue.ts already names ${already.map(([n]) => n).join(", ")}. ` +
+          `Deploying again makes a second set nothing points at. Pass --replace if that is the intention.`,
+      );
+    }
   }
 
   const chainId = Number(await rpc("eth_chainId", []));
@@ -198,7 +216,10 @@ async function main(): Promise<void> {
   }
 
   const baseURI = flag("base-uri") ?? "";
-  if (!baseURI && broadcast && !moneyOnly) {
+  // Only when a collection is actually being deployed. Both of the narrow modes
+  // leave it alone, and demanding a baseURI from a run that does not touch it
+  // stops the run for a reason that does not apply to it.
+  if (!baseURI && broadcast && !moneyOnly && !splitterOnly) {
     throw new Error("Pass --base-uri. A collection deployed without one has no art.");
   }
 
@@ -311,16 +332,31 @@ async function main(): Promise<void> {
     throw new Error(`${what} was sent but no receipt came back: ${hash}`);
   }
 
-  found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
-  found.pot = await deploy("PrizePot", [CROCARD, publisher]);
+  // Kept apart from `found`, which holds only what this run deployed and is what
+  // gets written back. A reused address written back would look for `drop: null`
+  // and there is nothing there to fill in.
+  let dropAt: string;
+  let potAt: string;
+  if (splitterOnly) {
+    dropAt = CONTRACTS.drop!;
+    potAt = CONTRACTS.pot!;
+    console.log(`reusing drop  ${dropAt}`);
+    console.log(`reusing pot   ${potAt}\n`);
+  } else {
+    dropAt = found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
+    potAt = found.pot = await deploy("PrizePot", [CROCARD, publisher]);
+  }
   found.splitter = await deploy("Splitter", [
     ROUTER,
     CROCARD,
-    found.drop,
+    dropAt,
     BURN_ADDRESS,
-    found.pot,
+    potAt,
   ]);
-  if (moneyOnly) {
+  if (splitterOnly) {
+    console.log("--splitter-only: only the splitter was deployed. The drop and the pot are the");
+    console.log("ones that were already there, and the collection is untouched.\n");
+  } else if (moneyOnly) {
     console.log("--money-only: the collection is not deployed. Run again without it once the");
     console.log("art is final and uploaded, and pass --base-uri.\n");
   } else {
@@ -347,21 +383,27 @@ async function main(): Promise<void> {
   // A quarter each is the maker's starting position. The other half stays in the
   // pot and grows, and `setShare` moves any of it later without a redeploy.
   const SHARES: [string, number][] = BOARDS.map((board) => [board.id, 2_500]);
-  for (const [board, bps] of SHARES) {
+  // Not in splitter-only mode: that pot is already deployed and already has its
+  // shares, and the owner may have moved them since with setShare. Writing the
+  // starting position back over a considered one would be a silent change to
+  // where the prize money goes.
+  for (const [board, bps] of splitterOnly ? [] : SHARES) {
     await call(
       found.pot!,
       `setShare(${board}, ${bps} bps)`,
       selector("setShare(bytes32,uint256)") + asWord(board) + word(BigInt(bps)),
     );
   }
-  console.log(
-    `  boards: ${SHARES.map(([b, v]) => `${b} ${v / 100}%`).join(", ")}` +
-      `, ${(10_000 - SHARES.reduce((sum, [, v]) => sum + v, 0)) / 100}% stays in the pot\n`,
-  );
+  if (!splitterOnly) {
+    console.log(
+      `  boards: ${SHARES.map(([b, v]) => `${b} ${v / 100}%`).join(", ")}` +
+        `, ${(10_000 - SHARES.reduce((sum, [, v]) => sum + v, 0)) / 100}% stays in the pot\n`,
+    );
+  }
 
   const cost = spent * gasPrice;
   console.log(
-    `${moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
+    `${splitterOnly ? "the splitter" : moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
       `at ${gasPrice / 10n ** 9n} gwei`,
   );
 
@@ -404,7 +446,7 @@ async function main(): Promise<void> {
   writeFileSync(file, source);
 
   console.log(
-    `${moneyOnly ? "The three" : "All four"} written into ${file}.` +
+    `${splitterOnly ? "The splitter" : moneyOnly ? "The three" : "All four"} written into ${file}.` +
       (moneyOnly ? " nft is left null until the collection is deployed." : ""),
   );
   console.log(`\nStill to do: set the wallets in ${file}, and the two Worker secrets.`);

@@ -103,12 +103,14 @@ contract SplitterTest is Test {
     }
 
     function test_theRemainderIsNotStranded() public {
-        // Three units is the smallest amount that cannot divide cleanly.
+        // Three units is the smallest amount that cannot divide cleanly. At
+        // 30/50/20 that is 0.9, 1.5 and 0.6 — both of the first two round down
+        // and the pot takes what is left, which is the whole point.
         router.setRate(1);
         vm.deal(address(splitter), 3);
         splitter.release();
-        assertEq(card.balanceOf(holders), 1);
-        assertEq(card.balanceOf(burner), 0);
+        assertEq(card.balanceOf(holders), 0);
+        assertEq(card.balanceOf(burner), 1);
         assertEq(card.balanceOf(pot), 2, "the odd units land in the pot");
         assertEq(card.balanceOf(address(splitter)), 0);
     }
@@ -150,9 +152,9 @@ contract SplitterTest is Test {
 
     /** The shares are constants. Nobody can move them, including the deployer. */
     function test_theSplitHasNoAdmin() public view {
-        assertEq(splitter.HOLDERS_BPS(), 5_000);
-        assertEq(splitter.BURN_BPS(), 2_500);
-        assertEq(splitter.POT_BPS(), 2_500);
+        assertEq(splitter.HOLDERS_BPS(), 3_000);
+        assertEq(splitter.BURN_BPS(), 5_000);
+        assertEq(splitter.POT_BPS(), 2_000);
         assertEq(
             splitter.HOLDERS_BPS() + splitter.BURN_BPS() + splitter.POT_BPS(),
             10_000,

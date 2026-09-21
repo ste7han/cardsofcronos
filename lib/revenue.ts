@@ -282,13 +282,13 @@ export function croPerCard(option: MintOption): number {
  */
 export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | null> = {
   drop: "0x09e4d4bf527ddcff1ea38e550573a15c490043c6",
-  // Was 0xbb658915095d90fe7892d642ea1e6d223ae5fa75. The split moved to 50% burn,
-  // 30% holders, 20% pot, and the shares are `constant` in that contract with no
-  // setter — so it cannot be changed, only replaced. Null until the replacement
-  // is deployed, because pointing at it would have this file and the page say a
-  // split the deployed bytecode does not do. It holds 0 CRO, so nothing is
-  // stranded there.
-  splitter: null,
+  // Replaced 0xbb658915095d90fe7892d642ea1e6d223ae5fa75 on 21 September 2026.
+  // The split moved to 50% burn, 30% holders, 20% pot, and the shares are
+  // `constant` with no setter — so it could not be adjusted, only redeployed.
+  // The old one held 0 CRO and nothing was routed to it, so nothing was stranded
+  // and nothing had to be migrated. Read back off chain after deploying: 5000
+  // burn, 3000 holders, 2000 pot, paying the same drop and the same pot.
+  splitter: "0x8a687588c78f5af713ce196619a48a8432f574c9",
   pot: "0xafe431c0c6b2cde0888e0dff74d22be08c981025",
   nft: null,
 };

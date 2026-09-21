@@ -56,9 +56,9 @@ export const OURS: readonly Listed[] = [
     what:
       "Everything the game earns arrives here. It buys $CROCARD on the market and divides it: " +
       "half of it burned, three tenths to the people holding the token, a fifth to the prize pot. " +
-      "Being replaced — the version that is deployed divides it the old way, half to holders and " +
-      "a quarter each to the burn and the pot, and the shares cannot be changed without a new " +
-      "contract. Nothing is routed to either one yet.",
+      "Deployed fresh in September 2026 to change that split: the shares are fixed in the contract, " +
+      "so moving them meant a new one. The first version is still on chain at " +
+      "0xbb658915095d90fe7892d642ea1e6d223ae5fa75, divides the old way, and has nothing pointed at it.",
     powers: [
       "Anybody can set it going. `release()` takes no arguments, has no owner check and can only " +
         "do the one thing, so calling it is paying the gas rather than making a decision.",
