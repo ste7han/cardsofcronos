@@ -306,4 +306,107 @@ contract MatchEscrowTest is Test {
     function test_theSplitterCannotBePointedSomewhereElse() public view {
         assertEq(escrow.splitter(), splitter);
     }
+
+    // ------------------------------------------------- getting stuck CRO out
+
+    function test_theOwnerCannotTouchALiveStake() public {
+        // The whole reason this contract does not inherit Rescuable. Two people
+        // are mid-match; there is nothing here that is not theirs.
+        fill(100 ether);
+        assertEq(escrow.committed(), 200 ether);
+        assertEq(escrow.stuck(), 0, "nothing is loose");
+
+        vm.expectRevert(MatchEscrow.NothingStuck.selector);
+        escrow.sweepStuck(address(this));
+        assertEq(address(escrow).balance, 200 ether, "untouched");
+    }
+
+    function test_anOpenSeatIsAlsoOutOfReach() public {
+        vm.prank(alice);
+        escrow.open{value: 100 ether}(ID);
+        assertEq(escrow.stuck(), 0);
+        vm.expectRevert(MatchEscrow.NothingStuck.selector);
+        escrow.sweepStuck(address(this));
+    }
+
+    function test_croThatBelongsToNoMatchCanBeTakenOut() public {
+        fill(100 ether);
+        // Forced in, which is the case a hatch exists for: no function of this
+        // contract accounted for it and nobody can ever ask for it back.
+        vm.deal(address(escrow), address(escrow).balance + 7 ether);
+
+        assertEq(escrow.stuck(), 7 ether, "the loose part and not a wei more");
+
+        address to = address(0x0FF1CE);
+        escrow.sweepStuck(to);
+        assertEq(to.balance, 7 ether);
+        assertEq(address(escrow).balance, 200 ether, "the match still has its pot");
+    }
+
+    function test_onlyTheOwnerSweeps() public {
+        vm.deal(address(escrow), 7 ether);
+        vm.prank(alice);
+        vm.expectRevert();
+        escrow.sweepStuck(alice);
+
+        vm.prank(publisher);
+        vm.expectRevert();
+        escrow.sweepStuck(publisher);
+    }
+
+    function test_whatIsOwedFallsAsItIsPaidOut() public {
+        fill(100 ether);
+        vm.prank(publisher);
+        escrow.settle(ID, alice);
+        escrow.claim(ID);
+
+        assertEq(escrow.committed(), 0, "nothing is owed once it is paid");
+        assertEq(address(escrow).balance, 0);
+    }
+
+    function test_whatIsOwedFallsWhenSomebodyWalksAway() public {
+        fill(100 ether);
+        vm.warp(block.timestamp + 31 days);
+        vm.prank(alice);
+        escrow.walkAway(ID);
+        assertEq(escrow.committed(), 100 ether, "his half is still his");
+        vm.prank(bob);
+        escrow.walkAway(ID);
+        assertEq(escrow.committed(), 0);
+    }
+
+    function test_severalMatchesAtOnceAreEachOthersFloor() public {
+        fill(100 ether);
+        bytes32 second = keccak256("match-2");
+        vm.prank(bob);
+        escrow.open{value: 500 ether}(second);
+        vm.prank(alice);
+        escrow.join{value: 500 ether}(second);
+
+        assertEq(escrow.committed(), 1_200 ether);
+        vm.deal(address(escrow), address(escrow).balance + 3 ether);
+        assertEq(escrow.stuck(), 3 ether);
+
+        // Settling one does not make the other's pot sweepable.
+        vm.prank(publisher);
+        escrow.settle(ID, alice);
+        escrow.claim(ID);
+        assertEq(escrow.committed(), 1_000 ether, "the second match keeps its pot");
+        assertEq(escrow.stuck(), 3 ether);
+    }
+
+    function test_aTokenSentHereByMistakeCanComeBackOut() public {
+        // Stakes are CRO. Anything in a token arrived by accident and there is
+        // no accounting to protect.
+        card.mint(address(escrow), 1_000e18);
+        address to = address(0x0FF1CE);
+        escrow.sweepToken(IERC20(address(card)), to);
+        assertEq(card.balanceOf(to), 1_000e18);
+    }
+
+    function test_sweepingToNowhereIsRefused() public {
+        vm.deal(address(escrow), 7 ether);
+        vm.expectRevert(MatchEscrow.SendFailed.selector);
+        escrow.sweepStuck(address(0));
+    }
 }

@@ -46,23 +46,49 @@ describe("how many you may have open", () => {
   });
 });
 
-describe("getting the money out if something goes wrong", () => {
-  it("gives the escrow the same rescue hatch as everything else", () => {
-    expect(escrow).toMatch(/contract MatchEscrow is Ownable, Rescuable/);
+describe("getting stuck CRO out, and nothing else", () => {
+  it("does not give the escrow the hatch the other contracts have", () => {
+    // Rescuable sweeps the whole balance after two days' notice. That is right
+    // for a splitter holding CRO in transit and for a pot the project owns. It
+    // is wrong here: the balance is other people's money in matches they are
+    // still playing.
+    expect(escrow).toMatch(/contract MatchEscrow is Ownable \{/);
+    // The code, not the word: the note above the contract explains what it does
+    // not inherit and why, and a test that failed on the explanation would be a
+    // test that punishes writing one down.
+    expect(escrow).not.toMatch(/^import \{Rescuable\}/m);
+    expect(escrow).not.toMatch(/is Ownable, Rescuable/);
   });
 
-  it("can reach CRO and not only tokens", () => {
-    // The escrow holds CRO, not $CROCARD. A hatch that could only sweep a
-    // token balance would be a hatch that does nothing here.
-    expect(rescuable).toMatch(/function rescue\(\) external onlyOwner/);
-    expect(rescuable).toMatch(/uint256 amount = address\(this\)\.balance;/);
-    expect(rescuable).toMatch(/payable\(to\)\.call\{value: amount\}/);
+  it("counts what is owed, and can only take the difference", () => {
+    expect(escrow).toContain("uint256 public committed;");
+    expect(escrow).toMatch(/return balance > committed \? balance - committed : 0;/);
+    expect(escrow).toMatch(/uint256 amount = stuck\(\);/);
   });
 
-  it("announces before it can be used, which is what makes it survivable", () => {
-    // Two days. The delay is the feature: it is the window in which anybody
-    // watching can get their stake out first, and it is why this can be
-    // disclosed on /contracts rather than hidden.
+  it("is the owner's and nobody else's", () => {
+    expect(escrow).toMatch(/function sweepStuck\(address to\) external onlyOwner/);
+    expect(escrow).toMatch(/function sweepToken\(IERC20 token, address to\) external onlyOwner/);
+  });
+
+  it("moves what is owed down on every way money leaves", () => {
+    // Four ways out, and a counter that missed one would slowly turn players'
+    // stakes into something the owner could sweep.
+    for (const line of [
+      "committed -= stake;",
+      "committed -= pot;",
+    ]) {
+      expect(escrow, line).toContain(line);
+    }
+    // Two of them are `stake` — cancel and walkAway — so that line appears
+    // twice and a single occurrence means one of the paths lost its bookkeeping.
+    expect(escrow.split("committed -= stake;")).toHaveLength(3);
+  });
+
+  it("leaves the other contracts their hatch, with its notice", () => {
+    // Two days. The delay is the feature there: it is the window in which
+    // anybody watching can react, and it is why that power can be disclosed on
+    // /contracts rather than hidden.
     expect(rescuable).toMatch(/RESCUE_DELAY\s*=\s*2 days/);
     expect(rescuable).toMatch(/function announceRescue\(address to\) external onlyOwner/);
   });

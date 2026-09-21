@@ -4,8 +4,6 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {Rescuable} from "./Rescuable.sol";
-
 /**
  * What two players put up on a ranked match, held where neither can take it.
  *
@@ -44,8 +42,28 @@ import {Rescuable} from "./Rescuable.sol";
  * the caller. A push payment inside settle would let a receiver that reverts on
  * purpose lock the publisher out of settling anything — and the publisher is
  * one key answering for every match at once.
+ *
+ * ── THE OWNER CANNOT TOUCH A LIVE STAKE, AND THAT IS THE POINT ───────────────
+ *
+ * The other contracts in this project inherit Rescuable: the owner announces,
+ * waits two days, and sweeps the balance. That is right for a splitter holding
+ * CRO in transit and for a pot the project owns. It is wrong here, because the
+ * balance is other people's money in matches they are still playing, and a
+ * hatch that can reach it is a hatch somebody has to trust.
+ *
+ * So this one counts. `committed` is the sum of every stake that still has a
+ * player attached to it, and the owner may sweep the difference and nothing
+ * else. Anything that is committed has a named owner and a way out already: an
+ * open seat can be cancelled whenever, a settled pot can be claimed by anyone
+ * on the winner's behalf, and a match nobody ever settled can be walked away
+ * from after thirty days. Nothing can be stranded, so nothing needs a hatch
+ * that could take it.
+ *
+ * What is left over is genuinely nobody's — CRO forced in, or a rounding
+ * nobody can reach — and there is no reason to make the owner wait two days
+ * for money that was never a player's.
  */
-contract MatchEscrow is Ownable, Rescuable {
+contract MatchEscrow is Ownable {
     /**
      * @notice $CROCARD. What the winner holds decides the cut.
      *
@@ -111,6 +129,15 @@ contract MatchEscrow is Ownable, Rescuable {
 
     mapping(bytes32 => Wager) private wagers;
 
+    /**
+     * @notice Every stake that still has a player attached to it.
+     *
+     * The floor under the balance. It goes up when somebody puts money in and
+     * down when it leaves, so `address(this).balance - committed` is what is
+     * owed to nobody — and that is the only thing the owner may take.
+     */
+    uint256 public committed;
+
     error NotThePublisher();
     error AlreadyExists();
     error NoSuchMatch();
@@ -125,6 +152,7 @@ contract MatchEscrow is Ownable, Rescuable {
     error AlreadyPaid();
     error NotTheWinner();
     error SendFailed();
+    error NothingStuck();
 
     event Opened(bytes32 indexed id, address indexed opener, uint256 stake);
     event Joined(bytes32 indexed id, address indexed joiner, uint256 stake);
@@ -133,6 +161,7 @@ contract MatchEscrow is Ownable, Rescuable {
     event Claimed(bytes32 indexed id, address indexed winner, uint256 paid);
     event WalkedAway(bytes32 indexed id, address indexed player, uint256 stake);
     event PublisherChanged(address indexed from, address indexed to);
+    event SweptStuck(address indexed to, uint256 amount);
 
     constructor(address payable splitter_, address publisher_) Ownable(msg.sender) {
         require(splitter_ != address(0), "no splitter");
@@ -155,6 +184,7 @@ contract MatchEscrow is Ownable, Rescuable {
         wager.opener = msg.sender;
         wager.stake = msg.value;
         wager.state = State.Open;
+        committed += msg.value;
         emit Opened(id, msg.sender, msg.value);
     }
 
@@ -176,6 +206,7 @@ contract MatchEscrow is Ownable, Rescuable {
         wager.joiner = msg.sender;
         wager.filledAt = block.timestamp;
         wager.state = State.Full;
+        committed += msg.value;
         emit Joined(id, msg.sender, msg.value);
     }
 
@@ -194,6 +225,7 @@ contract MatchEscrow is Ownable, Rescuable {
         uint256 stake = wager.stake;
         wager.state = State.Settled;
         wager.paid = true;
+        committed -= stake;
         emit Cancelled(id, msg.sender, stake);
         pay(msg.sender, stake);
     }
@@ -239,6 +271,7 @@ contract MatchEscrow is Ownable, Rescuable {
 
         uint256 pot = wager.stake * 2;
         uint256 cut = (pot * cutFor(wager.winner)) / 10_000;
+        committed -= pot;
         emit Claimed(id, wager.winner, pot - cut);
 
         // The cut first. A winner that cannot receive must not also cost the
@@ -265,6 +298,7 @@ contract MatchEscrow is Ownable, Rescuable {
 
         wager.walked[msg.sender] = true;
         uint256 stake = wager.stake;
+        committed -= stake;
         emit WalkedAway(id, msg.sender, stake);
         pay(msg.sender, stake);
     }
@@ -323,6 +357,46 @@ contract MatchEscrow is Ownable, Rescuable {
      */
     function setDiscountToken(IERC20 token) external onlyOwner {
         discountToken = token;
+    }
+
+    /// @notice CRO here that no live match is holding. Zero, almost always.
+    function stuck() public view returns (uint256) {
+        uint256 balance = address(this).balance;
+        return balance > committed ? balance - committed : 0;
+    }
+
+    /**
+     * @notice Takes out CRO that belongs to no match. The owner, and nobody else.
+     *
+     * It cannot reach a stake: the most it will ever move is `stuck()`, and
+     * everything above that has a player with a way to it. There is no waiting
+     * period because there is nothing here to warn anybody about — money that
+     * was never a player's is not money anybody is watching for.
+     *
+     * If this ever reverts with NothingStuck while CRO is plainly trapped, the
+     * counter and the balance have come apart and that is a bug to find rather
+     * than a number to override. `walkAway` is what gets players out meanwhile.
+     */
+    function sweepStuck(address to) external onlyOwner {
+        if (to == address(0)) revert SendFailed();
+        uint256 amount = stuck();
+        if (amount == 0) revert NothingStuck();
+        emit SweptStuck(to, amount);
+        pay(to, amount);
+    }
+
+    /**
+     * @notice Sends a token balance out. Nothing here is ever owed in a token.
+     *
+     * Stakes are CRO. An ERC20 in this contract arrived by somebody's mistake
+     * and there is no accounting to protect.
+     */
+    function sweepToken(IERC20 token, address to) external onlyOwner {
+        if (to == address(0)) revert SendFailed();
+        uint256 amount = token.balanceOf(address(this));
+        if (amount == 0) revert NothingStuck();
+        emit SweptStuck(to, amount);
+        if (!token.transfer(to, amount)) revert SendFailed();
     }
 
     function pay(address to, uint256 amount) private {
