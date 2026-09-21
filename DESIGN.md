@@ -649,12 +649,22 @@ oversight, so the wallet stays in the file saying so — deleting it would make
 paying the maker a new decision rather than a visible one.
 
 **A mint is a number of cards at one price.** A card is 15 CRO, ten are 150, and
-there is no second product — see *Collecting* above for why the pack went. The
-$CROCARD discount carried over from the first collection comes off on top, one
-percent per million held and capped at thirty, which puts the floor at 10.5 CRO a
-card. `lib/revenue.ts` holds the price and the per-transaction cap, and
-`test/revenue.test.ts` reads both back out of the Solidity — a page quoting a
-price the chain refuses is a buyer who signs and gets a revert.
+there is no second product — see *Collecting* above for why the pack went. Up to
+**50 in one transaction**, which is what the contract allows.
+
+**Holding $CROCARD takes it down, on the ladder the rest of the game uses.**
+Retail 15, bagholder 13.5, holder 12, whale 10.5 — the same four rungs as the cut
+on a win, at a ten-thousandth, a thousandth and a hundredth of the supply. It was
+one percent per million held and capped at thirty, carried over from the first
+collection, and that is defensible arithmetic and an unreadable sentence: 999,999
+tokens was the full price and a million was one percent off. One idea of what a
+holder is, not two. The rungs are `constant` in the contract with no setter, so
+moving off the old formula meant deploying a new collection.
+
+`data/holder-tiers.ts` holds the ladder and `lib/revenue.ts` the price and the
+per-transaction cap. `test/revenue.test.ts` reads all of it back out of the
+Solidity, because Solidity cannot read those files and a page quoting a price the
+chain refuses is a buyer who signs and gets a revert.
 
 **Nothing arrives in CRO.** `contracts/Splitter.sol` swaps the whole of a payment
 for $CROCARD on the EbisusBay pool and divides the tokens afterwards, so every

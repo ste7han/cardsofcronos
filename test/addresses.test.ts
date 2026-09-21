@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { KEYS, NOT_OURS, OURS, RENOUNCED } from "@/lib/addresses";
-import { BURN_ADDRESS, CONTRACTS, CROCARD, LION, POOL, PUBLISHER, ROUTER, WALLETS } from "@/lib/revenue";
+import { BURN_ADDRESS, CONTRACTS, CROCARD, LION, MINT_PRICE_CRO, POOL, PUBLISHER, ROUTER, WALLETS } from "@/lib/revenue";
 
 const solidity = (name: string) =>
   readFileSync(new URL(`../contracts/${name}.sol`, import.meta.url), "utf8");
@@ -157,11 +157,15 @@ describe("what the page says a contract can do", () => {
     }
   });
 
-  it("is right that the price starts at the one the first collection charged", () => {
-    // The collection was deployed with the first one's default, which is ten
-    // times what this game sells at. It is corrected with setMintPrice after
-    // deploying, and mint-control refuses to open either door while it still
-    // stands — so this is the fact that refusal is built on.
-    expect(solidity("CardsOfCronosSetOne")).toMatch(/uint256 public mintPrice = 150 ether;/);
+  it("is right that a card costs what the page says a card costs", () => {
+    // This checked the opposite for a day. The contract inherited the first
+    // collection's 150 ether and was corrected with setMintPrice after
+    // deploying, which left a window where an open sale would have charged ten
+    // times the price — and there is no refund in the contract for anybody who
+    // hit it. The default is the right number now, so the window is gone and
+    // this is what says it stays gone.
+    expect(solidity("CardsOfCronosSetOne")).toMatch(
+      new RegExp(`uint256 public mintPrice = ${MINT_PRICE_CRO} ether;`),
+    );
   });
 });

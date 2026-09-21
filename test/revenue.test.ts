@@ -11,15 +11,13 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { isAddress, normalise } from "@/lib/address";
-import { CROCARD_SUPPLY } from "@/data/holder-tiers";
+import { CROCARD_SUPPLY, HOLDER_TIERS } from "@/data/holder-tiers";
 import {
   BURN_ADDRESS,
   CONTRACTS,
   CROCARD,
   KNOWN_ADDRESSES,
   DISCOUNT_CAP,
-  DISCOUNT_PER_MILLION,
-  heldFor,
   MAX_PER_TX,
   MINT_PRICE_CRO,
   priceHolding,
@@ -277,36 +275,57 @@ describe("what a mint costs", () => {
     expect(source).not.toMatch(/function buyPack|packPrice|PACK_/);
   });
 
-  it("discounts by the rule the contract runs, not by one this file invented", () => {
-    // A buyer can act on this number: they can go and buy $CROCARD for it. So
-    // it is read out of the Solidity rather than asserted from the design notes.
+  it("discounts by the ladder the contract runs, not by one this file invented", () => {
+    // A buyer can act on these: they can go and buy $CROCARD to reach a rung.
+    // Solidity cannot read data/holder-tiers.ts, so the two hold the same six
+    // numbers separately and this is the seam. Every rung, both halves.
     const source = readFileSync(new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url), "utf8");
-    expect(source).toMatch(/uint256 percent = discountToken\.balanceOf\(user\) \/ 1_000_000e18;/);
-    const cap = /return percent > (\d+) \? \d+ : percent;/.exec(source);
-    expect(cap, "the cap is no longer written that way").not.toBeNull();
-    expect(DISCOUNT_CAP).toBe(Number(cap![1]));
-    expect(DISCOUNT_PER_MILLION).toBe(1);
+    const constant = (name: string): string => {
+      const found = new RegExp(`uint256 public constant ${name} = ([0-9_e]+);`).exec(source);
+      expect(found, `${name} is no longer a constant in the contract`).not.toBeNull();
+      return found![1]!;
+    };
+
+    const rungs = [
+      { id: "small", at: "BAGHOLDER_AT", off: "BAGHOLDER_OFF" },
+      { id: "medium", at: "HOLDER_AT", off: "HOLDER_OFF" },
+      { id: "whale", at: "WHALE_AT", off: "WHALE_OFF" },
+    ] as const;
+
+    for (const rung of rungs) {
+      const tier = HOLDER_TIERS.find((one) => one.id === rung.id)!;
+      // "100_000e18" is that many whole tokens. Compared as whole tokens rather
+      // than as wei, because that is the unit the ladder is written in.
+      const whole = Number(constant(rung.at).replace(/_/g, "").replace("e18", ""));
+      expect(whole, `${tier.name} threshold`).toBe(tier.atLeast);
+      expect(Number(constant(rung.off)), `${tier.name} discount`).toBe(tier.off);
+    }
+
+    // And that it reads them highest first, which is the ordering bug that
+    // would hand a whale the bagholder rate.
+    expect(source).toMatch(
+      /if \(held >= WHALE_AT\) return WHALE_OFF;\s+if \(held >= HOLDER_AT\) return HOLDER_OFF;\s+if \(held >= BAGHOLDER_AT\) return BAGHOLDER_OFF;\s+return 0;/,
+    );
   });
 
-  it("divides in integers, so a nearly-million is retail", () => {
-    // The part that surprises people. 999,999 is not 0.999% off, it is nothing
-    // off, and the page has to say so rather than let somebody find out by
-    // paying full price.
+  it("starts at the price this game charges, not the first collection's", () => {
+    // The first version of this contract inherited 150 ether and had to be
+    // corrected after deploying. That window is what this closes.
+    const source = readFileSync(new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url), "utf8");
+    expect(source).toMatch(new RegExp(`uint256 public mintPrice = ${MINT_PRICE_CRO} ether;`));
+  });
+
+  it("prices every rung the way the contract would", () => {
     expect(priceHolding(0)).toBe(15);
-    expect(priceHolding(999_999)).toBe(15);
-    expect(priceHolding(1_000_000)).toBe(14.85);
-    expect(priceHolding(10_000_000)).toBe(13.5);
-    expect(priceHolding(30_000_000)).toBe(10.5);
-    // And it stops at the cap rather than going free.
-    expect(priceHolding(500_000_000)).toBe(10.5);
-  });
-
-  it("says what a discount costs to reach, and stops at the cap", () => {
-    expect(heldFor(1)).toBe(1_000_000);
-    expect(heldFor(30)).toBe(30_000_000);
-    expect(heldFor(31)).toBeNull();
-    // The floor is 3% of the supply, which is the sentence the page makes of it.
-    expect(heldFor(DISCOUNT_CAP)! / CROCARD_SUPPLY).toBeCloseTo(0.03, 10);
+    expect(priceHolding(99_999)).toBe(15);
+    expect(priceHolding(100_000)).toBe(13.5);
+    expect(priceHolding(999_999)).toBe(13.5);
+    expect(priceHolding(1_000_000)).toBe(12);
+    expect(priceHolding(9_999_999)).toBe(12);
+    expect(priceHolding(10_000_000)).toBe(10.5);
+    // Nothing more comes off above the top rung.
+    expect(priceHolding(900_000_000)).toBe(10.5);
+    expect(DISCOUNT_CAP).toBe(30);
   });
 
   it("offers no quantity the chain would reject", () => {

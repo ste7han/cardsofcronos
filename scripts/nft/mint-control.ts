@@ -13,19 +13,20 @@
 //
 // ── WHY THIS IS A SCRIPT AND NOT A NOTE IN A README ──────────────────────────
 //
-// The collection is deployed with both doors shut and the price it inherited
-// from the first collection, which is 150 CRO and ten times what this one
-// charges. Opening a mint is therefore three transactions in an order that
-// matters, and an order somebody has to get right at whatever hour a mint opens.
-// Written down as steps, the step that gets skipped is the one that checks.
+// The collection is deployed with both doors shut. Opening a mint is two
+// transactions at whatever hour somebody picks, against a contract where three
+// of these four switches decide whether strangers can spend money. Written down
+// as steps in a README, the step that gets skipped is the one that checks.
 //
 // ── WHAT IT REFUSES ──────────────────────────────────────────────────────────
 //
-// Opening the sale while the price is still the inherited 150. That is the one
-// mistake that cannot be taken back: somebody buys at ten times the price in the
-// seconds before it is noticed, and there is no refund in the contract. It also
-// refuses a price of zero, and it will not open either door while the baseURI
-// still points at nothing.
+// Opening a door while the price is nowhere near what the site quotes. An
+// earlier version of this contract inherited the first collection's 150 CRO and
+// had to be corrected after deploying; the default is 15 now, so the window is
+// gone, but the refusal stays because the price has a setter and the mistake
+// cannot be taken back — somebody buys at the wrong price in the seconds before
+// it is noticed, and there is no refund in the contract. It also refuses a price
+// of zero.
 //
 // It does NOT refuse to open a door because the provenance hash is unpublished
 // or the site is not deployed. It cannot see either, and a check that pretends
@@ -167,11 +168,13 @@ async function main(): Promise<void> {
     // set in an earlier one, what matters is what the chain will charge the
     // moment the door opens.
     const after = price !== null ? BigInt(Number(price)) * ONE_CRO : before.price;
-    if (after >= 100n * ONE_CRO) {
+    // Five times what the site quotes. Wide on purpose: this is a guard against
+    // a wrong number, not a second opinion about the maker's pricing.
+    if (after > BigInt(MINT_PRICE_CRO * 5) * ONE_CRO) {
       throw new Error(
-        `The price is ${Number(after) / Number(ONE_CRO)} CRO a card, which is the one the first ` +
-          `collection charged. Set it before opening anything: there is no refund in the contract ` +
-          `for somebody who buys at it.`,
+        `The price is ${Number(after) / Number(ONE_CRO)} CRO a card and the site quotes ` +
+          `${MINT_PRICE_CRO}. Set it before opening anything: there is no refund in the contract ` +
+          `for somebody who buys at the wrong one.`,
       );
     }
     if (after === 0n) throw new Error("The price is zero. Nothing opens at zero.");

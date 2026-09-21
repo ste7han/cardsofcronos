@@ -65,6 +65,22 @@ export interface HolderTier {
    * beat you.
    */
   cut: number;
+  /**
+   * Percent off a mint at this tier, 0 to 100.
+   *
+   * The same ladder doing a second job, which is the whole reason it is a field
+   * here rather than a table of its own: the page already shows these four rungs
+   * and somebody reading it should not have to hold two different ideas of what
+   * "holder" means.
+   *
+   * IT IS ALSO IN THE CONTRACT, hardcoded, because Solidity cannot read this
+   * file. `discountFor` on contracts/CardsOfCronosSetOne.sol has the same three
+   * thresholds and the same three percentages, and test/revenue.test.ts reads
+   * them back out of the Solidity to check. There is no setter for them: the
+   * first version of this collection charged one percent per million held and
+   * moving to these rungs meant deploying a new one.
+   */
+  off: number;
 }
 
 /**
@@ -81,24 +97,28 @@ export const HOLDER_TIERS: readonly HolderTier[] = [
     // One per cent of a billion.
     atLeast: CROCARD_SUPPLY / 100,
     cut: 0.05,
+    off: 30,
   },
   {
     id: "medium",
     name: "HOLDER",
     atLeast: CROCARD_SUPPLY / 1_000,
     cut: 0.1,
+    off: 20,
   },
   {
     id: "small",
     name: "BAGHOLDER",
     atLeast: CROCARD_SUPPLY / 10_000,
     cut: 0.15,
+    off: 10,
   },
   {
     id: "none",
     name: "RETAIL",
     atLeast: 0,
     cut: 0.25,
+    off: 0,
   },
 ];
 
@@ -127,9 +147,26 @@ export const HOLDER_TIERS: readonly HolderTier[] = [
           `Climbing the ladder has to cost you less, or it is not a ladder.`,
       );
     }
+    if (below.off >= above.off) {
+      throw new Error(
+        `${below.name} mints at ${below.off}% off and ${above.name} above it at ${above.off}%. ` +
+          `The same rule as the cut: climbing has to be worth something.`,
+      );
+    }
   }
   if (HOLDER_TIERS[HOLDER_TIERS.length - 1]!.atLeast !== 0) {
     throw new Error("The bottom rung asks for a balance. Somebody holding nothing has no tier.");
+  }
+  if (HOLDER_TIERS[HOLDER_TIERS.length - 1]!.off !== 0) {
+    throw new Error("The bottom rung has a discount on it, which makes it not the bottom rung.");
+  }
+  for (const tier of HOLDER_TIERS) {
+    if (!Number.isInteger(tier.off) || tier.off < 0 || tier.off > 100) {
+      throw new Error(`${tier.name} mints at ${tier.off}% off, which is not a percentage.`);
+    }
+    // Whole percentages only. The contract returns a uint and multiplies the
+    // price by (100 - off) / 100, so a fraction here is a number this file can
+    // hold and the chain cannot.
   }
 }
 

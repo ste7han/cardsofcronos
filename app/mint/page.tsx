@@ -7,6 +7,7 @@ import { CROCARD_SUPPLY, HOLDER_TIERS } from "@/data/holder-tiers";
 import type { Rarity } from "@/engine/types";
 import { RARITIES, RULES } from "@/engine/types";
 import { COPIES, HASH, SEED, TOKENS } from "@/lib/provenance";
+import { priceHolding } from "@/lib/revenue";
 import { RARITY } from "@/lib/rarity";
 import { SET } from "@/lib/set";
 
@@ -85,6 +86,18 @@ export default function MintPage() {
                 <dt className="text-[8px] tracking-[0.18em] text-faint">TAKEN WHEN YOU WIN</dt>
                 <dd className="display mt-1 text-2xl text-gold">
                   {Math.round(tier.cut * 100)}%
+                </dd>
+                {/* The same ladder deciding the mint. It was a table of its own
+                    further up the page, which was two ladders to keep in step
+                    and two ideas of what a holder is. */}
+                <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">A CARD COSTS</dt>
+                <dd className="display mt-1 text-2xl tabular-nums">
+                  {priceHolding(tier.atLeast)} CRO
+                  {tier.off > 0 && (
+                    <span className="ml-1.5 text-[9px] tracking-[0.16em] text-pump">
+                      {tier.off}% OFF
+                    </span>
+                  )}
                 </dd>
                 <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">DECK POWER</dt>
                 <dd className="display mt-1 text-2xl">SAME</dd>

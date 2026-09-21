@@ -11,8 +11,8 @@
 // checksum. A share that does not add up to a hundred is refused outright rather
 // than quietly leaving a remainder somewhere.
 
+import { CROCARD_SUPPLY, HOLDER_TIERS, tierFor } from "@/data/holder-tiers";
 import { normalise } from "@/lib/address";
-import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 
 /**
  * The token this game burns. Already live on Cronos, already held by the people
@@ -249,47 +249,33 @@ export const MINT_PRICE_CRO = 15;
 export const MAX_PER_TX = 50;
 
 /**
- * The $CROCARD discount on a mint, carried over from the first collection.
+ * The $CROCARD discount on a mint.
  *
- * One percent off per whole million held, capped at thirty. So a card is 15 CRO
- * at retail and 10.5 at the floor, and the floor needs 30 million — three
- * percent of the supply.
+ * The holder ladder, doing a second job. data/holder-tiers.ts already sets out
+ * four rungs and the page already draws them for what a win is cut by; this is
+ * the same four deciding what a card costs. One idea of what "holder" means
+ * rather than two.
  *
- * `discountFor` on the contract divides in integers, and that is not a rounding
- * detail: anything under a million is no discount at all, not a fraction of one.
- * It behaved that way on the first collection too and is kept rather than
- * smoothed, because changing the deal on people who bought in for it would be a
- * worse idea than any arithmetic it tidies.
+ * It was one percent per million held, capped at thirty, carried over from the
+ * first collection. That is defensible arithmetic and an unreadable sentence:
+ * 999,999 tokens was the full price and a million was one percent off. The
+ * rungs are 10 / 20 / 30 at a ten-thousandth, a thousandth and a hundredth of
+ * the supply.
  *
- * These two numbers are the contract's, not this file's. test/revenue.test.ts
- * reads them back out of the Solidity — the discount is the one number on the
- * page a buyer could act on by going and buying a token.
+ * THE CONTRACT HOLDS THE SAME NUMBERS, hardcoded, because Solidity cannot read
+ * a TypeScript file — and holds them as constants with no setter, so this is a
+ * deal rather than an announcement. test/revenue.test.ts reads them back out of
+ * the Solidity. Moving off the per-million formula meant deploying a new
+ * collection; moving off these would mean the same again.
  */
-export const DISCOUNT_PER_MILLION = 1;
-export const DISCOUNT_CAP = 30;
-
-/** Whole $CROCARD needed for a given discount, or null above the cap. */
-export function heldFor(percent: number): number | null {
-  if (percent > DISCOUNT_CAP) return null;
-  return (percent / DISCOUNT_PER_MILLION) * 1_000_000;
-}
 
 /** What a card costs somebody holding this many whole $CROCARD, in CRO. */
 export function priceHolding(held: number): number {
-  // Integer division, the way the contract does it. Math.floor rather than a
-  // divide, so 999_999 is retail here exactly as it is on chain.
-  const off = Math.min(Math.floor(held / 1_000_000) * DISCOUNT_PER_MILLION, DISCOUNT_CAP);
-  return (MINT_PRICE_CRO * (100 - off)) / 100;
+  return (MINT_PRICE_CRO * (100 - tierFor(held).off)) / 100;
 }
 
-{
-  if (!Number.isInteger(MINT_PRICE_CRO) || MINT_PRICE_CRO <= 0) {
-    throw new Error(`A card costs ${MINT_PRICE_CRO} CRO, which is not a price.`);
-  }
-  if (!Number.isInteger(MAX_PER_TX) || MAX_PER_TX <= 0) {
-    throw new Error(`${MAX_PER_TX} is not a number of cards.`);
-  }
-}
+/** The best discount on offer, which is the top rung's. */
+export const DISCOUNT_CAP = HOLDER_TIERS[0]!.off;
 
 /**
  * The contracts, once they exist.
@@ -313,13 +299,18 @@ export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | nul
   // burn, 3000 holders, 2000 pot, paying the same drop and the same pot.
   splitter: "0x8a687588c78f5af713ce196619a48a8432f574c9",
   pot: "0xafe431c0c6b2cde0888e0dff74d22be08c981025",
-  // Deployed 21 September 2026. Read back off chain from two RPCs before being
-  // recorded here: maxSupply 5603, which is fixed for good and matches
-  // data/shuffle.json; the allowlist root over the 49 addresses holding the
-  // first collection; royalties to the splitter above at 10%. It starts with
-  // both doors shut and its baseURI on the face-down art, so every token looks
-  // the same until the set is revealed.
-  nft: "0x2d1783a4cf9cc3db85ef0dd3a619ad1394847e10",
+  // Being replaced, 21 September 2026, the same day it went up. The first one is
+  // at 0x2d1783a4cf9cc3db85ef0dd3a619ad1394847e10 — it discounted a mint by one
+  // percent per million $CROCARD held, capped at thirty, carried over from the
+  // first collection. That is a curve nobody can read off a page, and the game
+  // already has a ladder: retail, bagholder, holder, whale. `discountFor` is
+  // code, not storage, so moving to the ladder means new bytecode.
+  //
+  // Nothing was minted against it and nothing was ever routed to it, so nothing
+  // is stranded and nothing has to be migrated. Null until the new one is
+  // deployed, deliberately: scripts/deploy-contracts.ts refuses --nft-only while
+  // this names an address, so a half-done swap cannot leave the old one behind.
+  nft: null,
 };
 
 for (const [name, address] of Object.entries(CONTRACTS)) {

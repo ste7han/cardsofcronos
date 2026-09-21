@@ -67,8 +67,16 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
 
     // ------------------------------------------------------------ paid mints
 
-    /// @notice Price of one card, before any discount. In CRO.
-    uint256 public mintPrice = 150 ether;
+    /**
+     * @notice Price of one card, before any discount. In CRO.
+     * @dev 15, which is this game's price. The first version of this contract
+     *      inherited the first collection's 150 and had to be corrected with
+     *      setMintPrice after deploying — a window in which an open sale would
+     *      have charged ten times the price, with no refund in here for anybody
+     *      who hit it. The default is the right number now so that window does
+     *      not exist.
+     */
+    uint256 public mintPrice = 15 ether;
 
     /// @notice Most that can be bought in one transaction.
     uint256 public constant MAX_MINT_PER_TX = 50;
@@ -78,13 +86,32 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
 
     /**
      * @notice $CROCARD. Holding it makes minting cheaper.
-     * @dev The same token and the same formula as the first collection: one
-     *      percent off per million held, capped at thirty. Kept because it is
-     *      the one mechanic that already rewards holding the token, and because
-     *      changing the deal on people who bought in for it would be a worse
-     *      idea than any gas it saves.
+     * @dev The same token as the first collection. NOT the same formula: that
+     *      one took a percent off per million held and capped at thirty, which
+     *      is a curve nobody can read off a page. This takes the ladder the rest
+     *      of the game already uses — retail, bagholder, holder, whale — so one
+     *      idea of what holding means covers both what a mint costs and what a
+     *      win is cut by. data/holder-tiers.ts is the same four rungs, and
+     *      test/revenue.test.ts reads these three constants back out of here to
+     *      check they have not drifted apart.
      */
     IERC20 public discountToken = IERC20(0xECf3361441512c1e9F6A6e8734D86614D8e795BC);
+
+    /**
+     * The rungs, in whole tokens times 1e18.
+     *
+     * A ten-thousandth of the supply, a thousandth, and a hundredth. Constants
+     * rather than storage: a discount somebody can be moved off after they
+     * bought in for it is not a deal, it is an announcement.
+     */
+    uint256 public constant BAGHOLDER_AT = 100_000e18;
+    uint256 public constant HOLDER_AT = 1_000_000e18;
+    uint256 public constant WHALE_AT = 10_000_000e18;
+
+    /// @notice Percent off at each rung above retail.
+    uint256 public constant BAGHOLDER_OFF = 10;
+    uint256 public constant HOLDER_OFF = 20;
+    uint256 public constant WHALE_OFF = 30;
 
     // ---------------------------------------------------------------- events
 
@@ -225,15 +252,21 @@ contract CardsOfCronosSetOne is ERC721, ERC2981, Rescuable {
     // ----------------------------------------------------------------- price
 
     /**
-     * @notice What one card costs this address right now.
-     * @dev The first collection's formula, unchanged: `balance / 1_000_000e18`
-     *      percent off, capped at thirty. Note what the integer division means —
-     *      anything under a million $CROCARD is no discount at all, and that is
-     *      how it has always behaved.
+     * @notice What percent comes off a card for this address right now.
+     * @dev Four rungs and no arithmetic between them, which is the point. The
+     *      first collection divided in integers, so 999,999 tokens was the full
+     *      price and 1,000,000 was one percent off — true, defensible, and
+     *      impossible to put on a page in a sentence anybody would finish.
+     *
+     *      Read highest first. Read the other way round a whale would be handed
+     *      the bagholder rate, which is the ordering bug this shape cannot have.
      */
     function discountFor(address user) public view returns (uint256) {
-        uint256 percent = discountToken.balanceOf(user) / 1_000_000e18;
-        return percent > 30 ? 30 : percent;
+        uint256 held = discountToken.balanceOf(user);
+        if (held >= WHALE_AT) return WHALE_OFF;
+        if (held >= HOLDER_AT) return HOLDER_OFF;
+        if (held >= BAGHOLDER_AT) return BAGHOLDER_OFF;
+        return 0;
     }
 
     function priceFor(address user) public view returns (uint256) {

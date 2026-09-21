@@ -210,7 +210,7 @@ contract BuyingTest is Test {
 
     function test_buyingAtFullPrice() public {
         uint256 price = nft.priceFor(buyer);
-        assertEq(price, 150 ether, "no CROCARD, no discount");
+        assertEq(price, 15 ether, "no CROCARD, no discount");
 
         vm.prank(buyer);
         nft.buy{value: price * 2}(2);
@@ -242,30 +242,50 @@ contract BuyingTest is Test {
     }
 
     function test_theDiscountAtEveryEdge() public {
-        // Integer division, which is the part that surprises people: anything
-        // under a million rounds to nothing at all.
-        crocard.setBalance(buyer, 999_999e18);
-        assertEq(nft.discountFor(buyer), 0, "just under a million is no discount");
+        // Four rungs, so what matters is the boundary of each: one wei under a
+        // rung is the rung below, and exactly on it is the rung itself. An
+        // off-by-one here is somebody who bought the threshold to the token and
+        // gets charged as though they had not.
+        assertEq(nft.discountFor(buyer), 0, "holding nothing is retail");
 
+        crocard.setBalance(buyer, 100_000e18 - 1);
+        assertEq(nft.discountFor(buyer), 0, "one under bagholder is still retail");
+        crocard.setBalance(buyer, 100_000e18);
+        assertEq(nft.discountFor(buyer), 10, "bagholder is ten percent");
+
+        crocard.setBalance(buyer, 1_000_000e18 - 1);
+        assertEq(nft.discountFor(buyer), 10, "one under holder is still bagholder");
         crocard.setBalance(buyer, 1_000_000e18);
-        assertEq(nft.discountFor(buyer), 1, "a million is one percent");
+        assertEq(nft.discountFor(buyer), 20, "holder is twenty percent");
 
-        crocard.setBalance(buyer, 29_000_000e18);
-        assertEq(nft.discountFor(buyer), 29);
-
-        crocard.setBalance(buyer, 30_000_000e18);
-        assertEq(nft.discountFor(buyer), 30);
+        crocard.setBalance(buyer, 10_000_000e18 - 1);
+        assertEq(nft.discountFor(buyer), 20, "one under whale is still holder");
+        crocard.setBalance(buyer, 10_000_000e18);
+        assertEq(nft.discountFor(buyer), 30, "whale is thirty percent");
 
         crocard.setBalance(buyer, 900_000_000e18);
-        assertEq(nft.discountFor(buyer), 30, "and it is capped there");
+        assertEq(nft.discountFor(buyer), 30, "and nothing more comes off above it");
 
-        assertEq(nft.priceFor(buyer), (150 ether * 70) / 100);
+        assertEq(nft.priceFor(buyer), (15 ether * 70) / 100, "the floor is 10.5 CRO");
+    }
+
+    function test_theRungsAreTheOnesTheSiteShows() public view {
+        // data/holder-tiers.ts holds the same four, and the page draws them.
+        // Solidity cannot read that file, so this is the half that can drift —
+        // and test/revenue.test.ts reads these constants back out of the source
+        // to close the other half.
+        assertEq(nft.BAGHOLDER_AT(), 100_000e18);
+        assertEq(nft.HOLDER_AT(), 1_000_000e18);
+        assertEq(nft.WHALE_AT(), 10_000_000e18);
+        assertEq(nft.BAGHOLDER_OFF(), 10);
+        assertEq(nft.HOLDER_OFF(), 20);
+        assertEq(nft.WHALE_OFF(), 30);
     }
 
     function test_buyingWithADiscountPaysTheDiscountedPrice() public {
-        crocard.setBalance(buyer, 10_000_000e18);
+        crocard.setBalance(buyer, 1_000_000e18);
         uint256 price = nft.priceFor(buyer);
-        assertEq(price, (150 ether * 90) / 100);
+        assertEq(price, (15 ether * 80) / 100, "a holder pays twenty percent less");
 
         vm.prank(buyer);
         nft.buy{value: price}(1);
@@ -293,7 +313,7 @@ contract BuyingTest is Test {
         nft.setSaleOpen(false);
         vm.prank(buyer);
         vm.expectRevert(CardsOfCronosSetOne.SaleClosed.selector);
-        nft.buy{value: 150 ether}(1);
+        nft.buy{value: 15 ether}(1);
     }
 
     function test_tokenUriSaysNoRatherThanNothing() public {
