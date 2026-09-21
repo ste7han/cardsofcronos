@@ -43,6 +43,8 @@ export async function POST(request: Request) {
   await settle(db(), current, state, Date.now(), {
     publisherKey: env().PUBLISHER_KEY,
     rpc: env().CRONOS_RPC,
+    pvpFriendly: env().DISCORD_PVP_FRIENDLY,
+    pvpRanked: env().DISCORD_PVP_RANKED,
   });
 
   return Response.json({

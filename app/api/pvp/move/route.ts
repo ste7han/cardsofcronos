@@ -56,6 +56,8 @@ export async function POST(request: Request) {
     await settle(db(), played, state, now, {
       publisherKey: env().PUBLISHER_KEY,
       rpc: env().CRONOS_RPC,
+      pvpFriendly: env().DISCORD_PVP_FRIENDLY,
+      pvpRanked: env().DISCORD_PVP_RANKED,
     });
   } else {
     await saveMoves(db(), played.id, played.moves, played.deadline, null);

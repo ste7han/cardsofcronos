@@ -12,6 +12,9 @@
 import { seatOf } from "@/engine/record";
 import type { MatchRecord } from "@/engine/record";
 import type { State } from "@/engine/types";
+import { formatMC } from "@/engine/format";
+import { RULES } from "@/engine/types";
+import { post } from "@/lib/discord";
 import { settleMatch } from "@/lib/escrow";
 import { addResult, finishMatch, type Database } from "@/lib/store";
 
@@ -27,7 +30,12 @@ export async function settle(
   record: MatchRecord,
   state: State,
   now: number,
-  secrets: { publisherKey?: string; rpc?: string } = {},
+  secrets: {
+    publisherKey?: string;
+    rpc?: string;
+    pvpFriendly?: string;
+    pvpRanked?: string;
+  } = {},
 ): Promise<void> {
   if (!state.finished) return;
   if (!(await finishMatch(db, record.id, record.moves, record.deadline, now))) return;
@@ -70,6 +78,65 @@ export async function settle(
   // draw: `settle` takes a winner and refuses anything else. Both sides get
   // their own deposit back through walkAway, which is slow and correct, and a
   // draw in this game needs both market caps to land on the same figure.
+
+  // And said out loud, in the channel that matches what was at stake.
+  //
+  // Here rather than in a route, and after the finishMatch guard, so it happens
+  // exactly once: three routes can be the one that notices a match has ended,
+  // and announcing from each of them would put the same result in a channel
+  // three times.
+  //
+  // Nothing here is taken on anybody's word. This server IS the referee — a
+  // match is a seed and a list of moves it replayed itself — so unlike the solo
+  // feed there is nothing to verify first. It already has.
+  await announce(record, state, secrets).catch(() => {
+    // A channel that did not hear about it is not a reason to fail a settled
+    // match. The result is written, the records are updated and the pot is
+    // handled; this is the least important thing in the function.
+  });
 }
+
+/** Which channel a result belongs in, and what it says. */
+async function announce(
+  record: MatchRecord,
+  state: State,
+  secrets: { pvpFriendly?: string; pvpRanked?: string },
+): Promise<void> {
+  const staked = record.stake > 0;
+  const hook = staked ? secrets.pvpRanked : secrets.pvpFriendly;
+  if (!hook) return;
+
+  const you = record.seats.you;
+  const opponent = record.seats.opponent;
+  const yourMC = state.players.you.mc;
+  const theirMC = state.players.opponent.mc;
+
+  const winner = state.winner === null ? null : record.seats[state.winner];
+  const loser = winner === null ? null : winner === you ? opponent : you;
+
+  await post(hook, [
+    {
+      title:
+        winner === null
+          ? `${short(you)} and ${short(opponent)} drew`
+          : `${short(winner)} beat ${short(loser!)}`,
+      description:
+        `**${formatMC(Math.max(yourMC, theirMC))}** against **${formatMC(
+          Math.min(yourMC, theirMC),
+        )}** after ${RULES.turns} turns` +
+        (staked
+          ? winner === null
+            ? `\n${record.stake} CRO a side. A draw is not settled on chain — the contract has ` +
+              `no draw, so both sides take their own deposit back.`
+            : `\nPlaying for ${record.stake} CRO a side. The pot goes to the winner, less the ` +
+              `cut their holding earns.`
+          : "\nFriendly. Nothing was staked."),
+      color: staked ? 0xffd700 : 0x9d4edd,
+      timestamp: new Date().toISOString(),
+    },
+  ]);
+}
+
+const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 
 export { seatOf };

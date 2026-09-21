@@ -66,6 +66,15 @@ interface CloudflareEnv {
    */
   DISCORD_SOLO?: string;
   /**
+   * Where a finished PvP match is announced, split by what was at stake.
+   *
+   * Two channels because they are two different things to watch: a friendly is
+   * a game and a ranked one is money. Nothing here needs verifying first — this
+   * server refereed the match, replaying it from the seed and the moves.
+   */
+  DISCORD_PVP_FRIENDLY?: string;
+  DISCORD_PVP_RANKED?: string;
+  /**
    * The Durable Object holding the feeds' clock. See worker/index.js.
    *
    * Optional because nothing in the app needs it: only the Worker wrapper winds
