@@ -25,8 +25,8 @@ interface IRouter {
  *
  * CRO arrives — mint proceeds pushed out of the NFT contract, a royalty paid by
  * a marketplace that read ERC2981, a rake from a ranked match. All of it buys
- * $CROCARD, and the tokens are what gets split: half to the people holding it, a
- * quarter burned, a quarter into the weekly prize pot.
+ * $CROCARD, and the tokens are what gets split: half of it burned, three tenths
+ * to the people holding it, a fifth into the weekly prize pot.
  *
  * The maker's call, and it changes what the split means. An earlier version
  * divided the CRO itself and only the burn leg ever touched the token; this puts
@@ -60,9 +60,9 @@ interface IRouter {
  */
 contract Splitter is Rescuable {
     /// Basis points, out of 10_000. Constants: this split has no admin.
-    uint256 public constant HOLDERS_BPS = 5_000;
-    uint256 public constant BURN_BPS = 2_500;
-    uint256 public constant POT_BPS = 2_500;
+    uint256 public constant HOLDERS_BPS = 3_000;
+    uint256 public constant BURN_BPS = 5_000;
+    uint256 public constant POT_BPS = 2_000;
 
     /// @notice The most CRO one call will swap. Call it again for the rest.
     uint256 public constant MOST_PER_RELEASE = 500 ether;

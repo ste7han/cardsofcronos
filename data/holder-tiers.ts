@@ -11,7 +11,7 @@
 // much of what you win you keep. Nothing else.
 //
 // What is taken does not all go up in smoke. A ranked match splits its cut the
-// same way a mint does — half to holders, a quarter burned, a quarter into the
+// same way a mint does — half burned, three tenths to holders, a fifth into the
 // weekly pot — which is why the number below is a cut and not a burn.
 //
 // There were perks on these rungs — all tables, tournament entry, new sets

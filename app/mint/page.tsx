@@ -100,7 +100,7 @@ export default function MintPage() {
 
         <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-muted">
           What is taken is not all burned. A ranked match splits its cut the way a mint does — half
-          back to $CROCARD holders, a quarter burned, a quarter into the{" "}
+          of it burned, three tenths back to $CROCARD holders, a fifth into the{" "}
           <Link href="/tournament" className="text-pump hover:underline">
             weekly prize pot
           </Link>

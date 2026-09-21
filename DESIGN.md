@@ -402,7 +402,7 @@ match whichever is chosen.
 ## The weekly high score
 
 Beat the bot, and your market cap goes on that week's board. The best score when
-the week closes takes the prize pot, which is a quarter of every paid mint.
+the week closes takes the prize pot, which is a fifth of every paid mint.
 
 **Your best of the week counts, not your last.** A board where playing again can
 cost you your place is a board that tells you to stop playing.
@@ -438,7 +438,7 @@ to arrive the moment either changes.
 an invisible one, which is the failure worth being loud about. `tournament_paid`
 has the week as its primary key, so a week cannot be paid twice.
 
-**The pot is a contract, not a wallet.** `contracts/PrizePot.sol` takes a quarter
+**The pot is a contract, not a wallet.** `contracts/PrizePot.sol` takes a fifth
 of everything from the splitter and holds it where nobody can spend it. Who won
 is the one thing that cannot be decided on chain — it comes from replaying
 submitted matches — so something off-chain has to name a name, and naming needs a
@@ -552,8 +552,8 @@ cannot be verified is a discount nobody earned.
 
 **The field is called `cut`, not `burn`**, and it was `burn` for an afternoon.
 That was true while a ranked match was entirely burn and stopped being true the
-moment the stream split three ways — a quarter of this is burned and the rest
-goes to holders and the pot. It had already reached the page as "BURNED WHEN YOU
+moment the stream split three ways — half of this is burned and the rest goes
+to holders and the pot. It had already reached the page as "BURNED WHEN YOU
 WIN", which is the "one name, two meanings" failure this project has a section
 about, arriving by the ordinary route: the name was right when it was written.
 
@@ -584,9 +584,9 @@ on a stream marked live while a wallet it pays is still unknown.
 
 | stream | split |
 |---|---|
-| paid mints | 50% $CROCARD holders · 25% burn · 25% prize pot |
-| ranked matches | 50% $CROCARD holders · 25% burn · 25% prize pot |
-| NFT royalties | 50% $CROCARD holders · 25% burn · 25% prize pot |
+| paid mints | 50% burn · 30% $CROCARD holders · 20% prize pot |
+| ranked matches | 50% burn · 30% $CROCARD holders · 20% prize pot |
+| NFT royalties | 50% burn · 30% $CROCARD holders · 20% prize pot |
 
 **The split is done by a contract, not by a person.** `contracts/Splitter.sol`
 holds the three destinations as immutables and the three shares as constants,
@@ -640,7 +640,7 @@ ways was three things to explain; one sentence now covers every way money enters
 this game, and a rule somebody can repeat from memory is a rule they can check.
 
 **Nothing pays the creator wallet.** It took a quarter of mints and a quarter of
-royalties once, and both moved. That is the settled position and not an
+royalties in the first version, and both moved. That is the settled position and not an
 oversight, so the wallet stays in the file saying so — deleting it would make
 paying the maker a new decision rather than a visible one.
 
@@ -665,7 +665,7 @@ different promise from burning and both are being made: a burn helps every holde
 by making the supply smaller, and this hands them the token itself. The creator
 takes nothing out of a mint.
 
-**A quarter is the prize pot**, paid out weekly on high score, which is what TCG
+**A fifth is the prize pot**, paid out weekly on high score, which is what TCG
 does. Paid out, never spent — it is the one wallet whose balance is somebody
 else's.
 
@@ -719,7 +719,7 @@ so letting a match reshuffle it would hand back exactly the variance the
 measurement removed. See `scripts/lions-seed.ts`.
 
 **A week pays at most one percent of supply**, which is 10 million $CROCARD. A
-quarter of every mint lands in the pot and the mint is the busiest this game will
+fifth of every mint lands in the pot and the mint is the busiest this game will
 ever be, so without a ceiling the first week after it hands one player a tenth of
 the supply for beating a bot once — and that player is then the market. What is
 over the ceiling is not refused and not lost: it stays in the pot and is the next

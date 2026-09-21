@@ -35,14 +35,14 @@ contract SplitterTest is Test {
         splitter = new Splitter(IRouter(address(router)), IERC20(address(card)), holders, burner, pot);
     }
 
-    function test_buysAndDividesFiftyTwentyFiveTwentyFive() public {
+    function test_buysAndDividesFiftyThirtyTwenty() public {
         vm.deal(address(splitter), 100 ether);
         splitter.release();
 
         // 100 CRO bought 2,280,000 tokens.
-        assertEq(card.balanceOf(holders), 1_140_000 ether, "half to the people holding it");
-        assertEq(card.balanceOf(burner), 570_000 ether, "a quarter burned");
-        assertEq(card.balanceOf(pot), 570_000 ether, "a quarter to the weekly pot");
+        assertEq(card.balanceOf(burner), 1_140_000 ether, "half of it burned");
+        assertEq(card.balanceOf(holders), 684_000 ether, "three tenths to the people holding it");
+        assertEq(card.balanceOf(pot), 456_000 ether, "a fifth to the weekly pot");
         assertEq(address(splitter).balance, 0, "and the CRO is spent");
         assertEq(card.balanceOf(address(splitter)), 0, "and nothing kept back");
     }
@@ -52,7 +52,7 @@ contract SplitterTest is Test {
         vm.deal(address(splitter), 10 ether);
         vm.prank(address(0xDEAD));
         splitter.release();
-        assertEq(card.balanceOf(holders), 114_000 ether);
+        assertEq(card.balanceOf(holders), 68_400 ether);
     }
 
     /**

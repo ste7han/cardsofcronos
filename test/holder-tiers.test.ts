@@ -68,12 +68,13 @@ describe("which rung a balance is on", () => {
     expect(cutFor(CROCARD_SUPPLY / 100)).toBeLessThan(cutFor(0));
   });
 
-  it("is a cut and not a burn, because only a quarter of it is burned", () => {
+  it("is a cut and not a burn, because only half of it is burned", () => {
     // The field was called `burn` while a ranked match was 100% burn. It is not
-    // any more, and a name that describes a quarter of what it does is the trap
-    // this codebase keeps a whole section of CLAUDE.md about.
+    // any more, and a name that describes half of what it does is the trap this
+    // codebase keeps a whole section of CLAUDE.md about. The share moved from a
+    // quarter to a half and the name is still wrong for the same reason.
     const rake = STREAMS.find((stream) => stream.id === "rake")!;
-    expect(rake.shares.find((share) => share.to === "burn")!.percent).toBe(25);
+    expect(rake.shares.find((share) => share.to === "burn")!.percent).toBe(50);
     expect(rake.shares).toHaveLength(3);
   });
 

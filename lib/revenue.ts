@@ -282,7 +282,13 @@ export function croPerCard(option: MintOption): number {
  */
 export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | null> = {
   drop: "0x09e4d4bf527ddcff1ea38e550573a15c490043c6",
-  splitter: "0xbb658915095d90fe7892d642ea1e6d223ae5fa75",
+  // Was 0xbb658915095d90fe7892d642ea1e6d223ae5fa75. The split moved to 50% burn,
+  // 30% holders, 20% pot, and the shares are `constant` in that contract with no
+  // setter — so it cannot be changed, only replaced. Null until the replacement
+  // is deployed, because pointing at it would have this file and the page say a
+  // split the deployed bytecode does not do. It holds 0 CRO, so nothing is
+  // stranded there.
+  splitter: null,
   pot: "0xafe431c0c6b2cde0888e0dff74d22be08c981025",
   nft: null,
 };
@@ -320,13 +326,13 @@ export const STREAMS: readonly Stream[] = [
     from: "Packs and cards of the new line.",
     // Every share is bought as $CROCARD before it is split. The CRO that arrives
     // goes through the market first, so the whole of a mint is buy pressure and
-    // each destination is paid in the thing the game is about — half back to the
-    // people already holding it, a quarter burned, a quarter into the pot. The
+    // each destination is paid in the thing the game is about — half of it
+    // burned, three tenths to the people already holding it, a fifth into the pot. The
     // creator takes nothing out of a mint any more.
     shares: [
-      { to: "holders", percent: 50 },
-      { to: "burn", percent: 25 },
-      { to: "tournament", percent: 25 },
+      { to: "burn", percent: 50 },
+      { to: "holders", percent: 30 },
+      { to: "tournament", percent: 20 },
     ],
     live: false,
     open:
@@ -342,9 +348,9 @@ export const STREAMS: readonly Stream[] = [
     // sentence now covers every way money enters this game, and a rule somebody
     // can repeat from memory is a rule they can check.
     shares: [
-      { to: "holders", percent: 50 },
-      { to: "burn", percent: 25 },
-      { to: "tournament", percent: 25 },
+      { to: "burn", percent: 50 },
+      { to: "holders", percent: 30 },
+      { to: "tournament", percent: 20 },
     ],
     live: false,
   },
@@ -363,9 +369,9 @@ export const STREAMS: readonly Stream[] = [
     // by mints alone, or the weekly prize is only ever as big as last week's
     // minting.
     shares: [
-      { to: "holders", percent: 50 },
-      { to: "burn", percent: 25 },
-      { to: "tournament", percent: 25 },
+      { to: "burn", percent: 50 },
+      { to: "holders", percent: 30 },
+      { to: "tournament", percent: 20 },
     ],
     live: false,
     open:
@@ -418,7 +424,7 @@ for (const stream of STREAMS) {
 /**
  * The most one week's prize may be, in whole $CROCARD.
  *
- * One percent of the billion there will ever be. A quarter of every mint lands
+ * One percent of the billion there will ever be. A fifth of every mint lands
  * in the pot and the mint is the busiest this game will ever be, so without a
  * ceiling the first week after it hands one player a tenth of the supply for
  * beating a bot once — and that player is then the market.

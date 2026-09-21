@@ -189,7 +189,7 @@ export function Tournament() {
             <dt className="display text-sm text-gold">What one week can pay</dt>
             <dd className="mt-1.5 max-w-2xl text-[11px] leading-relaxed text-muted">
               At most one percent of the supply — {ONE_PERCENT} $CROCARD — however full the pot is.
-              A quarter of every mint lands here and the mint is the busiest this game will ever be,
+              A fifth of every mint lands here and the mint is the busiest this game will ever be,
               so without a ceiling the first week after it would hand one player a tenth of the
               supply for beating a bot once. Whatever is over stays in the pot.
             </dd>

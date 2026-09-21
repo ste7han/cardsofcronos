@@ -155,8 +155,8 @@ export default function Landing() {
           <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
             <span className="text-fg">Three things earn, and all of it is bought in the token.</span>{" "}
             Paid mints, royalties on the cards that resell, and a cut of what is staked on a ranked
-            match. Every one of them is swapped for $CROCARD before it is divided — half to the
-            people holding it, a quarter burned, a quarter into the weekly pot. The contract that
+            match. Every one of them is swapped for $CROCARD before it is divided — half of it burned,
+            three tenths to the people holding it, a fifth into the weekly pot. The contract that
             does it has no owner and nothing to set.
           </p>
           <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
@@ -174,7 +174,7 @@ export default function Landing() {
           <dl className="mt-3 grid border border-line sm:grid-cols-3">
             <Figure label="TICKER" value="$CROCARD" />
             <Figure label="CHAIN" value="Cronos" />
-            <Figure label="BURN" value="a quarter of it" last />
+            <Figure label="BURN" value="half of it" last />
           </dl>
         </div>
       </section>

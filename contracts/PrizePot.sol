@@ -9,7 +9,7 @@ import {Rescuable} from "./Rescuable.sol";
 /**
  * The weekly prize, held where nobody can spend it.
  *
- * A quarter of every mint, every royalty and every ranked match arrives here
+ * A fifth of every mint, every royalty and every ranked match arrives here
  * from Splitter.sol, as $CROCARD — the splitter buys it on the way. Each week
  * the pot is awarded to whoever posted the best verified score, and paid out.
  *
@@ -67,7 +67,7 @@ import {Rescuable} from "./Rescuable.sol";
  *
  * ── WHY ONE WEEK CANNOT TAKE EVERYTHING ──────────────────────────────────────
  *
- * A quarter of every mint lands here and the mint is the busiest this game will
+ * A fifth of every mint lands here and the mint is the busiest this game will
  * ever be. Without a ceiling the first week after a good mint hands one player
  * a double-digit percentage of the supply — for beating a bot once — and that
  * player is then the market. So a week pays at most `mostPerWeek`, and what is

@@ -252,7 +252,7 @@ contract PrizePotTest is Test {
     // ── THE CEILING ─────────────────────────────────────────────────────────
 
     /**
-     * The reason it exists: a quarter of every mint lands here, the mint is the
+     * The reason it exists: a fifth of every mint lands here, the mint is the
      * busiest this game will ever be, and without a ceiling the first week after
      * it hands one player a tenth of the supply for beating a bot once.
      */

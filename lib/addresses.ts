@@ -55,12 +55,15 @@ export const OURS: readonly Listed[] = [
     address: CONTRACTS.splitter,
     what:
       "Everything the game earns arrives here. It buys $CROCARD on the market and divides it: " +
-      "half to the people holding the token, a quarter burned, a quarter to the prize pot.",
+      "half of it burned, three tenths to the people holding the token, a fifth to the prize pot. " +
+      "Being replaced — the version that is deployed divides it the old way, half to holders and " +
+      "a quarter each to the burn and the pot, and the shares cannot be changed without a new " +
+      "contract. Nothing is routed to either one yet.",
     powers: [
       "Anybody can set it going. `release()` takes no arguments, has no owner check and can only " +
         "do the one thing, so calling it is paying the gas rather than making a decision.",
-      "It cannot be pointed somewhere else. The three destinations were fixed when it was " +
-        "deployed and there is no function to change them.",
+      "It cannot be pointed somewhere else, and its shares cannot be moved. Both were fixed when " +
+        "it was deployed, which is why changing the split means deploying a new one.",
       "The owner can empty it, after telling you first. The rescue hatch announces two days " +
         "before it can be used, which is the window to notice.",
     ],
@@ -173,7 +176,7 @@ export const NOT_OURS: readonly Listed[] = [
     id: "burn",
     name: "The burn address",
     address: BURN_ADDRESS,
-    what: "Where the burned quarter goes. Nobody holds its key, so nothing sent there comes back.",
+    what: "Where the burned half goes. Nobody holds its key, so nothing sent there comes back.",
     powers: [],
     theirs:
       "Not an address anybody owns. It is the convention for this, and it already held 89 million " +
