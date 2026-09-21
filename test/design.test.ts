@@ -19,6 +19,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
+import { STREAMS } from "@/lib/revenue";
 import { MARKETING_COST, RULES, SECTORS, TURN_ACTION_COST } from "@/engine/types";
 import { PACK_SIZE } from "@/engine/pack";
 import { PULL_WEIGHTS } from "@/engine/draw";
@@ -100,5 +101,34 @@ describe("the design document still describes this game", () => {
       .filter((word): word is string => Boolean(word));
 
     expect([...named].sort()).toEqual([...SECTORS].sort());
+  });
+
+  it("divides the money the way the splitter does", () => {
+    // This one drifted. The split moved to 50/30/20 in September 2026 and the
+    // document went on saying half of a mint goes to holders for as long as
+    // nothing looked — which is the exact shape of the failure this file exists
+    // for, on the one set of numbers that is about somebody's money.
+    //
+    // Written in words rather than digits, because that is how the document
+    // reads and a check that only counted "30" would pass on any page with a
+    // thirty on it.
+    const inWords: Record<number, string> = {
+      50: "Half",
+      30: "three tenths",
+      20: "A fifth",
+    };
+    for (const stream of STREAMS) {
+      for (const share of stream.shares) {
+        const word = inWords[share.percent];
+        expect(word, `${share.percent}% has no wording in this test`).toBeDefined();
+        expect(DESIGN, `${share.to} takes ${share.percent}%`).toContain(word!);
+      }
+    }
+    // And the shape itself: one split, the same on every stream, or the
+    // sentence the document makes out of it is not true of all three.
+    const shapes = STREAMS.map((stream) =>
+      stream.shares.map((share) => `${share.to}:${share.percent}`).join(","),
+    );
+    expect(new Set(shapes).size, "the streams no longer divide the same way").toBe(1);
   });
 });

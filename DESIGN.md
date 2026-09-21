@@ -660,10 +660,13 @@ the contract counts the tokens it actually received rather than trusting the
 router's return value. It has no owner and no arguments: a stranger can call
 `release()` and it can only do the one thing.
 
-**Half of a mint goes back to the people already holding the token.** That is a
-different promise from burning and both are being made: a burn helps every holder
-by making the supply smaller, and this hands them the token itself. The creator
-takes nothing out of a mint.
+**Half of a mint is burned and three tenths go back to the people already holding
+the token.** That is a different promise from burning and both are being made: a
+burn helps every holder by making the supply smaller, and this hands them the
+token itself. The creator takes nothing out of a mint. Until September 2026 it
+was the other way round — half to holders, a quarter burned, a quarter to the pot
+— and the shares are `constant` in the splitter with no setter, so turning it
+around meant deploying a new one.
 
 **A fifth is the prize pot**, paid out weekly on high score, which is what TCG
 does. Paid out, never spent — it is the one wallet whose balance is somebody
