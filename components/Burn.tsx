@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { CROCARD_SUPPLY } from "@/data/holder-tiers";
-import { STREAMS, WALLETS, nameOf, receiverOf, sourceOf, type Destination } from "@/lib/revenue";
+import { BURN_ADDRESS, CONTRACTS, STREAMS, WALLETS, nameOf, receiverOf, sourceOf, type Destination } from "@/lib/revenue";
 import { EXPLORER, toCro, toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
 
@@ -37,16 +37,34 @@ interface Answer {
   burns: BurnRow[];
 }
 
-interface WalletBalance {
+/** One address the money passes through. See app/api/wallets/route.ts. */
+interface Place {
   id: string;
-  /** Null while nobody has said what this wallet is. Not the same as unknown. */
-  address: string | null;
+  name: string;
   what: string;
+  /** Null while it is not deployed. Not the same as a balance nobody could read. */
+  address: string | null;
+  unit: "CRO" | "$CROCARD";
   /** null means the chain would not answer, which is not the same as empty. */
-  wei: string | null;
+  amount: string | null;
 }
 
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
+
+/**
+ * The shape of the list before the balances arrive.
+ *
+ * Names and addresses only, so the section is a list with its numbers still
+ * loading rather than a blank box that pops into existence. The addresses come
+ * from lib/revenue.ts, which is where they come from on the server too.
+ */
+const PLACEHOLDERS: Place[] = [
+  { id: "splitter", name: "SPLITTER", what: "", address: CONTRACTS.splitter, unit: "CRO", amount: null },
+  { id: "burn", name: "BURN ADDRESS", what: "", address: BURN_ADDRESS, unit: "$CROCARD", amount: null },
+  { id: "drop", name: "HOLDER DROP", what: "", address: CONTRACTS.drop, unit: "$CROCARD", amount: null },
+  { id: "pot", name: "PRIZE POT", what: "", address: CONTRACTS.pot, unit: "$CROCARD", amount: null },
+  { id: "owner", name: "OWNER", what: "", address: WALLETS.deployer.address, unit: "CRO", amount: null },
+];
 
 /**
  * A colour per destination, in one place.
@@ -84,7 +102,7 @@ function Bar({ shares }: { shares: readonly { to: Destination; percent: number }
 
 export function Burn() {
   const [answer, setAnswer] = useState<Answer | null>(null);
-  const [held, setHeld] = useState<WalletBalance[] | null>(null);
+  const [held, setHeld] = useState<Place[] | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -101,7 +119,7 @@ export function Burn() {
       try {
         const response = await fetch("/api/wallets");
         if (response.ok) {
-          setHeld(((await response.json()) as { wallets: WalletBalance[] }).wallets);
+          setHeld(((await response.json()) as { places: Place[] }).places);
         }
       } catch {
         // Same rule. A balance nobody could read stays unread on screen.
@@ -312,63 +330,76 @@ export function Burn() {
         </div>
       </section>
 
+      {/* Where the money actually goes, in the order it moves.
+          This listed the four wallets in lib/revenue.ts until September 2026,
+          three of which have no address and two of which no stream pays — so a
+          page about where the money goes carried three rows reading "not
+          announced yet", which reads as a promise that money will one day go
+          there. The tournament row was not a gap but wrong: the prize pot has
+          been a contract for as long as there has been one. */}
       <section>
-        <h2 className="display text-xl">THE WALLETS</h2>
+        <h2 className="display text-xl">WHERE IT GOES</h2>
         <dl className="mt-4 divide-y divide-line border border-line">
-          {Object.values(WALLETS).map((wallet) => {
-            const balance = held?.find((one) => one.id === wallet.id);
-            return (
-              <div key={wallet.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <dt className="text-[10px] tracking-[0.18em] text-faint">
-                    {wallet.id.toUpperCase()}
-                  </dt>
-                  <dd className="mt-1 text-[10px] leading-relaxed text-muted">{wallet.what}</dd>
-                  {wallet.address === null ? (
-                    <p className="mt-1 text-[10px] text-gold">Not announced yet.</p>
-                  ) : (
-                    <a
-                      href={`${EXPLORER}/address/${wallet.address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 block font-mono text-[10px] break-all text-fg hover:text-pump"
-                    >
-                      {balance?.address ?? wallet.address}
-                    </a>
-                  )}
-                </div>
-
-                {/* Four states and never three. Empty is a fact about the
-                    wallet; unknown is a fact about the request; and an address
-                    nobody has chosen yet is a fact about the project. Reading
-                    "0 CRO" for any of the other three is the one wrong answer
-                    this section can give. */}
-                <span className="shrink-0 text-right">
-                  <span className="display block text-xl tabular-nums">
-                    {wallet.address === null
-                      ? "—"
-                      : held === null
-                        ? "…"
-                        : balance?.wei == null
-                          ? "—"
-                          : toCro(balance.wei).toFixed(2)}
-                  </span>
-                  <span className="block text-[8px] tracking-[0.18em] text-faint">
-                    {wallet.address === null
-                      ? "NO WALLET YET"
-                      : held !== null && balance?.wei == null
-                        ? "NOT KNOWN"
-                        : "CRO"}
-                  </span>
-                </span>
+          {(held ?? PLACEHOLDERS).map((place) => (
+            <div
+              key={place.id}
+              className="flex flex-wrap items-start justify-between gap-3 px-4 py-3"
+            >
+              <div className="min-w-0">
+                <dt className="text-[10px] tracking-[0.18em] text-faint">{place.name}</dt>
+                <dd className="mt-1 max-w-xl text-[10px] leading-relaxed text-muted">
+                  {place.what}
+                </dd>
+                {place.address === null ? (
+                  <p className="mt-1 text-[10px] text-gold">Not deployed yet.</p>
+                ) : (
+                  <a
+                    href={`${EXPLORER}/address/${place.address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block font-mono text-[10px] break-all text-fg hover:text-pump"
+                  >
+                    {place.address}
+                  </a>
+                )}
               </div>
-            );
-          })}
+
+              {/* Four states and never three. Empty is a fact about the
+                  address; unknown is a fact about the request; and something
+                  not deployed is a fact about the project. Reading "0" for any
+                  of the other three is the one wrong answer this can give. */}
+              <span className="shrink-0 text-right">
+                <span className="display block text-xl tabular-nums">
+                  {place.address === null
+                    ? "—"
+                    : held === null
+                      ? "…"
+                      : place.amount == null
+                        ? "—"
+                        : place.unit === "CRO"
+                          ? toCro(place.amount).toFixed(2)
+                          : Math.round(toTokens(place.amount)).toLocaleString("en-US")}
+                </span>
+                <span className="block text-[8px] tracking-[0.18em] text-faint">
+                  {place.address === null
+                    ? "NOT DEPLOYED"
+                    : held !== null && place.amount == null
+                      ? "NOT KNOWN"
+                      : place.unit}
+                </span>
+              </span>
+            </div>
+          ))}
         </dl>
         <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-faint">
           Read off the chain a minute at a time, so nobody has to go and look it up — and published
           so the splits above can be checked rather than taken on trust. None of them is a key: an
-          address is public by nature, and these are here to be watched.
+          address is public by nature, and these are here to be watched. The wallets this project
+          holds but no stream pays are on the{" "}
+          <Link href="/contracts" className="text-pump hover:underline">
+            contracts page
+          </Link>{" "}
+          instead, where naming them is the point.
         </p>
       </section>
     </div>
