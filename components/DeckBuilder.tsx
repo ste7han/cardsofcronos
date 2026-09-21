@@ -28,7 +28,7 @@ import {
   saveDeck,
   type LoadedDeck,
 } from "@/lib/deck-storage";
-import { DECK_FROM_COLLECTION, copiesHeld, ownedForRules, poolCards } from "@/lib/collection";
+import { DECK_FROM_COLLECTION, copiesHeld, poolCards, poolFor } from "@/lib/collection";
 import { useSession } from "@/lib/use-session";
 import { sizeOf, useCardSize } from "@/lib/card-size";
 import { cx } from "@/lib/cx";
@@ -64,18 +64,62 @@ export function DeckBuilder() {
    */
   const [poolReady, setPoolReady] = useState(false);
 
+  /**
+   * Set when the collection could not be read at all.
+   *
+   * Not the same as holding nothing, and the page says them differently. A
+   * builder that answered "you own no cards" because a request timed out would
+   * be telling somebody their 53 cards are gone.
+   */
+  const [poolFailed, setPoolFailed] = useState(false);
+
   // Keyed on the wallet, not just on mount. Signing in or out changes whose
   // cards these are, and a builder still holding the last wallet's deck would be
   // offering to save cards this one does not own.
+  //
+  // ── IT ASKS THE CHAIN NOW ────────────────────────────────────────────────
+  //
+  // This read localStorage, which was the whole collection while the mint was a
+  // rehearsal. The moment there was a contract it became the wrong answer: a
+  // wallet holding 53 real cards was told it had none. poolFor adds both — the
+  // local ones still exist for whoever opened rehearsal packs — and the chain
+  // is the half that matters.
   useEffect(() => {
+    let current = true;
+
+    // Synchronously first, so somebody with rehearsal cards is not looking at
+    // an empty grid while a request is in flight.
     setPool(poolCards());
     setCopies(copiesHeld());
-    setPoolReady(true);
+
+    void (async () => {
+      try {
+        const { cards, copies: held } = await poolFor(wallet);
+        if (!current) return;
+        setPool(cards);
+        setCopies(held);
+        setPoolFailed(false);
+      } catch {
+        if (!current) return;
+        // The local half is already on screen. What is missing is the chain, and
+        // the notice says so rather than the grid quietly being short.
+        setPoolFailed(true);
+      } finally {
+        if (current) setPoolReady(true);
+      }
+    })();
+
     const stored = loadDeck();
     setInitial(stored);
     setPicked(stored.cardIds);
     setName(stored.name);
     setSaved(stored.cardIds.length > 0);
+
+    // A wallet switched mid-request must not have the old one's cards land on
+    // top of it.
+    return () => {
+      current = false;
+    };
   }, [wallet]);
 
   const [type, setType] = useState<CardType | null>(null);
@@ -307,6 +351,15 @@ export function DeckBuilder() {
             </span>
           </div>
         </div>
+
+        {/* Said out loud, because the grid below it would otherwise just be
+            short and look like an answer. */}
+        {poolFailed && (
+          <p className="mt-3 border border-dump/40 bg-dump/5 px-4 py-3 text-[11px] leading-relaxed text-dump">
+            The cards you hold on chain could not be read, so this is showing less than you own.
+            That is this page failing rather than an empty wallet — reload in a moment.
+          </p>
+        )}
 
         {/* A column count is the wrong way to lay these out. The full card is
             drawn for about 400px across — that is the width it is rendered at

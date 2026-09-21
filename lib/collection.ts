@@ -178,6 +178,55 @@ export function poolCards(): Card[] {
   return SET.filter((c) => pool.has(c.id));
 }
 
+/**
+ * What this wallet holds ON CHAIN, as card ids, one entry per token.
+ *
+ * The real answer now. Everything above this line is the browser: cards drawn
+ * locally and kept in localStorage, which is what the mint was before there was
+ * a contract. A wallet that minted 53 cards for real had none of them here and
+ * the deck builder told it so — correctly, about the wrong collection.
+ *
+ * The chain cannot be asked directly: contracts/CardsOfCronosSetOne.sol is
+ * deliberately not ERC721Enumerable, so /api/cards reads the ownership table the
+ * minute-job keeps. A mint from ten seconds ago may not be in it yet.
+ *
+ * Returns an empty list for a wallet that holds nothing, and THROWS when it
+ * could not ask — those are different facts and the builder draws them
+ * differently. Signed out returns empty without asking, which is neither.
+ */
+export async function chainHoldings(wallet: string | null): Promise<string[]> {
+  if (wallet === null) return [];
+  const response = await fetch(`/api/cards?wallet=${wallet}`);
+  if (!response.ok) throw new Error(`The chain holdings could not be read: ${response.status}`);
+  const { tokens } = (await response.json()) as { tokens: { cardId: string }[] };
+  return tokens.map((one) => one.cardId);
+}
+
+/**
+ * Everything this wallet may deck, and how many of each it has.
+ *
+ * The chain and the browser, added together. They are not rivals: the local
+ * ones only exist for a wallet that opened rehearsal packs before there was a
+ * contract — MINT_OPEN is off, so nobody else can add to them — and throwing
+ * them away would take cards off the one person who has any.
+ *
+ * DECK_FROM_COLLECTION off hands back the whole set, the same as deckPool.
+ */
+export async function poolFor(
+  wallet: string | null,
+): Promise<{ cards: Card[]; copies: Map<string, number> }> {
+  const copies = new Map<string, number>();
+  const count = (id: string) => copies.set(id, (copies.get(id) ?? 0) + 1);
+
+  for (const id of holdings()) count(id);
+  for (const id of await chainHoldings(wallet)) count(id);
+
+  if (!DECK_FROM_COLLECTION) {
+    return { cards: [...SET], copies };
+  }
+  return { cards: SET.filter((card) => copies.has(card.id)), copies };
+}
+
 export interface Bought {
   /** What came out, in draw order. Empty when there was nothing left to pull. */
   cardIds: string[];
