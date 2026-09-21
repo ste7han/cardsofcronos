@@ -13,11 +13,12 @@
 // something rounder.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 import { BURN_ADDRESS, CONTRACTS, STREAMS, WALLETS, nameOf, receiverOf, sourceOf, type Destination } from "@/lib/revenue";
 import { EXPLORER, toCro, toTokens } from "@/lib/units";
+import { SendItThrough } from "@/components/SendItThrough";
 import { cx } from "@/lib/cx";
 
 interface BurnRow {
@@ -34,6 +35,9 @@ interface Answer {
   /** What the burn address holds now, base units, or null when unreadable. */
   dead: string | null;
   deadAddress: string;
+  /** CRO that has arrived and has not been through the split yet. */
+  waiting: { collection: string | null; splitter: string | null };
+  at: { collection: string | null; splitter: string | null };
   burns: BurnRow[];
 }
 
@@ -104,16 +108,21 @@ export function Burn() {
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [held, setHeld] = useState<Place[] | null>(null);
 
+  // Pulled out of the effect so the release button can ask again after it has
+  // sent one: what is waiting has just changed, and a panel still showing the
+  // old figure reads as a press that did nothing.
+  const look = useCallback(async () => {
+    try {
+      const response = await fetch("/api/burn");
+      if (response.ok) setAnswer((await response.json()) as Answer);
+    } catch {
+      // Nothing to say. The page reads "none yet" either way, and inventing a
+      // number because a request failed is the one thing it must not do.
+    }
+  }, []);
+
   useEffect(() => {
-    void (async () => {
-      try {
-        const response = await fetch("/api/burn");
-        if (response.ok) setAnswer((await response.json()) as Answer);
-      } catch {
-        // Nothing to say. The page reads "none yet" either way, and inventing a
-        // number because a request failed is the one thing it must not do.
-      }
-    })();
+    void look();
 
     void (async () => {
       try {
@@ -125,7 +134,7 @@ export function Burn() {
         // Same rule. A balance nobody could read stays unread on screen.
       }
     })();
-  }, []);
+  }, [look]);
 
   return (
     <div className="space-y-10">
@@ -207,6 +216,14 @@ export function Burn() {
             </dd>
           </div>
         </dl>
+
+        {answer !== null && (
+          <SendItThrough
+            waiting={answer.waiting}
+            at={answer.at}
+            onDone={() => void look()}
+          />
+        )}
 
         {answer !== null && answer.burns.length === 0 ? (
           <p className="mt-3 text-[11px] leading-relaxed text-gold">
