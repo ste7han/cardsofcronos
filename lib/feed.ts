@@ -93,6 +93,43 @@ const wordAt = (data: string, n: number): bigint => {
 /** An indexed address topic, as an address. */
 const addressIn = (topic: string): string => "0x" + topic.slice(-40);
 
+/**
+ * When a log's block was mined, as an ISO string, or null when it cannot be had.
+ *
+ * Discord shows an embed's timestamp as a time, and the honest value is when the
+ * thing happened rather than when this got round to mentioning it. Those are the
+ * same thing on a healthy minute and hours apart after a quiet night — the feed
+ * only runs on a tick or a page view, so a site nobody visits overnight wakes up
+ * behind, and stamping those with `now` would announce a buy from three in the
+ * morning as if it had just happened.
+ *
+ * One call per block that actually had an event, not per block scanned, and
+ * answers are shared inside a run: a burst of mints is usually one block.
+ */
+async function minedAt(
+  rpcs: readonly string[],
+  block: string,
+  seen: Map<string, string | null>,
+): Promise<string | null> {
+  const had = seen.get(block);
+  if (had !== undefined) return had;
+  try {
+    const head = await rpc<{ timestamp: string } | null>(rpcs, "eth_getBlockByNumber", [
+      block,
+      false,
+    ]);
+    const at =
+      head === null ? null : new Date(Number(BigInt(head.timestamp)) * 1000).toISOString();
+    seen.set(block, at);
+    return at;
+  } catch {
+    // An embed with no timestamp is a message without a time on it, which is
+    // better than a message with the wrong one.
+    seen.set(block, null);
+    return null;
+  }
+}
+
 /** 1234567890123456789012 wei as "1,234.57". Whole numbers lose the decimals. */
 export function amount(base: bigint, decimals = 18, places = 2): string {
   const whole = base / 10n ** BigInt(decimals);
@@ -265,6 +302,7 @@ async function runOne(
 /** Cards minted: bought and claimed, which are two events and one sentence. */
 export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
   const nft = CONTRACTS.nft!;
+  const times = new Map<string, string | null>();
   // How far along the mint is, asked once for the whole batch. It is the number
   // that makes a mint line mean something — five cards out of 5,603 reads
   // differently from five out of the last twenty.
@@ -300,12 +338,14 @@ export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Em
           `\n[every one of them on the explorer](${EXPLORER}/address/${nft})`,
         color: PURPLE,
         footer: outOf ? { text: outOf } : undefined,
-        timestamp: new Date().toISOString(),
+        // The last of them, which is when the burst had finished.
+        timestamp: (await minedAt(rpcs, logs[logs.length - 1]!.blockNumber, times)) ?? undefined,
       },
     ];
   }
 
-  return logs.map((log) => {
+  return Promise.all(
+    logs.map(async (log) => {
     const who = short(addressIn(log.topics[1]!));
     const cards = Number(wordAt(log.data, 0));
     const free = log.topics[0] === CLAIMED;
@@ -320,9 +360,10 @@ export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Em
       url: txLink(log.transactionHash),
       color: free ? GOLD : PURPLE,
       footer: outOf ? { text: outOf } : undefined,
-      timestamp: new Date().toISOString(),
+      timestamp: (await minedAt(rpcs, log.blockNumber, times)) ?? undefined,
     };
-  });
+    }),
+  );
 }
 
 /**
@@ -333,7 +374,8 @@ export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Em
  * likely. A buy is $CROCARD leaving the pool, so `amount1Out` above zero; a sell
  * is the same log with the other two fields filled in, and it is left out.
  */
-export async function sayBuys(logs: Log[]): Promise<Embed[]> {
+export async function sayBuys(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
+  const times = new Map<string, string | null>();
   const buys = logs
     .map((log) => ({
       log,
@@ -352,22 +394,26 @@ export async function sayBuys(logs: Log[]): Promise<Embed[]> {
         description: `${amount(got)} $CROCARD for ${amount(cro)} CRO`,
         url: `${EXPLORER}/address/${POOL}`,
         color: GREEN,
-        timestamp: new Date().toISOString(),
+        timestamp:
+          (await minedAt(rpcs, buys[buys.length - 1]!.log.blockNumber, times)) ?? undefined,
       },
     ];
   }
 
-  return buys.map((one) => ({
-    title: `${amount(one.gotOut)} $CROCARD bought`,
-    description: `for ${amount(one.croIn)} CRO`,
-    url: txLink(one.log.transactionHash),
-    color: GREEN,
-    timestamp: new Date().toISOString(),
-  }));
+  return Promise.all(
+    buys.map(async (one) => ({
+      title: `${amount(one.gotOut)} $CROCARD bought`,
+      description: `for ${amount(one.croIn)} CRO`,
+      url: txLink(one.log.transactionHash),
+      color: GREEN,
+      timestamp: (await minedAt(rpcs, one.log.blockNumber, times)) ?? undefined,
+    })),
+  );
 }
 
 /** $CROCARD sent to the dead address, and how much is there now. */
 export async function sayBurns(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
+  const times = new Map<string, string | null>();
   let held: string | null = null;
   try {
     const answer = await rpc(rpcs, "eth_call", [
@@ -390,19 +436,22 @@ export async function sayBurns(logs: Log[], rpcs: readonly string[]): Promise<Em
         url: `${EXPLORER}/address/${BURN_ADDRESS}`,
         color: 0xff6b35,
         footer: held ? { text: held } : undefined,
-        timestamp: new Date().toISOString(),
+        timestamp:
+          (await minedAt(rpcs, burned[burned.length - 1]!.log.blockNumber, times)) ?? undefined,
       },
     ];
   }
 
-  return burned.map((one) => ({
-    title: `${amount(one.howMuch)} $CROCARD burned`,
-    description: `Sent to the dead address, where nothing comes back from.`,
-    url: txLink(one.log.transactionHash),
-    color: 0xff6b35,
-    footer: held ? { text: held } : undefined,
-    timestamp: new Date().toISOString(),
-  }));
+  return Promise.all(
+    burned.map(async (one) => ({
+      title: `${amount(one.howMuch)} $CROCARD burned`,
+      description: `Sent to the dead address, where nothing comes back from.`,
+      url: txLink(one.log.transactionHash),
+      color: 0xff6b35,
+      footer: held ? { text: held } : undefined,
+      timestamp: (await minedAt(rpcs, one.log.blockNumber, times)) ?? undefined,
+    })),
+  );
 }
 
 /**
@@ -483,7 +532,7 @@ export async function runFeeds(
       webhook: secrets.buys,
       address: POOL,
       topics: [SWAP],
-      say: (logs) => sayBuys(logs),
+      say: sayBuys,
     }),
   );
 

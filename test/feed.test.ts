@@ -108,7 +108,7 @@ describe("a buy, which is half of a swap", () => {
   const sell = log({ topics: [SWAP], data: amounts(0n, 1000n * 10n ** 18n, 5n * 10n ** 18n, 0n) });
 
   it("reports a buy", async () => {
-    const [embed] = await sayBuys([buy]);
+    const [embed] = await sayBuys([buy], []);
     expect(embed!.title).toContain("1,000 $CROCARD bought");
     expect(embed!.description).toContain("5 CRO");
   });
@@ -116,17 +116,17 @@ describe("a buy, which is half of a swap", () => {
   it("says nothing about a sell", async () => {
     // The channel is called CROCARD BUYS. A feed that reported both under that
     // name would be lying by its own title.
-    expect(await sayBuys([sell])).toEqual([]);
+    expect(await sayBuys([sell], [])).toEqual([]);
   });
 
   it("picks the buys out of a mixed batch", async () => {
-    const embeds = await sayBuys([sell, buy, sell]);
+    const embeds = await sayBuys([sell, buy, sell], []);
     expect(embeds).toHaveLength(1);
   });
 
   it("collapses a burst rather than posting a line each", async () => {
     const many = Array.from({ length: TOO_MANY + 2 }, () => buy);
-    const embeds = await sayBuys(many);
+    const embeds = await sayBuys(many, []);
     expect(embeds).toHaveLength(1);
     expect(embeds[0]!.title).toContain(`${many.length} buys`);
     expect(embeds[0]!.description).toContain("CRO");
@@ -177,6 +177,16 @@ describe("a mint", () => {
     const [embed] = await sayMints([bought], []);
     expect(embed!.title).toBeTruthy();
     expect(embed!.footer).toBeUndefined();
+  });
+
+  it("leaves the time off rather than putting the wrong one on", async () => {
+    // Every embed is stamped with when its block was mined, not with now. The
+    // feed runs on a tick or a page view, so after a quiet night it wakes up
+    // behind — and a buy from three in the morning stamped `now` would tell
+    // everybody it had just happened. Unreadable means no timestamp, which is a
+    // message without a time on it rather than one with a lie on it.
+    const [embed] = await sayMints([bought], []);
+    expect(embed!.timestamp).toBeUndefined();
   });
 });
 
