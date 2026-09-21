@@ -32,6 +32,7 @@ import { RULES, type Move } from "@/engine/types";
 import { post } from "@/lib/discord";
 import { INDEX } from "@/lib/set";
 import { formatMC } from "@/engine/format";
+import { from, versus } from "@/lib/flair";
 
 export const dynamic = "force-dynamic";
 
@@ -138,15 +139,22 @@ export async function POST(request: Request) {
     const name = typeof deckName === "string" && deckName.trim() !== "" ? deckName.trim() : null;
     await post(hook, [
       {
+        author: from("Cards of Cronos · the market", "https://cardsofcronos.com/play"),
         title:
           won === null
-            ? `${short(wallet)} drew with ${board.name}`
+            ? `⚖️  ${short(wallet)} drew with ${board.name}`
             : won
-              ? `${short(wallet)} beat ${board.name}`
-              : `${board.name} beat ${short(wallet)}`,
+              ? `🏆  ${short(wallet)} beat ${board.name}`
+              : `💀  ${board.name} beat ${short(wallet)}`,
         description:
-          `**${formatMC(yours)}** against **${formatMC(theirs)}**` +
-          (name ? `\nPlaying ${name}` : ""),
+          // The bar first, because it is the shape of the match and the two
+          // figures are only the caption under it.
+          `\`${versus(yours, theirs)}\`\n` +
+          `**${formatMC(yours)}**  ·  ${board.name} **${formatMC(theirs)}**\n` +
+          (won === null
+            ? "Level after ten turns."
+            : `${won ? "Won" : "Lost"} by **${formatMC(Math.abs(yours - theirs))}**`) +
+          (name ? ` · playing ${name}` : ""),
         color: won === null ? 0x8b949e : won ? 0x3fb950 : 0xf85149,
         // Replayed on the server before this was written, which is the only
         // reason a figure a browser computed is worth putting in a channel.

@@ -30,6 +30,8 @@ export interface Posted {
 /** A Discord embed, as much of one as this project sends. */
 export interface Embed {
   title: string;
+  /** The small line above the title: who is speaking, with an icon. */
+  author?: { name: string; url?: string; icon_url?: string };
   description?: string;
   /** Decimal, not hex. Discord wants an integer. */
   color?: number;

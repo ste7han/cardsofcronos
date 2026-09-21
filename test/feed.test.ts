@@ -168,7 +168,9 @@ describe("a mint", () => {
     const embeds = await sayMints(many, []);
     expect(embeds).toHaveLength(1);
     // Six bought at five, plus three claimed.
-    expect(embeds[0]!.title).toBe(`${TOO_MANY * 5 + 3} cards minted`);
+    // The amount, not the whole line: the title carries a marker in front of
+    // it now and a test that broke on that would be a test about decoration.
+    expect(embeds[0]!.title).toContain(`${TOO_MANY * 5 + 3} cards minted`);
   });
 
   it("still posts when the chain will not say how far along the mint is", async () => {
@@ -195,13 +197,15 @@ describe("a burn", () => {
 
   it("says how much went to the dead address", async () => {
     const [embed] = await sayBurns([burn], []);
-    expect(embed!.title).toBe("50,000 $CROCARD burned");
+    expect(embed!.title).toContain("50,000 $CROCARD burned");
   });
 
   it("collapses a burst", async () => {
     const many = Array.from({ length: TOO_MANY + 1 }, () => burn);
     const embeds = await sayBurns(many, []);
     expect(embeds).toHaveLength(1);
-    expect(embeds[0]!.title).toBe(`${50_000 * many.length} $CROCARD burned`.replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+    expect(embeds[0]!.title).toContain(
+      `${50_000 * many.length} $CROCARD burned`.replace(/\B(?=(\d{3})+(?!\d))/g, ","),
+    );
   });
 });

@@ -49,6 +49,8 @@
 import { LOG_RPCS, PUBLIC_RPCS, rpc } from "@/lib/cronos";
 import { selector, topicOf, word } from "@/lib/evm-tx";
 import { post, type Embed } from "@/lib/discord";
+import { CROCARD_SUPPLY } from "@/data/holder-tiers";
+import { bar, from, grouped, share, sizeOf } from "@/lib/flair";
 import { recordBurns } from "@/lib/splitter";
 import { TRANSFER } from "@/lib/mint";
 import { BURN_ADDRESS, CONTRACTS, CROCARD, POOL } from "@/lib/revenue";
@@ -301,46 +303,59 @@ async function runOne(
   return { feed, from, to, found: fresh.length, posted: embeds.length };
 }
 
-/** Cards minted: bought and claimed, which are two events and one sentence. */
+/**
+ * Cards minted: bought and claimed, which are two events and one sentence.
+ *
+ * The line carries how far the whole mint has got, because that is the fact a
+ * number of cards is only interesting against. Five cards out of five thousand
+ * six hundred reads differently from five out of the last twenty left.
+ */
 export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
   const nft = CONTRACTS.nft!;
   const times = new Map<string, string | null>();
-  // How far along the mint is, asked once for the whole batch. It is the number
-  // that makes a mint line mean something — five cards out of 5,603 reads
-  // differently from five out of the last twenty.
+
+  // Asked once for the whole batch.
   let minted: number | null = null;
+  let supply = 5603;
   try {
     const next = await rpc(rpcs, "eth_call", [
       { to: nft, data: selector("nextTokenId()") },
       "latest",
     ]);
     minted = Number(BigInt(next)) - 1;
+    supply = Number(BigInt(await rpc(rpcs, "eth_call", [
+      { to: nft, data: selector("maxSupply()") },
+      "latest",
+    ])));
   } catch {
-    // A missing counter costs a line in the footer, not the message.
+    // A missing counter costs the bar, not the message.
   }
-  const outOf = minted === null ? "" : `${minted.toLocaleString("en-US")} of 5,603 minted`;
+
+  const progress =
+    minted === null
+      ? null
+      : `\n\`${bar(minted, supply)}\`  ${grouped(minted)} / ${grouped(supply)} · ${share(
+          minted,
+          supply,
+        )}`;
+  const left = minted === null ? null : `${grouped(supply - minted)} left · face down until the reveal`;
 
   if (logs.length > TOO_MANY) {
     let cards = 0;
     let paid = 0n;
     for (const log of logs) {
-      if (log.topics[0] === BOUGHT) {
-        cards += Number(wordAt(log.data, 0));
-        paid += wordAt(log.data, 1);
-      } else {
-        cards += Number(wordAt(log.data, 0));
-      }
+      cards += Number(wordAt(log.data, 0));
+      if (log.topics[0] === BOUGHT) paid += wordAt(log.data, 1);
     }
     return [
       {
-        title: `${cards} cards minted`,
+        author: from("Cards of Cronos · mint", `${EXPLORER}/address/${nft}`),
+        title: `🃏  ${cards} cards minted`,
         description:
-          `${logs.length} transactions` +
-          (paid > 0n ? `, ${amount(paid)} CRO paid` : "") +
-          `\n[every one of them on the explorer](${EXPLORER}/address/${nft})`,
+          `${logs.length} transactions${paid > 0n ? ` · ${amount(paid)} CRO` : ""}` +
+          (progress ?? ""),
         color: PURPLE,
-        footer: outOf ? { text: outOf } : undefined,
-        // The last of them, which is when the burst had finished.
+        footer: left ? { text: left } : undefined,
         timestamp: (await minedAt(rpcs, logs[logs.length - 1]!.blockNumber, times)) ?? undefined,
       },
     ];
@@ -348,22 +363,26 @@ export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Em
 
   return Promise.all(
     logs.map(async (log) => {
-    const who = short(addressIn(log.topics[1]!));
-    const cards = Number(wordAt(log.data, 0));
-    const free = log.topics[0] === CLAIMED;
-    const paid = free ? 0n : wordAt(log.data, 1);
-    return {
-      title: free
-        ? `${who} claimed ${cards} free ${cards === 1 ? "card" : "cards"}`
-        : `${who} minted ${cards} ${cards === 1 ? "card" : "cards"}`,
-      description: free
-        ? "A free mint, for holding the 2025 collection."
-        : `${amount(paid)} CRO`,
-      url: txLink(log.transactionHash),
-      color: free ? GOLD : PURPLE,
-      footer: outOf ? { text: outOf } : undefined,
-      timestamp: (await minedAt(rpcs, log.blockNumber, times)) ?? undefined,
-    };
+      const who = short(addressIn(log.topics[1]!));
+      const cards = Number(wordAt(log.data, 0));
+      const free = log.topics[0] === CLAIMED;
+      const paid = free ? 0n : wordAt(log.data, 1);
+      const many = cards === 1 ? "card" : "cards";
+
+      return {
+        author: from("Cards of Cronos · mint", `${EXPLORER}/address/${nft}`),
+        title: free
+          ? `🎁  ${who} claimed ${cards} free ${many}`
+          : `${sizeOf(Number(paid / 10n ** 16n) / 100)}  ${who} minted ${cards} ${many}`,
+        description:
+          (free
+            ? "Free, for holding the 2025 collection."
+            : `**${amount(paid)} CRO**`) + (progress ?? ""),
+        url: txLink(log.transactionHash),
+        color: free ? GOLD : PURPLE,
+        footer: left ? { text: left } : undefined,
+        timestamp: (await minedAt(rpcs, log.blockNumber, times)) ?? undefined,
+      };
     }),
   );
 }
@@ -375,26 +394,47 @@ export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Em
  * because the pair sorts its tokens by address and the other order is just as
  * likely. A buy is $CROCARD leaving the pool, so `amount1Out` above zero; a sell
  * is the same log with the other two fields filled in, and it is left out.
+ *
+ * What the line adds to the two amounts is the price it came out at and how
+ * much of the pool it took. A buy is only big or small against the thing it was
+ * bought from.
  */
 export async function sayBuys(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
   const times = new Map<string, string | null>();
   const buys = logs
-    .map((log) => ({
-      log,
-      croIn: wordAt(log.data, 0),
-      gotOut: wordAt(log.data, 3),
-    }))
+    .map((log) => ({ log, croIn: wordAt(log.data, 0), gotOut: wordAt(log.data, 3) }))
     .filter((one) => one.gotOut > 0n);
   if (buys.length === 0) return [];
+
+  // What the pool is holding, so "how big was that" has an answer. One call for
+  // the batch, and its absence costs a line rather than the message.
+  let inPool: bigint | null = null;
+  try {
+    inPool = BigInt(
+      await rpc(rpcs, "eth_call", [
+        { to: CROCARD, data: selector("balanceOf(address)") + word(POOL) },
+        "latest",
+      ]),
+    );
+  } catch {
+    // Left out.
+  }
+
+  const priceOf = (cro: bigint, got: bigint): string => {
+    if (got === 0n) return "";
+    // CRO per million tokens, because per token is six leading zeroes.
+    const per = (Number(cro) / Number(got)) * 1_000_000;
+    return ` · ${per.toFixed(2)} CRO per million`;
+  };
 
   if (buys.length > TOO_MANY) {
     const cro = buys.reduce((sum, one) => sum + one.croIn, 0n);
     const got = buys.reduce((sum, one) => sum + one.gotOut, 0n);
     return [
       {
-        title: `${buys.length} buys`,
-        description: `${amount(got)} $CROCARD for ${amount(cro)} CRO`,
-        url: `${EXPLORER}/address/${POOL}`,
+        author: from("Cards of Cronos · $CROCARD", `${EXPLORER}/address/${POOL}`),
+        title: `${sizeOf(Number(cro / 10n ** 16n) / 100)}  ${buys.length} buys`,
+        description: `**${amount(got)} $CROCARD** for **${amount(cro)} CRO**${priceOf(cro, got)}`,
         color: GREEN,
         timestamp:
           (await minedAt(rpcs, buys[buys.length - 1]!.log.blockNumber, times)) ?? undefined,
@@ -403,29 +443,57 @@ export async function sayBuys(logs: Log[], rpcs: readonly string[]): Promise<Emb
   }
 
   return Promise.all(
-    buys.map(async (one) => ({
-      title: `${amount(one.gotOut)} $CROCARD bought`,
-      description: `for ${amount(one.croIn)} CRO`,
-      url: txLink(one.log.transactionHash),
-      color: GREEN,
-      timestamp: (await minedAt(rpcs, one.log.blockNumber, times)) ?? undefined,
-    })),
+    buys.map(async (one) => {
+      const cro = Number(one.croIn / 10n ** 16n) / 100;
+      const took =
+        inPool === null || inPool === 0n
+          ? null
+          : `Took ${share(Number(one.gotOut / 10n ** 18n), Number(inPool / 10n ** 18n))} of the pool`;
+      return {
+        author: from("Cards of Cronos · $CROCARD", `${EXPLORER}/address/${POOL}`),
+        title: `${sizeOf(cro)}  ${amount(one.gotOut)} $CROCARD bought`,
+        description:
+          `**${amount(one.croIn)} CRO**${priceOf(one.croIn, one.gotOut)}`,
+        url: txLink(one.log.transactionHash),
+        color: GREEN,
+        footer: took ? { text: took } : undefined,
+        timestamp: (await minedAt(rpcs, one.log.blockNumber, times)) ?? undefined,
+      };
+    }),
   );
 }
 
-/** $CROCARD sent to the dead address, and how much is there now. */
+/**
+ * $CROCARD sent to the dead address, and how much is there now.
+ *
+ * The line carries the share of the whole supply that has gone, with a bar,
+ * because that is the only number a burn is really about. A quarter of a million
+ * tokens means nothing on its own; nine per cent of everything there will ever
+ * be means something.
+ */
 export async function sayBurns(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
   const times = new Map<string, string | null>();
-  let held: string | null = null;
+
+  let held: bigint | null = null;
   try {
-    const answer = await rpc(rpcs, "eth_call", [
-      { to: CROCARD, data: selector("balanceOf(address)") + word(BURN_ADDRESS) },
-      "latest",
-    ]);
-    held = `${amount(BigInt(answer))} $CROCARD burned in total`;
+    held = BigInt(
+      await rpc(rpcs, "eth_call", [
+        { to: CROCARD, data: selector("balanceOf(address)") + word(BURN_ADDRESS) },
+        "latest",
+      ]),
+    );
   } catch {
-    // Same as the mint counter: the footer goes, the message stays.
+    // The bar goes, the message stays.
   }
+
+  const gone =
+    held === null
+      ? null
+      : `\n\`${bar(Number(held / 10n ** 18n), CROCARD_SUPPLY)}\`  ${share(
+          Number(held / 10n ** 18n),
+          CROCARD_SUPPLY,
+        )} of all $CROCARD is gone`;
+  const total = held === null ? null : `${amount(held)} burned in total · nothing comes back`;
 
   const burned = logs.map((log) => ({ log, howMuch: wordAt(log.data, 0) }));
 
@@ -433,11 +501,12 @@ export async function sayBurns(logs: Log[], rpcs: readonly string[]): Promise<Em
     const all = burned.reduce((sum, one) => sum + one.howMuch, 0n);
     return [
       {
-        title: `${amount(all)} $CROCARD burned`,
-        description: `across ${burned.length} transactions`,
+        author: from("Cards of Cronos · burn", "https://cardsofcronos.com/burn"),
+        title: `🔥  ${amount(all)} $CROCARD burned`,
+        description: `across ${burned.length} transactions` + (gone ?? ""),
         url: `${EXPLORER}/address/${BURN_ADDRESS}`,
         color: 0xff6b35,
-        footer: held ? { text: held } : undefined,
+        footer: total ? { text: total } : undefined,
         timestamp:
           (await minedAt(rpcs, burned[burned.length - 1]!.log.blockNumber, times)) ?? undefined,
       },
@@ -446,11 +515,13 @@ export async function sayBurns(logs: Log[], rpcs: readonly string[]): Promise<Em
 
   return Promise.all(
     burned.map(async (one) => ({
-      title: `${amount(one.howMuch)} $CROCARD burned`,
-      description: `Sent to the dead address, where nothing comes back from.`,
+      author: from("Cards of Cronos · burn", "https://cardsofcronos.com/burn"),
+      title: `🔥  ${amount(one.howMuch)} $CROCARD burned`,
+      description:
+        "Sent to the dead address, where nobody holds the key." + (gone ?? ""),
       url: txLink(one.log.transactionHash),
       color: 0xff6b35,
-      footer: held ? { text: held } : undefined,
+      footer: total ? { text: total } : undefined,
       timestamp: (await minedAt(rpcs, one.log.blockNumber, times)) ?? undefined,
     })),
   );

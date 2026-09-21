@@ -15,6 +15,7 @@ import type { State } from "@/engine/types";
 import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { post } from "@/lib/discord";
+import { from, versus } from "@/lib/flair";
 import { settleMatch } from "@/lib/escrow";
 import { addResult, finishMatch, type Database } from "@/lib/store";
 
@@ -114,24 +115,40 @@ async function announce(
   const winner = state.winner === null ? null : record.seats[state.winner];
   const loser = winner === null ? null : winner === you ? opponent : you;
 
+  const high = Math.max(yourMC, theirMC);
+  const low = Math.min(yourMC, theirMC);
+
   await post(hook, [
     {
+      author: from(
+        staked ? "Cards of Cronos · ranked" : "Cards of Cronos · friendly",
+        "https://cardsofcronos.com/pvp",
+      ),
       title:
         winner === null
-          ? `${short(you)} and ${short(opponent)} drew`
-          : `${short(winner)} beat ${short(loser!)}`,
+          ? `⚖️  ${short(you)} and ${short(opponent)} drew`
+          : `${staked ? "💰" : "⚔️"}  ${short(winner)} beat ${short(loser!)}`,
       description:
-        `**${formatMC(Math.max(yourMC, theirMC))}** against **${formatMC(
-          Math.min(yourMC, theirMC),
-        )}** after ${RULES.turns} turns` +
+        // The shape of the match first. Two seven-figure numbers side by side
+        // are a sum somebody has to do; a bar is a glance.
+        `\`${versus(high, low)}\`\n` +
+        `**${formatMC(high)}**  ·  **${formatMC(low)}**  after ${RULES.turns} turns\n` +
+        (winner === null
+          ? "Level to the last figure."
+          : `Won by **${formatMC(high - low)}**`) +
         (staked
           ? winner === null
-            ? `\n${record.stake} CRO a side. A draw is not settled on chain — the contract has ` +
-              `no draw, so both sides take their own deposit back.`
-            : `\nPlaying for ${record.stake} CRO a side. The pot goes to the winner, less the ` +
-              `cut their holding earns.`
-          : "\nFriendly. Nothing was staked."),
+            ? `\n\n**${record.stake} CRO a side.** A draw is not settled on chain — the contract ` +
+              `has no draw, so both sides take their own deposit back.`
+            : `\n\n**${record.stake} CRO a side.** The pot goes to the winner, less the cut ` +
+              `their holding earns.`
+          : "\n\nFriendly. Nothing was staked."),
       color: staked ? 0xffd700 : 0x9d4edd,
+      footer: {
+        text: staked
+          ? `Pot ${record.stake * 2} CRO · refereed by replaying every move`
+          : "Refereed by replaying every move",
+      },
       timestamp: new Date().toISOString(),
     },
   ]);
