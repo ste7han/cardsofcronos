@@ -349,3 +349,32 @@ CREATE TABLE IF NOT EXISTS drop_leaves (
   amount  TEXT NOT NULL,
   PRIMARY KEY (tree, address)
 );
+
+-- What the Discord feeds have already said.
+--
+-- The cursor in `cursors` says how far each feed has read the chain; this says
+-- which individual logs have gone out. Both, because the two failure modes are
+-- different and both happen: a run that posts and then fails to save its cursor
+-- would repeat itself forever, and a feed with no cursor would rescan the chain
+-- every minute to find out it had nothing to say.
+--
+-- The order is post, record here, then move the cursor. So a crash between the
+-- three costs a repeated line somebody sees rather than a missed one nobody
+-- does — which is the right way round for a feed, where the only evidence that a
+-- mint went unreported is that nobody noticed.
+--
+-- ID IS THE FEED, THE TRANSACTION AND THE LOG INDEX. Not the transaction alone:
+-- one transaction can mint twice, burn twice, or buy through two pools, and a
+-- key that could not tell those apart would drop the second one silently.
+--
+-- It is a cache of nothing. Losing it costs at most one repeat of whatever the
+-- cursor has not passed yet.
+CREATE TABLE IF NOT EXISTS feed_posted (
+  id TEXT PRIMARY KEY,
+  at INTEGER NOT NULL
+);
+
+-- Old rows are worth dropping eventually: nothing ever reads a row whose block
+-- the cursor has long passed. Nothing does that yet, and at a few rows a day it
+-- would take years to be worth a job.
+CREATE INDEX IF NOT EXISTS feed_posted_at ON feed_posted (at);

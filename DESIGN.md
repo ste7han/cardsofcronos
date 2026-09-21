@@ -816,6 +816,28 @@ billion, missing the pool and the burn address. A script that gets this wrong
 produces a file somebody notices; the daily job moves a cursor, so one failover
 would skip a day permanently and say nothing.
 
+**Three things get said out loud in Discord**, on a cron that fires every minute:
+cards minted, $CROCARD bought, $CROCARD burned. Each has its own webhook and its
+own cursor, and a feed that cannot post does not stop the other two — one broken
+webhook should cost one channel.
+
+It starts at the head rather than at the beginning: a feed switched on is a
+channel filling with four years of history the moment it is, and none of that is
+news. And it posts, then records the log, then moves the cursor — so a crash
+between the three repeats a line somebody sees rather than skipping one nobody
+does, which is the right way round when the only evidence of a missed mint is
+that nobody noticed.
+
+Past a handful in one minute the lines collapse into one message that says how
+many. A sale opening would otherwise be a channel nobody can read.
+
+**A sell is not a buy**, and the log does not say which it is. A Uniswap V2
+`Swap` is four amounts in one blob and reading them in the wrong order turns
+every sell into a buy in a channel called BUYS. This pool puts WCRO first and
+$CROCARD second — a fact about this pair, read off it rather than assumed,
+because a pair sorts its tokens by address and the other order was just as
+likely.
+
 **Nothing with code on it is paid.** The pool holds thirty-nine per cent of the
 supply. Unknown counts as not paid too — an address nobody has asked about waits
 a day and is in tomorrow's share-out, and that asymmetry is deliberate: leaving

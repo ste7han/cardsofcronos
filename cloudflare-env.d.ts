@@ -42,4 +42,18 @@ interface CloudflareEnv {
    * and belongs on a wallet that never touches a server.
    */
   PUBLISHER_KEY?: string;
+  /**
+   * Discord webhook URLs, one per feed. See lib/feed.ts.
+   *
+   * A webhook URL is a password with no username: anybody holding one can post
+   * into that channel, as that webhook, until somebody deletes it. So they are
+   * secrets like the rest — never in wrangler.jsonc, never in a log line, and
+   * not in a URL this project builds.
+   *
+   * Absent means that feed does not run and says so, rather than the job
+   * failing: one channel nobody set up should not stop the other two.
+   */
+  DISCORD_MINTS?: string;
+  DISCORD_BUYS?: string;
+  DISCORD_BURNS?: string;
 }

@@ -38,8 +38,12 @@
   // a tick firing early does not close the week that is still running. It is
   // also after the daily one, so the last release of the week has landed in the
   // pot before the pot is handed over.
+  // Every minute: read the blocks since the last tick and post what happened to
+  // Discord — cards minted, $CROCARD bought, $CROCARD burned. A feed that
+  // reports a mint an hour later is not a feed, which is why this one is not
+  // folded into the daily tick above.
   "triggers": {
-    "crons": ["10 0 * * *", "20 0 * * 1"]
+    "crons": ["* * * * *", "10 0 * * *", "20 0 * * 1"]
   },
   "workers_dev": true,
   // Cloudflare's SQLite, on this account, free at this size. A match is a seed

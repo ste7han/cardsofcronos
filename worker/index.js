@@ -30,6 +30,9 @@ export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "../.open-ne
  * quietly falling back to one of them.
  */
 const ROUTES = {
+  // Every minute: the Discord feeds. The only one of the three that is not
+  // about money moving — it only reads and posts.
+  "* * * * *": "/api/cron/feed",
   // Every day at 00:10 UTC: release what the splitter holds, record the burns.
   "10 0 * * *": "/api/cron/daily",
   // Mondays at 00:20 UTC: close the week and pay whoever won it. Ten minutes
