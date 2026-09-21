@@ -23,9 +23,20 @@ import { IllegalMove } from "./types";
 
 export type MatchMode = "live" | "correspondence";
 
-/** How long a player has to move, by mode. */
+/**
+ * How long a player has to move, by mode.
+ *
+ * Two minutes on a live match and a day on a slow one. The live figure was one
+ * minute and the maker moved it: a minute is long enough to make a move and not
+ * long enough to think about one, and a game whose whole subject is what to
+ * spend a budget on should leave room to count.
+ *
+ * How many of each you may have open at once is CONCURRENT in lib/store.ts —
+ * one live and five slow, because a live match wants you at the screen and five
+ * of those at once is not a thing anybody can do.
+ */
 export const TURN_CLOCK: Record<MatchMode, number> = {
-  live: 60_000,
+  live: 2 * 60 * 1000,
   correspondence: 24 * 60 * 60 * 1000,
 };
 
@@ -90,9 +101,9 @@ export function seatOf(record: MatchRecord, playerId: string): Player | null {
  * Bring the clock up to now, ending a turn for every window that has closed.
  *
  * When the clock runs out the turn ends and the match does not, which is settled
- * in DESIGN.md: at one minute, forfeiting would mean a bad connection costs a
- * stake, and ending the turn is punishment enough on its own — the whole budget
- * for that turn is lost and the waste rule charges for it.
+ * in DESIGN.md: forfeiting would mean a bad connection costs a stake, and
+ * ending the turn is punishment enough on its own — the whole budget for that
+ * turn is lost and the waste rule charges for it.
  *
  * Returns a new record; the old one is untouched, like everything else here.
  */
