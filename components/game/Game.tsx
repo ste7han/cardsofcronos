@@ -93,6 +93,7 @@ interface Aiming {
 export function Game({
   board = BOARDS[0]!,
   onMatch,
+  begin = true,
 }: {
   board?: Board;
   /**
@@ -103,6 +104,11 @@ export function Game({
    * not, and the table is sized to the viewport with no room to spare.
    */
   onMatch?: (playing: boolean) => void;
+  /**
+   * Whether to deal at all. Default true, so anything that mounts this without
+   * an opinion still gets a match.
+   */
+  begin?: boolean;
 }) {
   // Whose deck this is. Signing in or out mid-visit has to restart the table:
   // the deck it dealt from belongs to an address, and carrying on with the last
@@ -234,8 +240,13 @@ export function Game({
     // Always as yourself. A demo that survived a sign-in would leave somebody
     // playing a deck they do not hold, and the whole point of the wallet is that
     // the deck on the table is yours.
-    if (sessionReady) start(false);
-  }, [start, sessionReady, wallet]);
+    //
+    // `begin` is what /play sets once somebody has chosen who to play. It used
+    // to deal the moment the page loaded, which meant the choice of opponent —
+    // and the reason each one exists — was never on screen: you arrived already
+    // playing the first board in the list.
+    if (sessionReady && begin) start(false);
+  }, [start, sessionReady, wallet, begin]);
 
   useEffect(() => () => {
     if (flashTimer.current) clearTimeout(flashTimer.current);
