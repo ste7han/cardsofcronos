@@ -157,9 +157,15 @@ export function copiesHeld(): Map<string, number> {
   return counts;
 }
 
-/** Which cards this player owns at all — one entry each, whatever they hold. */
+/**
+ * Which cards this player owns at all — one entry each, whatever they hold.
+ *
+ * Both halves: the browser's rehearsal cards and the last answer the chain gave.
+ * The deck rules are checked against this, so leaving the chain out was a deck
+ * of real cards being refused for cards you do not own.
+ */
 export function collection(): string[] {
-  return [...new Set(holdings())];
+  return [...new Set([...holdings(), ...rememberedChain()])];
 }
 
 /** What the deck builder may build from. See DECK_FROM_COLLECTION above. */
@@ -199,7 +205,55 @@ export async function chainHoldings(wallet: string | null): Promise<string[]> {
   const response = await fetch(`/api/cards?wallet=${wallet}`);
   if (!response.ok) throw new Error(`The chain holdings could not be read: ${response.status}`);
   const { tokens } = (await response.json()) as { tokens: { cardId: string }[] };
-  return tokens.map((one) => one.cardId);
+  const ids = tokens.map((one) => one.cardId);
+  remember(wallet, ids);
+  return ids;
+}
+
+/**
+ * The last answer the chain gave, kept so the rules can be checked without one.
+ *
+ * lib/deck-storage.ts validates a deck against what you own, and it does that
+ * synchronously — saving is a button press, not a request. Before this, the set
+ * it checked against was the browser's rehearsal collection, so a deck built
+ * from 53 cards minted on chain was refused for holding cards you do not own.
+ * Silently: the button simply did not turn into SAVED.
+ *
+ * A cache, and the word is meant. It is written every time the chain is asked
+ * and it can be behind — somebody who sold a card between two page loads could
+ * save a deck holding it. That is a UI convenience being briefly wrong, and the
+ * reason it is survivable is that it is not the last word: a deck that matters
+ * is checked again where it is played.
+ */
+function chainKey(wallet: string): string {
+  return `tcg.chain.v1:${wallet}`;
+}
+
+function remember(wallet: string, ids: readonly string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(chainKey(wallet), JSON.stringify(ids));
+  } catch {
+    // A full or blocked localStorage costs the cache, not the cards.
+  }
+}
+
+/** What the chain last said this wallet holds. Empty when it has never said. */
+export function rememberedChain(): string[] {
+  if (typeof window === "undefined") return [];
+  const wallet = signedIn();
+  if (wallet === null) return [];
+  try {
+    const raw = window.localStorage.getItem(chainKey(wallet));
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every((id) => typeof id === "string")) {
+      return (parsed as string[]).filter((id) => SET.some((card) => card.id === id));
+    }
+  } catch {
+    // An unreadable cache is the same as none.
+  }
+  return [];
 }
 
 /**

@@ -6,10 +6,8 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { CardSizePicker } from "@/components/CardSizePicker";
 import { CardView } from "@/components/CardView";
 import { Icon } from "@/components/Icon";
-import { PRESET_DECKS, type PresetDeck } from "@/data/preset-decks";
+import { byDeck, deckKey, history as matchHistory, type DeckRow } from "@/lib/history";
 import {
-  buildDeck,
-  buildDeckPreferring,
   countProjects,
   deckProblems,
 } from "@/engine/deck";
@@ -24,8 +22,11 @@ import {
 import { formatMC, searchText } from "@/engine/format";
 import {
   clearDeck,
+  deleteSavedDeck,
   loadDeck,
-  saveDeck,
+  saveDeckAs,
+  savedDecks,
+  type SavedDeck,
   type LoadedDeck,
 } from "@/lib/deck-storage";
 import { DECK_FROM_COLLECTION, copiesHeld, poolCards, poolFor } from "@/lib/collection";
@@ -73,6 +74,15 @@ export function DeckBuilder() {
    */
   const [poolFailed, setPoolFailed] = useState(false);
 
+  /** The decks this wallet has saved, newest first, and what each has done. */
+  const [mine, setMine] = useState<SavedDeck[]>([]);
+  const [records, setRecords] = useState<Map<string, DeckRow>>(new Map());
+
+  /** The name being typed. Saving without one gets "Deck 3" rather than "". */
+  const [deckName, setDeckName] = useState("");
+  /** Why the last save was refused, if it was. */
+  const [saveFailed, setSaveFailed] = useState<string[]>([]);
+
   // Keyed on the wallet, not just on mount. Signing in or out changes whose
   // cards these are, and a builder still holding the last wallet's deck would be
   // offering to save cards this one does not own.
@@ -113,7 +123,13 @@ export function DeckBuilder() {
     setInitial(stored);
     setPicked(stored.cardIds);
     setName(stored.name);
+    setDeckName(stored.name);
     setSaved(stored.cardIds.length > 0);
+
+    setMine(savedDecks());
+    // Keyed by what the deck holds rather than by its id, so a record survives
+    // a rename and follows the cards.
+    setRecords(new Map(byDeck(matchHistory()).map((row) => [row.deckKey, row])));
 
     // A wallet switched mid-request must not have the old one's cards land on
     // top of it.
@@ -184,27 +200,19 @@ export function DeckBuilder() {
    * always worked that way, because no sector has forty cards. With a small
    * collection it leans less, which is exactly what owning less means.
    */
-  function loadPreset(preset: PresetDeck) {
-    const from = DECK_FROM_COLLECTION ? pool : SET;
-    if (from.length < RULES.deckSize) return;
-    setPicked(buildDeckPreferring(from, preset.seed, preset.prefer));
-    setLoaded(preset.id);
-    // The preset's name comes with it, unless you have already named this deck
-    // something of your own — overwriting that would be taking it off you.
-    if (!name.trim() || PRESET_DECKS.some((p) => p.name === name)) setName(preset.name);
+  /** Puts one of your saved decks on the table. */
+  function loadSaved(deck: SavedDeck) {
+    setPicked(deck.cardIds);
+    setName(deck.name);
+    setDeckName(deck.name);
+    setLoaded(deck.id);
     setSaved(false);
   }
 
-  function rollRandom() {
-    // Math.random is fine here: this is a UI convenience, not the engine. A
-    // match's randomness runs through the seeded generator so it stays
-    // replayable; picking a deck to look at does not have to.
-    const from = DECK_FROM_COLLECTION ? pool : SET;
-    if (from.length < RULES.deckSize) return;
-    setPicked(buildDeck(from, Math.floor(Math.random() * 1_000_000)));
-    setLoaded("random");
-    setSaved(false);
-  }
+  // loadPreset and rollRandom were here. The four ready-made decks and the
+  // random roll went with them: a player picks between decks they built, and a
+  // deck handed over is the thing this game decided against everywhere else.
+  // data/preset-decks.ts is still used by scripts/ for measurement.
 
   function toggle(card: Card) {
     // Dimming is a hint; this is the rule. Clicking a card you do not own does
@@ -500,72 +508,126 @@ export function DeckBuilder() {
               </p>
             </div>
 
-            {/* Ready-made decks. Above the save row because this is where you
-                start, not where you finish. */}
+            {/* Your decks. The four ready-made ones and the random roll used to
+                be here, and they went: a player picks between decks they built.
+                Handing somebody a deck is also the thing this game decided
+                against everywhere else — see the note about the free starter in
+                lib/deck-storage.ts. */}
             <div className="mt-4 border-t border-line pt-3">
-              <p className="text-[9px] tracking-[0.2em] text-faint">
-                READY-MADE
-              </p>
-              <div className="mt-2 space-y-1">
-                {PRESET_DECKS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => loadPreset(preset)}
-                    className={cx(
-                      "block w-full border px-2 py-1.5 text-left transition-colors",
-                      loaded === preset.id
-                        ? "border-pump bg-pump/10"
-                        : "border-line hover:border-line-strong",
-                    )}
-                  >
-                    <span
-                      className={cx(
-                        "text-[9px] tracking-[0.16em]",
-                        loaded === preset.id ? "text-pump" : "text-fg",
-                      )}
-                    >
-                      {preset.name}
-                    </span>
-                    <span className="mt-0.5 block text-[9px] leading-snug text-muted">
-                      {preset.blurb}
-                    </span>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={rollRandom}
-                  className={cx(
-                    "block w-full border px-2 py-1.5 text-left transition-colors",
-                    loaded === "random"
-                      ? "border-gold bg-gold/10"
-                      : "border-line hover:border-line-strong",
-                  )}
-                >
-                  <span
-                    className={cx(
-                      "text-[9px] tracking-[0.16em]",
-                      loaded === "random" ? "text-gold" : "text-fg",
-                    )}
-                  >
-                    ROLL A RANDOM DECK
-                  </span>
-                  <span className="mt-0.5 block text-[9px] leading-snug text-muted">
-                    A fresh legal deck every click. Weaker than the four above.
-                  </span>
-                </button>
-              </div>
+              <p className="text-[9px] tracking-[0.2em] text-faint">YOUR DECKS</p>
+
+              {mine.length === 0 ? (
+                <p className="mt-2 text-[9px] leading-snug text-muted">
+                  None saved yet. Build one below and give it a name — it turns up here and it
+                  becomes the deck you play with.
+                </p>
+              ) : (
+                <div className="mt-2 space-y-1">
+                  {mine.map((deck) => {
+                    const record = records.get(deckKey(deck.cardIds));
+                    return (
+                      <div
+                        key={deck.id}
+                        className={cx(
+                          "flex items-center gap-1 border transition-colors",
+                          loaded === deck.id
+                            ? "border-pump bg-pump/10"
+                            : "border-line hover:border-line-strong",
+                        )}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => loadSaved(deck)}
+                          className="min-w-0 flex-1 px-2 py-1.5 text-left"
+                        >
+                          <span
+                            className={cx(
+                              "block truncate text-[9px] tracking-[0.16em]",
+                              loaded === deck.id ? "text-pump" : "text-fg",
+                            )}
+                          >
+                            {deck.name}
+                          </span>
+                          {/* What it has done, not what it is made of. The
+                              record is kept by what the deck holds, so it
+                              survives a rename — see deckKey. */}
+                          <span className="mt-0.5 block text-[9px] leading-snug text-muted">
+                            {record === undefined
+                              ? "Never played"
+                              : `${record.won}W ${record.lost}L${
+                                  record.played > 0
+                                    ? ` · ${Math.round((record.won / record.played) * 100)}%`
+                                    : ""
+                                }`}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            deleteSavedDeck(deck.id);
+                            setMine(savedDecks());
+                            if (loaded === deck.id) setLoaded(null);
+                          }}
+                          title={`Delete ${deck.name}`}
+                          className="shrink-0 px-2 py-1.5 text-[9px] text-faint transition-colors hover:text-dump"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="shrink-0 border-t border-line p-4">
-            <div className="flex flex-wrap gap-2">
+            {/* A name, and then the save. There was no field here at all: the
+                builder carried a name, loaded one from storage and picked one
+                up from a preset, and nothing let you type it — so every deck
+                anybody saved was called whatever a preset had been called, or
+                nothing. */}
+            <label className="block">
+              <span className="text-[9px] tracking-[0.2em] text-faint">NAME</span>
+              <input
+                value={deckName}
+                onChange={(event) => {
+                  setDeckName(event.target.value);
+                  setSaved(false);
+                }}
+                maxLength={28}
+                placeholder="Name this deck"
+                className="mt-1 w-full border border-line bg-ground px-2 py-1.5 text-[11px] text-fg placeholder:text-faint focus:border-pump focus:outline-none"
+              />
+            </label>
+
+            {/* Why it will not save, in the words the rules use. The button
+                being grey was the whole explanation before, and the commonest
+                reason for it — not enough cards — is one somebody can fix. */}
+            {!legal && picked.length > 0 && (
+              <p className="mt-2 text-[9px] leading-snug text-gold">{problems[0]}</p>
+            )}
+            {saveFailed.length > 0 && (
+              <p className="mt-2 text-[9px] leading-snug text-dump">{saveFailed[0]}</p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={!legal}
                 onClick={() => {
-                  const failed = saveDeck(picked);
+                  // Saving over the one on screen when it came from the list,
+                  // and adding one otherwise. Editing a deck and saving should
+                  // not quietly leave the old version behind.
+                  const editing = mine.find((deck) => deck.id === loaded);
+                  const { problems: failed, id } = saveDeckAs(picked, deckName, editing?.id);
+                  setSaveFailed(failed);
                   setSaved(failed.length === 0);
+                  if (failed.length === 0) {
+                    setMine(savedDecks());
+                    setName(deckName.trim());
+                    if (id !== undefined) setLoaded(id);
+                  }
                 }}
                 className={cx(
                   "flex-1 border px-3 py-2 text-[9px] tracking-[0.18em] transition-colors",
