@@ -94,7 +94,17 @@ export function MintShop() {
 
   return (
     <div>
-      <div className="panel border border-line p-6">
+      {/* The real one, first. It was under the local rehearsal, which showed a
+          NOT OPEN plate to everybody — so a visitor read "not open" twice
+          before reaching a mint that was working. */}
+      <MintOnChain />
+
+      {/* The rehearsal: cards drawn in this browser, kept in localStorage, and
+          nobody's to sell. It is only drawn for somebody who can actually use
+          it — MINT_OPEN is off, so that is the admin — because a second panel
+          saying NOT OPEN above a mint that is open is how somebody decides the
+          mint is shut and leaves. */}
+      <div className={cx("panel mt-4 border border-line p-6", !open && "hidden")}>
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="display text-lg">CARDS</h2>
           <span className="display text-2xl tabular-nums text-gold">
@@ -173,8 +183,6 @@ export function MintShop() {
           </p>
         )}
       </div>
-
-      <MintOnChain />
 
       <div className="panel mt-4 border border-line p-6">
         <h3 className="text-[10px] tracking-[0.18em] text-faint">THE ODDS, PER CARD DRAWN</h3>

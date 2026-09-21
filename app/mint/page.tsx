@@ -14,7 +14,11 @@ import { SET } from "@/lib/set";
 
 export const metadata: Metadata = {
   title: "Mint — Cards of Cronos",
-  description: "The cards become NFTs on Cronos. The mint is not open yet.",
+  // Deliberately says nothing about whether it is open. This is static metadata
+  // baked at build time, and it told everybody the mint had not started for a
+  // day after it had. Whether it is open is a question for the chain, and the
+  // banner on the page asks it.
+  description: "The cards become NFTs on Cronos. What you mint you play, and what you play you own.",
 };
 
 export default function MintPage() {
