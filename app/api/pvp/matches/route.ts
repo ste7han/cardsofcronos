@@ -4,7 +4,7 @@
 // is the seed and the list of moves; anything else stored beside it is a second
 // copy of the truth that can disagree with the first.
 
-import { db, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { catchUp, seatOf, stateOf } from "@/engine/record";
 import { CARDS } from "@/data/cards";
 import { matchesOf, saveMoves } from "@/lib/store";
@@ -31,7 +31,10 @@ export async function POST(request: Request) {
     }
 
     const state = stateOf(current, CARDS, INDEX);
-    await settle(db(), current, state, now);
+    await settle(db(), current, state, now, {
+      publisherKey: env().PUBLISHER_KEY,
+      rpc: env().CRONOS_RPC,
+    });
 
     const seat = seatOf(current, wallet)!;
     const them = seat === "you" ? "opponent" : "you";

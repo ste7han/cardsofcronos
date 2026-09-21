@@ -6,7 +6,7 @@
 // that still typechecks as a State is something somebody eventually passes to
 // applyMove.
 
-import { db, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { catchUp, seatOf, stateOf } from "@/engine/record";
 import { CARDS } from "@/data/cards";
 import { getMatch, saveMoves } from "@/lib/store";
@@ -40,7 +40,10 @@ export async function POST(request: Request) {
   const state = stateOf(current, CARDS, INDEX);
   // A match that ended on the clock rather than on a move has nobody to notice
   // it except the next person to look. Cheap and idempotent when it did not.
-  await settle(db(), current, state, Date.now());
+  await settle(db(), current, state, Date.now(), {
+    publisherKey: env().PUBLISHER_KEY,
+    rpc: env().CRONOS_RPC,
+  });
 
   return Response.json({
     id: current.id,

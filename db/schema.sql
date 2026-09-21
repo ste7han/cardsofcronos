@@ -51,7 +51,17 @@ CREATE TABLE IF NOT EXISTS matches (
   moves         TEXT NOT NULL DEFAULT '[]',
   created_at    INTEGER NOT NULL,
   deadline      INTEGER NOT NULL,
-  finished_at   INTEGER
+  finished_at   INTEGER,
+  -- Which wager in contracts/MatchEscrow.sol holds this match's stakes, or
+  -- NULL for a friendly one. It is the LISTING's id and not this match's, and
+  -- that is not tidiness: the deposits are made against the offer, which exists
+  -- before anybody has joined it, and a match id is only minted once both decks
+  -- are in.
+  --
+  -- The two must stay different. `seed` is derived from the match id, so a match
+  -- id somebody could know before choosing a deck is a shuffle they could work
+  -- out and build against.
+  wager         TEXT
 );
 
 -- Both sides are queried the same way, so both get an index. "My matches" is

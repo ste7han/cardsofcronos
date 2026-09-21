@@ -289,7 +289,7 @@ export const DISCOUNT_CAP = HOLDER_TIERS[0]!.off;
  * the NFT that pays the splitter — each needs the ones before it. That order is
  * what scripts/deploy-contracts.ts exists to get right.
  */
-export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | null> = {
+export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft" | "escrow", string | null> = {
   drop: "0x09e4d4bf527ddcff1ea38e550573a15c490043c6",
   // Replaced 0xbb658915095d90fe7892d642ea1e6d223ae5fa75 on 21 September 2026.
   // The split moved to 50% burn, 30% holders, 20% pot, and the shares are
@@ -317,6 +317,11 @@ export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | nul
   // It starts with both doors shut and its baseURI on the face-down art, so
   // every token looks the same until the set is revealed.
   nft: "0xe08c69c02d7f9a695466741f9f83391167db3da1",
+  // What two players put up on a ranked match. Null until it is deployed, and
+  // the server refuses a stake by name while it is — a lobby offering 100 CRO
+  // against nothing in escrow is not a half-built feature, it is a lie people
+  // lose money to.
+  escrow: "0xf3c11f0a560d7b0d2584b97b02840f46b315c7c2",
 };
 
 for (const [name, address] of Object.entries(CONTRACTS)) {

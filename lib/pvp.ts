@@ -4,12 +4,16 @@
 // on top of it. Split that way so the rules can be tested without a request, and
 // so a second front end later cannot invent different ones.
 //
-// Correspondence and friendly, for now. Live matches need a connection that
-// stays open — Durable Objects, not a database — and staked matches need
-// somewhere to hold the stake, which does not exist yet. Both are refused by
-// name rather than silently ignored: an unknown mode arriving at a route that
-// only understood one of them is exactly the failure this project keeps writing
-// tests against.
+// Correspondence for now. Live matches need a connection that stays open —
+// Durable Objects, not a database — and they are refused by name rather than
+// silently ignored: an unknown mode arriving at a route that only understood
+// one of them is exactly the failure this project keeps writing tests against.
+//
+// Staked matches are allowed as of September 2026, because there is somewhere
+// to hold a stake: contracts/MatchEscrow.sol. What that changes for this file
+// is smaller than it sounds — the amount is validated here, and whether the
+// money is actually in escrow is a question for the chain, in lib/escrow.ts.
+// Nothing here believes a client about a deposit.
 
 import { validateDeck } from "@/engine/deck";
 import type { MatchMode } from "@/engine/record";
@@ -17,6 +21,38 @@ import type { CardIndex } from "@/engine/types";
 
 /** What the lobby accepts today. */
 export const MODES: readonly MatchMode[] = ["correspondence"];
+
+/**
+ * The amounts on the buttons. Zero is a friendly match.
+ *
+ * Buttons and not only a free field, because a lobby where twenty people are
+ * waiting on twenty different amounts is twenty people waiting. A free amount
+ * is allowed on top — see whyNotAStake — for anybody who wants one, and it is
+ * their own problem to find somebody at it.
+ */
+export const STAKES: readonly number[] = [0, 10, 50, 100, 500, 1000];
+
+/** The most anybody may put on one match. Not a judgement, a blast radius. */
+export const MOST_AT_STAKE = 100_000;
+
+/**
+ * Why an amount is not a stake, or null.
+ *
+ * Whole CRO. The escrow takes wei and could hold any fraction, but the lobby
+ * stores the amount as a number and matches offers by it — and two offers that
+ * differ in the eighteenth decimal are two offers nobody can pair.
+ */
+export function whyNotAStake(stake: unknown): string | null {
+  // Not "falsy": zero is a real answer and `!stake` would also let through
+  // undefined and an empty string.
+  if (typeof stake !== "number" || !Number.isFinite(stake)) return "That is not a stake.";
+  if (stake < 0) return "A stake cannot be negative.";
+  if (!Number.isInteger(stake)) return "Stakes are whole CRO.";
+  if (stake > MOST_AT_STAKE) {
+    return `The most on one match is ${MOST_AT_STAKE.toLocaleString("en-US")} CRO.`;
+  }
+  return null;
+}
 
 /**
  * Why a request to sit down is refused, or null.
@@ -35,11 +71,8 @@ export function whyNotSeated(args: {
     return `Only ${MODES.join(" and ")} matches can be played yet. Live play needs a connection that stays open.`;
   }
 
-  // Not "falsy": a stake of zero is the only allowed one, and `!stake` would
-  // also let through undefined and an empty string.
-  if (args.stake !== 0) {
-    return "Only friendly matches for now. There is nowhere to hold a stake yet, and a stake nobody holds is not a stake.";
-  }
+  const why = whyNotAStake(args.stake);
+  if (why !== null) return why;
 
   if (!Array.isArray(args.deck) || !args.deck.every((id) => typeof id === "string")) {
     return "That is not a deck.";
@@ -53,12 +86,34 @@ export function whyNotSeated(args: {
     return error instanceof Error ? error.message : "That deck is not legal.";
   }
 
-  // Deliberately not checked: whether the player owns these cards. A collection
-  // lives in their own browser, so the server has never seen it and cannot say.
-  // For a friendly match with nothing at stake that is a fair trade; the moment
-  // a match is worth something, collections have to move to the server, and this
-  // comment is where that starts. See DESIGN.md.
+  // Whether the player owns these cards is checked by the caller and only for a
+  // staked match — see whyNotYours. It cannot be checked here because it needs
+  // the database, and this function is the rules rather than the plumbing.
+  //
+  // For a friendly match it is not checked at all, and that is deliberate: a
+  // collection used to live only in the player's own browser, so the server had
+  // never seen it. It has seen it since the mint — card_owners is kept current
+  // from the chain — and the moment a match is worth something, that is the
+  // half that has to be true.
   return null;
+}
+
+/**
+ * Which of these cards this wallet does not hold.
+ *
+ * Only worth asking on a staked match. It reads the ownership table the
+ * minute-job keeps rather than the chain, so a card minted in the last minute
+ * may not be there yet — which is a reason to wait a minute before staking on
+ * it, and the lobby says so.
+ *
+ * Duplicates in the deck are not a concern: a deck holds one of each, and the
+ * deck rules have already said so by the time this is asked.
+ */
+export function notHeldBy(
+  held: ReadonlySet<string>,
+  deck: readonly string[],
+): string[] {
+  return [...new Set(deck)].filter((id) => !held.has(id));
 }
 
 /** A short, readable id. Not a secret: it names a match, it does not protect one. */

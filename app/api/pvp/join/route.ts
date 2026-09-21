@@ -11,7 +11,8 @@
 // again — which is the failure worth having, because the other one is two
 // matches from one offer.
 
-import { db, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { wagerFor, whyNotFunded } from "@/lib/escrow";
 import { claimListing, hasRoomFor, putListing, putMatch, seedFor } from "@/lib/store";
 import { newId, whyNotSeated } from "@/lib/pvp";
 import { newRecord } from "@/engine/record";
@@ -49,12 +50,27 @@ export async function POST(request: Request) {
       ? "You already have as many matches as that mode allows."
       : null;
 
-  if (refusal || noRoom) {
+  // The money, asked of the chain and of nobody else. A client saying it has
+  // deposited is a client saying anything it likes, and a match that starts on
+  // that word is a match one side can win without ever having staked.
+  //
+  // The wager is keyed on the OFFER's id, because that is what existed when the
+  // deposits were made. See the wager column in db/schema.sql for why it must
+  // not be this match's id.
+  let notFunded: string | null = null;
+  if (refusal === null && noRoom === null && listing.stake > 0) {
+    notFunded = whyNotFunded(
+      await wagerFor(listing.id, env().CRONOS_RPC).catch(() => null),
+      { opener: listing.playerId, joiner: wallet, stakeCro: listing.stake },
+    );
+  }
+
+  if (refusal || noRoom || notFunded) {
     // Put it back. The player who posted it did nothing wrong and should not
     // lose their place in the lobby because somebody else turned up with a deck
     // that does not pass.
     await putListing(db(), listing);
-    return Response.json({ error: refusal ?? noRoom }, { status: 400 });
+    return Response.json({ error: refusal ?? noRoom ?? notFunded }, { status: 400 });
   }
 
   const matchId = newId();
@@ -72,6 +88,8 @@ export async function POST(request: Request) {
       // must not produce two different games, and a replay never has to guess.
       seed: seedFor(matchId),
       decks: { you: listing.deck, opponent: deck as string[] },
+      // Friendly matches carry none, and settling one would find nothing.
+      wager: listing.stake > 0 ? listing.id : null,
       now,
     }),
   );

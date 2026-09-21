@@ -9,7 +9,7 @@
 // are written to be read by a player, and inventing a second vaguer one here
 // would throw away the only explanation that knows what actually happened.
 
-import { db, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { playInto, seatOf, stateOf } from "@/engine/record";
 import { CARDS } from "@/data/cards";
 import { getMatch, saveMoves } from "@/lib/store";
@@ -53,7 +53,10 @@ export async function POST(request: Request) {
     // settle writes the moves as well, under a WHERE that makes it happen once.
     // Two requests reach a finished match — the move that ends it and the
     // opponent's next poll — and a record incremented twice cannot be corrected.
-    await settle(db(), played, state, now);
+    await settle(db(), played, state, now, {
+      publisherKey: env().PUBLISHER_KEY,
+      rpc: env().CRONOS_RPC,
+    });
   } else {
     await saveMoves(db(), played.id, played.moves, played.deadline, null);
   }

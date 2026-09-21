@@ -43,6 +43,14 @@ export interface LobbyListing {
   createdAt: number;
   expiresAt: number;
   mine: boolean;
+  /**
+   * Whether the opener's stake is actually in the escrow.
+   *
+   * Always true for a friendly offer. False on a staked one means "not yet":
+   * posting the offer and signing the deposit are two steps, and the second
+   * happens in a wallet. Read off the chain by /api/pvp/lobby.
+   */
+  funded: boolean;
 }
 
 export interface MatchSummary {

@@ -46,6 +46,7 @@ describe("the contracts page", () => {
     expect(find("drop").address).toBe(CONTRACTS.drop);
     expect(find("pot").address).toBe(CONTRACTS.pot);
     expect(find("nft").address).toBe(CONTRACTS.nft);
+    expect(find("escrow").address).toBe(CONTRACTS.escrow);
     expect(find("crocard").address).toBe(CROCARD);
     expect(find("lion").address).toBe(LION);
     expect(find("burn").address).toBe(BURN_ADDRESS);

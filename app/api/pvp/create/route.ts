@@ -37,7 +37,15 @@ export async function POST(request: Request) {
     id,
     playerId: wallet,
     mode: mode as MatchMode,
-    stake: 0,
+    // What was asked for, now that there is somewhere to hold it. It was
+    // hardcoded to zero while a stake was refused outright, and the validation
+    // above is what makes this safe to take from the body.
+    //
+    // NOTHING IS IN ESCROW YET. Posting an offer records an intention; the
+    // deposit is a separate transaction the player signs against this id, and
+    // /api/pvp/join asks the chain whether both are in before a match starts.
+    // The lobby only offers a staked seat once the chain says the opener paid.
+    stake: stake as number,
     deck: deck as string[],
     // Copied onto the listing rather than looked up when the lobby is read: it
     // is what the offer was made at, and matchmaking compares against it.

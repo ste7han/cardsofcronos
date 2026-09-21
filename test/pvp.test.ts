@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { MODES, newId, whyNotSeated } from "@/lib/pvp";
+import { MODES, MOST_AT_STAKE, STAKES, newId, whyNotSeated } from "@/lib/pvp";
 import { buildDeckPreferring } from "@/engine/deck";
 import { RULES } from "@/engine/types";
 import { INDEX, SET } from "@/lib/set";
@@ -29,13 +29,30 @@ describe("sitting down", () => {
     expect(MODES).not.toContain("live");
   });
 
-  it("refuses any stake at all, including one dressed as nothing", () => {
-    // There is nowhere to hold a stake yet. `!stake` would have let undefined
-    // and "" through as if they were zero, and a match that thinks it is staked
-    // and is not is worse than one that refuses.
-    expect(whyNotSeated({ mode: "correspondence", stake: 1, deck: legal(), index: INDEX })).toBeTruthy();
-    expect(whyNotSeated({ mode: "correspondence", stake: "0", deck: legal(), index: INDEX })).toBeTruthy();
-    expect(whyNotSeated({ mode: "correspondence", stake: undefined, deck: legal(), index: INDEX })).toBeTruthy();
+  it("takes a stake now, and still refuses one dressed as nothing", () => {
+    // Stakes were refused outright while there was nowhere to hold one. There
+    // is now — contracts/MatchEscrow.sol — so an amount is allowed and it is
+    // the amount that is checked. `!stake` would still let undefined and "" in
+    // as if they were zero, and a match that thinks it is staked and is not is
+    // worse than one that refuses.
+    const seat = (stake: unknown) =>
+      whyNotSeated({ mode: "correspondence", stake, deck: legal(), index: INDEX });
+
+    expect(seat(0), "friendly").toBeNull();
+    for (const good of STAKES) expect(seat(good), `${good} CRO`).toBeNull();
+
+    expect(seat("0"), "a string is not an amount").toBeTruthy();
+    expect(seat(undefined)).toBeTruthy();
+    expect(seat(Number.NaN)).toBeTruthy();
+    expect(seat(-10), "negative").toBeTruthy();
+    expect(seat(10.5), "whole CRO only").toBeTruthy();
+    expect(seat(MOST_AT_STAKE + 1), "over the cap").toBeTruthy();
+  });
+
+  it("allows an amount that is not on a button", () => {
+    // The five are a convenience, not the rule. Somebody who wants to play for
+    // 42 may; finding an opponent at 42 is their own problem.
+    expect(whyNotSeated({ mode: "correspondence", stake: 42, deck: legal(), index: INDEX })).toBeNull();
   });
 
   it("refuses a deck that is not one", () => {

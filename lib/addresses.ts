@@ -118,6 +118,29 @@ export const OURS: readonly Listed[] = [
       "Checked on chain on 18 September 2026.",
   },
   {
+    id: "escrow",
+    name: "MatchEscrow",
+    address: CONTRACTS.escrow,
+    what:
+      "What two players put up on a ranked match. Two equal deposits in CRO; the winner takes " +
+      "the pot less a cut, and the cut goes to the splitter above like everything else.",
+    powers: [
+      "The publisher can name the winner of a match that has two deposits and has not been " +
+        "settled, and nothing else. It cannot withdraw, cannot re-settle, and cannot reach a " +
+        "balance. Paying is a separate call anybody may make, and it always pays the winner.",
+      "The owner can take out CRO that belongs to no match, and only that. This is the one " +
+        "contract here with no rescue hatch over its balance: it counts what is owed to players " +
+        "and the owner may sweep the difference, which is nothing unless somebody forced CRO in.",
+      "The owner can replace the publisher, and can send out a token somebody put here by " +
+        "mistake — stakes are CRO, so nothing is ever owed in a token.",
+      "Nobody can move the cut. It is the holder ladder, fixed with no setter, and it is read " +
+        "when a pot is paid rather than when a winner is named — so buying more $CROCARD between " +
+        "the two counts in your favour.",
+      "A match nobody ever settled can be walked away from after thirty days. Each side takes " +
+        "its own deposit and neither can take the other's, so it is an exit and not a way to win.",
+    ],
+  },
+  {
     id: "nft",
     name: "Cards of Cronos Set 01",
     address: CONTRACTS.nft,

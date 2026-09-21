@@ -42,6 +42,18 @@ export const TURN_CLOCK: Record<MatchMode, number> = {
 
 export interface MatchRecord {
   id: string;
+  /**
+   * The wager in the escrow holding both stakes, or null for a friendly match.
+   *
+   * It is the id of the OFFER this match came from, not this match's id. The
+   * deposits are made against the offer — which exists before anybody has
+   * joined it — and a match id is only minted once both decks are in.
+   *
+   * Those two must stay different: `seed` is derived from the match id, so an
+   * id somebody could know before choosing a deck is a shuffle they could work
+   * out and build a deck against.
+   */
+  wager?: string | null;
   mode: MatchMode;
   /** What is at stake per side. Zero is a friendly match, and for now the only
    * value lib/pvp.ts will accept: there is nowhere on Cronos to hold a stake
@@ -66,10 +78,12 @@ export function newRecord(args: {
   seats: Record<Player, string>;
   seed: number;
   decks: Record<Player, string[]>;
+  wager?: string | null;
   now: number;
 }): MatchRecord {
   return {
     id: args.id,
+    wager: args.wager ?? null,
     mode: args.mode,
     stake: args.stake,
     seats: args.seats,

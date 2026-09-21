@@ -190,10 +190,13 @@ function fakeDb(): Database & {
             return;
           }
           if (sql.startsWith("INSERT INTO matches")) {
-            const [id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent, moves, created_at, deadline] = bound;
+            // In the order putMatch binds them. A column added to the real
+            // schema and not here comes back null and the round-trip test is
+            // the only thing that notices.
+            const [id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent, moves, created_at, deadline, wager] = bound;
             matches.set(id as string, {
               id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent,
-              moves, created_at, deadline, finished_at: null,
+              moves, created_at, deadline, wager: wager ?? null, finished_at: null,
             });
             return;
           }
@@ -330,6 +333,9 @@ const link = (over: Partial<Link> = {}): Link => ({
 
 const record = (over: Partial<MatchRecord> = {}): MatchRecord => ({
   id: "m1",
+  // Null for a friendly match, which is what most of these are. A staked one
+  // carries the id of the offer it came from — see the column's comment.
+  wager: null,
   mode: "correspondence",
   stake: 0,
   seats: { you: ALICE, opponent: BOB },
@@ -420,6 +426,20 @@ describe("a match in storage", () => {
     const written = record({ moves: [{ kind: "endTurn" }, { kind: "playCard", handIndex: 2 }] });
     await putMatch(db, written);
     expect(await getMatch(db, "m1")).toEqual(written);
+  });
+
+  it("remembers which wager is holding the stakes", async () => {
+    // Null for a friendly match and the offer's id for a staked one. Losing it
+    // would mean a finished match that nobody could settle, with both stakes
+    // sitting in the escrow until somebody walked away from them.
+    const db = fakeDb();
+    await putMatch(db, record({ id: "staked", stake: 100, wager: "offer-7" }));
+    const back = await getMatch(db, "staked");
+    expect(back?.wager).toBe("offer-7");
+    expect(back?.stake).toBe(100);
+
+    await putMatch(db, record({ id: "friendly" }));
+    expect((await getMatch(db, "friendly"))?.wager).toBeNull();
   });
 
   it("finds a player on either side of the table", async () => {

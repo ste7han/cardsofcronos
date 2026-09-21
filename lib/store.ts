@@ -70,6 +70,7 @@ interface MatchRow {
   created_at: number;
   deadline: number;
   finished_at: number | null;
+  wager: string | null;
 }
 
 const toListing = (row: ListingRow): Listing => ({
@@ -85,6 +86,7 @@ const toListing = (row: ListingRow): Listing => ({
 
 const toRecord = (row: MatchRow): MatchRecord => ({
   id: row.id,
+  wager: row.wager ?? null,
   mode: row.mode,
   stake: row.stake,
   seats: { you: row.seat_you, opponent: row.seat_opponent },
@@ -151,8 +153,8 @@ export async function putMatch(db: Database, record: MatchRecord): Promise<void>
     .prepare(
       `INSERT INTO matches
          (id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent,
-          moves, created_at, deadline)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          moves, created_at, deadline, wager)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       record.id,
@@ -166,6 +168,7 @@ export async function putMatch(db: Database, record: MatchRecord): Promise<void>
       JSON.stringify(record.moves),
       record.createdAt,
       record.deadline,
+      record.wager ?? null,
     )
     .run();
 }

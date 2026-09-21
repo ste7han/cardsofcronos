@@ -153,6 +153,19 @@ async function main(): Promise<void> {
       }
     }
   }
+  // The escrow is last and on its own day, like the collection: it needs the
+  // splitter to send its cut to, and it needs the game rules settled before
+  // anybody stakes anything on them.
+  const escrowOnly = process.argv.includes("--escrow-only");
+  if (escrowOnly) {
+    if (CONTRACTS.escrow !== null) {
+      throw new Error(`lib/revenue.ts already names an escrow (${CONTRACTS.escrow}).`);
+    }
+    if (CONTRACTS.splitter === null) {
+      throw new Error("--escrow-only pays its cut to the splitter, and there is not one.");
+    }
+  }
+
   const splitterOnly = process.argv.includes("--splitter-only");
   if (splitterOnly) {
     if (CONTRACTS.splitter !== null) {
@@ -164,7 +177,7 @@ async function main(): Promise<void> {
     if (CONTRACTS.drop === null || CONTRACTS.pot === null) {
       throw new Error("--splitter-only reuses the drop and the pot, and one of them is not deployed.");
     }
-  } else if (!nftOnly) {
+  } else if (!nftOnly && !escrowOnly) {
     const already = Object.entries(CONTRACTS).filter(([, address]) => address !== null);
     if (already.length > 0 && !process.argv.includes("--replace")) {
       throw new Error(
@@ -233,7 +246,7 @@ async function main(): Promise<void> {
   // Only when a collection is actually being deployed. Both of the narrow modes
   // leave it alone, and demanding a baseURI from a run that does not touch it
   // stops the run for a reason that does not apply to it.
-  if (!baseURI && broadcast && !moneyOnly && !splitterOnly) {
+  if (!baseURI && broadcast && !moneyOnly && !splitterOnly && !escrowOnly) {
     throw new Error("Pass --base-uri. A collection deployed without one has no art.");
   }
 
@@ -351,7 +364,15 @@ async function main(): Promise<void> {
   // and there is nothing there to fill in.
   let dropAt: string;
   let potAt: string;
-  if (nftOnly) {
+  if (escrowOnly) {
+    dropAt = CONTRACTS.drop!;
+    potAt = CONTRACTS.pot!;
+    found.splitter = CONTRACTS.splitter!;
+    console.log(`reusing splitter  ${found.splitter}`);
+    found.escrow = await deploy("MatchEscrow", [found.splitter, publisher]);
+    console.log("--escrow-only: only the match escrow was deployed, against the splitter that");
+    console.log("was already there. Nothing else was touched.\n");
+  } else if (nftOnly) {
     dropAt = CONTRACTS.drop!;
     potAt = CONTRACTS.pot!;
     found.splitter = CONTRACTS.splitter!;
@@ -365,7 +386,7 @@ async function main(): Promise<void> {
     dropAt = found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
     potAt = found.pot = await deploy("PrizePot", [CROCARD, publisher]);
   }
-  if (!nftOnly) {
+  if (!nftOnly && !escrowOnly) {
     found.splitter = await deploy("Splitter", [
       ROUTER,
       CROCARD,
@@ -374,7 +395,9 @@ async function main(): Promise<void> {
       potAt,
     ]);
   }
-  if (splitterOnly) {
+  if (escrowOnly) {
+    // Said above, next to the deploy.
+  } else if (splitterOnly) {
     console.log("--splitter-only: only the splitter was deployed. The drop and the pot are the");
     console.log("ones that were already there, and the collection is untouched.\n");
   } else if (moneyOnly) {
@@ -415,14 +438,14 @@ async function main(): Promise<void> {
   // shares, and the owner may have moved them since with setShare. Writing the
   // starting position back over a considered one would be a silent change to
   // where the prize money goes.
-  for (const [board, bps] of splitterOnly || nftOnly ? [] : SHARES) {
+  for (const [board, bps] of splitterOnly || nftOnly || escrowOnly ? [] : SHARES) {
     await call(
       found.pot!,
       `setShare(${board}, ${bps} bps)`,
       selector("setShare(bytes32,uint256)") + asWord(board) + word(BigInt(bps)),
     );
   }
-  if (!splitterOnly && !nftOnly) {
+  if (!splitterOnly && !nftOnly && !escrowOnly) {
     console.log(
       `  boards: ${SHARES.map(([b, v]) => `${b} ${v / 100}%`).join(", ")}` +
         `, ${(10_000 - SHARES.reduce((sum, [, v]) => sum + v, 0)) / 100}% stays in the pot\n`,
@@ -461,9 +484,11 @@ async function main(): Promise<void> {
     ["drop", found.drop],
     // Reused rather than deployed in --nft-only, and the write-back looks for
     // `splitter: null` to fill in. It is not null, so it must not be offered.
-    ["splitter", nftOnly ? undefined : found.splitter],
+    // Reused rather than deployed in --escrow-only too, for the same reason.
+    ["splitter", nftOnly || escrowOnly ? undefined : found.splitter],
     ["pot", found.pot],
     ["nft", found.nft],
+    ["escrow", found.escrow],
   ] as const) {
     // Skipped rather than written as the string "undefined", which is what a
     // --money-only run produced: the file then held `nft: "undefined"` and
