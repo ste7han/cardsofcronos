@@ -38,6 +38,8 @@
 
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { CARDS } from "@/data/cards";
 import { RARITIES, type Rarity } from "@/engine/types";
@@ -67,11 +69,15 @@ function rng(seed: number): () => number {
   };
 }
 
-function main(): void {
-  const seed = Number(process.argv[2]);
-  if (!Number.isInteger(seed) || seed <= 0) {
-    throw new Error("Give a seed: npx tsx scripts/shuffle.ts 20260917");
-  }
+/**
+ * The sequence, and the hash of it, from a seed.
+ *
+ * Pulled out of main so it can be rerun without writing anything — which is what
+ * makes the promise on /mint testable rather than only checkable by hand. Any
+ * change in here changes the hash, and test/provenance.test.ts is what says so
+ * before the change leaves the machine.
+ */
+export function draw(seed: number): { order: string[]; hash: string } {
   const next = rng(seed);
 
   // One entry per copy, with the fraction of the way through its own rarity it
@@ -84,7 +90,11 @@ function main(): void {
     const total = cards.length * copies;
     let i = 0;
     // Round-robin over the cards rather than all copies of one card together,
-    // so two of the same card cannot land next to each other.
+    // so copies of one card start out spread across the whole rarity instead of
+    // in a block. The jitter below can still push two of them together — 10 of
+    // the 5602 boundaries in the published sequence are a pair — so this is
+    // where they start, not a guarantee about where they end up. Two of the same
+    // card is a real thing to hold here anyway; see lib/collection.ts.
     for (let copy = 0; copy < copies; copy++) {
       for (const card of cards) {
         spread.push({ id: card.id, rarity, at: (i + 0.5) / total });
@@ -101,7 +111,15 @@ function main(): void {
   spread.sort((a, b) => a.at - b.at);
 
   const order = spread.map((entry) => entry.id);
-  const hash = createHash("sha256").update(order.join("\n")).digest("hex");
+  return { order, hash: createHash("sha256").update(order.join("\n")).digest("hex") };
+}
+
+function main(): void {
+  const seed = Number(process.argv[2]);
+  if (!Number.isInteger(seed) || seed <= 0) {
+    throw new Error("Give a seed: npx tsx scripts/shuffle.ts 20260917");
+  }
+  const { order, hash } = draw(seed);
 
   writeFileSync(
     "data/shuffle.json",
@@ -128,4 +146,9 @@ function main(): void {
   }
 }
 
-main();
+// Only when it is the thing being run. test/provenance.test.ts imports `draw`
+// from here to rerun the sequence, and an unguarded main would fire on that
+// import, demand a seed off argv and fail the test before it started.
+if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}

@@ -6,6 +6,7 @@ import { MintShop } from "@/components/MintShop";
 import { CROCARD_SUPPLY, HOLDER_TIERS } from "@/data/holder-tiers";
 import type { Rarity } from "@/engine/types";
 import { RARITIES, RULES } from "@/engine/types";
+import { COPIES, HASH, SEED, TOKENS } from "@/lib/provenance";
 import { RARITY } from "@/lib/rarity";
 import { SET } from "@/lib/set";
 
@@ -142,6 +143,64 @@ export default function MintPage() {
             );
           })}
         </dl>
+      </section>
+
+      {/* Which card a token turns out to be, and the proof that it was settled
+          first. Published before the sale opens, because after it opens the
+          order is visible and hashing something everybody can see proves
+          nothing. lib/provenance.ts has why the numbers come from the file
+          rather than being typed here. */}
+      <section className="mt-16 border border-line bg-panel px-5 py-5">
+        <h2 className="display text-xl">WHICH CARD YOU GET</h2>
+        <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
+          The contract cannot draw anything. A token&rsquo;s picture is its number, so which card
+          token 7 is had to be decided before anybody could buy token 7. The whole sequence was
+          drawn from one seed, hashed, and the hash put here before the mint opened.
+        </p>
+
+        <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-3">
+          <div className="bg-panel px-4 py-4">
+            <dt className="text-[8px] tracking-[0.18em] text-faint">SEED</dt>
+            <dd className="display mt-1.5 text-2xl tabular-nums">{SEED}</dd>
+          </div>
+          <div className="bg-panel px-4 py-4">
+            <dt className="text-[8px] tracking-[0.18em] text-faint">TOKENS</dt>
+            <dd className="display mt-1.5 text-2xl tabular-nums">
+              {TOKENS.toLocaleString("en-US")}
+            </dd>
+          </div>
+          <div className="bg-panel px-4 py-4">
+            <dt className="text-[8px] tracking-[0.18em] text-faint">COPIES OF EACH CARD</dt>
+            <dd className="mt-1.5 text-[11px] leading-relaxed text-muted">
+              {RARITIES.map((rarity) => `${COPIES[rarity]} ${RARITY[rarity].label.toLowerCase()}`).join(
+                " · ",
+              )}
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-4 border border-line px-4 py-3">
+          <p className="text-[8px] tracking-[0.18em] text-faint">SHA-256 OF THE SEQUENCE</p>
+          {/* Broken to the character so it can be compared by eye against a
+              hash somebody computed themselves, which is the only use it has. */}
+          <p className="mt-1.5 break-all font-mono text-[11px] leading-relaxed text-gold">{HASH}</p>
+        </div>
+
+        <p className="mt-4 max-w-2xl text-[10px] leading-relaxed text-muted">
+          Check it yourself: run the shuffle again with the seed above and the file comes back byte
+          for byte identical, or this promise was false. The rarities are spread evenly across the
+          whole sequence before anything is shuffled, so the odds are the same whether you are the
+          tenth buyer or the last — which matters because the last collection planned 1,894 and
+          stopped at 515.
+        </p>
+
+        <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-gold">
+          What this does not say is that the order is fair. It says it was fixed before the first
+          sale and has not moved since, and those are different claims. It is also why nothing here
+          can guarantee the contents of any ten tokens you happen to buy together: a sequence
+          settled in advance cannot promise you a rare in the next ten, and a page that said it
+          could would be lying about something checkable.
+        </p>
       </section>
 
       {/* The update authority, said out loud.
