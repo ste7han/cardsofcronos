@@ -139,4 +139,29 @@ describe("what the page says a contract can do", () => {
   it("is right that royalties go to the splitter", () => {
     expect(solidity("CardsOfCronosSetOne")).toMatch(/_setDefaultRoyalty\(splitter_/);
   });
+
+  it("keeps the four switches scripts/nft/mint-control.ts drives, under those names", () => {
+    // That script is what opens a mint, and it hand-encodes these four by
+    // signature. A setter renamed in the Solidity would not fail anywhere: the
+    // selector would simply be for a function that no longer exists, the call
+    // would revert, and the first anybody would know is a mint that will not
+    // open at the hour it was announced for.
+    const source = solidity("CardsOfCronosSetOne");
+    for (const signature of [
+      "function setMintPrice(uint256 price) external onlyOwner",
+      "function setClaimsOpen(bool open) external onlyOwner",
+      "function setSaleOpen(bool open) external onlyOwner",
+      "function setBaseURI(string calldata baseURI_) external",
+    ]) {
+      expect(source, signature).toContain(signature);
+    }
+  });
+
+  it("is right that the price starts at the one the first collection charged", () => {
+    // The collection was deployed with the first one's default, which is ten
+    // times what this game sells at. It is corrected with setMintPrice after
+    // deploying, and mint-control refuses to open either door while it still
+    // stands — so this is the fact that refusal is built on.
+    expect(solidity("CardsOfCronosSetOne")).toMatch(/uint256 public mintPrice = 150 ether;/);
+  });
 });
