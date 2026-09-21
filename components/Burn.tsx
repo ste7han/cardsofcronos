@@ -394,13 +394,27 @@ export function Burn() {
         <p className="mt-3 max-w-2xl text-[10px] leading-relaxed text-faint">
           Read off the chain a minute at a time, so nobody has to go and look it up — and published
           so the splits above can be checked rather than taken on trust. None of them is a key: an
-          address is public by nature, and these are here to be watched. The wallets this project
-          holds but no stream pays are on the{" "}
-          <Link href="/contracts" className="text-pump hover:underline">
-            contracts page
-          </Link>{" "}
-          instead, where naming them is the point.
+          address is public by nature, and these are here to be watched.
         </p>
+
+        {/* A door rather than a word in a footnote. This is where somebody
+            looking at five addresses wants to ask what can be done with them,
+            and it is the only way through now that /contracts has left the
+            nav — see components/Nav.tsx. */}
+        <Link
+          href="/contracts"
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-line bg-panel px-5 py-4 transition-colors hover:border-pump"
+        >
+          <span className="min-w-0">
+            <span className="display block text-sm">WHAT CAN BE DONE WITH THEM</span>
+            <span className="mt-1 block max-w-xl text-[10px] leading-relaxed text-muted">
+              Every contract this game touches, who holds the key, and what that key can do —
+              including the rescue hatches, which are the most alarming things on it and therefore
+              the ones most worth naming. The wallets no stream pays are there too.
+            </span>
+          </span>
+          <span className="shrink-0 text-[10px] tracking-[0.18em] text-pump">CONTRACTS →</span>
+        </Link>
       </section>
     </div>
   );

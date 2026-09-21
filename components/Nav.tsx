@@ -15,12 +15,12 @@ const LINKS = [
   { href: "/mint", label: "MINT" },
   { href: "/tournament", label: "WEEKLY" },
   { href: "/burn", label: "BURN" },
-  // Next to BURN because they are one subject: where the money goes, and what
-  // is able to touch it on the way. It was only in the footer, and a page that
-  // exists to be checked is a page that has to be findable without scrolling to
-  // the bottom of something first.
-  { href: "/contracts", label: "CONTRACTS" },
   { href: "/profile", label: "PROFILE" },
+  // NOT /contracts. It sat here on the argument that a page which exists to be
+  // checked has to be findable without scrolling to the bottom of something
+  // first — true, and it was paying for that with a slot in a bar that has to
+  // fit on a phone. It is in the footer, and /burn now carries it where it is
+  // actually wanted: under the list of addresses the money moves through.
 ];
 
 export function Nav() {
