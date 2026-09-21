@@ -17,8 +17,12 @@ import {
   CONTRACTS,
   CROCARD,
   KNOWN_ADDRESSES,
+  DISCOUNT_CAP,
+  DISCOUNT_PER_MILLION,
+  heldFor,
   MAX_PER_TX,
   MINT_PRICE_CRO,
+  priceHolding,
   MOST_PER_WEEK,
   NOT_A_HOLDER,
   POOL,
@@ -271,6 +275,38 @@ describe("what a mint costs", () => {
     const source = readFileSync(new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url), "utf8");
     expect(source).toMatch(/uint256 owed = priceFor\(msg\.sender\) \* amount;/);
     expect(source).not.toMatch(/function buyPack|packPrice|PACK_/);
+  });
+
+  it("discounts by the rule the contract runs, not by one this file invented", () => {
+    // A buyer can act on this number: they can go and buy $CROCARD for it. So
+    // it is read out of the Solidity rather than asserted from the design notes.
+    const source = readFileSync(new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url), "utf8");
+    expect(source).toMatch(/uint256 percent = discountToken\.balanceOf\(user\) \/ 1_000_000e18;/);
+    const cap = /return percent > (\d+) \? \d+ : percent;/.exec(source);
+    expect(cap, "the cap is no longer written that way").not.toBeNull();
+    expect(DISCOUNT_CAP).toBe(Number(cap![1]));
+    expect(DISCOUNT_PER_MILLION).toBe(1);
+  });
+
+  it("divides in integers, so a nearly-million is retail", () => {
+    // The part that surprises people. 999,999 is not 0.999% off, it is nothing
+    // off, and the page has to say so rather than let somebody find out by
+    // paying full price.
+    expect(priceHolding(0)).toBe(15);
+    expect(priceHolding(999_999)).toBe(15);
+    expect(priceHolding(1_000_000)).toBe(14.85);
+    expect(priceHolding(10_000_000)).toBe(13.5);
+    expect(priceHolding(30_000_000)).toBe(10.5);
+    // And it stops at the cap rather than going free.
+    expect(priceHolding(500_000_000)).toBe(10.5);
+  });
+
+  it("says what a discount costs to reach, and stops at the cap", () => {
+    expect(heldFor(1)).toBe(1_000_000);
+    expect(heldFor(30)).toBe(30_000_000);
+    expect(heldFor(31)).toBeNull();
+    // The floor is 3% of the supply, which is the sentence the page makes of it.
+    expect(heldFor(DISCOUNT_CAP)! / CROCARD_SUPPLY).toBeCloseTo(0.03, 10);
   });
 
   it("offers no quantity the chain would reject", () => {

@@ -248,6 +248,40 @@ export const MINT_PRICE_CRO = 15;
  */
 export const MAX_PER_TX = 50;
 
+/**
+ * The $CROCARD discount on a mint, carried over from the first collection.
+ *
+ * One percent off per whole million held, capped at thirty. So a card is 15 CRO
+ * at retail and 10.5 at the floor, and the floor needs 30 million — three
+ * percent of the supply.
+ *
+ * `discountFor` on the contract divides in integers, and that is not a rounding
+ * detail: anything under a million is no discount at all, not a fraction of one.
+ * It behaved that way on the first collection too and is kept rather than
+ * smoothed, because changing the deal on people who bought in for it would be a
+ * worse idea than any arithmetic it tidies.
+ *
+ * These two numbers are the contract's, not this file's. test/revenue.test.ts
+ * reads them back out of the Solidity — the discount is the one number on the
+ * page a buyer could act on by going and buying a token.
+ */
+export const DISCOUNT_PER_MILLION = 1;
+export const DISCOUNT_CAP = 30;
+
+/** Whole $CROCARD needed for a given discount, or null above the cap. */
+export function heldFor(percent: number): number | null {
+  if (percent > DISCOUNT_CAP) return null;
+  return (percent / DISCOUNT_PER_MILLION) * 1_000_000;
+}
+
+/** What a card costs somebody holding this many whole $CROCARD, in CRO. */
+export function priceHolding(held: number): number {
+  // Integer division, the way the contract does it. Math.floor rather than a
+  // divide, so 999_999 is retail here exactly as it is on chain.
+  const off = Math.min(Math.floor(held / 1_000_000) * DISCOUNT_PER_MILLION, DISCOUNT_CAP);
+  return (MINT_PRICE_CRO * (100 - off)) / 100;
+}
+
 {
   if (!Number.isInteger(MINT_PRICE_CRO) || MINT_PRICE_CRO <= 0) {
     throw new Error(`A card costs ${MINT_PRICE_CRO} CRO, which is not a price.`);

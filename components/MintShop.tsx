@@ -38,7 +38,7 @@ import { MintOnChain } from "@/components/MintOnChain";
 import { PULL_WEIGHTS } from "@/engine/draw";
 import { RARITIES } from "@/engine/types";
 import { MINT_OPEN, buyCards, collectionProgress, type Bought } from "@/lib/collection";
-import { MAX_PER_TX, MINT_PRICE_CRO } from "@/lib/revenue";
+import { DISCOUNT_CAP, MAX_PER_TX, MINT_PRICE_CRO, heldFor, priceHolding } from "@/lib/revenue";
 import { useSession } from "@/lib/use-session";
 import { cx } from "@/lib/cx";
 import { RARITY } from "@/lib/rarity";
@@ -141,6 +141,53 @@ export function MintShop() {
           </span>
           <span> · before the $CROCARD discount</span>
         </p>
+
+        {/* What that discount is, in the numbers somebody would have to act on.
+            It said "before the $CROCARD discount" and nowhere what the discount
+            was, which is a price with a footnote and no note. */}
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="text-[8px] tracking-[0.18em] text-faint">
+            HOLDING $CROCARD MAKES IT CHEAPER
+          </p>
+          <p className="mt-2 max-w-xl text-[10px] leading-relaxed text-muted">
+            One percent off per whole million you hold, up to {DISCOUNT_CAP}%. The contract counts
+            in whole millions, so {(1_000_000 - 1).toLocaleString("en-US")} is the retail price and
+            not a fraction off it — and above{" "}
+            {heldFor(DISCOUNT_CAP)!.toLocaleString("en-US")} nothing more comes off.
+          </p>
+
+          <dl className="mt-3 grid gap-px border border-line bg-line sm:grid-cols-4">
+            {[0, 1_000_000, 10_000_000, heldFor(DISCOUNT_CAP)!].map((held) => (
+              <div key={held} className="bg-panel px-3 py-3">
+                <dt className="text-[8px] tracking-[0.16em] text-faint">
+                  {held === 0
+                    ? "UNDER A MILLION"
+                    : `${(held / 1_000_000).toLocaleString("en-US")}M HELD`}
+                </dt>
+                <dd
+                  className={cx(
+                    "display mt-1 text-lg tabular-nums",
+                    held === heldFor(DISCOUNT_CAP) ? "text-gold" : "text-fg",
+                  )}
+                >
+                  {priceHolding(held)} CRO
+                </dd>
+                <p className="text-[9px] text-muted">
+                  {held === 0
+                    ? "retail"
+                    : `${Math.round(100 - (priceHolding(held) / MINT_PRICE_CRO) * 100)}% off`}
+                </p>
+              </div>
+            ))}
+          </dl>
+
+          <p className="mt-3 max-w-xl text-[10px] leading-relaxed text-muted">
+            It is the same formula the first collection used and it is read off the chain, not off
+            this page: connect a wallet and the panel below quotes what you will actually be
+            charged. A balance that cannot be read is on the retail rate, because a discount nobody
+            can verify is a discount nobody earned.
+          </p>
+        </div>
 
         {open ? (
           <button
