@@ -139,6 +139,20 @@ async function main(): Promise<void> {
   // setter, so changing the split means new bytecode at a new address. The drop
   // and the pot it pays are reused exactly as they are — redeploying those would
   // throw away a pot balance and every board share set on it.
+  // The same narrowing for the collection, which is deployed last and long after
+  // the three that handle money: the art has to be rendered and on IPFS before
+  // anybody knows the baseURI, so this run happens on its own day.
+  const nftOnly = process.argv.includes("--nft-only");
+  if (nftOnly) {
+    if (CONTRACTS.nft !== null) {
+      throw new Error(`lib/revenue.ts already names a collection (${CONTRACTS.nft}).`);
+    }
+    for (const needed of ["drop", "splitter", "pot"] as const) {
+      if (CONTRACTS[needed] === null) {
+        throw new Error(`--nft-only reuses the ${needed}, and it is not deployed.`);
+      }
+    }
+  }
   const splitterOnly = process.argv.includes("--splitter-only");
   if (splitterOnly) {
     if (CONTRACTS.splitter !== null) {
@@ -150,7 +164,7 @@ async function main(): Promise<void> {
     if (CONTRACTS.drop === null || CONTRACTS.pot === null) {
       throw new Error("--splitter-only reuses the drop and the pot, and one of them is not deployed.");
     }
-  } else {
+  } else if (!nftOnly) {
     const already = Object.entries(CONTRACTS).filter(([, address]) => address !== null);
     if (already.length > 0 && !process.argv.includes("--replace")) {
       throw new Error(
@@ -337,7 +351,12 @@ async function main(): Promise<void> {
   // and there is nothing there to fill in.
   let dropAt: string;
   let potAt: string;
-  if (splitterOnly) {
+  if (nftOnly) {
+    dropAt = CONTRACTS.drop!;
+    potAt = CONTRACTS.pot!;
+    found.splitter = CONTRACTS.splitter!;
+    console.log(`reusing splitter  ${found.splitter}`);
+  } else if (splitterOnly) {
     dropAt = CONTRACTS.drop!;
     potAt = CONTRACTS.pot!;
     console.log(`reusing drop  ${dropAt}`);
@@ -346,13 +365,15 @@ async function main(): Promise<void> {
     dropAt = found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
     potAt = found.pot = await deploy("PrizePot", [CROCARD, publisher]);
   }
-  found.splitter = await deploy("Splitter", [
-    ROUTER,
-    CROCARD,
-    dropAt,
-    BURN_ADDRESS,
-    potAt,
-  ]);
+  if (!nftOnly) {
+    found.splitter = await deploy("Splitter", [
+      ROUTER,
+      CROCARD,
+      dropAt,
+      BURN_ADDRESS,
+      potAt,
+    ]);
+  }
   if (splitterOnly) {
     console.log("--splitter-only: only the splitter was deployed. The drop and the pot are the");
     console.log("ones that were already there, and the collection is untouched.\n");
@@ -360,6 +381,9 @@ async function main(): Promise<void> {
     console.log("--money-only: the collection is not deployed. Run again without it once the");
     console.log("art is final and uploaded, and pass --base-uri.\n");
   } else {
+    // Royalties are paid here and the address is immutable once set, so a
+    // collection deployed against nothing pays its royalties to nothing.
+    if (!found.splitter) throw new Error("No splitter to pay royalties to.");
     found.nft = await deploy("CardsOfCronosSetOne", [
       name,
       symbol,
@@ -368,6 +392,10 @@ async function main(): Promise<void> {
       allowlist.root,
       found.splitter,
     ]);
+    if (nftOnly) {
+      console.log("--nft-only: only the collection was deployed, against the splitter, drop and");
+      console.log("pot that were already there.\n");
+    }
   }
 
   // ── AND THE BOARDS GET THEIR SHARES ────────────────────────────────────────
@@ -387,14 +415,14 @@ async function main(): Promise<void> {
   // shares, and the owner may have moved them since with setShare. Writing the
   // starting position back over a considered one would be a silent change to
   // where the prize money goes.
-  for (const [board, bps] of splitterOnly ? [] : SHARES) {
+  for (const [board, bps] of splitterOnly || nftOnly ? [] : SHARES) {
     await call(
       found.pot!,
       `setShare(${board}, ${bps} bps)`,
       selector("setShare(bytes32,uint256)") + asWord(board) + word(BigInt(bps)),
     );
   }
-  if (!splitterOnly) {
+  if (!splitterOnly && !nftOnly) {
     console.log(
       `  boards: ${SHARES.map(([b, v]) => `${b} ${v / 100}%`).join(", ")}` +
         `, ${(10_000 - SHARES.reduce((sum, [, v]) => sum + v, 0)) / 100}% stays in the pot\n`,
@@ -403,7 +431,7 @@ async function main(): Promise<void> {
 
   const cost = spent * gasPrice;
   console.log(
-    `${splitterOnly ? "the splitter" : moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
+    `${nftOnly ? "the collection" : splitterOnly ? "the splitter" : moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
       `at ${gasPrice / 10n ** 9n} gwei`,
   );
 
@@ -431,7 +459,9 @@ async function main(): Promise<void> {
   let source = readFileSync(file, "utf8");
   for (const [key_, address] of [
     ["drop", found.drop],
-    ["splitter", found.splitter],
+    // Reused rather than deployed in --nft-only, and the write-back looks for
+    // `splitter: null` to fill in. It is not null, so it must not be offered.
+    ["splitter", nftOnly ? undefined : found.splitter],
     ["pot", found.pot],
     ["nft", found.nft],
   ] as const) {
@@ -446,7 +476,7 @@ async function main(): Promise<void> {
   writeFileSync(file, source);
 
   console.log(
-    `${splitterOnly ? "The splitter" : moneyOnly ? "The three" : "All four"} written into ${file}.` +
+    `${nftOnly ? "The collection" : splitterOnly ? "The splitter" : moneyOnly ? "The three" : "All four"} written into ${file}.` +
       (moneyOnly ? " nft is left null until the collection is deployed." : ""),
   );
   console.log(`\nStill to do: set the wallets in ${file}, and the two Worker secrets.`);

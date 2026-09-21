@@ -121,12 +121,17 @@ export const OURS: readonly Listed[] = [
     id: "nft",
     name: "Cards of Cronos Set 01",
     address: CONTRACTS.nft,
-    what: "The card collection. Not deployed yet — the artwork is still being finished.",
+    what:
+      "The card collection. 5,603 of them, fixed in the contract when it was deployed in " +
+      "September 2026 and unchangeable since. Every one is face down until the set is revealed.",
     powers: [
-      "The owner can change where the art is served from. It is how a broken image gets fixed " +
-        "and it is also the power to change what you own, which is why it is said out loud here " +
-        "and on the mint page.",
-      "How many there will ever be is fixed when it is deployed and cannot be changed afterwards.",
+      "The owner can change where the art is served from. Revealing the set is that power being " +
+        "used once — and it stays afterwards, which means it is also the power to change what " +
+        "you own. Said out loud here and on the mint page for that reason.",
+      "How many there will ever be was fixed when it was deployed. 5,603, and no function to " +
+        "move it. Which card each one turns out to be was fixed before any of them were sold, " +
+        "and the hash proving that is published on the mint page.",
+      "The owner opens and closes the free claim and the sale, and sets the price.",
       "Royalties are paid to the splitter above, so they go the same three ways as everything else.",
     ],
   },

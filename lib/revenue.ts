@@ -290,7 +290,13 @@ export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft", string | nul
   // burn, 3000 holders, 2000 pot, paying the same drop and the same pot.
   splitter: "0x8a687588c78f5af713ce196619a48a8432f574c9",
   pot: "0xafe431c0c6b2cde0888e0dff74d22be08c981025",
-  nft: null,
+  // Deployed 21 September 2026. Read back off chain from two RPCs before being
+  // recorded here: maxSupply 5603, which is fixed for good and matches
+  // data/shuffle.json; the allowlist root over the 49 addresses holding the
+  // first collection; royalties to the splitter above at 10%. It starts with
+  // both doors shut and its baseURI on the face-down art, so every token looks
+  // the same until the set is revealed.
+  nft: "0x2d1783a4cf9cc3db85ef0dd3a619ad1394847e10",
 };
 
 for (const [name, address] of Object.entries(CONTRACTS)) {
