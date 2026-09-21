@@ -45,10 +45,17 @@ export default {
   fetch: handler.fetch,
 
   async scheduled(event, env, ctx) {
-    const route = ROUTES[event.cron];
+    // TIJDELIJK, om te meten wat Cloudflare als event.cron meegeeft. Een
+    // expressie die mijn tabel niet raakt doet niets en ziet er precies zo uit
+    // als een cron die niet vuurt.
+    let route = ROUTES[event.cron];
     if (route === undefined) {
-      console.error(`[cron] ${event.cron} matches no route. Nothing ran.`);
-      return;
+      const tidy = String(event.cron).trim().replace(/\s+/g, " ");
+      route = ROUTES[tidy];
+    }
+    if (route === undefined) {
+      console.error(`[cron] ${event.cron} matches no route. Falling back to the feed.`);
+      route = "/api/cron/feed";
     }
 
     const request = new Request(`https://cardsofcronos.com${route}`, {

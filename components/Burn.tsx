@@ -15,6 +15,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 import { STREAMS, WALLETS, nameOf, receiverOf, sourceOf, type Destination } from "@/lib/revenue";
 import { EXPLORER, toCro, toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
@@ -30,6 +31,9 @@ interface BurnRow {
 
 interface Answer {
   total: { burns: number; wei: string; burned: string };
+  /** What the burn address holds now, base units, or null when unreadable. */
+  dead: string | null;
+  deadAddress: string;
   burns: BurnRow[];
 }
 
@@ -107,8 +111,64 @@ export function Burn() {
 
   return (
     <div className="space-y-10">
+      {/* What is at the dead address, first, because it is the bigger number and
+          the one somebody came to see. The page used to open with what this game
+          had burned — zero — under the heading "$CROCARD BURNED", which read as
+          "none has ever been burned" while 89 million sat at an address anybody
+          could look at. Both numbers are true; only one of them was here. */}
       <section>
-        <h2 className="display text-xl">BURNED SO FAR</h2>
+        <h2 className="display text-xl">$CROCARD BURNED, ALL OF IT</h2>
+        <div className="mt-4 border border-line bg-panel px-5 py-5">
+          <p className="text-[8px] tracking-[0.18em] text-faint">
+            HELD AT THE BURN ADDRESS RIGHT NOW
+          </p>
+          <p className="display mt-1.5 text-4xl tabular-nums text-dump sm:text-5xl">
+            {answer === null
+              ? "—"
+              : answer.dead === null
+                ? "—"
+                : Math.round(toTokens(answer.dead)).toLocaleString("en-US")}
+          </p>
+          {answer !== null && answer.dead !== null && (
+            <p className="mt-1 text-[10px] tracking-[0.18em] text-faint tabular-nums">
+              {((toTokens(answer.dead) / CROCARD_SUPPLY) * 100).toFixed(2)}% OF THE SUPPLY
+            </p>
+          )}
+
+          {answer !== null && answer.dead === null ? (
+            // Said differently from a zero, because they are different facts and
+            // only one of them is about the token.
+            <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-dump">
+              The burn address could not be read just now. That is this page failing rather than an
+              empty address — try again in a moment, or go and look for yourself.
+            </p>
+          ) : (
+            <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
+              Read off the chain when you loaded this page, not from anything we keep. Most of it is
+              from the 2025 version; what this game has burned is the number below, and the two add
+              up to this one. Nothing sent there comes back — nobody holds its key.
+            </p>
+          )}
+
+          {answer !== null && (
+            <a
+              href={`${EXPLORER}/address/${answer.deadAddress}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block text-[10px] tracking-[0.18em] text-pump hover:underline"
+            >
+              CHECK IT YOURSELF →
+            </a>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="display text-xl">BURNED BY THIS GAME</h2>
+        <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
+          The part of the total above that this version put there, and every one of them is a
+          transaction you can open.
+        </p>
         <dl className="mt-4 grid gap-px border border-line bg-line sm:grid-cols-3">
           <div className="bg-panel px-4 py-4">
             <dt className="text-[8px] tracking-[0.18em] text-faint">$CROCARD BURNED</dt>
@@ -132,10 +192,11 @@ export function Burn() {
 
         {answer !== null && answer.burns.length === 0 ? (
           <p className="mt-3 text-[11px] leading-relaxed text-gold">
-            None yet, and zero is the honest number. Nothing has been minted, so nothing has been
-            earned, so nothing has been bought and nothing burned. Every burn that does happen
-            turns up here with the transaction that did it — a burn total you cannot check is a
-            number you should not believe.
+            None yet, and zero is the honest number for this half of it. Nothing has been minted,
+            so nothing has been earned, so nothing has been bought and nothing burned by this
+            version. Every burn that does happen turns up here with the transaction that did it —
+            a burn total you cannot check is a number you should not believe, which is also why the
+            figure above is read off the chain rather than kept here.
           </p>
         ) : answer !== null ? (
           <div className="mt-4 overflow-x-auto border border-line">
