@@ -378,3 +378,30 @@ CREATE TABLE IF NOT EXISTS feed_posted (
 -- the cursor has long passed. Nothing does that yet, and at a few rows a day it
 -- would take years to be worth a job.
 CREATE INDEX IF NOT EXISTS feed_posted_at ON feed_posted (at);
+
+-- Who holds which card, kept current rather than asked for.
+--
+-- The collection is not ERC721Enumerable — deliberately, because an index costs
+-- every holder gas on every mint and transfer and this project reads it from a
+-- script. So there is no `tokenOfOwnerByIndex` to ask, and finding somebody's
+-- cards by walking `ownerOf(1..5603)` is 5,603 calls for one page view.
+--
+-- Instead the same minute-job that feeds Discord reads the collection's Transfer
+-- log and writes the answer down. A mint is a Transfer from the zero address and
+-- a sale is a Transfer between two people; both are the same row being updated,
+-- which is why this is a table of current owners rather than a list of events.
+--
+-- THIS IS A CACHE OF THE CHAIN and not a record of anything. Every row is
+-- derived, losing it costs a rescan rather than a fact, and the cursor in
+-- `cursors` under "feed:owners" says how far it has read. What it must not be is
+-- subtly stale in a way nobody notices, which is why the scan moves its cursor
+-- only over blocks it actually read.
+CREATE TABLE IF NOT EXISTS card_owners (
+  token INTEGER PRIMARY KEY,
+  owner TEXT NOT NULL
+        CHECK (owner = lower(owner) AND length(owner) = 42
+               AND substr(owner, 1, 2) = '0x'),
+  at    INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS card_owners_by_owner ON card_owners (owner);

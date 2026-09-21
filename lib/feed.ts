@@ -456,6 +456,70 @@ export async function sayBurns(logs: Log[], rpcs: readonly string[]): Promise<Em
 }
 
 /**
+ * Keeps `card_owners` current from the collection's Transfer log.
+ *
+ * Not a feed: it posts nothing. It shares this job because it reads the same
+ * contract over the same blocks, and a second scan on a second cursor would be
+ * a second thing to fall behind.
+ *
+ * A mint is a Transfer from the zero address and a sale is a Transfer between
+ * two people, and both are the same row being written — so this is a table of
+ * who holds what now, not a list of what happened. Applied in log order, which
+ * `eth_getLogs` guarantees within a range, so a token that changed hands twice
+ * in one scan ends up with the second owner.
+ *
+ * Returns what it did rather than throwing: a page that cannot list somebody's
+ * cards is worse than a Discord line nobody sees, but it is still not a reason
+ * to fail the whole minute.
+ */
+async function runOwners(
+  db: Database,
+  logRpcs: readonly string[],
+  head: number,
+  now: number,
+): Promise<RanFeed> {
+  const feed = "owners";
+  const nothing: RanFeed = { feed, from: null, to: null, found: 0, posted: 0 };
+  const nft = CONTRACTS.nft;
+  if (nft === null) return { ...nothing, skipped: "nothing deployed to watch" };
+
+  const seen = await cursorOf(db, `feed:${feed}`);
+  // Never run: start at the head like the feeds do. What was minted before this
+  // was switched on is filled in by scripts/holders.ts, which walks ownerOf —
+  // slow, once, and off the critical path.
+  const from = seen === null ? Math.max(0, head - 1) : seen + 1;
+  if (from > head) return { ...nothing, from, to: head, skipped: "no new blocks" };
+  const to = Math.min(head, from + CHUNK - 1);
+
+  let logs: Log[];
+  try {
+    logs = await logsBetween(logRpcs, nft, [TRANSFER], from, to);
+  } catch (error) {
+    return { ...nothing, from, to, wrong: error instanceof Error ? error.message : "getLogs failed" };
+  }
+
+  for (const log of logs) {
+    // An ERC721 Transfer indexes all three, so the id is a topic and not data.
+    // An ERC20 Transfer would have it in the data and three topics is how they
+    // are told apart — this contract only has the one kind, and a log with the
+    // wrong shape is skipped rather than written as token zero.
+    if (log.topics.length !== 4) continue;
+    const token = Number(BigInt(log.topics[3]!));
+    const to_ = addressIn(log.topics[2]!).toLowerCase();
+    await db
+      .prepare(
+        `INSERT INTO card_owners (token, owner, at) VALUES (?, ?, ?)
+         ON CONFLICT (token) DO UPDATE SET owner = excluded.owner, at = excluded.at`,
+      )
+      .bind(token, to_, now)
+      .run();
+  }
+
+  await setCursor(db, `feed:${feed}`, to, now);
+  return { feed, from, to, found: logs.length, posted: 0 };
+}
+
+/**
  * Every feed, once.
  *
  * Sequential rather than parallel, and not for correctness: three feeds on one
@@ -549,6 +613,10 @@ export async function runFeeds(
       say: sayBurns,
     }),
   );
+
+  // Last, and it posts nothing. If it fails, the three channels have already
+  // had their say.
+  feeds.push(await runOwners(db, logRpcs, head, now));
 
   return { head, feeds };
 }

@@ -16,6 +16,7 @@ import { RULES } from "@/engine/types";
 import { byDeck, history, tally, type DeckRow, type MatchOutcome } from "@/lib/history";
 import { LINKABLE, type Network } from "@/lib/links";
 import { Claim } from "@/components/Claim";
+import { CardsSummary } from "@/components/YourCards";
 import { HOLDER_TIERS, nextTier, tierFor } from "@/data/holder-tiers";
 import { toTokens } from "@/lib/units";
 import { TelegramLink } from "@/components/TelegramLink";
@@ -118,6 +119,12 @@ export function Profile() {
       </section>
 
       <Holding standing={standing} wallet={wallet} />
+
+      {/* What you actually bought. It sits under the balance and above the
+          decks because that is the order somebody reads them in: what I have,
+          what it is worth, what I built with it. The cards themselves are a
+          page of their own — see app/profile/cards for why. */}
+      <CardsSummary wallet={wallet} />
 
       {/* Rank after holding, because holding is the thing that pays and rank is
           the thing that will. Empty is the honest answer for both today. */}
