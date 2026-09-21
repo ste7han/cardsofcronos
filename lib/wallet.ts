@@ -19,8 +19,10 @@
 // What that changes about the risk is the part worth stating. `personal_sign`
 // cannot move anything — a wallet will not turn a signature over plain bytes
 // into a transfer. `eth_sendTransaction` can, so everything below that builds
-// calldata does it from arguments this file was given, and there is exactly one
-// function it knows how to call.
+// calldata does it from arguments this file was given. It can also send CRO
+// now, for the paid mint — see sendCall, where a value of zero is left out of
+// the request rather than sent as one, so a call that was never meant to pay
+// cannot pay by accident.
 
 import { challenge, newNonce, type WalletProof } from "@/lib/session";
 import { bytesToHex, normalise } from "@/lib/address";
@@ -193,15 +195,27 @@ export function claimData(
  * No gas and no gas price: the wallet estimates both and shows them to the
  * person before they agree. Guessing here would mean a number in somebody\'s
  * confirmation screen that this project chose and they did not.
+ *
+ * `value` is CRO, in wei, and it is the one argument here that can lose
+ * somebody money by being wrong. It is left out of the request entirely when it
+ * is zero rather than sent as "0x0", so a call that was never meant to pay
+ * cannot pay by a formatting accident — and every caller that does pay has to
+ * say so at the call site.
  */
-export async function sendCall(from: string, to: string, data: string): Promise<string> {
+export async function sendCall(
+  from: string,
+  to: string,
+  data: string,
+  value: bigint = 0n,
+): Promise<string> {
   const wallet = provider();
   if (wallet === null) throw new Error("No wallet in this browser.");
+  if (value < 0n) throw new Error("A transaction cannot send a negative amount.");
 
   await ensureCronos();
   const hash = await wallet.request({
     method: "eth_sendTransaction",
-    params: [{ from, to, data }],
+    params: [{ from, to, data, ...(value > 0n ? { value: "0x" + value.toString(16) } : {}) }],
   });
   if (typeof hash !== "string") throw new Error("The wallet did not return a transaction.");
   return hash;

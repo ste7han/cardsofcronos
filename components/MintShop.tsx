@@ -34,6 +34,7 @@
 import { useEffect, useState } from "react";
 
 import { CardsOpening } from "@/components/CardsOpening";
+import { MintOnChain } from "@/components/MintOnChain";
 import { PULL_WEIGHTS } from "@/engine/draw";
 import { RARITIES } from "@/engine/types";
 import { MINT_OPEN, buyCards, collectionProgress, type Bought } from "@/lib/collection";
@@ -163,6 +164,8 @@ export function MintShop() {
           </p>
         )}
       </div>
+
+      <MintOnChain />
 
       <div className="panel mt-4 border border-line p-6">
         <h3 className="text-[10px] tracking-[0.18em] text-faint">THE ODDS, PER CARD DRAWN</h3>
