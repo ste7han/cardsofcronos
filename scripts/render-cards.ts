@@ -28,7 +28,7 @@
 // the picture was not available.
 // That is a real 4x render rather than a small one blown up.
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -166,6 +166,12 @@ async function checkFingerprint() {
   console.log(`card set ${mine} — script and server agree\n`);
 }
 
+/** Width and height straight out of a PNG's IHDR, so the log states what is on disk. */
+function sizeOf(file: string): { width: number; height: number } {
+  const head = readFileSync(file).subarray(16, 24);
+  return { width: head.readUInt32BE(0), height: head.readUInt32BE(4) };
+}
+
 async function main() {
   await checkFingerprint();
   await mkdir(OUT, { recursive: true });
@@ -246,7 +252,16 @@ async function main() {
   }
 
   await browser.close();
-  console.log(`\n${done} cards rendered at ${268 * SCALE}x${375 * SCALE} into ${OUT}/`);
+  // Measured off a file rather than computed from 268x375, which is what this
+  // said and has not been the card's shape since it was made taller to stop
+  // clipping rules text. It reported 1072x1500 for output that was 1072x1676,
+  // which is the one line anybody checks to see the render did what they asked.
+  const shot = CARDS[0] && existsSync(path.join(OUT, `${CARDS[0].id}.png`))
+    ? sizeOf(path.join(OUT, `${CARDS[0].id}.png`))
+    : null;
+  console.log(
+    `\n${done} cards rendered${shot ? ` at ${shot.width}x${shot.height}` : ""} into ${OUT}/`,
+  );
   console.log(`Metadata in ${OUT}/metadata/ — ERC721 shape; image fields are filenames, to be rewritten on upload.`);
 }
 
