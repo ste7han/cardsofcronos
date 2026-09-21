@@ -238,7 +238,22 @@ export function saveDeckAs(
   return { problems: [], id: deckId };
 }
 
-/** Throws one away. Not the one being played — that stays until another is picked. */
+/**
+ * Throws one away, and stops playing it if that is what it was.
+ *
+ * The list and the deck you play are two records of the same thing, and deleting
+ * only the first leaves a deck nobody can see still being dealt at the table —
+ * found by deleting a deck and watching it stay. Anything else you have saved is
+ * untouched: this clears the seat, it does not pick the next one.
+ */
 export function deleteSavedDeck(id: string): void {
+  const going = savedDecks().find((deck) => deck.id === id);
   writeList(savedDecks().filter((deck) => deck.id !== id));
+
+  if (going === undefined) return;
+  const playing = loadDeck();
+  const same =
+    playing.cardIds.length === going.cardIds.length &&
+    [...playing.cardIds].sort().join() === [...going.cardIds].sort().join();
+  if (same) clearDeck();
 }

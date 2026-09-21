@@ -8,6 +8,7 @@ import { CardView } from "@/components/CardView";
 import { Icon } from "@/components/Icon";
 import { byDeck, deckKey, history as matchHistory, type DeckRow } from "@/lib/history";
 import {
+  buildDeck,
   countProjects,
   deckProblems,
 } from "@/engine/deck";
@@ -209,10 +210,33 @@ export function DeckBuilder() {
     setSaved(false);
   }
 
-  // loadPreset and rollRandom were here. The four ready-made decks and the
-  // random roll went with them: a player picks between decks they built, and a
-  // deck handed over is the thing this game decided against everywhere else.
-  // data/preset-decks.ts is still used by scripts/ for measurement.
+  // loadPreset was here. The four ready-made decks went: a player picks between
+  // decks they built, and a deck handed over is the thing this game decided
+  // against everywhere else. data/preset-decks.ts is still used by scripts/ for
+  // measurement.
+
+  /**
+   * Fills the table with a legal deck out of the cards you hold.
+   *
+   * It went with the presets for a moment and came back, and the difference
+   * between the two is the whole reason: a preset is a deck somebody else
+   * designed, and this is forty of your own cards in an order you did not have
+   * to click. Nothing is saved by pressing it — name it and save it, or press
+   * it again.
+   *
+   * `pool` is what the chain says you hold, so there is nothing here to filter:
+   * it cannot reach for a card you do not own.
+   */
+  function rollRandom() {
+    // Math.random is fine here: this is a UI convenience, not the engine. A
+    // match's randomness runs through the seeded generator so it stays
+    // replayable; picking a deck to look at does not have to.
+    const from = DECK_FROM_COLLECTION ? pool : SET;
+    if (from.length < RULES.deckSize) return;
+    setPicked(buildDeck(from, Math.floor(Math.random() * 1_000_000)));
+    setLoaded("random");
+    setSaved(false);
+  }
 
   function toggle(card: Card) {
     // Dimming is a hint; this is the rule. Clicking a card you do not own does
@@ -516,10 +540,43 @@ export function DeckBuilder() {
             <div className="mt-4 border-t border-line pt-3">
               <p className="text-[9px] tracking-[0.2em] text-faint">YOUR DECKS</p>
 
+              {/* Forty of your own cards, in an order you did not have to click.
+                  Not a saved deck and not somebody else's design — it fills the
+                  table and then you name it, or press it again. It draws from
+                  `pool`, which is what the chain says you hold, so it cannot
+                  reach for a card you do not own. */}
+              <button
+                type="button"
+                onClick={rollRandom}
+                disabled={(DECK_FROM_COLLECTION ? pool.length : SET.length) < RULES.deckSize}
+                className={cx(
+                  "mt-2 block w-full border px-2 py-1.5 text-left transition-colors",
+                  (DECK_FROM_COLLECTION ? pool.length : SET.length) < RULES.deckSize
+                    ? "cursor-not-allowed border-line text-faint"
+                    : loaded === "random"
+                      ? "border-gold bg-gold/10"
+                      : "border-line hover:border-line-strong",
+                )}
+              >
+                <span
+                  className={cx(
+                    "text-[9px] tracking-[0.16em]",
+                    loaded === "random" ? "text-gold" : "text-fg",
+                  )}
+                >
+                  ROLL A RANDOM DECK
+                </span>
+                <span className="mt-0.5 block text-[9px] leading-snug text-muted">
+                  {(DECK_FROM_COLLECTION ? pool.length : SET.length) < RULES.deckSize
+                    ? `You hold ${pool.length} cards and a deck is ${RULES.deckSize}.`
+                    : "A legal deck out of the cards you hold. Name it below to keep it."}
+                </span>
+              </button>
+
               {mine.length === 0 ? (
                 <p className="mt-2 text-[9px] leading-snug text-muted">
-                  None saved yet. Build one below and give it a name — it turns up here and it
-                  becomes the deck you play with.
+                  No deck saved yet. Roll one or build one, give it a name below, and it turns up
+                  here as the deck you play with.
                 </p>
               ) : (
                 <div className="mt-2 space-y-1">
