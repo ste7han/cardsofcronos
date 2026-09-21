@@ -376,16 +376,45 @@ export function Game({
       won: state.winner === null ? null : state.winner === "you",
     });
 
-    // TCG also sends the seed and the moves up to /api/solo, where the server
-    // replays the match and writes down what its own engine produced — because a
-    // number this browser computed is fine as a private note to itself, which is
-    // what the line above is, and is not a record the moment somebody else reads
-    // it back. That route is not built here, so the record stops at this browser
-    // and the code that would send it is gone rather than pointed at a 404.
+    // And up to /api/solo, where the server replays it and announces the
+    // result. The line above is a private note this browser wrote to itself;
+    // this is the version somebody else reads, and the difference is that the
+    // server plays the moves through its own engine before saying anything.
     //
-    // What comes with it: lib/solo.ts, /api/solo, and the half of the profile
-    // that shows a record somebody other than this tab has checked.
-  }, [state, demo, deckInfo]);
+    // A win and a loss both go. The weekly board refuses anything but a win
+    // because that is a competition; a result is a result.
+    //
+    // Fire and forget, and deliberately: the record above is already written,
+    // the match is over, and a channel that did not hear about it is not a
+    // reason to show anybody an error about a game they have just finished.
+    const proof = proofOf();
+    if (proof !== null && played.current !== null) {
+      void fetch("/api/solo", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          proof,
+          board: board.id,
+          seed: played.current.seed,
+          deck: deckInfo.cardIds,
+          deckName: deckInfo.name,
+          moves: played.current.moves,
+        }),
+      })
+        .then(async (answer) => {
+          // Said out loud, in the console, and nowhere else. There is nothing
+          // for the player to do about it and the match is already recorded —
+          // but this failed silently for its whole first hour, with a route
+          // answering 401 and a `.catch` that only ever sees a network error.
+          if (!answer.ok) {
+            console.error(`[solo] ${answer.status}: ${await answer.text()}`);
+          }
+        })
+        .catch((error: unknown) => {
+          console.error("[solo] the result could not be sent", error);
+        });
+    }
+  }, [state, demo, deckInfo, board.id]);
 
 
   /**

@@ -57,6 +57,15 @@ interface CloudflareEnv {
   DISCORD_BUYS?: string;
   DISCORD_BURNS?: string;
   /**
+   * Where a finished match against the bot is announced.
+   *
+   * Unlike the three above, what goes here is not read off a log — a solo match
+   * happens in somebody's browser. It is replayed on the server first; see
+   * app/api/solo/route.ts for why that is the only version of this worth
+   * building.
+   */
+  DISCORD_SOLO?: string;
+  /**
    * The Durable Object holding the feeds' clock. See worker/index.js.
    *
    * Optional because nothing in the app needs it: only the Worker wrapper winds
