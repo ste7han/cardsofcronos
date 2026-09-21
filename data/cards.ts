@@ -3491,8 +3491,21 @@ const LOAF: ProjectCard[] = [
     holders: 6,
     // every cat on earth does this and none were taught
     effect: { kind: "scaleMC", target: "self", percentage: 27 },
-    // the more people arrive the more it burns, and arriving costs them
-    restriction: { kind: "taxPlays", percent: 14 },
+    // It was `taxPlays 14%` and the rare of this same family is `scaleMC 12%`
+    // with `taxPlays 10%` — the top card of the family was the card three rungs
+    // below it with bigger numbers, which is the whole fault scripts/mythic-check
+    // exists to catch. It scored one count there because ECHO compares effect
+    // kinds and the kinds were never what was wrong; the shape was. The check now
+    // reads shape too, and this is the only card in the set it finds.
+    //
+    // What replaces it is the family read straight: a cat folded up doing
+    // nothing, and the asset is that it does nothing. Play it and nothing else
+    // all turn and it pays — a real cost on a ten-turn clock, and the one line
+    // in this family that is about not acting.
+    payoff: {
+      when: { kind: "playedThisTurnAtMost", cards: 1 },
+      effect: { kind: "directMC", target: "self", mc: 240_000 },
+    },
     flavour: "Every cat on earth does this and none of them were taught. That is the asset.",
   },
 ];
@@ -4839,8 +4852,18 @@ const CROARMY: ProjectCard[] = [
     holders: 6,
     // a game first and a token second, which almost never happens
     effect: { kind: "stealMC", percentage: 22 },
-    // a war that does not stop when you log off, and it finishes what is left
-    payoff: { when: { kind: "theirHandAtMost", cards: 3 }, effect: { kind: "damageHolders", target: "allEnemyProjects", amount: 2 } },
+    // It was `theirHandAtMost 3 -> damageHolders allEnemyProjects 2`, and so was
+    // Cr00ts' mythic, on the same stealMC 22% and with only the trigger between
+    // them. Two families whose top card is the same card in play is the same
+    // fault as a mythic that repeats its own family, one table over — and no
+    // count in scripts/mythic-check looks across families for it.
+    //
+    // This one reads the family instead: soldiers with a memory of what they
+    // have done, so it pays for the match you have already played.
+    payoff: {
+      when: { kind: "discardAtLeast", count: 6 },
+      effect: { kind: "directMC", target: "self", mc: 30_000, per: "spent" },
+    },
     flavour: "It set out to be a game first and a token second, which almost never happens.",
   },
 ];

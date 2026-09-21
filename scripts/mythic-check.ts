@@ -51,6 +51,21 @@ const bodyLines = (card: Card) =>
 
 const kindOf = (c: ProjectCard) => (c as { effect?: { kind: string } }).effect?.kind ?? "—";
 
+/**
+ * A rules line with its numbers taken out, so two cards that differ only in how
+ * big they are read as the same line.
+ *
+ * ECHO compares effect kinds, which is coarser than the fault it was built for.
+ * Loaf's mythic was `scaleMC 27%` over `While undamaged, every card costs your
+ * opponent 14% more` and its own rare was the same two lines at 12% and 10% —
+ * one flag, below the shortlist, and nothing to read on the top card of the
+ * family. The kind was never the thing that was wrong; the shape was.
+ */
+const shapeOf = (c: Card) =>
+  bodyLines(c)
+    .map((l) => l.text.replace(/[\d.,]+/g, "#"))
+    .join(" | ");
+
 // How many families' mythics run each effect kind.
 const mythicKinds = new Map<string, string[]>();
 for (const [family, cards] of byFamily) {
@@ -67,6 +82,8 @@ interface Row {
   echoes: string[];
   thin: boolean;
   common: number;
+  /** A lower card in the same family whose rules read the same but smaller. */
+  sameShapeAs: string | null;
   flags: number;
 }
 
@@ -85,6 +102,9 @@ for (const [family, cards] of byFamily) {
   const echo = echoes.length > 0;
   const lines = bodyLines(mythic).length;
   const thin = lines <= 1;
+  const shape = shapeOf(mythic);
+  const twin = cards.find((c) => c.id !== mythic.id && shapeOf(c) === shape);
+  const sameShapeAs = twin ? twin.rarity : null;
   const shared = (mythicKinds.get(kind) ?? []).length;
   // Three or more families topping out on the same effect is where a kind stops
   // being an identity and starts being a default.
@@ -99,7 +119,11 @@ for (const [family, cards] of byFamily) {
     echoes,
     thin,
     common,
-    flags: (echo ? 1 : 0) + (thin ? 1 : 0) + (common ? 1 : 0),
+    sameShapeAs,
+    // SHAPE counts double. The other three are worth a look; this one is the
+    // card saying nothing the family has not already said, which is the fault
+    // this script exists for.
+    flags: (echo ? 1 : 0) + (thin ? 1 : 0) + (common ? 1 : 0) + (sameShapeAs ? 2 : 0),
   });
 }
 
@@ -112,6 +136,7 @@ for (const r of rows) {
     r.echo ? `ECHO: same kind as its own ${[...new Set(r.echoes)].join(", ")}` : "",
     r.thin ? "THIN: one line" : "",
     r.common ? `COMMON: ${r.common} families top out on this` : "",
+    r.sameShapeAs ? `SHAPE: reads the same as its own ${r.sameShapeAs}, only bigger` : "",
   ].filter(Boolean);
   console.log(
     `  ${String(r.flags).padStart(3)}    ${r.family.padEnd(20)}${r.kind.padEnd(20)}${String(r.lines).padStart(3)}    ${notes.join("; ")}`,
@@ -122,6 +147,8 @@ const worst = rows.filter((r) => r.flags >= 2);
 console.log(`\n${worst.length} carry two or more:`);
 for (const r of worst) console.log(`  ${r.name}`);
 console.log(
-  `\nNone of the three counts is a fault on its own. Read these as the shortlist\n` +
-    `to look at, and check each against what the family is for before changing it.`,
+  `\nECHO, THIN and COMMON are none of them a fault on their own — read those as\n` +
+    `the shortlist, and check each against what the family is for before changing\n` +
+    `it. SHAPE is different: it means the top card of the family is a card you\n` +
+    `already have with bigger numbers, and there is nothing to read.`,
 );
