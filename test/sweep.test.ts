@@ -75,12 +75,18 @@ describe("the daily job actually running", () => {
     expect(ms).toBeLessThan(24 * 60 * 60 * 1000);
   });
 
-  it("records that it ran only after it has run", () => {
-    // Written before the work, a run that threw halfway would count as today's
-    // and the money would wait a day.
-    const work = daily.indexOf("const ran = { splitter, holders };");
+  it("claims the slot before it starts, not after it finishes", () => {
+    // This asserted the opposite for about an hour, on the reasoning that a run
+    // which threw halfway should not count as today's. That is a good argument
+    // for a job nobody calls again, and this one is called every minute: a run
+    // that threw left the slot unclaimed and the next minute started another.
+    // Six ran on top of each other the night the mint opened.
+    //
+    // test/entitlements.test.ts has the same check from the other side.
     const wrote = daily.indexOf("await setCursor(db(), RAN");
-    expect(work).toBeLessThan(wrote);
+    const work = daily.indexOf("const splitter = await runDaily(");
+    expect(wrote).toBeGreaterThan(-1);
+    expect(wrote).toBeLessThan(work);
   });
 
   it("is reached from the alarm, which is the clock that works", () => {

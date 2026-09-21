@@ -400,11 +400,30 @@ async function keepTheTreeMoving(
     why.push("no payable holders in the table");
     return { ...none, adopted, why: why.join("; ") };
   }
-  await addEntitlements(db, sharesOf(holding, arrived), now);
+  const shares = sharesOf(holding, arrived);
 
   // 4. And build the tree from everybody who has ever earned anything, which is
   //    a longer list: somebody who sold keeps what they earned while they held.
-  const leaves = leavesOf(await earners(db));
+  //
+  //    ADDED UP IN MEMORY, NOT WRITTEN YET. This used to store the new shares
+  //    first and propose afterwards, and the two came apart the night the mint
+  //    opened: the propose failed, the shares stayed, and the next run added
+  //    another round of them on top. Six runs later the table promised
+  //    1,149,115 $CROCARD against 206,205 actually sitting in the contract, and
+  //    `propose` refused every one of them — correctly, and for a reason that
+  //    looked nothing like its cause.
+  //
+  //    So nothing is written until the chain has accepted it. What the table
+  //    holds is then always something the contract has agreed to.
+  const owed = new Map<string, bigint>();
+  for (const earner of await earners(db)) owed.set(earner.address, earner.entitlement);
+  for (const [address, amount] of shares) {
+    owed.set(address, (owed.get(address) ?? 0n) + amount);
+  }
+
+  const leaves = leavesOf(
+    [...owed].map(([address, entitlement]) => ({ address, entitlement })),
+  );
   if (leaves.length === 0) {
     why.push("nobody is over the dust line yet");
     return { ...none, adopted, why: why.join("; ") };
@@ -412,12 +431,39 @@ async function keepTheTreeMoving(
 
   const promised = leaves.reduce((sum, [, amount]) => sum + BigInt(amount), 0n);
   const tree = treeOf(leaves);
+  // Checked here as well as on chain. The contract refuses a promise bigger
+  // than its balance, and finding that out through a reverted transaction costs
+  // gas and tells you "execution reverted" and nothing else.
+  //
+  // `available` is what the contract itself compares against: everything it has
+  // ever paid out, plus what it is holding now.
+  const [paidOut, held] = await Promise.all([
+    rpc<string>(rpcs, "eth_call", [{ to: drop, data: selector("paidOut()") }, "latest"]),
+    rpc<string>(rpcs, "eth_call", [
+      { to: CROCARD, data: selector("balanceOf(address)") + word(drop) },
+      "latest",
+    ]),
+  ]);
+  const available = BigInt(paidOut) + BigInt(held);
+  if (promised > available) {
+    why.push(
+      `the table says ${promised} is owed and the contract holds ${available}. ` +
+        `Nothing proposed; the table needs looking at rather than another run.`,
+    );
+    return { ...none, adopted, why: why.join("; ") };
+  }
+
   const proposed = await send(
     rpcs,
     key,
     drop,
     selector("propose(bytes32,uint256)") + word(tree.root) + word(promised),
   );
+
+  // Now, and not a line earlier. The chain has accepted the promise, so the
+  // table may hold what it promised — that is the whole of the ordering this
+  // function exists to get right.
+  await addEntitlements(db, shares, now);
 
   const liveAt = now + PUBLISH_DELAY;
   await recordTree(

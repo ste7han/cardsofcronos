@@ -192,7 +192,18 @@ function fakeDb(seed?: {
 }
 
 /** A chain that answers. */
-function fakeChain(chain: { head: number; unpromised?: bigint; pendingAt?: number }) {
+function fakeChain(chain: {
+  head: number;
+  unpromised?: bigint;
+  pendingAt?: number;
+  /**
+   * What the drop is holding, for the check that refuses to promise more than
+   * exists. Defaults to `unpromised`, which is right whenever nothing has been
+   * promised before — a test where somebody has already earned something has to
+   * say so, because those tokens are in the contract too.
+   */
+  held?: bigint;
+}) {
   const asked: { method: string; params: unknown[] }[] = [];
   vi.stubGlobal("fetch", async (_url: string, init: { body: string }) => {
     const { method, params } = JSON.parse(init.body) as { method: string; params: unknown[] };
@@ -220,6 +231,12 @@ function fakeChain(chain: { head: number; unpromised?: bigint; pendingAt?: numbe
         }
         if (data.startsWith(selector("unpromised()"))) {
           return reply("0x" + (chain.unpromised ?? 0n).toString(16));
+        }
+        if (data.startsWith(selector("paidOut()"))) {
+          return reply("0x0");
+        }
+        if (data.startsWith(selector("balanceOf(address)"))) {
+          return reply("0x" + (chain.held ?? chain.unpromised ?? 0n).toString(16));
         }
         return reply("0x0");
       }
@@ -477,10 +494,45 @@ describe("what somebody has already earned", () => {
           { address: wallet(1), balance: tokens(100), entitlement: tokens(7), isContract: false },
         ],
       });
-      fakeChain({ head: 1_000_000, unpromised: tokens(1_000) });
+      // The contract holds 1,007: the 1,000 that just arrived and the 7 this
+      // wallet earned in an earlier round and has not claimed. Saying only
+      // 1,000 would be describing a contract that owes more than it has.
+      fakeChain({ head: 1_000_000, unpromised: tokens(1_000), held: tokens(1_007) });
       await runHolders(db, { publisherKey: KEY }, 0);
 
       expect(BigInt(db.holders.get(wallet(1))!.entitlement)).toBe(tokens(1_007));
+    });
+  });
+
+  it("promises nothing at all when the table says more is owed than exists", async () => {
+    // What went wrong on the night the mint opened. Six runs stacked on top of
+    // each other, each adding a round of entitlements, and the table came to
+    // say 1,149,115 was owed against 206,205 in the contract. `propose` refused
+    // every one of them on chain, which cost gas and said "execution reverted".
+    //
+    // Now it is refused here, before anything is sent — and, more importantly,
+    // nothing is written when it is refused. The run that discovers this must
+    // leave the table exactly as it found it, or it is the bug again.
+    await withDrop(async () => {
+      const db = fakeDb({
+        cursor: 1_000_000,
+        holders: [
+          {
+            address: wallet(1),
+            balance: tokens(100),
+            entitlement: tokens(900_000),
+            isContract: false,
+          },
+        ],
+      });
+      fakeChain({ head: 1_000_000, unpromised: tokens(1_000), held: tokens(1_000) });
+
+      const ran = await runHolders(db, { publisherKey: KEY }, 0);
+
+      expect(ran.proposed).toBeNull();
+      expect(ran.why).toMatch(/owed/i);
+      // Untouched. This is the half that turned one bad run into six.
+      expect(BigInt(db.holders.get(wallet(1))!.entitlement)).toBe(tokens(900_000));
     });
   });
 });

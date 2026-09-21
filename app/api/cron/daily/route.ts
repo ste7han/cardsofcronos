@@ -20,8 +20,20 @@ import type { Database } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-/** How long a soft call waits before it will run the job again. */
-const BETWEEN_RUNS = 20 * 60 * 60 * 1000;
+/**
+ * How long a soft call waits before it will run the job again.
+ *
+ * Six hours, not twenty. Twenty was chosen to mean "about daily" and it puts
+ * the wrong thing on a daily clock: a proposed tree goes live exactly 24 hours
+ * after it is proposed, and the run that adopts it is whichever one happens
+ * next — so a 20-hour window could leave people unable to claim for most of a
+ * second day, for a tree the contract had already been willing to adopt.
+ *
+ * Releasing four times a day instead of once costs nothing that matters:
+ * `LEAST_WORTH_RELEASING` in lib/splitter.ts already refuses to swap dust, and
+ * a run with nothing to do is a handful of eth_calls.
+ */
+const BETWEEN_RUNS = 6 * 60 * 60 * 1000;
 
 /** The name the last-run time is filed under. Not a block — see below. */
 const RAN = "daily:ran";
@@ -74,6 +86,17 @@ export async function POST(request: Request) {
     }
   }
 
+  // Claimed BEFORE the work, and that is the opposite of what it said here at
+  // first. "Written after, so a run that threw halfway does not count" sounds
+  // careful and was wrong: the alarm asks every minute, so a run that threw
+  // left the slot unclaimed and the next minute started another one. Six of
+  // them ran on top of each other the night the mint opened, each adding a
+  // round of entitlements nobody had asked for.
+  //
+  // A failed run now waits for the next window instead. That is the right way
+  // round for a job that moves money: late is recoverable, six at once is not.
+  await setCursor(db(), RAN, Math.floor(now / 86_400_000), now);
+
   const secrets = { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC };
 
   // Sequential, not parallel. The round is opened over what the release just
@@ -82,11 +105,6 @@ export async function POST(request: Request) {
   const splitter = await runDaily(db(), secrets, now);
   const holders = await runHolders(db(), secrets, now);
   const ran = { splitter, holders };
-
-  // Written after the work, so a run that threw halfway does not count as
-  // today's. The day number is there to make the row readable in the table;
-  // what is actually read back is `at`.
-  await setCursor(db(), RAN, Math.floor(now / 86_400_000), now);
 
   // Always 200 with what happened, for the same reason the weekly one does. Most
   // days there is nothing to release, and a job that returns an error for the
