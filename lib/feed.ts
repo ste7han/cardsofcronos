@@ -49,6 +49,7 @@
 import { LOG_RPCS, PUBLIC_RPCS, rpc } from "@/lib/cronos";
 import { selector, topicOf, word } from "@/lib/evm-tx";
 import { post, type Embed } from "@/lib/discord";
+import { TRANSFER } from "@/lib/mint";
 import { BURN_ADDRESS, CONTRACTS, CROCARD, POOL } from "@/lib/revenue";
 import { cursorOf, setCursor } from "@/lib/store";
 import { EXPLORER } from "@/lib/units";
@@ -63,7 +64,7 @@ export const TOO_MANY = 6;
 export const BOUGHT = topicOf("Bought(address,uint256,uint256)");
 export const CLAIMED = topicOf("Claimed(address,uint256)");
 export const SWAP = topicOf("Swap(address,uint256,uint256,uint256,uint256,address)");
-export const TRANSFER = topicOf("Transfer(address,address,uint256)");
+
 
 /** Cards of Cronos purple, as Discord wants it: one integer. */
 const PURPLE = 0x9d4edd;

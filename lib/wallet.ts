@@ -162,6 +162,69 @@ function word(value: bigint | string): string {
 }
 
 /**
+ * Waits for a transaction to land, and says which tokens it minted.
+ *
+ * Asked through the wallet's own provider rather than a public RPC. It is
+ * already connected to Cronos and already trusted with sending the thing —
+ * adding a second endpoint here would be a second thing to be rate-limited by,
+ * for an answer the first one has.
+ *
+ * ── WHY IT READS THE LOGS RATHER THAN COUNTING ───────────────────────────────
+ *
+ * "You asked for five, so you got the next five" is right until it is not: two
+ * people minting in the same block get interleaved ids, and the second one
+ * would be shown the first one's cards. The Transfer logs say exactly which
+ * tokens went to which address, which is the only answer that cannot be wrong.
+ *
+ * Returns an empty array rather than throwing when the receipt never arrives.
+ * The tokens are minted either way — this is about what to show, and showing
+ * nothing is better than showing somebody else's cards.
+ */
+export async function mintedBy(
+  hash: string,
+  who: string,
+  contract: string,
+  transfer: string,
+): Promise<number[]> {
+  const wallet = provider();
+  if (wallet === null) return [];
+
+  interface Receipt {
+    logs?: { address: string; topics: string[] }[];
+  }
+
+  for (let tries = 0; tries < 40; tries++) {
+    let receipt: Receipt | null = null;
+    try {
+      receipt = (await wallet.request({
+        method: "eth_getTransactionReceipt",
+        params: [hash],
+      })) as Receipt | null;
+    } catch {
+      // A node that has not seen it yet is not an error to report.
+    }
+
+    if (receipt?.logs) {
+      const mine = normalise(who);
+      return receipt.logs
+        .filter(
+          (log) =>
+            normalise(log.address) === normalise(contract) &&
+            log.topics[0] === transfer &&
+            // Minted, not moved: an ERC721 Transfer from the zero address.
+            BigInt(log.topics[1] ?? "0x0") === 0n &&
+            normalise("0x" + (log.topics[2] ?? "").slice(-40)) === mine,
+        )
+        .map((log) => Number(BigInt(log.topics[3]!)))
+        .sort((a, b) => a - b);
+    }
+
+    await new Promise((wake) => setTimeout(wake, 750));
+  }
+  return [];
+}
+
+/**
  * The calldata for `claim(address,uint256,bytes32[])`.
  *
  * Hand-encoded, and the one thing this file knows how to call. The proof is a

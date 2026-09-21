@@ -23,7 +23,6 @@ import {
   CHUNK,
   SWAP,
   TOO_MANY,
-  TRANSFER,
   amount,
   idOf,
   sayBurns,
@@ -31,6 +30,7 @@ import {
   sayMints,
   type Log,
 } from "@/lib/feed";
+import { TRANSFER } from "@/lib/mint";
 
 /** A log, with only the fields the feed reads. */
 function log(over: Partial<Log> & { topics: string[]; data: string }): Log {

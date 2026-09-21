@@ -23,8 +23,18 @@
 // the copy; this holds what is actually owed.
 
 import { PUBLIC_RPCS } from "@/lib/cronos";
-import { selector, word } from "@/lib/evm-tx";
+import { selector, topicOf, word } from "@/lib/evm-tx";
 import { CONTRACTS } from "@/lib/revenue";
+
+/**
+ * The ERC721 (and ERC20) Transfer topic.
+ *
+ * It lives here rather than in lib/feed.ts because a browser needs it — reading
+ * which tokens a mint produced out of the receipt — and lib/feed.ts pulls in the
+ * database and the Discord client behind it. One definition either way: the feed
+ * imports this one.
+ */
+export const TRANSFER = topicOf("Transfer(address,address,uint256)");
 
 /** What the contract says about itself, as far as a buyer needs it. */
 export interface MintState {

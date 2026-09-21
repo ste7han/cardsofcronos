@@ -31,10 +31,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { buyData, claimData } from "@/lib/mint";
+import { CardsOpening } from "@/components/CardsOpening";
+import { TRANSFER, buyData, claimData } from "@/lib/mint";
 import { EXPLORER } from "@/lib/units";
 import { useSession } from "@/lib/use-session";
-import { reasonFor, sendCall } from "@/lib/wallet";
+import { mintedBy, reasonFor, sendCall } from "@/lib/wallet";
 import { cx } from "@/lib/cx";
 
 interface State {
@@ -72,6 +73,9 @@ export function MintOnChain() {
   const [amount, setAmount] = useState(1);
   const [sentAs, setSentAs] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string | null>(null);
+  /** The cards from the mint that just landed, once they are known. */
+  const [opening, setOpening] = useState<string[] | null>(null);
+  const [looking, setLooking] = useState(false);
 
   const look = useCallback(async () => {
     try {
@@ -135,6 +139,32 @@ export function MintOnChain() {
               ),
             );
       setSentAs(hash);
+
+      // What you got, as soon as it has landed. The contract will not say — the
+      // art is face down until the set is revealed — but a token that is minted
+      // is a token somebody already owns, and /api/tokens answers for those and
+      // refuses for the rest. See its note for why that line is the safe one.
+      setLooking(true);
+      try {
+        const tokens = await mintedBy(hash, wallet, state.contract, TRANSFER);
+        if (tokens.length > 0) {
+          const said = await fetch("/api/tokens", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ids: tokens }),
+          });
+          if (said.ok) {
+            const { cards } = (await said.json()) as { cards: { cardId: string }[] };
+            setOpening(cards.map((one) => one.cardId));
+          }
+        }
+      } catch {
+        // The tokens are minted either way. Failing to work out what they are
+        // costs the ceremony, not the cards, and the message below still points
+        // at the transaction.
+      } finally {
+        setLooking(false);
+      }
     } catch (error) {
       setWrong(reasonFor(error));
     }
@@ -152,9 +182,22 @@ export function MintOnChain() {
       {sentAs !== null ? (
         <div className="mt-4 border border-pump/40 bg-pump/5 px-4 py-3">
           <p className="text-[11px] leading-relaxed text-pump">
-            Sent. Your tokens arrive when the transaction lands — a block on Cronos is under half a
-            second, so that is about now. They are face down until the set is revealed.
+            {looking
+              ? "Sent. Waiting for it to land, and then you can turn them over."
+              : opening === null
+                ? "Sent. Your tokens are yours. What they are could not be read just now — the " +
+                  "transaction below says which ones, and they turn up on the marketplaces at the reveal."
+                : "Sent. Your cards are below."}
           </p>
+          {opening !== null && (
+            <button
+              type="button"
+              onClick={() => setOpening([...opening])}
+              className="mt-2 mr-4 inline-block text-[10px] tracking-[0.18em] text-gold hover:underline"
+            >
+              TURN THEM OVER AGAIN →
+            </button>
+          )}
           <a
             href={`${EXPLORER}/tx/${sentAs}`}
             target="_blank"
@@ -265,6 +308,14 @@ export function MintOnChain() {
       )}
 
       {wrong && <p className="mt-3 text-[10px] leading-relaxed text-dump">{wrong}</p>}
+
+      {/* The one moment a trading card game has that nothing else does, and it
+          was happening off screen for a real mint while the local rehearsal
+          above had it. What is shown is what the published order says those
+          token numbers are — the same order the hash on this page commits to. */}
+      {opening !== null && opening.length > 0 && (
+        <CardsOpening cardIds={opening} onDone={() => setOpening(null)} />
+      )}
     </div>
   );
 }
