@@ -20,6 +20,7 @@ import {
   DISCOUNT_CAP,
   MAX_PER_TX,
   MINT_PRICE_CRO,
+  MOST_PER_RELEASE,
   priceHolding,
   MOST_PER_WEEK,
   NOT_A_HOLDER,
@@ -326,6 +327,16 @@ describe("what a mint costs", () => {
     // Nothing more comes off above the top rung.
     expect(priceHolding(900_000_000)).toBe(10.5);
     expect(DISCOUNT_CAP).toBe(30);
+  });
+
+  it("caps a swap where the splitter caps it", () => {
+    // The burn page prints this before somebody presses a button that spends
+    // it. A figure here that is larger than the contract's leaves them looking
+    // at the difference with no explanation, which is exactly what happened.
+    const source = readFileSync(new URL("../contracts/Splitter.sol", import.meta.url), "utf8");
+    const cap = /uint256 public constant MOST_PER_RELEASE = (\d+) ether;/.exec(source);
+    expect(cap, "the cap is gone from the splitter").not.toBeNull();
+    expect(MOST_PER_RELEASE).toBe(BigInt(cap![1]!) * 10n ** 18n);
   });
 
   it("offers no quantity the chain would reject", () => {

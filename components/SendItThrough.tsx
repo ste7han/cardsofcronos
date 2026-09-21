@@ -29,6 +29,8 @@
 import { useState } from "react";
 
 import { selector } from "@/lib/evm-tx";
+import { cx } from "@/lib/cx";
+import { MOST_PER_RELEASE } from "@/lib/revenue";
 import { EXPLORER, toCro } from "@/lib/units";
 import { reasonFor, sendCall } from "@/lib/wallet";
 import { useSession } from "@/lib/use-session";
@@ -43,7 +45,7 @@ export function SendItThrough({
   onDone: () => void;
 }) {
   const { wallet } = useSession();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [sentAs, setSentAs] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string | null>(null);
 
@@ -51,28 +53,56 @@ export function SendItThrough({
   const inSplitter = waiting.splitter === null ? 0n : BigInt(waiting.splitter);
   const unreadable = waiting.collection === null && waiting.splitter === null;
 
-  // The step that is due. The collection first, because what it holds has to be
-  // in the splitter before the splitter can spend it.
-  const step =
+  // Both steps, each with its own amount and its own button.
+  //
+  // This offered one "step that is due" and put the collection first, on the
+  // reasoning that money has to be in the splitter before the splitter can
+  // spend it. True, and it made the button useless the moment a new mint landed:
+  // with 445 CRO waiting to be swapped and 15 newly arrived, it offered to move
+  // the 15. Somebody pressed it, moved 15 CRO between two contracts, and
+  // correctly saw nothing happen.
+  //
+  // Choosing for somebody is what went wrong. Both are shown now, with what
+  // each will actually do, and the one that burns is the one that says so.
+  const steps = [
     inCollection > 0n && at.collection !== null
-      ? { to: at.collection, amount: inCollection, label: "FORWARD IT TO THE SPLITTER" }
-      : inSplitter > 0n && at.splitter !== null
-        ? { to: at.splitter, amount: inSplitter, label: "BUY AND SPLIT IT" }
-        : null;
+      ? {
+          key: "forward",
+          to: at.collection,
+          amount: inCollection,
+          left: 0n,
+          label: "FORWARD IT TO THE SPLITTER",
+          note: "Out of the collection, where a mint pays. Nothing is bought or burned by this — it is the step before that.",
+        }
+      : null,
+    inSplitter > 0n && at.splitter !== null
+      ? {
+          key: "split",
+          to: at.splitter,
+          // contracts/Splitter.sol spends at most MOST_PER_RELEASE in one go, so
+          // a balance that has built up is taken in bites rather than in one bad
+          // trade. The button said the whole balance once and spent 500 of it.
+          amount: inSplitter > MOST_PER_RELEASE ? MOST_PER_RELEASE : inSplitter,
+          left: inSplitter > MOST_PER_RELEASE ? inSplitter - MOST_PER_RELEASE : 0n,
+          label: "BUY AND SPLIT IT",
+          note: "This is the one that burns: it buys $CROCARD and divides it, half burned, three tenths to holders, a fifth to the pot.",
+        }
+      : null,
+  ].filter((step): step is NonNullable<typeof step> => step !== null);
 
-  const press = async () => {
-    if (wallet === null || step === null) return;
+  const press = async (to: string, key: string) => {
+    if (wallet === null) return;
     setWrong(null);
-    setBusy(true);
+    setBusy(key);
     try {
       // `release()` on both, which is the same four bytes either way.
-      const hash = await sendCall(wallet, step.to, selector("release()"));
+      const hash = await sendCall(wallet, to, selector("release()"));
       setSentAs(hash);
       onDone();
     } catch (error) {
       setWrong(reasonFor(error));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
@@ -100,7 +130,7 @@ export function SendItThrough({
         </p>
       )}
 
-      {step === null ? (
+      {steps.length === 0 ? (
         <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
           Nothing is waiting. Everything that has been earned has been bought and divided — the
           burns above are what came of it.
@@ -109,9 +139,9 @@ export function SendItThrough({
         <>
           <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-muted">
             A job does this on its own every six hours, in batches, because a release is a trade and
-            four a day is a better trade than forty. You do not have to wait for it. Pressing this
-            is paying the gas, not making a decision: the call takes no arguments, cannot be pointed
-            anywhere, and the split is fixed in the contract.
+            four a day is a better trade than forty. You do not have to wait for it. Pressing one of
+            these is paying the gas, not making a decision: the calls take no arguments, cannot be
+            pointed anywhere, and the split is fixed in the contract.
           </p>
 
           {wallet === null ? (
@@ -119,14 +149,37 @@ export function SendItThrough({
               Sign in with your wallet to send it through.
             </p>
           ) : (
-            <button
-              type="button"
-              onClick={() => void press()}
-              disabled={busy}
-              className="glow-pump mt-3 border border-pump bg-pump/10 px-5 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground disabled:cursor-not-allowed disabled:border-line-strong disabled:bg-transparent disabled:text-muted disabled:shadow-none"
-            >
-              {busy ? "SENDING…" : `${step.label} · ${toCro(step.amount).toFixed(2)} CRO`}
-            </button>
+            <div className="mt-3 space-y-3">
+              {steps.map((step) => (
+                <div key={step.key}>
+                  <button
+                    type="button"
+                    onClick={() => void press(step.to, step.key)}
+                    disabled={busy !== null}
+                    className={cx(
+                      "w-full border px-5 py-3 text-[10px] tracking-[0.18em] transition-colors sm:w-auto",
+                      "disabled:cursor-not-allowed disabled:border-line-strong disabled:bg-transparent disabled:text-muted disabled:shadow-none",
+                      step.key === "split"
+                        ? "glow-pump border-pump bg-pump/10 text-pump hover:bg-pump hover:text-ground"
+                        : "border-line-strong text-muted hover:border-fg hover:text-fg",
+                    )}
+                  >
+                    {busy === step.key
+                      ? "SENDING…"
+                      : `${step.label} · ${toCro(step.amount).toFixed(2)} CRO`}
+                  </button>
+                  <p className="mt-1 max-w-2xl text-[10px] leading-relaxed text-faint">
+                    {step.note}
+                    {step.left > 0n &&
+                      ` One swap takes at most ${toCro(MOST_PER_RELEASE).toFixed(0)} CRO, so ${toCro(
+                        step.left,
+                      ).toFixed(2)} stays behind for the next press — the pool this trades against
+                      is small enough that taking it all at once would be a worse price for
+                      everybody.`}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
         </>
       )}

@@ -207,6 +207,109 @@ async function sweepCollection(
 }
 
 /**
+ * Reads the splitter's log and writes down every burn it finds.
+ *
+ * Lifted out of the daily job in September 2026, when the burn page grew a
+ * button anybody can press. A release used to happen only on a schedule, so
+ * recording it on the same schedule was the same thing; the moment a stranger
+ * could set one going, a burn could be hours old before the page that exists to
+ * show burns had heard of it. Somebody pressed the button, watched the money
+ * leave, and saw nothing appear.
+ *
+ * So the minute job calls it too. Both callers share one cursor and
+ * `recordBurn` keys on the transaction hash, so two runs overlapping costs a
+ * repeated read and writes nothing twice.
+ *
+ * It never throws. A scan that could not finish stops at the last chunk it
+ * actually read and says so — the cursor does not move past a range nobody
+ * looked at, which is the only property here that matters.
+ */
+export async function recordBurns(
+  db: Database,
+  secrets: { rpc?: string },
+  now: number,
+): Promise<{
+  recorded: number;
+  from: number | null;
+  to: number | null;
+  /** What each release transaction spent, for a caller that just sent one. */
+  spentBy: Record<string, string>;
+  why?: string;
+}> {
+  const splitter = CONTRACTS.splitter;
+  const nothing = { recorded: 0, from: null, to: null, spentBy: {} };
+  if (splitter === null) return { ...nothing, why: "no splitter contract yet" };
+
+  const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
+  const logRpcs = secrets.rpc ? [secrets.rpc, ...LOG_RPCS] : LOG_RPCS;
+
+  let why: string | undefined;
+  let head: number;
+  try {
+    head = Number(BigInt(await rpc<string>(rpcs, "eth_blockNumber", [])));
+  } catch (error) {
+    return { ...nothing, why: error instanceof Error ? error.message : "the head was unreadable" };
+  }
+
+  const seen = await cursorOf(db, BURN_CURSOR);
+
+  // Never run: start at the head rather than at the beginning. Reading the whole
+  // chain finds nothing — the splitter is younger than almost all of it — and
+  // costs a day of being rate-limited to find that out.
+  if (seen === null) {
+    await setCursor(db, BURN_CURSOR, head, now);
+    return { ...nothing, why: `first run, starting at block ${head}` };
+  }
+
+  let from = seen + 1;
+  let recorded = 0;
+  let read = from - 1;
+  const spentBy: Record<string, string> = {};
+
+  for (let chunk = 0; chunk < MOST_CHUNKS && from <= head; chunk++) {
+    const to = Math.min(from + CHUNK - 1, head);
+    let found: Released[];
+    try {
+      found = await releasedBetween(logRpcs, splitter, from, to);
+    } catch (error) {
+      // Stop where it stopped. The cursor is saved below at the last chunk that
+      // was actually read, so the next run starts here rather than past it.
+      why = error instanceof Error ? error.message : String(error);
+      break;
+    }
+
+    for (const one of found) {
+      // The splitter does not know which stream paid it. Mints, royalties and a
+      // match's cut all arrive as CRO in the same balance and leave in the same
+      // swap, so "splitter" is the honest answer and naming one of the three
+      // would be a guess printed as a fact.
+      const written = await recordBurn(db, {
+        txHash: one.txHash,
+        stream: "splitter",
+        wei: one.croSpent.toString(),
+        burned: one.burned.toString(),
+        at: await minedAt(rpcs, one.block),
+      });
+      if (written) recorded++;
+      spentBy[one.txHash] = one.croSpent.toString();
+    }
+
+    read = to;
+    from = to + 1;
+  }
+
+  if (read > seen) await setCursor(db, BURN_CURSOR, read, now);
+
+  return {
+    recorded,
+    from: read > seen ? seen + 1 : null,
+    to: read > seen ? read : null,
+    spentBy,
+    ...(why ? { why } : {}),
+  };
+}
+
+/**
  * Waits for a transaction to be in a block, briefly.
  *
  * Only so that the scan below covers it on this run instead of tomorrow's.
@@ -336,64 +439,21 @@ export async function runDaily(
     why = error instanceof Error ? error.message : String(error);
   }
 
-  const head = Number(BigInt(await rpc<string>(rpcs, "eth_blockNumber", [])));
-  const seen = await cursorOf(db, BURN_CURSOR);
-
-  // Never run: start at the head rather than at the beginning. Reading the whole
-  // chain finds nothing — the splitter is younger than almost all of it — and
-  // costs a day of being rate-limited to find that out.
-  if (seen === null) {
-    await setCursor(db, BURN_CURSOR, head, now);
-    return { ...nothing, released, skipped: also(why, `first run, starting at block ${head}`) };
-  }
-
-  let from = seen + 1;
-  let recorded = 0;
-  let spent: string | null = null;
-  let read = from - 1;
-
-  for (let chunk = 0; chunk < MOST_CHUNKS && from <= head; chunk++) {
-    const to = Math.min(from + CHUNK - 1, head);
-    let found: Released[];
-    try {
-      found = await releasedBetween(logRpcs, splitter, from, to);
-    } catch (error) {
-      // Stop where it stopped. The cursor is saved below at the last chunk that
-      // was actually read, so the next run starts here rather than past it.
-      why = error instanceof Error ? error.message : String(error);
-      break;
-    }
-
-    for (const one of found) {
-      // The splitter does not know which stream paid it. Mints, royalties and a
-      // match's cut all arrive as CRO in the same balance and leave in the same
-      // swap, so "splitter" is the honest answer and naming one of the three
-      // would be a guess printed as a fact.
-      const written = await recordBurn(db, {
-        txHash: one.txHash,
-        stream: "splitter",
-        wei: one.croSpent.toString(),
-        burned: one.burned.toString(),
-        at: await minedAt(rpcs, one.block),
-      });
-      if (written) recorded++;
-      if (one.txHash === released) spent = one.croSpent.toString();
-    }
-
-    read = to;
-    from = to + 1;
-  }
-
-  if (read > seen) await setCursor(db, BURN_CURSOR, read, now);
+  // The log scan, which is worth doing whether or not the release above worked
+  // — and which anybody can now create work for from the burn page, so it also
+  // runs on the minute job. See recordBurns.
+  const scan = await recordBurns(db, { rpc: secrets.rpc }, now);
+  if (scan.why) why = also(why, scan.why);
 
   return {
     swept,
     released,
-    spent,
-    recorded,
+    // What that release actually spent, once the log for it has been read.
+    spent: released === null ? null : (scan.spentBy[released] ?? null),
+    recorded: scan.recorded,
     signer,
-    from: read > seen ? seen + 1 : null,
-    to: read > seen ? read : null,
+    from: scan.from,
+    to: scan.to,
     ...(sweptWhy ? { sweptWhy } : {}),
     ...(why ? { skipped: why } : {}),
   };

@@ -49,6 +49,7 @@
 import { LOG_RPCS, PUBLIC_RPCS, rpc } from "@/lib/cronos";
 import { selector, topicOf, word } from "@/lib/evm-tx";
 import { post, type Embed } from "@/lib/discord";
+import { recordBurns } from "@/lib/splitter";
 import { TRANSFER } from "@/lib/mint";
 import { BURN_ADDRESS, CONTRACTS, CROCARD, POOL } from "@/lib/revenue";
 import { cursorOf, setCursor } from "@/lib/store";
@@ -614,9 +615,28 @@ export async function runFeeds(
     }),
   );
 
-  // Last, and it posts nothing. If it fails, the three channels have already
-  // had their say.
+  // Last, and neither of these posts anything. If either fails, the three
+  // channels have already had their say.
   feeds.push(await runOwners(db, logRpcs, head, now));
+
+  // Burns, written down within a minute of happening rather than within six
+  // hours. That mattered the moment the burn page grew a button anybody can
+  // press: somebody pressed it, watched the money leave, and saw nothing on the
+  // page that exists to show exactly that.
+  const burns = await recordBurns(db, { rpc: secrets.rpc }, now).catch((error: unknown) => ({
+    recorded: 0,
+    from: null,
+    to: null,
+    why: error instanceof Error ? error.message : "the burn scan failed",
+  }));
+  feeds.push({
+    feed: "burns:recorded",
+    from: burns.from,
+    to: burns.to,
+    found: burns.recorded,
+    posted: 0,
+    ...(burns.why ? { skipped: burns.why } : {}),
+  });
 
   return { head, feeds };
 }

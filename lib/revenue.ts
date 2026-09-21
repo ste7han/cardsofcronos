@@ -249,6 +249,22 @@ export const MINT_PRICE_CRO = 15;
 export const MAX_PER_TX = 50;
 
 /**
+ * The most one release spends on a swap, in wei.
+ *
+ * `MOST_PER_RELEASE` in contracts/Splitter.sol, repeated here because a page
+ * offering the button has to say what pressing it will do. It said the whole
+ * waiting balance once and spent 500 of it, which left somebody looking at 445
+ * CRO and no explanation.
+ *
+ * The cap is not caution for its own sake: the pool this trades against held
+ * about 27,800 CRO when the splitter was written, so 500 moves it about two per
+ * cent and 5,000 would move it fifteen. A balance that has built up is taken in
+ * bites rather than in one bad trade. test/revenue.test.ts reads it back out of
+ * the Solidity.
+ */
+export const MOST_PER_RELEASE = 500n * 10n ** 18n;
+
+/**
  * The $CROCARD discount on a mint.
  *
  * The holder ladder, doing a second job. data/holder-tiers.ts already sets out
