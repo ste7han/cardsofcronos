@@ -7,7 +7,9 @@
 //
 // WHAT IT DOES NOT DO is any of the work. The scheduled handler turns a tick
 // into an ordinary request to a route and hands it to the same fetch handler
-// everything else goes through. That keeps the job inside Next, where the D1
+// everything else goes through. The fetch handler does the same thing for the
+// Discord feeds after answering a page — see the note on fetch below for why a
+// page view drives a job at all. That keeps the job inside Next, where the D1
 // binding, the path aliases and every helper already work — the alternative is
 // a second runtime with its own copy of half the app.
 //
@@ -41,21 +43,72 @@ const ROUTES = {
   "20 0 * * 1": "/api/cron/weekly",
 };
 
+/**
+ * How recently this isolate asked for a feed run.
+ *
+ * A first guard only, and a weak one: isolates come and go and there are many
+ * of them, so this cannot promise anything on its own. The promise is in the
+ * route, which reads the cursors and declines a run that has just happened.
+ * This is here so the common case — a visitor loading four pages — does not
+ * become four requests into the Worker for the route to turn away.
+ */
+let askedAt = 0;
+
 export default {
-  fetch: handler.fetch,
+  /**
+   * Answers the request, and then quietly asks the feeds whether anything has
+   * happened on chain.
+   *
+   * AFTER the answer and inside waitUntil, so nobody waits on it: the visitor's
+   * page is not held up by a Discord post, and a feed that is failing cannot
+   * make the site slow. If the whole thing throws it is swallowed — a broken
+   * feed must never turn into a broken page.
+   *
+   * This exists because the cron stopped firing. See app/api/cron/feed/route.ts.
+   */
+  async fetch(request, env, ctx) {
+    const answer = await handler.fetch(request, env, ctx);
+
+    const now = Date.now();
+    // Documents only. Every page pulls in scripts, images and card art, and
+    // running this for each of those would be dozens of asks per visit for the
+    // route to decline.
+    const wanted = request.headers.get("sec-fetch-dest");
+    if (now - askedAt > 30_000 && (wanted === "document" || wanted === null)) {
+      askedAt = now;
+      ctx.waitUntil(
+        handler
+          .fetch(
+            new Request("https://cardsofcronos.com/api/cron/feed", {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-cron-secret": env.CRON_SECRET ?? "",
+              },
+              body: JSON.stringify({ soft: true }),
+            }),
+            env,
+            ctx,
+          )
+          .catch(() => {
+            // Swallowed on purpose. The visitor already has their page and
+            // there is nobody here to tell.
+          }),
+      );
+    }
+
+    return answer;
+  },
 
   async scheduled(event, env, ctx) {
-    // TIJDELIJK, om te meten wat Cloudflare als event.cron meegeeft. Een
-    // expressie die mijn tabel niet raakt doet niets en ziet er precies zo uit
-    // als een cron die niet vuurt.
-    let route = ROUTES[event.cron];
+    // Whitespace-normalised before it is given up on. An expression that does
+    // not match the table does nothing, and doing nothing looks exactly like a
+    // cron that never fired — which cost an evening to tell apart once.
+    const route =
+      ROUTES[event.cron] ?? ROUTES[String(event.cron).trim().replace(/\s+/g, " ")];
     if (route === undefined) {
-      const tidy = String(event.cron).trim().replace(/\s+/g, " ");
-      route = ROUTES[tidy];
-    }
-    if (route === undefined) {
-      console.error(`[cron] ${event.cron} matches no route. Falling back to the feed.`);
-      route = "/api/cron/feed";
+      console.error(`[cron] ${event.cron} matches no route. Nothing ran.`);
+      return;
     }
 
     const request = new Request(`https://cardsofcronos.com${route}`, {

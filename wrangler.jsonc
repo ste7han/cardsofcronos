@@ -46,6 +46,20 @@
     "crons": ["* * * * *", "10 0 * * *", "20 0 * * 1"]
   },
   "workers_dev": true,
+  // Keep the logs, rather than only being able to watch them live.
+  //
+  // `wrangler tail` shows what is happening while you are looking, which is no
+  // use for the jobs here: they fire at ten past midnight, twenty past on a
+  // Monday, and every minute. A cron that failed last night leaves nothing
+  // behind without this, and the first version of this project's scheduled work
+  // was debugged by guessing for exactly that reason.
+  //
+  // It also survived the case that prompted it: a tail that sat connected
+  // through requests which demonstrably reached the Worker and reported none of
+  // them.
+  "observability": {
+    "enabled": true
+  },
   // Cloudflare's SQLite, on this account, free at this size. A match is a seed
   // and a list of moves — a few hundred bytes — so the storage this game needs
   // is small enough that a separate database vendor would be a bill for nothing.

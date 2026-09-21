@@ -8,6 +8,17 @@
 // It runs every minute, which is the only one of the three that does. A feed
 // that reports a mint an hour later is not a feed.
 //
+// ── AND IT IS ALSO REACHED FROM ORDINARY TRAFFIC ─────────────────────────────
+//
+// worker/index.js calls this after answering a page, with `soft: true`, and a
+// soft call declines if the feeds have run in the last forty-five seconds. That
+// is not belt and braces for its own sake: the cron stopped firing on the day
+// this was written and no arrangement of schedules brought it back, while the
+// job itself worked perfectly when the event was delivered by hand. A channel
+// people watch should not be one scheduler away from silence — and a mint
+// happens because somebody is on the mint page, so the busiest the site ever is
+// is exactly when there is something to say.
+//
 // The work is in lib/feed.ts. This is the door.
 
 import { db, env } from "@/lib/api";
@@ -29,6 +40,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "No." }, { status: 401 });
   }
 
+  // Two things drive this: the cron, and ordinary page traffic. A tick says so
+  // in the body and gets an unconditional run; traffic asks for one only if the
+  // feeds have not run in the last three quarters of a minute, so a busy page
+  // does not scan the chain once per visitor.
+  const body = (await request.json().catch(() => ({}))) as { soft?: boolean };
   const ran = await runFeeds(
     db(),
     {
@@ -38,6 +54,7 @@ export async function POST(request: Request) {
       burns: env().DISCORD_BURNS,
     },
     Date.now(),
+    body.soft === true ? 45_000 : null,
   );
 
   // Always 200 with what happened. Most minutes there is nothing to say, and a

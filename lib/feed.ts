@@ -1,9 +1,25 @@
 // Three Discord feeds: cards minted, $CROCARD bought, $CROCARD burned.
 //
-// A cron every minute reads the blocks since it last looked and posts what it
-// finds. Each feed has its own cursor and its own webhook, and a feed that
-// cannot post does not stop the other two — one broken webhook should cost one
-// channel, not all three.
+// A run reads the blocks since it last looked and posts what it finds. Each feed
+// has its own cursor and its own webhook, and a feed that cannot post does not
+// stop the other two — one broken webhook should cost one channel, not all
+// three.
+//
+// ── IT IS DRIVEN FROM TWO PLACES, ON PURPOSE ─────────────────────────────────
+//
+// A cron every minute, and ordinary page traffic. Not belt and braces for its
+// own sake: the cron stopped firing on the day this was written — the daily job
+// had run twenty hours earlier, and then three separate schedules, including
+// four fixed minutes and a catch-all fallback in the scheduled handler,
+// produced nothing at all. A channel people watch should not be one scheduler
+// away from silence.
+//
+// Traffic is a better driver than it sounds for the thing that matters most
+// here. A mint happens because somebody is on the mint page, so the busiest the
+// site ever is, is exactly when there is something to report.
+//
+// Both drivers call the same code and `notWithin` keeps them from tripping over
+// each other: a run that has just happened is declined rather than repeated.
 //
 // ── WHY A CURSOR AND A LEDGER, RATHER THAN ONE OR THE OTHER ──────────────────
 //
@@ -104,6 +120,22 @@ export interface RanFeed {
 export interface RanFeeds {
   head: number | null;
   feeds: RanFeed[];
+  /** True when it declined to run because it had just run. Not a failure. */
+  tooSoon?: boolean;
+}
+
+/**
+ * When the feeds last finished a run, or null when they never have.
+ *
+ * The newest of the three cursors. Not the oldest: a feed that is stalled on a
+ * webhook nobody has fixed would otherwise hold the answer back forever and
+ * every page view would rescan the chain.
+ */
+async function lastRunAt(db: Database): Promise<number | null> {
+  const row = await db
+    .prepare(`SELECT MAX(at) AS at FROM cursors WHERE name LIKE 'feed:%'`)
+    .first<{ at: number | null }>();
+  return row?.at ?? null;
 }
 
 /**
@@ -389,7 +421,24 @@ export async function runFeeds(
     burns?: string;
   },
   now: number,
+  /**
+   * Skip entirely if a run finished less recently than this many milliseconds
+   * ago. Null runs regardless, which is what a scheduled tick wants.
+   *
+   * It exists because the feed is driven from two places — a cron and ordinary
+   * page traffic — and a busy page would otherwise scan the chain once per
+   * visitor. The clock it reads is the cursor's, so every driver shares one
+   * answer to "has this just run" rather than each keeping its own.
+   */
+  notWithin: number | null = null,
 ): Promise<RanFeeds> {
+  if (notWithin !== null) {
+    const last = await lastRunAt(db);
+    if (last !== null && now - last < notWithin) {
+      return { head: null, feeds: [], tooSoon: true };
+    }
+  }
+
   const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
   const logRpcs = secrets.rpc ? [secrets.rpc, ...LOG_RPCS] : LOG_RPCS;
 
