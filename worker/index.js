@@ -27,6 +27,68 @@ import handler from "../.open-next/worker.js";
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "../.open-next/worker.js";
 
 /**
+ * A clock that is not a Cron Trigger.
+ *
+ * Cloudflare stopped invoking the scheduled handler on this Worker — see
+ * docs/the-discord-feeds.md for what that took to establish — so the Discord
+ * feeds run off page traffic instead. That works during a mint, when there is
+ * traffic by definition, and not at four in the morning.
+ *
+ * A Durable Object alarm is a different subsystem from Cron Triggers, and this
+ * is one object holding one alarm: it wakes, asks the feed route for a run, and
+ * sets its next alarm. Nothing outside has to keep it going.
+ *
+ * ── IT RE-ARMS BEFORE IT WORKS, NOT AFTER ────────────────────────────────────
+ *
+ * If the fetch below throws and the alarm has not been set yet, the chain stops
+ * and nothing ever wakes it again — a clock that dies the first time the network
+ * hiccups. So the next alarm is booked first and the work happens after it.
+ *
+ * ── SOMETHING HAS TO WIND IT UP ──────────────────────────────────────────────
+ *
+ * An alarm that has never been set does not exist. `ensure` below is called from
+ * fetch, rarely, and only sets one when there is none — so the first visitor
+ * after a deploy starts it and then it keeps itself going with nobody visiting.
+ */
+export class FeedTicker {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+
+  /** Books an alarm if there is not one already. Cheap and idempotent. */
+  async fetch() {
+    const already = await this.ctx.storage.getAlarm();
+    if (already === null) {
+      await this.ctx.storage.setAlarm(Date.now() + 60_000);
+      return new Response("armed");
+    }
+    return new Response("already armed");
+  }
+
+  async alarm() {
+    // First, always. See above.
+    await this.ctx.storage.setAlarm(Date.now() + 60_000);
+
+    try {
+      const answer = await fetch("https://cardsofcronos.com/api/cron/feed", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-cron-secret": this.env.CRON_SECRET ?? "",
+        },
+        // Not soft: this is the clock, and a clock that asks permission is not
+        // one. Traffic-driven calls are the ones that defer to it.
+        body: JSON.stringify({ by: "alarm" }),
+      });
+      console.log(`[alarm] feed -> ${answer.status} ${await answer.text()}`);
+    } catch (error) {
+      console.error("[alarm] the feed could not be reached", error);
+    }
+  }
+}
+
+/**
  * Which cron runs which job. Kept in step with the triggers in wrangler.jsonc by
  * hand, which is why an expression that is not in here is loud rather than
  * quietly falling back to one of them.
@@ -76,6 +138,14 @@ export default {
     const wanted = request.headers.get("sec-fetch-dest");
     if (now - askedAt > 30_000 && (wanted === "document" || wanted === null)) {
       askedAt = now;
+      // Wind up the clock, if it is not already going. One object, always the
+      // same one, so "already armed" is the answer almost every time.
+      ctx.waitUntil(
+        env.FEED_TICKER
+          ? env.FEED_TICKER.get(env.FEED_TICKER.idFromName("the-one")).fetch("https://ticker/")
+              .catch(() => {})
+          : Promise.resolve(),
+      );
       ctx.waitUntil(
         handler
           .fetch(

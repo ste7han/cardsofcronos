@@ -56,4 +56,11 @@ interface CloudflareEnv {
   DISCORD_MINTS?: string;
   DISCORD_BUYS?: string;
   DISCORD_BURNS?: string;
+  /**
+   * The Durable Object holding the feeds' clock. See worker/index.js.
+   *
+   * Optional because nothing in the app needs it: only the Worker wrapper winds
+   * it up, and a build without the binding should still serve pages.
+   */
+  FEED_TICKER?: DurableObjectNamespace;
 }

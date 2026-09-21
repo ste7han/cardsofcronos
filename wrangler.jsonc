@@ -67,6 +67,31 @@
   // Its own database, deliberately. The account also has one called `trenches`,
   // and two games writing to one set of player and match tables would be a mess
   // nobody could unpick afterwards.
+  // A clock that is not a Cron Trigger.
+  //
+  // Cloudflare stopped invoking this Worker's scheduled handler on 21 September
+  // 2026 and nothing on this side brought it back — docs/the-discord-feeds.md
+  // lists what was ruled out. Durable Object alarms are a different subsystem,
+  // so the Discord feeds get their minute from one object holding one alarm
+  // that re-books itself. The crons above are left in place: if they start
+  // working again they simply join in, and the route declines a run that has
+  // just happened either way.
+  //
+  // SQLite-backed, which is what the Workers Free plan allows.
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "FEED_TICKER",
+        "class_name": "FeedTicker"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["FeedTicker"]
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

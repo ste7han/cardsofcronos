@@ -4,9 +4,11 @@ Three channels: cards minted, $CROCARD bought, $CROCARD burned. The code is
 `lib/feed.ts`; `app/api/cron/feed/route.ts` is the door and `worker/index.js`
 reaches it two ways.
 
-**Two drivers, not one.** A cron every minute, and ordinary page traffic — every
-document request asks for a run after the page has been answered, and a run that
-happened in the last forty-five seconds is declined. That is not caution for its
+**Three drivers, not one.** A cron every minute, a Durable Object alarm that
+re-books itself every minute, and ordinary page traffic — every document request
+asks for a run after the page has been answered, and a traffic-driven run that
+happened in the last forty-five seconds is declined. The cron and the alarm do
+not defer; they are clocks. That is not caution for its
 own sake. On the day this was built the cron stopped firing entirely: the daily
 job had run twenty hours earlier, and then a per-minute schedule, four fixed
 minutes, and a catch-all in the scheduled handler produced nothing at all, while
@@ -146,5 +148,22 @@ What was ruled out, in order, and how:
 
 The conclusion was that Cloudflare was not invoking the scheduled handler, with
 no way from here to make it. The cron is still declared and still routed, so if
-it comes back it simply works again; the traffic driver is what makes that not
-matter.
+it comes back it simply works again.
+
+What replaced it is a **Durable Object alarm** — `FeedTicker` in
+`worker/index.js`. Alarms are a different subsystem from Cron Triggers, so one
+being down says nothing about the other, and this one needs no third party and no
+account: one object, one alarm, re-booked every sixty seconds.
+
+Two things about it are worth knowing before changing it:
+
+- **It re-books before it works.** If the fetch threw and the next alarm had not
+  been set, the chain would stop and nothing would ever wake it again — a clock
+  that dies the first time the network hiccups.
+- **Something has to wind it up.** An alarm that has never been set does not
+  exist, so `fetch` pokes the object occasionally and it books one only if there
+  is none. The first visitor after a deploy starts it; after that it keeps
+  itself going with nobody visiting at all.
+
+An external uptime monitor pinging the site every minute would do the same job
+through the traffic driver, and needs an account somebody has to create.
