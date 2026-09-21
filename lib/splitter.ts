@@ -85,6 +85,10 @@ const MOST_CHUNKS = 150;
 
 /** What a run did, in enough detail to read in a log a month later. */
 export interface RanDaily {
+  /** The transaction that emptied the collection into the splitter, or null. */
+  swept: string | null;
+  /** Why nothing was swept. "The collection holds nothing" is the usual answer. */
+  sweptWhy?: string;
   /** The transaction that released, or null when there was nothing to release. */
   released: string | null;
   /** CRO spent by that release, in wei, once it has been read back out of the log. */
@@ -164,6 +168,42 @@ async function releaseNow(
   }
 
   return { tx: await send(rpcs, hexToBytes(publisherKey), splitter, selector("release()")) };
+}
+
+/**
+ * Empties the collection into the splitter.
+ *
+ * A mint pays the collection, not the splitter: `buy()` keeps the CRO and
+ * `release()` on the collection forwards it. Nothing called that until it was
+ * noticed the hard way — 150 CRO from the first ten cards sat in the collection
+ * while the burn page showed nothing happening, because the daily job knew
+ * about the splitter and not about the thing that pays it.
+ *
+ * Permissionless, like the splitter's own: `release()` on the collection takes
+ * no arguments and has no owner check, so this is paying the gas rather than
+ * making a decision. It still needs a key to sign with, which is the publisher's
+ * — the only key on a server, and one that cannot reach the money either way.
+ *
+ * Returns the hash or the reason there is none. "Nothing to release" is what
+ * most days look like.
+ */
+async function sweepCollection(
+  rpcs: readonly string[],
+  publisherKey: string | undefined,
+): Promise<{ tx: string | null; why?: string }> {
+  const nft = CONTRACTS.nft;
+  if (nft === null) return { tx: null, why: "no collection yet" };
+
+  // Asked before it is attempted: `release()` reverts on an empty contract, and
+  // a failed estimate reads like a fault rather than like a quiet day.
+  const waiting = BigInt(await rpc<string>(rpcs, "eth_getBalance", [nft, "latest"]));
+  if (waiting === 0n) return { tx: null, why: "the collection holds nothing" };
+  if (!publisherKey) return { tx: null, why: "no key to send with" };
+  if (signerOf(publisherKey) === null) {
+    return { tx: null, why: "PUBLISHER_KEY is set but is not a usable private key" };
+  }
+
+  return { tx: await send(rpcs, hexToBytes(publisherKey), nft, selector("release()")) };
 }
 
 /**
@@ -251,6 +291,7 @@ export async function runDaily(
   const splitter = CONTRACTS.splitter;
   const signer = signerOf(secrets.publisherKey);
   const nothing: RanDaily = {
+    swept: null,
     released: null,
     spent: null,
     recorded: 0,
@@ -265,6 +306,22 @@ export async function runDaily(
   // empty array instead of the truth would move the cursor past a day of burns
   // that then never come back — see LOG_RPCS.
   const logRpcs = secrets.rpc ? [secrets.rpc, ...LOG_RPCS] : LOG_RPCS;
+
+  // The collection first, so what a mint paid is in the splitter before the
+  // splitter is asked what it holds. The other order is a release that misses
+  // today's mints and catches them tomorrow, every day, forever.
+  let swept: string | null = null;
+  let sweptWhy: string | undefined;
+  try {
+    const out = await sweepCollection(rpcs, secrets.publisherKey);
+    swept = out.tx;
+    sweptWhy = out.why;
+    if (swept !== null) await settled(rpcs, swept);
+  } catch (error) {
+    // Reported, not thrown. A sweep that failed leaves the money where it is
+    // and the splitter may still have something of its own to release.
+    sweptWhy = error instanceof Error ? error.message : String(error);
+  }
 
   let released: string | null = null;
   let why: string | undefined;
@@ -330,12 +387,14 @@ export async function runDaily(
   if (read > seen) await setCursor(db, BURN_CURSOR, read, now);
 
   return {
+    swept,
     released,
     spent,
     recorded,
     signer,
     from: read > seen ? seen + 1 : null,
     to: read > seen ? read : null,
+    ...(sweptWhy ? { sweptWhy } : {}),
     ...(why ? { skipped: why } : {}),
   };
 }

@@ -85,6 +85,29 @@ export class FeedTicker {
     } catch (error) {
       console.error("[alarm] the feed could not be reached", error);
     }
+
+    // And the daily job, which says `soft` — it declines unless it has not run
+    // in twenty hours. It lives here for the same reason the feed does: the
+    // cron that used to run it stopped, and the money from the first mint sat
+    // in the collection because of it.
+    try {
+      const answer = await fetch("https://cardsofcronos.com/api/cron/daily", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-cron-secret": this.env.CRON_SECRET ?? "",
+        },
+        body: JSON.stringify({ soft: true }),
+      });
+      const said = await answer.text();
+      // Quiet on the ordinary answer. It is declined fifty-nine minutes an
+      // hour, every hour, and logging that would bury the one run that matters.
+      if (!said.includes('"tooSoon":true')) {
+        console.log(`[alarm] daily -> ${answer.status} ${said}`);
+      }
+    } catch (error) {
+      console.error("[alarm] the daily job could not be reached", error);
+    }
   }
 }
 
