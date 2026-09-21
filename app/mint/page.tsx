@@ -7,6 +7,7 @@ import { CROCARD_SUPPLY, HOLDER_TIERS } from "@/data/holder-tiers";
 import type { Rarity } from "@/engine/types";
 import { RARITIES, RULES } from "@/engine/types";
 import { COPIES, HASH, SEED, TOKENS } from "@/lib/provenance";
+import { cx } from "@/lib/cx";
 import { priceHolding } from "@/lib/revenue";
 import { RARITY } from "@/lib/rarity";
 import { SET } from "@/lib/set";
@@ -93,11 +94,13 @@ export default function MintPage() {
                 <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">A CARD COSTS</dt>
                 <dd className="display mt-1 text-2xl tabular-nums">
                   {priceHolding(tier.atLeast)} CRO
-                  {tier.off > 0 && (
-                    <span className="ml-1.5 text-[9px] tracking-[0.16em] text-pump">
-                      {tier.off}% OFF
-                    </span>
-                  )}
+                </dd>
+                {/* Under the price rather than beside it. Beside it, "10% OFF"
+                    wrapped on two of the four cards and pushed the rest of
+                    those cards down — four rungs that are meant to be read
+                    across, sitting at two different heights. */}
+                <dd className={cx("text-[9px]", tier.off > 0 ? "text-pump" : "text-muted")}>
+                  {tier.off > 0 ? `${tier.off}% off` : "retail"}
                 </dd>
                 <dt className="mt-3 text-[8px] tracking-[0.18em] text-faint">DECK POWER</dt>
                 <dd className="display mt-1 text-2xl">SAME</dd>
