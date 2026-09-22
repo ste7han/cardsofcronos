@@ -66,39 +66,56 @@ export function PlayArea() {
       <>
         <Opponents chosen={chosen} onChoose={setChosen} />
 
-        <div className="mx-auto max-w-4xl px-4 pb-16">
-          {!ready ? (
-            <p className="text-[10px] tracking-[0.16em] text-faint">READING…</p>
-          ) : !hasDeck ? (
-            // Said here rather than behind the button. Pressing play to be told
-            // you have nothing to play with is a worse way to find out.
-            <p className="max-w-xl text-[11px] leading-relaxed text-muted">
-              You need a legal deck of {RULES.deckSize} cards first.{" "}
-              <Link href="/deck" className="text-pump hover:underline">
-                Build one
-              </Link>
-              {" — "}roll a random one out of what you hold, name it, and it becomes the deck you
-              play with.
-            </p>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setStarted(true)}
-                className="glow-pump border border-pump bg-pump/10 px-6 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
-              >
-                PLAY {board.name}
-              </button>
-              <p className="mt-2 text-[10px] leading-relaxed text-faint">
-                With {deck!.name.trim() === "" ? "your deck" : `“${deck!.name.trim()}”`}. Nothing is
-                staked against the bot and nothing moves a rank —{" "}
-                <Link href="/pvp" className="text-pump hover:underline">
-                  that is PvP
+        {/* Room for the bar below, which is fixed and would otherwise sit on
+            top of the last card. */}
+        <div className="h-32" />
+
+        {/* ── A BAR THAT DOES NOT SCROLL AWAY ──────────────────────────────
+            This was an ordinary block under the two opponents. On a phone they
+            stack, so the only thing you could do on the page was below two full
+            cards and off the bottom of the screen: you picked an opponent, the
+            page did not move, and there was nothing to press.
+            Worse in the case that matters most — somebody arriving on a phone
+            has no deck, because a deck lives in one browser's storage, and the
+            sentence telling them so was off the bottom too. So the whole state
+            of the screen now lives where it cannot be scrolled past. */}
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ground/95 backdrop-blur">
+          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+            {!ready ? (
+              <p className="text-[10px] tracking-[0.16em] text-faint">READING…</p>
+            ) : !hasDeck ? (
+              <>
+                <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-muted">
+                  You need a deck of {RULES.deckSize} cards first, and a deck lives in the browser
+                  you built it in — so one made on a laptop is not here.
+                </p>
+                <Link
+                  href="/deck"
+                  className="glow-pump shrink-0 border border-pump bg-pump/10 px-5 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
+                >
+                  BUILD A DECK →
                 </Link>
-                .
-              </p>
-            </>
-          )}
+              </>
+            ) : (
+              <>
+                <p className="min-w-0 flex-1 text-[10px] leading-relaxed text-faint">
+                  {deck!.name.trim() === "" ? "Your deck" : `“${deck!.name.trim()}”`} against{" "}
+                  {board.name}. Nothing is staked and nothing moves a rank —{" "}
+                  <Link href="/pvp" className="text-pump hover:underline">
+                    that is PvP
+                  </Link>
+                  .
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setStarted(true)}
+                  className="glow-pump shrink-0 border border-pump bg-pump/10 px-6 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
+                >
+                  PLAY {board.name}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </>
     );
