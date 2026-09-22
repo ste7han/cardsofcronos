@@ -4,7 +4,8 @@
 // and is then ignored — settled in DESIGN.md, because a lobby that keeps dead
 // listings looks busier than it is, which is worse than looking empty.
 
-import { db, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { announceOffer } from "@/lib/challenge";
+import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { LISTING_LIFE, hasRoomFor, playerOf, putListing } from "@/lib/store";
 import { newId, whyNotSeated } from "@/lib/pvp";
 import type { MatchMode } from "@/engine/record";
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   }
 
   const id = newId();
-  await putListing(db(), {
+  const offer = {
     id,
     playerId: wallet,
     mode: mode as MatchMode,
@@ -52,7 +53,21 @@ export async function POST(request: Request) {
     rank: (await playerOf(db(), wallet)).rank,
     createdAt: now,
     expiresAt: now + LISTING_LIFE,
-  });
+  };
+  await putListing(db(), offer);
+
+  // Into the channel, because that is where people are. Nobody sits on /pvp
+  // waiting for an offer to appear, so an offer nobody is told about expires in
+  // an hour having been seen by nobody.
+  //
+  // After the write and never before it: announcing a seat that failed to save
+  // would send people to a link that is not there. And caught, because a
+  // webhook that did not answer is a missing line in Discord and not a reason
+  // to refuse somebody a seat.
+  await announceOffer(db(), offer, {
+    pvpFriendly: env().DISCORD_PVP_FRIENDLY,
+    pvpRanked: env().DISCORD_PVP_RANKED,
+  }).catch(() => {});
 
   return Response.json({ id });
 }

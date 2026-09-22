@@ -57,6 +57,24 @@ export function Lobby() {
   /** What this wallet holds, so the cut can be quoted before anybody commits. */
   const [held, setHeld] = useState(0);
 
+  /**
+   * The offer somebody was sent here for, from /pvp?offer=<id>.
+   *
+   * The Discord challenge links straight to one seat, and arriving at a list of
+   * six rows with no idea which one the message meant is the same as arriving
+   * at the lobby. So it is marked and scrolled to.
+   *
+   * Read from the location rather than with useSearchParams, which needs a
+   * Suspense boundary to render statically and would buy nothing here. Read once
+   * after mount, because the server has no location.
+   */
+  const [wanted, setWanted] = useState<string | null>(null);
+  const [found, setFound] = useState(false);
+
+  useEffect(() => {
+    setWanted(new URLSearchParams(window.location.search).get("offer"));
+  }, []);
+
   const cut = tierFor(held).cut;
 
   // What this wallet holds, so the cut can be quoted before anybody commits to
@@ -346,6 +364,15 @@ export function Lobby() {
           </div>
         )}
 
+        {/* Sent here for a seat that is no longer there. Said plainly, because
+            the alternative is somebody reading a challenge in Discord, pressing
+            it, and finding a lobby that looks like it never happened. */}
+        {wanted !== null && listings !== null && !listings.some((one) => one.id === wanted) && (
+          <p className="mt-4 border border-gold/40 bg-gold/5 px-4 py-3 text-[11px] leading-relaxed text-gold">
+            That seat is gone — taken, withdrawn, or an hour old. Anything else on offer is below.
+          </p>
+        )}
+
         {listings === null ? (
           <p className="mt-4 text-[10px] tracking-[0.16em] text-faint">READING…</p>
         ) : listings.length === 0 ? (
@@ -357,7 +384,18 @@ export function Lobby() {
             {listings.map((listing) => (
               <li
                 key={listing.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                ref={(node) => {
+                  // Once, and only when it is actually the one asked for. The
+                  // list re-renders on a timer — the countdown ticks every
+                  // second — so scrolling on every render would pin the page.
+                  if (node === null || listing.id !== wanted || found) return;
+                  setFound(true);
+                  node.scrollIntoView({ block: "center", behavior: "smooth" });
+                }}
+                className={cx(
+                  "flex flex-wrap items-center justify-between gap-3 px-4 py-3",
+                  listing.id === wanted && "bg-pump/10 ring-1 ring-inset ring-pump",
+                )}
               >
                 <span className="min-w-0 text-[11px] text-fg">
                   {listing.mine ? "Your offer" : `Rank ${listing.rank}`}
