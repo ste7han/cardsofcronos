@@ -58,5 +58,10 @@ export async function POST(request: Request) {
     drop,
     token: CROCARD,
     record: { wins: player.wins, losses: player.losses, draws: player.draws },
+    // The real ones. The page drew RANK_AT_FIRST_LOGIN and a hardcoded "0 / 10"
+    // at everybody, so a player who had climbed or fallen was shown the number
+    // they started with — and the table has held both columns the whole time.
+    rank: player.rank,
+    staked: player.staked,
   });
 }

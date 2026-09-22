@@ -42,9 +42,18 @@ interface Owed {
   root: string;
 }
 
+/** A share-out that has been proposed and is serving out its day of notice. */
+interface Coming {
+  earned: string;
+  promised: string;
+  holders: number;
+  liveAt: number;
+}
+
 interface Answer {
   wallet: string;
   owed: Owed | null;
+  coming?: Coming | null;
   drop: string | null;
 }
 
@@ -134,10 +143,57 @@ export function Claim({ wallet }: { wallet: string | null }) {
 
   // Deployed, and this wallet has never been in a tree — which is what a wallet
   // that has never held any looks like.
-  if (answer.owed === null) return null;
+  const whole = (value: string) => Math.round(toTokens(value)).toLocaleString("en-US");
+
+  // ── QUEUED, AND NOT YET CLAIMABLE ──────────────────────────────────────────
+  //
+  // The fifth state, and it was missing. A tree is proposed and then waits a day
+  // in the open before the contract will adopt it — that delay is the whole
+  // answer to a publisher key being stolen, and it is the reason this drop is
+  // safe to run from a server at all.
+  //
+  // With only the live tree read, that day looked like nothing: a holder with
+  // half a million $CROCARD queued and a timestamp attached was shown the same
+  // empty space as somebody who had earned nothing, and reasonably concluded
+  // the payout did not work. Saying what is coming turns the delay from a
+  // silence into the thing it actually is.
+  if (answer.owed === null) {
+    const coming = answer.coming ?? null;
+    if (coming === null) return null;
+
+    const when = new Date(coming.liveAt);
+    const waiting = coming.liveAt > Date.now();
+
+    return (
+      <div className="mt-4 border border-gold/40 bg-gold/5 px-4 py-4">
+        <p className="text-[8px] tracking-[0.18em] text-faint">ON ITS WAY</p>
+        <p className="display mt-1 text-3xl tabular-nums text-gold">
+          {whole(coming.earned)} <span className="text-base text-muted">$CROCARD</span>
+        </p>
+
+        <p className="mt-3 text-[10px] leading-relaxed text-muted">
+          Your share of {whole(coming.promised)} going to {coming.holders.toLocaleString("en-US")}{" "}
+          holders. It is not claimable yet: a share-out is published first and only counts a day
+          later, in the open, so that a key on a server can never pay anybody without a day in
+          which it can be thrown away. That is what makes this safe to run nightly.
+        </p>
+
+        <p className="mt-2 text-[10px] leading-relaxed text-gold">
+          {waiting
+            ? `The day is up at ${when.toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}, and it is adopted on the next nightly run after that.`
+            : `The day was up at ${when.toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}. It is adopted on the next nightly run, and the button appears here.`}
+        </p>
+      </div>
+    );
+  }
 
   const claimable = BigInt(answer.owed.claimable);
-  const whole = (value: string) => Math.round(toTokens(value)).toLocaleString("en-US");
 
   if (sentAs !== null) {
     return (

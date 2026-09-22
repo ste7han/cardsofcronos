@@ -505,6 +505,49 @@ export interface Owed {
  * wallet, whenever they like — and a cached copy of it would show somebody money
  * they have already had.
  */
+/** A tree that has been proposed and is serving out its day of notice. */
+export interface Coming {
+  /** What this wallet would be owed in total once it goes live, in base units. */
+  earned: string;
+  /** What the whole tree promises, so a share is a share of something. */
+  promised: string;
+  /** How many holders are in it. */
+  holders: number;
+  /** When the contract will let it be adopted. */
+  liveAt: number;
+}
+
+/**
+ * What is queued for this wallet, before it can be claimed.
+ *
+ * The claim button read only the live tree, so during the contract's day of
+ * notice it said "nothing earned yet" to a holder with half a million $CROCARD
+ * waiting and a timestamp attached. That is the shape of silence this project
+ * keeps writing down: not a failure, just a screen that knows something and
+ * does not say it, and the holder concluding the payout does not work.
+ *
+ * Deliberately no proof. Nothing can be claimed against a root the contract has
+ * not adopted, and handing out a proof that reverts would be worse than saying
+ * nothing at all.
+ */
+export async function comingTo(db: Database, wallet: string): Promise<Coming | null> {
+  const pending = await pendingTree(db);
+  if (pending === null) return null;
+
+  const leaves = await treeLeaves(db, pending.id);
+  const mine = leaves.find(([address]) => address === wallet);
+  if (mine === undefined) return null;
+
+  return {
+    earned: mine[1],
+    // A string, like every other amount that crosses to a browser: JSON has no
+    // bigint, and JSON.stringify throws on one rather than rounding it.
+    promised: pending.promised.toString(),
+    holders: pending.holders,
+    liveAt: pending.liveAt,
+  };
+}
+
 export async function owedTo(
   db: Database,
   wallet: string,

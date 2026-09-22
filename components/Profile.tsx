@@ -45,6 +45,10 @@ function Figure({ label, value, note }: { label: string; value: string; note?: s
 
 interface Standing {
   record: { wins: number; losses: number; draws: number };
+  /** Where this wallet actually sits, not where everybody starts. */
+  rank: number;
+  /** How many staked matches that rank rests on. The top tiers open at ten. */
+  staked: number;
   /** Base units as decimal strings, or null when the chain would not answer. */
   held: string | null;
   /** What the contract has paid this wallet across its whole life. */
@@ -136,8 +140,22 @@ export function Profile() {
         </p>
 
         <dl className="mt-5 grid gap-px border border-line bg-line sm:grid-cols-3">
-          <Figure label="RANK" value={String(RANK_AT_FIRST_LOGIN)} note="Where everyone starts" />
-          <Figure label="STAKED MATCHES" value={`0 / ${TIERS_OPEN_AFTER}`} note="Top tiers open at ten" />
+          <Figure
+            label="RANK"
+            value={String(standing?.rank ?? RANK_AT_FIRST_LOGIN)}
+            note={
+              standing === null || standing.rank === RANK_AT_FIRST_LOGIN
+                ? "Where everyone starts"
+                : standing.rank > RANK_AT_FIRST_LOGIN
+                  ? `Up ${standing.rank - RANK_AT_FIRST_LOGIN} from the start`
+                  : `Down ${RANK_AT_FIRST_LOGIN - standing.rank} from the start`
+            }
+          />
+          <Figure
+            label="STAKED MATCHES"
+            value={`${standing?.staked ?? 0} / ${TIERS_OPEN_AFTER}`}
+            note="Top tiers open at ten"
+          />
           <Figure
             label="RECORD"
             value={
@@ -149,11 +167,20 @@ export function Profile() {
           />
         </dl>
 
-        <p className="mt-3 text-[10px] leading-relaxed text-gold">
-          Nothing has moved this yet, because there is nobody to play. Ranked matches need PvP and
-          PvP needs a lobby — that is the next thing being built, and this section fills itself in
-          when it lands.
-        </p>
+        {/* Said only while it is true. It used to say the lobby was "the next
+            thing being built" — which stopped being true the day the lobby
+            shipped, and a page explaining an empty number with a reason that no
+            longer holds is worse than one that says nothing. */}
+        {(standing?.staked ?? 0) === 0 && (
+          <p className="mt-3 text-[10px] leading-relaxed text-gold">
+            Nothing has moved this yet. A rank only moves on a match with CRO on it, and nobody has
+            finished one — friendly matches and the market leave it exactly where it is.{" "}
+            <Link href="/pvp" className="underline hover:text-fg">
+              The lobby is here
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
       <section>

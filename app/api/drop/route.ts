@@ -19,7 +19,7 @@
 import { db, env } from "@/lib/api";
 import { normalise } from "@/lib/address";
 import { PUBLIC_RPCS } from "@/lib/cronos";
-import { owedTo, takenOnChain } from "@/lib/holders";
+import { comingTo, owedTo, takenOnChain } from "@/lib/holders";
 import { CONTRACTS } from "@/lib/revenue";
 
 export const dynamic = "force-dynamic";
@@ -75,5 +75,10 @@ export async function GET(request: Request) {
   const rpcs = secret ? [secret, ...PUBLIC_RPCS] : PUBLIC_RPCS;
 
   const owed = await owedTo(db(), wallet, takenOnChain(rpcs));
-  return Response.json({ wallet, owed, drop: CONTRACTS.drop });
+  // Both, because they are different questions. `owed` is what can be taken
+  // now; `coming` is what is queued behind the contract's day of notice — and a
+  // page that answers only the first tells a holder with half a million waiting
+  // that they have earned nothing.
+  const coming = await comingTo(db(), wallet);
+  return Response.json({ wallet, owed, coming, drop: CONTRACTS.drop });
 }
