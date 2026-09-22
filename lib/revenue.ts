@@ -40,23 +40,31 @@ export const BURN_ADDRESS = normalise("0x000000000000000000000000000000000000dEa
  * $CROCARD is actually burned at the dead address above, where 89 million of it
  * already sits.
  *
- * ── IT IS DELIBERATELY NOT IN `NOT_A_HOLDER` ─────────────────────────────────
+ * ── IT IS IN `NOT_A_HOLDER` SINCE 2026-09-22, AND WAS NOT BEFORE ─────────────
  *
- * It held 182 million — eighteen per cent of the supply — when the holder table
- * was first filled in on 2026-09-17, so a wallet this size sitting outside the
- * exclusions looks exactly like something somebody forgot. It is not.
+ * It was left out of the exclusions on purpose, and the reason was that the 182
+ * million it held is being given away to people on Cronos — so the wallet was on
+ * its way to nothing, and a rule about a balance that is about to stop existing
+ * would outlive the balance. That is how a project ends up not paying somebody
+ * for a reason nobody can remember.
  *
- * That eighteen per cent is being given away to people on Cronos, so the wallet
- * is on its way to nothing. Excluding it would be a rule about a balance that is
- * about to stop existing, and the rule would outlive the balance — which is how
- * a project ends up not paying somebody for a reason nobody can remember.
+ * The note ended with what to watch: "Finish the giveaway before the mint opens
+ * and this costs nothing. The other way round and the team wallet earns a fifth
+ * of everything that arrives in between."
  *
- * WHAT TO WATCH is the order. The drop is cumulative: whatever this wallet holds
- * on the day of a share-out earns its proportion for good, and selling or giving
- * away afterwards does not hand it back — the same rule that lets an ordinary
- * holder sell without losing what they earned. Finish the giveaway before the
- * mint opens and this costs nothing. The other way round and the team wallet
- * earns a fifth of everything that arrives in between.
+ * The other way round is what happened. The mint opened, the first share-out was
+ * proposed on 2026-09-21, and the largest single share in it — 97,932 $CROCARD
+ * of 522,712, 18.7% — went to this wallet, which still held 102 million. The
+ * giveaway is running but not fast enough, so the maker's call was to exclude it
+ * rather than keep paying a fifth of the holders' share to the project.
+ *
+ * THE DATE IS HERE SO THE RULE CAN BE UNDONE. That was the original objection
+ * and it was a good one: when this wallet is empty, or the giveaway is finished,
+ * this line has nothing left to do and should come out. It is a rule about a
+ * balance, and the balance is the thing to check before keeping it.
+ *
+ * The drop is cumulative, so what it earned from the tree proposed on
+ * 2026-09-21 it keeps. Excluding it stops the accrual; it does not claw back.
  */
 export const TEAM_WALLET = normalise("0x42BCc1355808aDf2344773c54e364257911CcC99");
 
@@ -123,6 +131,9 @@ export const NOT_A_HOLDER: readonly string[] = [
   BURN_ADDRESS,
   POOL,
   ROUTER,
+  // Added 2026-09-22, after it took 18.7% of the first share-out. The reasoning
+  // and the condition for taking it out again are on TEAM_WALLET above.
+  TEAM_WALLET,
 ];
 
 export interface Wallet {

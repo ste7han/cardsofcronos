@@ -395,7 +395,24 @@ async function keepTheTreeMoving(
   }
 
   // 3. Share it between the people holding the token now.
-  const holding = await payableHolders(db);
+  //
+  //    FILTERED HERE AS WELL AS AT THE CODE CHECK, and that is the point rather
+  //    than belt and braces. The named exclusions used to take effect only
+  //    through `unknownHolders` — an address is asked whether it has code once,
+  //    and the list short-circuits that question. So a wallet already answered
+  //    for could be added to NOT_A_HOLDER and go on being paid, because nothing
+  //    would ever ask about it again. That is exactly what happened when the
+  //    team wallet was added: `is_contract` was already 0, the list changed, and
+  //    the payout would not have.
+  //
+  //    is_contract still means what it says — whether there is code at the
+  //    address — and the team wallet has none. Writing 1 into that column to
+  //    make the payout come out right would be recording something untrue to
+  //    get an effect, which is how a column stops meaning anything. The list is
+  //    the rule; this is where it is applied.
+  const holding = (await payableHolders(db)).filter(
+    (holder) => !NOT_A_HOLDER.includes(holder.address),
+  );
   if (holding.length === 0) {
     why.push("no payable holders in the table");
     return { ...none, adopted, why: why.join("; ") };
