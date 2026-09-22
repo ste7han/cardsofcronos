@@ -128,20 +128,17 @@ CREATE TABLE IF NOT EXISTS links (
 CREATE UNIQUE INDEX IF NOT EXISTS links_account ON links (network, account_id);
 
 
-CREATE INDEX IF NOT EXISTS referrals_by_referrer ON referrals (referrer, qualified_at);
+-- The referral, task and points tables went with the old app and nothing reads
+-- them any more. Their indexes stayed behind here, which made this file stop at
+-- the first one on any database that did not already have those tables — so a
+-- fresh one got everything above this line and nothing below it. The live
+-- database still holds the three empty tables, which is why it never showed.
 
 -- One code per player, and no two players sharing one. NULL is allowed as often
 -- as it likes, which is what makes this work: a code is handed out lazily, on
 -- the first time somebody asks for one.
 -- Unused with ref_code, and kept with it for the same reason.
 CREATE UNIQUE INDEX IF NOT EXISTS players_ref_code ON players (ref_code);
-
-
-CREATE INDEX IF NOT EXISTS tasks_by_wallet ON tasks (wallet, voided_at);
-
-
-
-CREATE INDEX IF NOT EXISTS points_by_wallet ON points (wallet, voided_at);
 
 -- Every buy-and-burn, one row each.
 --
@@ -415,3 +412,35 @@ CREATE TABLE IF NOT EXISTS card_owners (
 );
 
 CREATE INDEX IF NOT EXISTS card_owners_by_owner ON card_owners (owner);
+
+-- The decks somebody built, kept where the wallet is rather than where the
+-- browser is.
+--
+-- These lived in localStorage, which meant a deck belonged to a browser and not
+-- to a player: one built on a laptop did not exist on the same person's phone,
+-- and /play on a phone therefore offered a deck builder to somebody who already
+-- had four decks. A deck is a thing you own, like the cards in it, so it hangs
+-- off the wallet.
+--
+-- `cards` is a JSON array of card ids. Denormalised on purpose: a deck is read
+-- and written whole, never queried by the cards inside it, and a join table
+-- would buy a query nothing asks in exchange for forty rows per deck.
+--
+-- WHAT IS IN HERE HAS BEEN CHECKED. app/api/decks validates against the rules
+-- and against what the wallet holds before writing, because a deck that arrives
+-- over HTTP is a deck somebody typed. The browser checks too, and that one is
+-- the filter; this one is the rule.
+CREATE TABLE IF NOT EXISTS decks (
+  id      TEXT PRIMARY KEY,
+  wallet  TEXT NOT NULL CHECK (wallet = lower(wallet) AND length(wallet) = 42 AND substr(wallet, 1, 2) = '0x'),
+  name    TEXT NOT NULL,
+  cards   TEXT NOT NULL,
+  at      INTEGER NOT NULL,
+  -- The one being dealt. At most one per wallet, and the index below is what
+  -- says so rather than the code that writes it — two decks both claiming the
+  -- seat is the kind of thing that reads fine and deals the wrong deck.
+  playing INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS decks_by_wallet ON decks (wallet, at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS decks_playing ON decks (wallet) WHERE playing = 1;

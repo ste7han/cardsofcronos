@@ -903,6 +903,127 @@ export async function treeLeaves(db: Database, tree: number): Promise<[string, s
   return results.map((row) => [row.address, row.amount]);
 }
 
+// ─── DECKS ───────────────────────────────────────────────────────────────────
+//
+// A deck belongs to a wallet, and used to belong to a browser. That difference
+// is the whole reason these exist: localStorage meant somebody who built four
+// decks on a laptop arrived at /play on their phone and was told to build one.
+//
+// Reading gives the whole list including which one is being dealt, because every
+// screen that wants one wants both — "your decks, and the one you are on" is a
+// single question asked in several places.
+
+/** A deck as it is stored, with its cards already parsed. */
+export interface StoredDeck {
+  id: string;
+  name: string;
+  cardIds: string[];
+  at: number;
+  playing: boolean;
+}
+
+/** How many decks one wallet may keep. A list, not a warehouse. */
+export const MOST_DECKS = 20;
+
+interface DeckRow {
+  id: string;
+  name: string;
+  cards: string;
+  at: number;
+  playing: number;
+}
+
+/**
+ * Every deck this wallet has, newest first.
+ *
+ * A row whose cards will not parse is DROPPED rather than thrown: one corrupt
+ * row should cost that row and not somebody's other decks. It cannot happen
+ * through the route — what goes in has been validated — so this is for a row
+ * that was edited by hand or written by something older.
+ */
+export async function decksOf(db: Database, wallet: string): Promise<StoredDeck[]> {
+  const { results } = await db
+    .prepare(`SELECT id, name, cards, at, playing FROM decks WHERE wallet = ? ORDER BY at DESC`)
+    .bind(wallet)
+    .all<DeckRow>();
+
+  return (results ?? [])
+    .map((row): StoredDeck | null => {
+      let cardIds: unknown;
+      try {
+        cardIds = JSON.parse(row.cards);
+      } catch {
+        return null;
+      }
+      if (!Array.isArray(cardIds) || !cardIds.every((id) => typeof id === "string")) return null;
+      return {
+        id: row.id,
+        name: row.name,
+        cardIds: cardIds as string[],
+        at: row.at,
+        playing: row.playing === 1,
+      };
+    })
+    .filter((deck): deck is StoredDeck => deck !== null);
+}
+
+/**
+ * Writes a deck, and makes it the one being dealt.
+ *
+ * Saving a deck and then playing something else is not a thing anybody means, so
+ * these are one operation. The seat is cleared before it is claimed, in that
+ * order, because the table has a unique index over it — doing it the other way
+ * round would be rejected by the database rather than quietly leaving two.
+ */
+export async function putDeck(
+  db: Database,
+  wallet: string,
+  deck: { id: string; name: string; cardIds: readonly string[]; at: number },
+): Promise<void> {
+  await db.prepare(`UPDATE decks SET playing = 0 WHERE wallet = ?`).bind(wallet).run();
+  await db
+    .prepare(
+      `INSERT INTO decks (id, wallet, name, cards, at, playing) VALUES (?, ?, ?, ?, ?, 1)
+       ON CONFLICT(id) DO UPDATE SET name = excluded.name, cards = excluded.cards,
+                                     at = excluded.at, playing = 1
+       WHERE decks.wallet = excluded.wallet`,
+    )
+    .bind(deck.id, wallet, deck.name, JSON.stringify(deck.cardIds), deck.at)
+    .run();
+}
+
+/**
+ * Throws one away.
+ *
+ * Scoped to the wallet in the WHERE rather than checked first, so a deck id
+ * belonging to somebody else deletes nothing instead of deleting theirs.
+ */
+export async function dropDeck(db: Database, wallet: string, id: string): Promise<void> {
+  await db.prepare(`DELETE FROM decks WHERE id = ? AND wallet = ?`).bind(id, wallet).run();
+}
+
+/** Picks which deck is dealt, without changing any of them. */
+export async function playDeck(db: Database, wallet: string, id: string): Promise<boolean> {
+  const exists = await db
+    .prepare(`SELECT id FROM decks WHERE id = ? AND wallet = ?`)
+    .bind(id, wallet)
+    .first<{ id: string }>();
+  if (exists === null) return false;
+
+  await db.prepare(`UPDATE decks SET playing = 0 WHERE wallet = ?`).bind(wallet).run();
+  await db.prepare(`UPDATE decks SET playing = 1 WHERE id = ? AND wallet = ?`).bind(id, wallet).run();
+  return true;
+}
+
+/** Which tokens of the collection this wallet holds, per the minute-job's table. */
+export async function tokensOf(db: Database, wallet: string): Promise<number[]> {
+  const { results } = await db
+    .prepare(`SELECT token FROM card_owners WHERE owner = ? ORDER BY token`)
+    .bind(wallet)
+    .all<{ token: number }>();
+  return (results ?? []).map((row) => row.token);
+}
+
 /** The seed for a new match. Not from the engine: it is what the engine is given. */
 export function seedFor(id: string): number {
   // A hash of the id rather than a random number, so creating the same match

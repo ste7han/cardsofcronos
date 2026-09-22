@@ -25,12 +25,14 @@ import {
   clearDeck,
   deleteSavedDeck,
   loadDeck,
+  playSavedDeck,
   saveDeckAs,
   savedDecks,
   type SavedDeck,
   type LoadedDeck,
 } from "@/lib/deck-storage";
 import { DECK_FROM_COLLECTION, copiesHeld, poolCards, poolFor } from "@/lib/collection";
+import { useDecks } from "@/lib/use-decks";
 import { useSession } from "@/lib/use-session";
 import { sizeOf, useCardSize } from "@/lib/card-size";
 import { cx } from "@/lib/cx";
@@ -51,11 +53,14 @@ export function DeckBuilder() {
   const [name, setName] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
+  /** A save is a round trip now, and a button that did not say so looked stuck. */
+  const [saving, setSaving] = useState(false);
   /**
    * The cards this player owns. Empty until after mount, because the collection
    * lives in localStorage — the same reason the deck is loaded in an effect.
    */
   const { wallet, ready: sessionReady } = useSession();
+  const { stamp } = useDecks();
   const [pool, setPool] = useState<Card[]>([]);
   /** How many of each card this player holds. Second copies are trade, not deck. */
   const [copies, setCopies] = useState<Map<string, number>>(() => new Map());
@@ -120,6 +125,9 @@ export function DeckBuilder() {
       }
     })();
 
+    // The cache, which useDecks fills from the server. On a browser this wallet
+    // has never built a deck in it is empty until that lands, and `stamp` in the
+    // deps is what brings this effect back round when it does.
     const stored = loadDeck();
     setInitial(stored);
     setPicked(stored.cardIds);
@@ -137,7 +145,7 @@ export function DeckBuilder() {
     return () => {
       current = false;
     };
-  }, [wallet]);
+  }, [wallet, stamp]);
 
   const [type, setType] = useState<CardType | null>(null);
   const [rarity, setRarity] = useState<Rarity | null>(null);
@@ -202,12 +210,21 @@ export function DeckBuilder() {
    * collection it leans less, which is exactly what owning less means.
    */
   /** Puts one of your saved decks on the table. */
+  /**
+   * Opens one of your decks, and makes it the one you play.
+   *
+   * It used to do only the first half, and the row lit up as though it had done
+   * both — so picking a deck here and walking to /play dealt whatever was there
+   * before, with nothing on either screen disagreeing. The seat is a fact on the
+   * server now, and picking a deck is what moving it means.
+   */
   function loadSaved(deck: SavedDeck) {
     setPicked(deck.cardIds);
     setName(deck.name);
     setDeckName(deck.name);
     setLoaded(deck.id);
-    setSaved(false);
+    setSaved(true);
+    void playSavedDeck(deck.id);
   }
 
   // loadPreset was here. The four ready-made decks went: a player picks between
@@ -621,9 +638,16 @@ export function DeckBuilder() {
                         <button
                           type="button"
                           onClick={() => {
-                            deleteSavedDeck(deck.id);
-                            setMine(savedDecks());
-                            if (loaded === deck.id) setLoaded(null);
+                            // Optimism would be wrong here. The deck lives on
+                            // the server, so it is gone when the server says it
+                            // is gone — and a row that vanished from the list
+                            // and came back on the next load is worse than one
+                            // that took a moment to go.
+                            void deleteSavedDeck(deck.id).then((gone) => {
+                              if (!gone) return;
+                              setMine(savedDecks());
+                              if (loaded === deck.id) setLoaded(null);
+                            });
                           }}
                           title={`Delete ${deck.name}`}
                           className="shrink-0 px-2 py-1.5 text-[9px] text-faint transition-colors hover:text-dump"
@@ -671,20 +695,22 @@ export function DeckBuilder() {
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!legal}
+                disabled={!legal || saving}
                 onClick={() => {
                   // Saving over the one on screen when it came from the list,
                   // and adding one otherwise. Editing a deck and saving should
                   // not quietly leave the old version behind.
                   const editing = mine.find((deck) => deck.id === loaded);
-                  const { problems: failed, id } = saveDeckAs(picked, deckName, editing?.id);
-                  setSaveFailed(failed);
-                  setSaved(failed.length === 0);
-                  if (failed.length === 0) {
+                  setSaving(true);
+                  void saveDeckAs(picked, deckName, editing?.id).then(({ problems: failed, id }) => {
+                    setSaving(false);
+                    setSaveFailed(failed);
+                    setSaved(failed.length === 0);
+                    if (failed.length > 0) return;
                     setMine(savedDecks());
                     setName(deckName.trim());
                     if (id !== undefined) setLoaded(id);
-                  }
+                  });
                 }}
                 className={cx(
                   "flex-1 border px-3 py-2 text-[9px] tracking-[0.18em] transition-colors",
@@ -693,7 +719,7 @@ export function DeckBuilder() {
                     : "cursor-not-allowed border-line-strong text-faint",
                 )}
               >
-                {saved ? "SAVED" : "SAVE DECK"}
+                {saving ? "SAVING…" : saved ? "SAVED" : "SAVE DECK"}
               </button>
               <button
                 type="button"

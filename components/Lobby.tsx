@@ -12,6 +12,7 @@ import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { ask, type LobbyListing, type MatchSummary } from "@/lib/pvp-client";
 import { loadDeck } from "@/lib/deck-storage";
+import { useDecks } from "@/lib/use-decks";
 import { STAKES } from "@/lib/pvp";
 import { CONTRACTS } from "@/lib/revenue";
 import { openData, joinData, stakeWei } from "@/lib/escrow";
@@ -39,6 +40,10 @@ function timeLeft(deadline: number, now: number): string {
 
 export function Lobby() {
   const { wallet, ready } = useSession();
+  // Called for the effect rather than the value: it fetches this wallet's decks
+  // and re-renders when they land, which is what lets the read further down
+  // stay a plain synchronous one.
+  useDecks();
   const [matches, setMatches] = useState<MatchSummary[] | null>(null);
   const [listings, setListings] = useState<LobbyListing[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -186,6 +191,9 @@ export function Lobby() {
     );
   }
 
+  // Read during render, which is fine because useDecks re-renders when the
+  // answer lands. Without it this said "no deck" on any browser the deck was
+  // not built in, which since the decks moved to the server is a lie.
   const deck = typeof window === "undefined" ? null : loadDeck();
   const hasDeck = (deck?.cardIds.length ?? 0) === RULES.deckSize;
 

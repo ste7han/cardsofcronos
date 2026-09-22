@@ -1,5 +1,23 @@
 // Where your deck lives between sessions.
 //
+// ── ON THE SERVER, AND CACHED HERE ───────────────────────────────────────────
+//
+// A deck belongs to the wallet and lives in D1 — app/api/decks. This file is the
+// browser's copy of that, and everything below reads the copy.
+//
+// It was the other way round until September 2026, and a deck was the property
+// of a browser rather than of a player: somebody who built four decks on a
+// laptop arrived at /play on their phone, was told they had none, and was
+// offered the builder. What is stored here now is a cache, which is why every
+// write goes to the server FIRST and only lands here if it was accepted. A save
+// that wrote locally and then failed over the network would be a deck that
+// exists on one device and nowhere else, which is the bug this replaced.
+//
+// The reads stay synchronous on purpose. The lobby and the table read a deck
+// during render, and turning that into a promise would mean every screen
+// learning to show a deck that has not arrived yet. Instead `syncDecks` fills
+// the cache after mount and fires DECKS_EVENT, and the screens re-read.
+//
 // Nothing here trusts what it reads back. A stored deck can be from an older set,
 // hand-edited, or half-written by a crashed tab, and a deck that quietly breaks
 // the rules is exactly the kind of silent failure this project keeps trying to
@@ -10,9 +28,16 @@
 // the best deck in the game and the reason not to mint at all.
 
 import { deckProblems } from "@/engine/deck";
-import { ownedForRules } from "@/lib/collection";
-import { signedIn } from "@/lib/session";
+import { chainHoldings, ownedForRules } from "@/lib/collection";
+import { proofOf, signedIn } from "@/lib/session";
 import { INDEX } from "@/lib/set";
+
+/** Fired on this window whenever the cached decks change, from any cause. */
+export const DECKS_EVENT = "coc:decks";
+
+function announce(): void {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(DECKS_EVENT));
+}
 
 /**
  * A deck belongs to a wallet, for the same reason a collection does.
@@ -192,68 +217,176 @@ export function savedDecks(): SavedDeck[] {
     .sort((a, b) => b.at - a.at);
 }
 
-function writeList(decks: readonly SavedDeck[]): void {
+// ─── THE SERVER, AND THIS CACHE ──────────────────────────────────────────────
+
+interface Answer {
+  decks: { id: string; name: string; cardIds: string[]; at: number }[];
+  playing: string | null;
+  problems?: string[];
+}
+
+/** One request to /api/decks, or null when it could not be made at all. */
+async function ask(action: string, extra: Record<string, unknown> = {}): Promise<Answer | null> {
+  const proof = proofOf();
+  if (proof === null) return null;
+  try {
+    const response = await fetch("/api/decks", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ proof, action, ...extra }),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as Answer;
+  } catch {
+    // Offline, or the route is down. The caller reports it rather than
+    // pretending; what is cached here stays exactly as it was.
+    return null;
+  }
+}
+
+/**
+ * Writes the server's answer into the cache, so the synchronous readers above
+ * see it.
+ *
+ * Both halves, together. The list and the deck being dealt are one fact told
+ * twice, and updating only the list is how a deleted deck kept being dealt at
+ * the table.
+ */
+function cache(answer: Answer): void {
   const key = listKey(signedIn());
   if (key === null) return;
-  window.localStorage.setItem(key, JSON.stringify(decks));
+
+  window.localStorage.setItem(
+    key,
+    JSON.stringify(answer.decks.map((deck) => ({ ...deck, cardIds: [...deck.cardIds] }))),
+  );
+
+  const playing = answer.decks.find((deck) => deck.id === answer.playing);
+  if (playing === undefined) clearDeck();
+  else {
+    const single = keyFor(signedIn());
+    // Written straight through rather than via saveDeck, which re-validates
+    // against what the browser thinks is owned. The server already checked when
+    // it accepted this, and a chain read that has not landed yet would
+    // otherwise throw away a deck that is perfectly legal.
+    if (single !== null) {
+      window.localStorage.setItem(
+        single,
+        JSON.stringify({ cardIds: playing.cardIds, name: playing.name }),
+      );
+    }
+  }
+
+  announce();
+}
+
+/**
+ * Fetches this wallet's decks and fills the cache.
+ *
+ * Call it after mount and on every wallet change. It is also the migration: a
+ * wallet whose decks are only in this browser — everybody, the first time —
+ * gets them pushed up before the list is read back, so nothing anybody built is
+ * lost by moving the store.
+ *
+ * Returns whether it managed to reach the server, because "you have no decks"
+ * and "we could not ask" are different things and the screens say so.
+ */
+export async function syncDecks(): Promise<boolean> {
+  const wallet = signedIn();
+  if (typeof window === "undefined" || wallet === null) return false;
+
+  // FIRST, and not as an afterthought. loadDeck checks a deck against what this
+  // wallet owns, and what the browser knows it owns is another thing that lived
+  // only in localStorage — so on a browser that had never asked, the answer is
+  // "nothing", and a deck fetched from the server would be handed straight back
+  // as forty cards you do not own. Moving the decks to the server without this
+  // would have moved the bug rather than fixed it.
+  //
+  // A failure here is left alone: what was remembered before stays remembered,
+  // which is the difference between a bad connection and a sold collection.
+  await chainHoldings(wallet).catch(() => []);
+
+  let answer = await ask("list");
+  if (answer === null) return false;
+
+  if (answer.decks.length === 0) {
+    const local = savedDecks();
+    if (local.length > 0) {
+      // Oldest first, so the newest one ends up holding the seat — saving makes
+      // a deck the one being dealt, and the list is newest first.
+      for (const deck of [...local].reverse()) {
+        const sent = await ask("save", { name: deck.name, cardIds: deck.cardIds });
+        if (sent !== null && (sent.problems?.length ?? 0) === 0) answer = sent;
+      }
+      // Whatever the deck being played was, keep playing it.
+      const playing = loadDeck();
+      const same = answer.decks.find(
+        (deck) => [...deck.cardIds].sort().join() === [...playing.cardIds].sort().join(),
+      );
+      if (playing.cardIds.length > 0 && same !== undefined) {
+        answer = (await ask("play", { id: same.id })) ?? answer;
+      }
+    }
+  }
+
+  cache(answer);
+  return true;
 }
 
 /**
  * Saves a deck under a name, and makes it the one being played.
  *
- * Returns the problems, empty when it worked — the same shape as saveDeck,
+ * Returns the problems, empty when it worked — the same shape it always had,
  * because a caller that forgot to look would otherwise treat a refusal as a
- * save. A deck that is not legal is not stored at all; a name that is blank
- * gets one, because a list of decks called nothing is not a list you can pick
- * from.
+ * save. A deck that is not legal is not stored at all; a name that is blank gets
+ * one, because a list of decks called nothing is not a list you can pick from.
  *
  * `id` replaces an existing deck rather than adding one, which is what saving
  * again after editing means.
+ *
+ * The rules are checked here as well as on the server. Not as a safety net —
+ * the server's answer is the one that counts — but so a deck that is short two
+ * cards says so without a round trip.
  */
-export function saveDeckAs(
+export async function saveDeckAs(
   cardIds: readonly string[],
   name: string,
   id?: string,
-): { problems: string[]; id?: string } {
-  const wallet = signedIn();
-  if (wallet === null) return { problems: ["Sign in with a wallet before saving a deck."] };
+): Promise<{ problems: string[]; id?: string }> {
+  if (signedIn() === null) return { problems: ["Sign in with a wallet before saving a deck."] };
 
   const problems = deckProblems(cardIds, INDEX, ownedForRules());
   if (problems.length > 0) return { problems };
 
-  const decks = savedDecks();
-  const at = Date.now();
-  const called = name.trim().slice(0, 28) || `Deck ${decks.length + 1}`;
-  const deckId = id ?? `d${at.toString(36)}`;
+  const answer = await ask("save", { name, cardIds: [...cardIds], id });
+  if (answer === null) {
+    return { problems: ["Could not reach the server, so the deck was not saved. Try again."] };
+  }
+  if ((answer.problems?.length ?? 0) > 0) return { problems: answer.problems! };
 
-  const without = decks.filter((deck) => deck.id !== deckId);
-  writeList([{ id: deckId, name: called, cardIds: [...cardIds], at }, ...without]);
-
-  // And it becomes the one you play. The lobby and the board read the single
-  // deck above, so a save that did not do this would put a deck in the list
-  // that nothing would ever deal.
-  const failed = saveDeck(cardIds, called);
-  if (failed.length > 0) return { problems: failed };
-
-  return { problems: [], id: deckId };
+  cache(answer);
+  return { problems: [], id: answer.playing ?? undefined };
 }
 
 /**
  * Throws one away, and stops playing it if that is what it was.
  *
- * The list and the deck you play are two records of the same thing, and deleting
- * only the first leaves a deck nobody can see still being dealt at the table —
- * found by deleting a deck and watching it stay. Anything else you have saved is
- * untouched: this clears the seat, it does not pick the next one.
+ * Both of those follow from the server's answer rather than being done here:
+ * the seat moves because the answer says which deck holds it now. Doing it by
+ * hand is how a deleted deck stayed on the table, found by deleting one and
+ * watching it keep being dealt.
  */
-export function deleteSavedDeck(id: string): void {
-  const going = savedDecks().find((deck) => deck.id === id);
-  writeList(savedDecks().filter((deck) => deck.id !== id));
+export async function deleteSavedDeck(id: string): Promise<boolean> {
+  const answer = await ask("delete", { id });
+  if (answer === null) return false;
+  cache(answer);
+  return true;
+}
 
-  if (going === undefined) return;
-  const playing = loadDeck();
-  const same =
-    playing.cardIds.length === going.cardIds.length &&
-    [...playing.cardIds].sort().join() === [...going.cardIds].sort().join();
-  if (same) clearDeck();
+/** Picks which of your decks is dealt, without changing any of them. */
+export async function playSavedDeck(id: string): Promise<boolean> {
+  const answer = await ask("play", { id });
+  if (answer === null) return false;
+  cache(answer);
+  return true;
 }

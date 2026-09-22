@@ -30,10 +30,15 @@ import { Game } from "@/components/game/Game";
 import { Opponents } from "@/components/game/Opponents";
 import { RULES } from "@/engine/types";
 import { loadDeck } from "@/lib/deck-storage";
+import { useDecks } from "@/lib/use-decks";
 import { useSession } from "@/lib/use-session";
 
 export function PlayArea() {
-  const { wallet, ready } = useSession();
+  const { wallet, ready: session } = useSession();
+  const { stamp, ready: decksReady } = useDecks();
+  // Both, and not either. Signed in with the decks still in flight is exactly
+  // the state that used to draw "you have no deck" at somebody who had four.
+  const ready = session && decksReady;
   const [chosen, setChosen] = useState(BOARDS[0]!.id);
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -52,7 +57,7 @@ export function PlayArea() {
     // A wallet change puts the choice back: the deck on the table has to be the
     // one belonging to whoever is signed in now.
     setStarted(false);
-  }, [ready, wallet]);
+  }, [ready, wallet, stamp]);
 
   // Told by the table rather than set when the button is pressed: the table also
   // empties on signing out and on a deck being rejected, and the picker has to
