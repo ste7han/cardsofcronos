@@ -21,6 +21,7 @@ import allowlist from "@/data/allowlist.json";
 import { normalise } from "@/lib/address";
 import { selector } from "@/lib/evm-tx";
 import { buyData, claimData } from "@/lib/mint";
+import { ALLOWLIST_ROOT } from "@/lib/revenue";
 
 const solidity = readFileSync(
   new URL("../contracts/CardsOfCronosSetOne.sol", import.meta.url),
@@ -104,14 +105,18 @@ describe("claiming a free mint", () => {
 });
 
 describe("the allowlist the contract was deployed against", () => {
-  it("is the root that is on chain", () => {
-    // Read off Cronos after deploying on 21 September 2026. If the file is
-    // regenerated and the root moves, every proof in it stops verifying and the
-    // free mints are simply gone — the root is immutable in practice, because
-    // setAllowlistRoot would invalidate anything already claimed against it.
-    expect(allowlist.root).toBe(
-      "0xc1d2094cca1acd9dcae65268b30faabe48f2ad934b11119a3f995406b4788dc5",
-    );
+  it("is the root recorded as being on chain", () => {
+    // This held a second copy of the root and a note saying it could never
+    // move, because setAllowlistRoot would invalidate what had already been
+    // claimed. It does not: `claimed[address]` is its own mapping, so raising
+    // an allowance takes nothing from anybody — which is how a holder was given
+    // thirty more mints on 22 September 2026, and how this test came to be
+    // failing about a fact rather than a mistake.
+    //
+    // So it compares against lib/revenue.ts now. The file and the constant
+    // moving together is what this catches; the chain is checked by
+    // scripts/nft/allowlist-root.ts, which is the only thing that moves it.
+    expect(allowlist.root).toBe(ALLOWLIST_ROOT);
   });
 
   it("proves every claim against that root with the leaf the contract builds", () => {

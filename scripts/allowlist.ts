@@ -15,6 +15,16 @@
 // leaf either way, so the contract does not know or care which was chosen — this
 // is a decision about generosity, not about mechanics.
 //
+// ── MINTS GIVEN BY HAND ─────────────────────────────────────────────────────
+// data/granted-mints.json is merged in: free mints somebody decided to give,
+// on top of whatever the snapshot earns that address. They ADD rather than
+// replace, so a holder who is also given some keeps both.
+//
+// The allowance can only ever go up. The contract counts what an address has
+// already claimed against the allowance in its leaf, so a smaller number does
+// not take anything back — it silently stops somebody mid-claim, which is the
+// kind of quiet nothing this project keeps trying to make loud. This refuses it.
+//
 // ── THE BURN ADDRESS ────────────────────────────────────────────────────────
 // Ten tokens sit at the old dapp's burn address. `ownerOf` calls it an owner and
 // there is nobody behind it, so it is left out and the run says so. Anything
@@ -29,7 +39,7 @@
 // and proofs that no Solidity verifier will accept, and you find out on mint
 // day. This library is by the same people as the verifier it has to match.
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
@@ -45,6 +55,10 @@ const PER_CARD = process.argv.includes("--per-card");
 // quietly replaced by one with different numbers is the worst shape this script
 // could fail in.
 const OUT = process.argv.slice(2).find((a) => !a.startsWith("--")) ?? "data/allowlist";
+
+interface Granted {
+  grants: { address: string; mints: number; why: string; at: string }[];
+}
 
 interface Snapshot {
   contract: string;
@@ -63,6 +77,11 @@ function main(): void {
   const mapping = JSON.parse(
     readFileSync("data/legacy-token-mapping.json", "utf8"),
   ) as Record<string, string>;
+
+  // Optional: there is nothing wrong with an allowlist that is only holders.
+  const granted: Granted = existsSync("data/granted-mints.json")
+    ? (JSON.parse(readFileSync("data/granted-mints.json", "utf8")) as Granted)
+    : { grants: [] };
 
   let skippedBurn = 0;
   const entries: { address: string; tokens: number; cards: number; quantity: number }[] = [];
@@ -92,6 +111,39 @@ function main(): void {
       cards: cards.size,
       quantity: PER_CARD ? cards.size : holder.tokens.length,
     });
+  }
+
+  // The mints given by hand, added on top.
+  for (const grant of granted.grants) {
+    const address = normalise(grant.address);
+    if (!Number.isInteger(grant.mints) || grant.mints <= 0) {
+      throw new Error(`The grant for ${address} is ${grant.mints}, which is not a number of mints.`);
+    }
+    const already = entries.find((entry) => entry.address === address);
+    if (already) already.quantity += grant.mints;
+    else entries.push({ address, tokens: 0, cards: 0, quantity: grant.mints });
+  }
+
+  // NOBODY LOSES WHAT THEY WERE OWED. A root is replaced for everybody at once,
+  // so a run that quietly lowered an allowance would take mints off people who
+  // had not got round to claiming — and the only sign would be a transaction
+  // that reverts, weeks later, for one person.
+  if (existsSync(`${OUT}.json`)) {
+    const before = JSON.parse(readFileSync(`${OUT}.json`, "utf8")) as
+      { claims: { address: string; quantity: number }[] };
+    for (const claim of before.claims) {
+      const address = normalise(claim.address);
+      const now = entries.find((entry) => entry.address === address);
+      if (now === undefined) {
+        throw new Error(`${address} was owed ${claim.quantity} and is not in the new list at all.`);
+      }
+      if (now.quantity < claim.quantity) {
+        throw new Error(
+          `${address} was owed ${claim.quantity} and would now be owed ${now.quantity}. ` +
+            `An allowance may only go up.`,
+        );
+      }
+    }
   }
 
   // Sorted by address so the file and the root are the same twice. An allowlist

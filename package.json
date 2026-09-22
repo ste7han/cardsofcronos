@@ -42,7 +42,8 @@
     "reveal": "tsx --env-file=.env.local scripts/nft/reveal.ts",
     "placeholder": "tsx scripts/nft/placeholder.ts",
     "deploy:contracts": "tsx --env-file=.env.local scripts/deploy-contracts.ts",
-    "mint-control": "tsx --env-file=.env.local scripts/nft/mint-control.ts"
+    "mint-control": "tsx --env-file=.env.local scripts/nft/mint-control.ts",
+    "allowlist-root": "tsx scripts/nft/allowlist-root.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",

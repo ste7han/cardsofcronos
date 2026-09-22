@@ -1,0 +1,11 @@
+{
+  "note": "Free mints given by hand, on top of whatever data/holders-snapshot.json earns an address. Merged into the allowlist by scripts/allowlist.ts, which adds them rather than replacing what a holder already had. One row per decision, with the reason, because a number in a merkle tree is not something anybody can look up afterwards.",
+  "grants": [
+    {
+      "address": "0xC6EDA82B712DD1cd8A602d6F0f3d30A733ADB63b",
+      "mints": 30,
+      "why": "Holds 383 Crooks Legends. Given by the maker on 22 September 2026, ahead of the Crooks programme.",
+      "at": "2026-09-22"
+    }
+  ]
+}

@@ -294,6 +294,34 @@ export function priceHolding(held: number): number {
 export const DISCOUNT_CAP = HOLDER_TIERS[0]!.off;
 
 /**
+ * The allowlist the collection is checking claims against, right now.
+ *
+ * ── IT IS NOT IMMUTABLE, AND IT WAS WRITTEN DOWN HERE THAT IT WAS ────────────
+ *
+ * This was a literal in test/mint.test.ts with a note saying the root could
+ * never move, because `setAllowlistRoot` would invalidate what had already been
+ * claimed. That is not how the contract works: `claimed[address]` is its own
+ * mapping and a claim is checked as `taken + amount > allowance`. Raising an
+ * allowance takes nothing from anybody — it is how a free mint is given to
+ * somebody who is already on the list, and it has been done.
+ *
+ * What is true is the thing the wrong note was reaching for: one root covers
+ * everybody, and a proof only verifies against the root it was built from. So
+ * data/allowlist.json, this constant and the contract have to agree, and when
+ * they do not, every free mint stops working at once.
+ *
+ * Which is why there are three of them. This is checked against the file by
+ * test/mint.test.ts, and against the chain by scripts/nft/allowlist-root.ts —
+ * which is the only thing that changes the chain, refuses to send a root that
+ * would owe anybody less than they have already taken, and reads the answer
+ * back afterwards rather than trusting the receipt.
+ *
+ * Read back off chain on 22 September 2026, after adding 30 mints for a holder.
+ */
+export const ALLOWLIST_ROOT =
+  "0xfd25d4eaf10011ac9a4e39a9c585ef013787cdda221e42b3ea1bb3802307725b";
+
+/**
  * The contracts, once they exist.
  *
  * Null until deployed, for exactly the reason the wallets are: a stand-in reads
