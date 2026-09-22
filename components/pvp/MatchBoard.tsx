@@ -281,6 +281,27 @@ export function MatchBoard({ id }: { id: string }) {
   // only difference is where the board comes from: a Snapshot built from this
   // view instead of one built from a State.
   const table = snapshotOfView(view);
+  /**
+   * The card being read, drawn big over the table.
+   *
+   * This table tracked `hovered`, drew the magnifier, and then drew nothing.
+   * So the button worked — the budget and the preview numbers moved with it —
+   * and the one thing it is named after never happened. On a phone, where the
+   * magnifier is the only way to read a card at all and the hand row clamps
+   * the rules text to two lines, that left no way to read a card during a
+   * match.
+   *
+   * Taken from the solo table, which has had it the whole time. Both render it
+   * from the same CardView; what differs is only where the free play comes
+   * from, because this side has a view and not a State.
+   */
+  const lifted = hovered !== null ? view.you.hand[hovered] : undefined;
+  const liftedCard = lifted !== undefined ? cardById(INDEX, lifted) : null;
+  // The same sentence the hand row uses, so the big card and the small one
+  // cannot disagree about whether this play is free.
+  const liftedFree =
+    liftedCard !== null && view.you.freePlays > 0 && mine && withinFreeCap(liftedCard);
+
   const hoveredCard =
     hovered !== null && !aiming && view.you.hand[hovered] !== undefined
       ? cardById(INDEX, view.you.hand[hovered]!)
@@ -747,6 +768,31 @@ export function MatchBoard({ id }: { id: string }) {
           <Log entries={view.log} />
         </div>
       </details>
+
+      {/* In the right margin, where there is one. Fixed rather than in flow, so
+          the table does not shift sideways every time the mouse crosses a card.
+          The width gives way on a short window instead of the bottom of the
+          card going below the fold — a card you can read two thirds of is the
+          problem this exists to solve. */}
+      {liftedCard !== null && (
+        <div className="pointer-events-none fixed top-[4.5rem] right-4 z-40 hidden w-[min(248px,calc((100dvh-6rem)*5/7))] min-[1440px]:block">
+          <CardView card={liftedCard} free={liftedFree} />
+        </div>
+      )}
+
+      {/* Below 1440 there is no clear margin beside the table, so the card
+          overlaps instead. Fixed here too, and not absolute: this table is not
+          the positioned ancestor the solo one is, and an absolute card would
+          hang off the bottom of the log rather than sit over the board. */}
+      {liftedCard !== null && (
+        // One stacked variant rather than a block and a hidden of equal weight
+        // fighting each other — which on the solo table came down to the order
+        // Tailwind happened to emit them in, and it emitted them the wrong way
+        // round and showed both at once.
+        <div className="pointer-events-none fixed top-[4.5rem] right-4 z-40 hidden w-[min(248px,calc(100vw-2rem))] max-[1439px]:block">
+          <CardView card={liftedCard} free={liftedFree} />
+        </div>
+      )}
     </div>
   );
 }
