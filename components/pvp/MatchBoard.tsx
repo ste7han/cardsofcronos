@@ -45,11 +45,11 @@ import { INDEX } from "@/lib/set";
 interface Answer {
   id: string;
   opponent: string;
+  /** Two minutes a turn, or a day. It changes how this screen behaves. */
+  mode: "live" | "correspondence";
   deadline: number;
   view: PlayerView;
-  // Always zero for now, and lib/pvp.ts refuses anything else: there is nowhere
-  // on Cronos to hold a stake yet. The field is what the API sends, so it is
-  // read rather than assumed away.
+  /** CRO a side, or zero for a friendly match. Held by contracts/MatchEscrow.sol. */
   stake: number;
 }
 
@@ -80,11 +80,21 @@ const POLL_QUICK = 3_000;
 const POLL_SLOW = 20_000;
 const STAYS_QUICK = 90_000;
 
+/**
+ * How long is left, in units somebody can act on.
+ *
+ * Seconds below ten minutes. This read `${minutes}m` at every size, with a
+ * floor of one — so a live match's whole two minutes was "2m", then "1m", then
+ * "1m" again, then "expired". On a day-long clock that is fine; on a two-minute
+ * one it is a countdown that never counts.
+ */
 function timeLeft(deadline: number, now: number): string {
   const ms = deadline - now;
   if (ms <= 0) return "expired";
-  const hours = Math.floor(ms / 3_600_000);
-  return hours >= 1 ? `${hours}h` : `${Math.max(1, Math.floor(ms / 60_000))}m`;
+  if (ms >= 3_600_000) return `${Math.floor(ms / 3_600_000)}h`;
+  if (ms >= 600_000) return `${Math.floor(ms / 60_000)}m`;
+  const seconds = Math.ceil(ms / 1_000);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 /** Which side of the table a target requirement points at, from where you sit. */
@@ -163,10 +173,18 @@ export function MatchBoard({ id }: { id: string }) {
     void load();
   }, [load]);
 
+  /**
+   * The clock, ticking at the speed the clock actually moves.
+   *
+   * A minute was right while every match was a day long and is useless at two
+   * minutes: it would redraw twice in the whole window. So it follows the
+   * match, and a live one ticks every second.
+   */
+  const live = answer?.mode === "live";
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    const timer = setInterval(() => setNow(Date.now()), live ? 1_000 : 60_000);
     return () => clearInterval(timer);
-  }, []);
+  }, [live]);
 
   const waiting = answer !== null && !answer.view.finished && answer.view.toMove !== answer.view.me;
 
@@ -186,7 +204,10 @@ export function MatchBoard({ id }: { id: string }) {
 
     const tick = () => {
       if (document.visibilityState === "visible") void load();
-      const quick = Date.now() - startedAt < STAYS_QUICK;
+      // A live match never slows down. Twenty seconds of a two-minute turn is
+      // a sixth of it spent not knowing it had started, and the turn is lost at
+      // the end of that window rather than merely late.
+      const quick = live || Date.now() - startedAt < STAYS_QUICK;
       timer = setTimeout(tick, quick ? POLL_QUICK : POLL_SLOW);
     };
     timer = setTimeout(tick, POLL_QUICK);
@@ -200,7 +221,7 @@ export function MatchBoard({ id }: { id: string }) {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [waiting, load]);
+  }, [waiting, load, live]);
 
   async function send(move: Move) {
     setBusy(true);

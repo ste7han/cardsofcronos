@@ -19,8 +19,23 @@ import { validateDeck } from "@/engine/deck";
 import type { MatchMode } from "@/engine/record";
 import type { CardIndex } from "@/engine/types";
 
-/** What the lobby accepts today. */
-export const MODES: readonly MatchMode[] = ["correspondence"];
+/**
+ * What the lobby accepts.
+ *
+ * Live was refused here with a note saying it "needs a connection that stays
+ * open". It does not, and never did: engine/record.ts brings the clock forward
+ * whenever anybody looks — a window nobody answered becomes an endTurn, so a
+ * missed turn costs the turn and not the match — and the board polls while it
+ * is the opponent's move. What live actually needed was a clock somebody can
+ * read at two minutes and a poll that does not sleep through it, and those are
+ * in components/pvp/MatchBoard.tsx now.
+ *
+ * The rest of live has been here the whole time and untakeable: TURN_CLOCK,
+ * the one-at-a-time limit in CONCURRENT, the deadline catch-up. It was built to
+ * a brief and then never given a button, which is its own kind of silent
+ * failure — the feature reads as present in every file that mentions it.
+ */
+export const MODES: readonly MatchMode[] = ["live", "correspondence"];
 
 /**
  * The amounts on the buttons. Zero is a friendly match.
@@ -68,7 +83,7 @@ export function whyNotSeated(args: {
   index: CardIndex;
 }): string | null {
   if (typeof args.mode !== "string" || !MODES.includes(args.mode as MatchMode)) {
-    return `Only ${MODES.join(" and ")} matches can be played yet. Live play needs a connection that stays open.`;
+    return `A match is ${MODES.join(" or ")}, and that was neither.`;
   }
 
   const why = whyNotAStake(args.stake);

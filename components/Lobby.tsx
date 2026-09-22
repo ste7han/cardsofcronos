@@ -14,6 +14,8 @@ import { ask, type LobbyListing, type MatchSummary } from "@/lib/pvp-client";
 import { loadDeck } from "@/lib/deck-storage";
 import { useDecks } from "@/lib/use-decks";
 import { STAKES } from "@/lib/pvp";
+import { CONCURRENT } from "@/lib/store";
+import type { MatchMode } from "@/engine/record";
 import { CONTRACTS } from "@/lib/revenue";
 import { openData, joinData, stakeWei } from "@/lib/escrow";
 import { tierFor } from "@/data/holder-tiers";
@@ -33,9 +35,12 @@ const short = (wallet: string) => `${wallet.slice(0, 4)}…${wallet.slice(-4)}`;
 function timeLeft(deadline: number, now: number): string {
   const ms = deadline - now;
   if (ms <= 0) return "turn expired";
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours >= 1) return `${hours}h left`;
-  return `${Math.max(1, Math.floor(ms / 60_000))}m left`;
+  if (ms >= 3_600_000) return `${Math.floor(ms / 3_600_000)}h left`;
+  // Seconds below ten minutes, because a live turn is two of them. The floor of
+  // one minute this used to have made the whole of a live window read "1m left".
+  if (ms >= 600_000) return `${Math.floor(ms / 60_000)}m left`;
+  const seconds = Math.ceil(ms / 1_000);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} left`;
 }
 
 export function Lobby() {
@@ -49,6 +54,15 @@ export function Lobby() {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+
+  /**
+   * How long a turn gives you on the next offer.
+   *
+   * Slow by default, and deliberately: a live match is one you have to be at.
+   * Somebody who posts one and walks away loses turns to a clock they are not
+   * watching, and the default should not be the one that punishes leaving.
+   */
+  const [mode, setMode] = useState<MatchMode>("correspondence");
 
   /** What the next offer plays for. Zero is friendly. */
   const [stake, setStake] = useState(0);
@@ -143,7 +157,7 @@ export function Lobby() {
     const amount = own === "" ? stake : Number(own);
     await run("create", async () => {
       const made = (await ask("create", {
-        mode: "correspondence",
+        mode,
         stake: amount,
         deck: deck!.cardIds,
       })) as { id?: string } | undefined;
@@ -174,11 +188,16 @@ export function Lobby() {
   }, [ready, wallet, refresh]);
 
   // The clock is shown, so it has to move. A minute is plenty for a deadline
-  // measured in days, and it means nothing here polls the server.
+  // measured in days; a live match runs one turn in two, so while there is one
+  // of those on screen it ticks every second. Still nothing polls the server —
+  // this only redraws a number already here.
+  const watchingLive = (matches ?? []).some(
+    (match) => match.mode === "live" && !match.finished,
+  );
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    const timer = setInterval(() => setNow(Date.now()), watchingLive ? 1_000 : 60_000);
     return () => clearInterval(timer);
-  }, []);
+  }, [watchingLive]);
 
   async function run(what: string, action: () => Promise<unknown>) {
     setBusy(what);
@@ -287,10 +306,11 @@ export function Lobby() {
       <section>
         <h2 className="display text-xl">OPEN OFFERS</h2>
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
-          A day a turn, so a match runs over a week and nobody has to be anywhere. Play for nothing,
-          or put CRO up: both sides stake the same and the winner takes the pot, less a cut that
-          falls the more $CROCARD you hold. It is held by a contract neither of you can reach —
-          not us either, beyond CRO that belongs to no match.
+          Two minutes a turn if you want it over with, or a day a turn so a match runs across a
+          week and nobody has to be anywhere. Play for nothing, or put CRO up: both sides stake the
+          same and the winner takes the pot, less a cut that falls the more $CROCARD you hold. It is
+          held by a contract neither of you can reach — not us either, beyond CRO that belongs to
+          no match.
         </p>
 
         {!hasDeck ? (
@@ -303,7 +323,34 @@ export function Lobby() {
           </p>
         ) : (
           <div className="mt-4">
-            <p className="text-[8px] tracking-[0.18em] text-faint">PLAYING FOR</p>
+            <p className="text-[8px] tracking-[0.18em] text-faint">A TURN LASTS</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(["live", "correspondence"] as const).map((one) => (
+                <button
+                  key={one}
+                  type="button"
+                  onClick={() => setMode(one)}
+                  className={cx(
+                    "border px-3 py-2 text-[10px] tracking-[0.14em] transition-colors",
+                    mode === one
+                      ? "border-pump bg-pump/10 text-pump"
+                      : "border-line text-muted hover:border-line-strong hover:text-fg",
+                  )}
+                >
+                  {one === "live" ? "2 MINUTES · LIVE" : "A DAY · SLOW"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 max-w-2xl text-[10px] leading-relaxed text-muted">
+              {mode === "live"
+                ? `Both of you at the table, ${RULES.turns} turns in a sitting. A turn you do not ` +
+                  `answer in two minutes ends — it costs the turn, not the match. One live match ` +
+                  `at a time.`
+                : `A day to answer, so it plays out over a week from wherever you are. Up to ` +
+                  `${CONCURRENT.correspondence} of these at once.`}
+            </p>
+
+            <p className="mt-4 text-[8px] tracking-[0.18em] text-faint">PLAYING FOR</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {STAKES.map((amount) => (
                 <button
@@ -406,6 +453,18 @@ export function Lobby() {
                     )}
                   >
                     {listing.stake > 0 ? `${listing.stake} CRO` : "friendly"}
+                  </span>
+                  {/* Which clock you would be sitting down to. Every offer was
+                      a day long when this row was written, so it did not have
+                      to say — and sitting down to two minutes without being
+                      told is losing turns to a rule nobody mentioned. */}
+                  <span
+                    className={cx(
+                      "ml-3 text-[10px]",
+                      listing.mode === "live" ? "text-pump" : "text-faint",
+                    )}
+                  >
+                    {listing.mode === "live" ? "2 min a turn" : "a day a turn"}
                   </span>
                   <span className="ml-3 text-[10px] text-faint">
                     {timeLeft(listing.expiresAt, now)}

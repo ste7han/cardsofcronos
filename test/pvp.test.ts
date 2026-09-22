@@ -11,6 +11,8 @@ import { MODES, MOST_AT_STAKE, STAKES, newId, whyNotSeated } from "@/lib/pvp";
 import { buildDeckPreferring } from "@/engine/deck";
 import { RULES } from "@/engine/types";
 import { INDEX, SET } from "@/lib/set";
+import { TURN_CLOCK } from "@/engine/record";
+import { CONCURRENT } from "@/lib/store";
 
 const legal = () => buildDeckPreferring(SET, 4242, () => true);
 
@@ -19,14 +21,38 @@ describe("sitting down", () => {
     expect(whyNotSeated({ mode: "correspondence", stake: 0, deck: legal(), index: INDEX })).toBeNull();
   });
 
-  it("refuses a mode that has no code behind it", () => {
-    // Live needs a connection that stays open. Refused by name rather than
-    // quietly treated as correspondence, which would put a player on a
-    // twenty-four hour clock they never asked for.
-    expect(whyNotSeated({ mode: "live", stake: 0, deck: legal(), index: INDEX })).toMatch(/live/i);
+  it("takes a live one too, now that there is a clock somebody can read", () => {
+    // This asserted the opposite. Live was refused with a note saying it needed
+    // a connection that stays open, which was never the reason: the engine
+    // brings the clock forward whenever anybody looks. What it actually needed
+    // was a countdown that counts at two minutes and a poll that does not sleep
+    // through one, and both are in components/pvp/MatchBoard.tsx now.
+    expect(whyNotSeated({ mode: "live", stake: 0, deck: legal(), index: INDEX })).toBeNull();
+    expect(MODES).toContain("live");
+  });
+
+  it("refuses a mode with no code behind it, by name", () => {
+    // Refused rather than quietly treated as correspondence, which would put a
+    // player on a twenty-four hour clock they never asked for — and now that
+    // live exists, would just as happily do the reverse.
     expect(whyNotSeated({ mode: "blitz", stake: 0, deck: legal(), index: INDEX })).toBeTruthy();
     expect(whyNotSeated({ mode: undefined, stake: 0, deck: legal(), index: INDEX })).toBeTruthy();
-    expect(MODES).not.toContain("live");
+    expect(whyNotSeated({ mode: "", stake: 0, deck: legal(), index: INDEX })).toBeTruthy();
+  });
+
+  it("gives the two modes different clocks, which is the whole difference", () => {
+    // One constant, two entries. A mode added to MODES without a clock would
+    // read as undefined and land a deadline of NaN on a real match.
+    for (const mode of MODES) {
+      expect(TURN_CLOCK[mode], mode).toBeGreaterThan(0);
+      expect(CONCURRENT[mode], mode).toBeGreaterThan(0);
+    }
+    expect(TURN_CLOCK.live).toBe(2 * 60 * 1000);
+    expect(TURN_CLOCK.correspondence).toBe(24 * 60 * 60 * 1000);
+    // One live match at a time, several slow ones. A live match you are not at
+    // is turns being lost, so having six of them is not a thing to allow.
+    expect(CONCURRENT.live).toBe(1);
+    expect(CONCURRENT.correspondence).toBeGreaterThan(CONCURRENT.live);
   });
 
   it("takes a stake now, and still refuses one dressed as nothing", () => {
