@@ -218,6 +218,39 @@ export function DeckBuilder() {
    * before, with nothing on either screen disagreeing. The seat is a fact on the
    * server now, and picking a deck is what moving it means.
    */
+  /**
+   * Saves what is on screen, from wherever the button was.
+   *
+   * One function because there are two buttons now — the panel's and the one
+   * in the bar at the bottom of a phone — and a second copy of this is the
+   * trap this project keeps writing down: the phone bar has to tell the deck
+   * list and the wallet, and the copy that forgets leaves a stale list on a
+   * screen where the list is scrolled out of sight anyway.
+   */
+  function save() {
+    if (!legal || saving) return;
+    // Saving over the one on screen when it came from the list, and adding one
+    // otherwise. Editing a deck and saving should not quietly leave the old
+    // version behind.
+    const editing = mine.find((deck) => deck.id === loaded);
+    setSaving(true);
+    void saveDeckAs(picked, deckName, editing?.id).then(({ problems: failed, id }) => {
+      setSaving(false);
+      setSaveFailed(failed);
+      setSaved(failed.length === 0);
+      if (failed.length > 0) return;
+      setMine(savedDecks());
+      setName(deckName.trim());
+      if (id !== undefined) setLoaded(id);
+    });
+  }
+
+  function clear() {
+    setPicked([]);
+    setSaved(false);
+    setLoaded(null);
+  }
+
   function loadSaved(deck: SavedDeck) {
     setPicked(deck.cardIds);
     setName(deck.name);
@@ -326,7 +359,10 @@ export function DeckBuilder() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_20rem] lg:items-start">
+    // The bottom padding is the height of the bar below. Without it the bar
+    // sits on top of the last row of cards, which are the ones somebody
+    // scrolled all that way to reach.
+    <div className="grid gap-4 max-lg:pb-20 lg:grid-cols-[1fr_20rem] lg:items-start">
       <div className="min-w-0 space-y-4">
         <div className="panel space-y-3 border border-line p-4">
           <Row label="TYPE">
@@ -442,7 +478,14 @@ export function DeckBuilder() {
           stops being sticky: you had to scroll past all 174 cards to reach the
           save button. It is capped to the screen now and scrolls inside itself,
           with the counters pinned and the card list taking whatever is left. */}
-      <aside className="lg:sticky lg:top-[4.5rem]">
+      {/* Ordered on purpose. The grid puts the card list first, which is right
+          on a desktop where the panel sits beside it — and on a phone the
+          columns stack, so the panel landed under four hundred and forty-eight
+          cards. Naming a deck, rolling one or saving meant scrolling to the
+          bottom of the set first. The panel goes first below lg, and the bar at
+          the end of this file keeps the count and the save in reach while you
+          are down among the cards. Both come from TCG, which hit this first. */}
+      <aside className="max-lg:order-first lg:sticky lg:top-[4.5rem]">
         {/* The cap goes on the panel, not on the aside. The aside is a grid item
             whose height is its content, so max-h-full there resolves to the
             content height and constrains nothing. */}
@@ -507,7 +550,7 @@ export function DeckBuilder() {
           </div>
 
           {/* Everything between the counters and the buttons scrolls. */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 max-lg:max-h-[30rem]">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 max-lg:max-h-[17rem]">
             {/* The curve. Under this system it is the thing you are building, so
                 it should be visible while you build it rather than something you
                 work out afterwards. */}
@@ -696,22 +739,7 @@ export function DeckBuilder() {
               <button
                 type="button"
                 disabled={!legal || saving}
-                onClick={() => {
-                  // Saving over the one on screen when it came from the list,
-                  // and adding one otherwise. Editing a deck and saving should
-                  // not quietly leave the old version behind.
-                  const editing = mine.find((deck) => deck.id === loaded);
-                  setSaving(true);
-                  void saveDeckAs(picked, deckName, editing?.id).then(({ problems: failed, id }) => {
-                    setSaving(false);
-                    setSaveFailed(failed);
-                    setSaved(failed.length === 0);
-                    if (failed.length > 0) return;
-                    setMine(savedDecks());
-                    setName(deckName.trim());
-                    if (id !== undefined) setLoaded(id);
-                  });
-                }}
+                onClick={save}
                 className={cx(
                   "flex-1 border px-3 py-2 text-[9px] tracking-[0.18em] transition-colors",
                   legal
@@ -723,11 +751,7 @@ export function DeckBuilder() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setPicked([]);
-                  setSaved(false);
-                  setLoaded(null);
-                }}
+                onClick={clear}
                 className="border border-line-strong px-3 py-2 text-[9px] tracking-[0.16em] text-muted hover:border-dump hover:text-dump"
               >
                 CLEAR
@@ -749,8 +773,8 @@ export function DeckBuilder() {
 
             {initial.rejected.length > 0 && (
               <p className="mt-3 text-[10px] leading-relaxed text-gold">
-                Your saved deck was not legal any more, so the starter deck is
-                loaded. {initial.rejected[0]}
+                Your saved deck is not legal any more, so nothing is loaded.{" "}
+                {initial.rejected[0]}
               </p>
             )}
           </div>
@@ -796,6 +820,64 @@ export function DeckBuilder() {
           </div>
         </div>
       </aside>
+
+      {/* Phones only, and it exists because the panel cannot be in two places.
+          The panel is at the top now, which fixes starting a deck; this fixes
+          finishing one, so the count and the save are reachable from anywhere
+          in the list without scrolling back up. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ground/95 px-3 py-2 backdrop-blur lg:hidden">
+        <div className="flex items-center gap-2">
+          <span
+            className={cx(
+              "display shrink-0 text-base",
+              picked.length === RULES.deckSize ? "text-pump" : "text-fg",
+            )}
+          >
+            {picked.length}
+            <span className="text-xs text-faint">/{RULES.deckSize}</span>
+          </span>
+
+          {/* Why it will not save, in the one place the button is. Without this
+              a disabled button on a phone is a dead end: the reasons are up in
+              the panel and the panel is a screen away. */}
+          <span className="min-w-0 flex-1 truncate text-[9px] leading-tight text-muted">
+            {saveFailed.length > 0
+              ? saveFailed[0]
+              : saving
+                ? "Saving…"
+                : legal
+                  ? saved
+                    ? "Saved."
+                    : deckName.trim() === ""
+                      ? "Ready. It will be named for you."
+                      : `Ready to save “${deckName.trim()}”.`
+                  : picked.length === 0
+                    ? "Pick cards, or roll a deck at the top."
+                    : problems[0]}
+          </span>
+
+          <button
+            type="button"
+            onClick={clear}
+            className="shrink-0 border border-line-strong px-2.5 py-1.5 text-[9px] tracking-[0.16em] text-muted"
+          >
+            CLEAR
+          </button>
+          <button
+            type="button"
+            disabled={!legal || saving}
+            onClick={save}
+            className={cx(
+              "shrink-0 border px-3 py-1.5 text-[9px] tracking-[0.18em]",
+              legal && !saving
+                ? "border-pump bg-pump/10 text-pump"
+                : "cursor-not-allowed border-line-strong text-faint",
+            )}
+          >
+            {saving ? "…" : saved ? "SAVED" : "SAVE"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
