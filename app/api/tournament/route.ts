@@ -22,6 +22,7 @@ import { deckProblems } from "@/engine/deck";
 import { applyMove, newMatch } from "@/engine/match";
 import { RULES, type Move } from "@/engine/types";
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
+import { spendEntry } from "@/lib/entries";
 import { PUBLIC_RPCS, rpc, tokenBalances } from "@/lib/cronos";
 import { selector } from "@/lib/evm-tx";
 import { asWord } from "@/lib/publisher";
@@ -158,7 +159,29 @@ export async function POST(request: Request) {
     return Response.json({ error: "Only a match you won counts." }, { status: 400 });
   }
 
+  // ── A PAID BOARD COSTS A GO ────────────────────────────────────────────────
+  //
+  // Spent here and not when the match started. A disconnection then costs
+  // nothing, and the only way to spend an entry is to finish a match the server
+  // has replayed — which is the generous direction to be wrong in, and the one
+  // that cannot take somebody's ten CRO for a match nobody ever saw.
+  //
+  // After the replay, deliberately. Spending it before would charge for a
+  // submission the engine then refused.
   const now = Date.now();
+  if (board.entry?.contract != null) {
+    if (!(await spendEntry(db(), wallet, board.id, now))) {
+      return Response.json(
+        {
+          error:
+            `This board costs ${board.entry.cro} CRO a go and this wallet has none left. ` +
+            `Pay for one and the score counts.`,
+        },
+        { status: 402 },
+      );
+    }
+  }
+
   const best = await record(
     db(),
     {

@@ -344,7 +344,10 @@ export const ALLOWLIST_ROOT =
  * the NFT that pays the splitter — each needs the ones before it. That order is
  * what scripts/deploy-contracts.ts exists to get right.
  */
-export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft" | "escrow", string | null> = {
+export const CONTRACTS: Record<
+  "drop" | "splitter" | "pot" | "nft" | "escrow" | "lionPot" | "lionEntry",
+  string | null
+> = {
   drop: "0x09e4d4bf527ddcff1ea38e550573a15c490043c6",
   // Replaced 0xbb658915095d90fe7892d642ea1e6d223ae5fa75 on 21 September 2026.
   // The split moved to 50% burn, 30% holders, 20% pot, and the shares are
@@ -377,6 +380,26 @@ export const CONTRACTS: Record<"drop" | "splitter" | "pot" | "nft" | "escrow", s
   // against nothing in escrow is not a half-built feature, it is a lie people
   // lose money to.
   escrow: "0xf3c11f0a560d7b0d2584b97b02840f46b315c7c2",
+
+  /**
+   * The Loaded Lions prize, in $LION.
+   *
+   * A second PrizePot and not a change to the first: the token is `immutable`
+   * there, deliberately, so a pot pays one thing for its whole life. The board
+   * pays out of both — its share of the weekly $CROCARD, and the $LION that
+   * entries bought — and a week is closed on each with the same winner.
+   */
+  lionPot: null,
+
+  /**
+   * The door to that board. contracts/BoardEntry.sol.
+   *
+   * Null is a board that cannot be paid for, which is why the fee is not shown
+   * and the old $LION holding rule still stands until this exists. Half a
+   * feature is worse than neither: a paywall announced with nothing behind it
+   * would take money nobody could spend.
+   */
+  lionEntry: null,
 };
 
 for (const [name, address] of Object.entries(CONTRACTS)) {

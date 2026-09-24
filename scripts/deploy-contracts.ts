@@ -36,7 +36,7 @@ import { BOARDS } from "@/data/boards";
 import { asWord } from "@/lib/publisher";
 import { encodeParameters, type AbiType } from "@/lib/abi";
 import { PUBLIC_RPCS } from "@/lib/cronos";
-import { BURN_ADDRESS, CONTRACTS, CROCARD, ROUTER } from "@/lib/revenue";
+import { BURN_ADDRESS, CONTRACTS, CROCARD, LION, ROUTER } from "@/lib/revenue";
 import { CRONOS_CHAIN_ID, addressOfKey, selector, signTransaction, word } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
 
@@ -166,6 +166,23 @@ async function main(): Promise<void> {
     }
   }
 
+  // The Loaded Lions board: a second PrizePot holding $LION, and the door that
+  // buys into it. Its own day like the escrow and the collection, and its own
+  // flag, because it reuses the splitter and the router exactly as they are.
+  const lionsOnly = process.argv.includes("--lions-only");
+  if (lionsOnly) {
+    if (CONTRACTS.lionPot !== null || CONTRACTS.lionEntry !== null) {
+      throw new Error(
+        `lib/revenue.ts already names the lions contracts ` +
+          `(${CONTRACTS.lionPot}, ${CONTRACTS.lionEntry}). Deploying again makes a second pair ` +
+          `nothing points at — and the first would keep taking entries.`,
+      );
+    }
+    if (CONTRACTS.splitter === null) {
+      throw new Error("--lions-only sends the game's half to the splitter, and there is not one.");
+    }
+  }
+
   const splitterOnly = process.argv.includes("--splitter-only");
   if (splitterOnly) {
     if (CONTRACTS.splitter !== null) {
@@ -177,7 +194,7 @@ async function main(): Promise<void> {
     if (CONTRACTS.drop === null || CONTRACTS.pot === null) {
       throw new Error("--splitter-only reuses the drop and the pot, and one of them is not deployed.");
     }
-  } else if (!nftOnly && !escrowOnly) {
+  } else if (!nftOnly && !escrowOnly && !lionsOnly) {
     const already = Object.entries(CONTRACTS).filter(([, address]) => address !== null);
     if (already.length > 0 && !process.argv.includes("--replace")) {
       throw new Error(
@@ -364,7 +381,33 @@ async function main(): Promise<void> {
   // and there is nothing there to fill in.
   let dropAt: string;
   let potAt: string;
-  if (escrowOnly) {
+  if (lionsOnly) {
+    dropAt = CONTRACTS.drop!;
+    potAt = CONTRACTS.pot!;
+    found.splitter = CONTRACTS.splitter!;
+    console.log(`reusing splitter  ${found.splitter}`);
+    console.log(`prize token       ${LION}  ($LION)`);
+
+    // The pot first. The door is given its address and it is immutable there, so
+    // the order is not a preference — it is the only order that can work.
+    found.lionPot = await deploy("PrizePot", [LION, publisher]);
+    found.lionEntry = await deploy("BoardEntry", [
+      10n * 10n ** 18n, // ten CRO a go
+      5_000n, // half of it buys $LION
+      found.splitter,
+      found.lionPot,
+      LION,
+      ROUTER,
+    ]);
+
+    console.log("\n--lions-only: a second prize pot holding $LION, and the door that buys into");
+    console.log("it. Ten CRO a go: half to the splitter, half straight into the pot. Nothing");
+    console.log("else was touched.");
+    console.log("\nStill to do by hand, in this order:");
+    console.log("  1. Put both addresses in lib/revenue.ts and deploy the site.");
+    console.log("  2. setShare on the NEW pot: lions 10000 bps. It has one board and pays all of it.");
+    console.log("  3. setShare on the OLD pot: lions 1000 bps, down from 2500.\n");
+  } else if (escrowOnly) {
     dropAt = CONTRACTS.drop!;
     potAt = CONTRACTS.pot!;
     found.splitter = CONTRACTS.splitter!;
@@ -386,7 +429,7 @@ async function main(): Promise<void> {
     dropAt = found.drop = await deploy("HolderDrop", [CROCARD, publisher]);
     potAt = found.pot = await deploy("PrizePot", [CROCARD, publisher]);
   }
-  if (!nftOnly && !escrowOnly) {
+  if (!nftOnly && !escrowOnly && !lionsOnly) {
     found.splitter = await deploy("Splitter", [
       ROUTER,
       CROCARD,
@@ -395,7 +438,7 @@ async function main(): Promise<void> {
       potAt,
     ]);
   }
-  if (escrowOnly) {
+  if (lionsOnly || escrowOnly) {
     // Said above, next to the deploy.
   } else if (splitterOnly) {
     console.log("--splitter-only: only the splitter was deployed. The drop and the pot are the");
@@ -438,14 +481,20 @@ async function main(): Promise<void> {
   // shares, and the owner may have moved them since with setShare. Writing the
   // starting position back over a considered one would be a silent change to
   // where the prize money goes.
-  for (const [board, bps] of splitterOnly || nftOnly || escrowOnly ? [] : SHARES) {
+  // Nor in lions-only mode. That run deploys a pot with ONE board in it, which
+  // wants all ten thousand rather than a quarter — and it must not write the
+  // starting position back over the old pot, whose lions share is about to be
+  // moved the other way. Both are printed as steps instead, because they are
+  // two different numbers on two different contracts and getting them the wrong
+  // way round is a prize paid out of the wrong pot.
+  for (const [board, bps] of splitterOnly || nftOnly || escrowOnly || lionsOnly ? [] : SHARES) {
     await call(
       found.pot!,
       `setShare(${board}, ${bps} bps)`,
       selector("setShare(bytes32,uint256)") + asWord(board) + word(BigInt(bps)),
     );
   }
-  if (!splitterOnly && !nftOnly && !escrowOnly) {
+  if (!splitterOnly && !nftOnly && !escrowOnly && !lionsOnly) {
     console.log(
       `  boards: ${SHARES.map(([b, v]) => `${b} ${v / 100}%`).join(", ")}` +
         `, ${(10_000 - SHARES.reduce((sum, [, v]) => sum + v, 0)) / 100}% stays in the pot\n`,
@@ -454,7 +503,7 @@ async function main(): Promise<void> {
 
   const cost = spent * gasPrice;
   console.log(
-    `${nftOnly ? "the collection" : splitterOnly ? "the splitter" : moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
+    `${nftOnly ? "the collection" : splitterOnly ? "the splitter" : escrowOnly ? "the escrow" : lionsOnly ? "the pot and the door" : moneyOnly ? "the three" : "all four"}: ${spent} gas, about ${cost / 10n ** 16n} / 100 CRO ` +
       `at ${gasPrice / 10n ** 9n} gwei`,
   );
 

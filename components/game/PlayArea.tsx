@@ -27,9 +27,11 @@ import Link from "next/link";
 
 import { BOARDS, boardOf } from "@/data/boards";
 import { Game } from "@/components/game/Game";
-import { Opponents } from "@/components/game/Opponents";
+import { Opponents, type Answer } from "@/components/game/Opponents";
 import { RULES } from "@/engine/types";
 import { loadDeck } from "@/lib/deck-storage";
+import { enterData, feeWei } from "@/lib/entry-pay";
+import { reasonFor, sendCall } from "@/lib/wallet";
 import { useDecks } from "@/lib/use-decks";
 import { useSession } from "@/lib/use-session";
 
@@ -40,6 +42,44 @@ export function PlayArea() {
   // the state that used to draw "you have no deck" at somebody who had four.
   const ready = session && decksReady;
   const [chosen, setChosen] = useState(BOARDS[0]!.id);
+  /**
+   * What the server says about the board that is chosen.
+   *
+   * The static board carries the opponent and the name; this carries what it
+   * costs, what it pays and how many goes this wallet has paid for — none of
+   * which the browser can work out.
+   */
+  const [about, setAbout] = useState<Answer | null>(null);
+  const [paying, setPaying] = useState(false);
+  const [paid, setPaid] = useState(false);
+  const [payFailed, setPayFailed] = useState<string | null>(null);
+
+  /** A board that charges, and no go paid for. */
+  const needsPaying = about?.entry != null && about.entry.spare === 0;
+
+  /**
+   * Buys one go.
+   *
+   * The contract decides everything about the money — see the note in
+   * contracts/BoardEntry.sol — so this sends the fee the board named and
+   * nothing else. What it cannot do is make the entry appear instantly: the
+   * chain is read on a timer, deliberately, because a payment the browser
+   * merely claims is the thing every rule here refuses.
+   */
+  async function pay() {
+    const entry = about?.entry;
+    if (entry == null || wallet === null) return;
+    setPaying(true);
+    setPayFailed(null);
+    try {
+      await sendCall(wallet, entry.contract, enterData(), feeWei(entry.cro));
+      setPaid(true);
+    } catch (error) {
+      setPayFailed(reasonFor(error));
+    } finally {
+      setPaying(false);
+    }
+  }
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const board = boardOf(chosen) ?? BOARDS[0]!;
@@ -69,7 +109,14 @@ export function PlayArea() {
   if (!started) {
     return (
       <>
-        <Opponents chosen={chosen} onChoose={setChosen} />
+        <Opponents
+          chosen={chosen}
+          onChoose={(board) => {
+            setChosen(board.id);
+            setAbout(board);
+            setPayFailed(null);
+          }}
+        />
 
         {/* Room for the bar below, which is fixed and would otherwise sit on
             top of the last card. */}
@@ -101,15 +148,48 @@ export function PlayArea() {
                   BUILD A DECK →
                 </Link>
               </>
+            ) : needsPaying ? (
+              <>
+                <p className="min-w-0 flex-1 text-[10px] leading-relaxed text-faint">
+                  {board.name} costs {about!.entry!.cro} CRO a go. Half of it buys{" "}
+                  {about!.alsoPays?.symbol ?? "the prize"} straight into the pot you would be
+                  playing for.
+                  {payFailed !== null && <span className="mt-1 block text-dump">{payFailed}</span>}
+                  {paid && (
+                    <span className="mt-1 block text-pump">
+                      Paid. It shows up here within a minute — the chain is read on a timer, not
+                      taken on the browser&apos;s word.
+                    </span>
+                  )}
+                </p>
+                <button
+                  type="button"
+                  disabled={paying || wallet === null}
+                  onClick={() => void pay()}
+                  className="glow-gold shrink-0 border border-gold bg-gold/10 px-6 py-3 text-[10px] tracking-[0.18em] text-gold transition-colors hover:bg-gold hover:text-ground disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {paying ? "CHECK YOUR WALLET…" : `PAY ${about!.entry!.cro} CRO`}
+                </button>
+              </>
             ) : (
               <>
                 <p className="min-w-0 flex-1 text-[10px] leading-relaxed text-faint">
                   {deck!.name.trim() === "" ? "Your deck" : `“${deck!.name.trim()}”`} against{" "}
-                  {board.name}. Nothing is staked and nothing moves a rank —{" "}
-                  <Link href="/pvp" className="text-pump hover:underline">
-                    that is PvP
-                  </Link>
-                  .
+                  {board.name}.{" "}
+                  {about?.entry != null ? (
+                    <>
+                      {about.entry.spare} paid {about.entry.spare === 1 ? "go" : "goes"} left; a
+                      finished match spends one.
+                    </>
+                  ) : (
+                    <>
+                      Nothing is staked and nothing moves a rank —{" "}
+                      <Link href="/pvp" className="text-pump hover:underline">
+                        that is PvP
+                      </Link>
+                      .
+                    </>
+                  )}
                 </p>
                 <button
                   type="button"

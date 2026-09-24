@@ -444,3 +444,33 @@ CREATE TABLE IF NOT EXISTS decks (
 
 CREATE INDEX IF NOT EXISTS decks_by_wallet ON decks (wallet, at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS decks_playing ON decks (wallet) WHERE playing = 1;
+
+-- Who paid to play a board, read off the chain.
+--
+-- contracts/BoardEntry.sol emits `Entered` and this is that log, written down.
+-- It is not a record of anything the browser said: a payment is a fact about
+-- Cronos, and the whole reason the fee is a contract call rather than a transfer
+-- to a wallet is that a wallet transfer cannot say which board it was for.
+--
+-- ONE ENTRY IS ONE MATCH. `used_at` is set when a score is accepted against it,
+-- and an entry that was paid for but never played stays unused — so a
+-- disconnection costs nothing, and the only way to spend one is to finish.
+--
+-- Keyed on the log and not on the transaction: one transaction could hold two
+-- entries, and a primary key that could not tell them apart would quietly throw
+-- the second away.
+CREATE TABLE IF NOT EXISTS board_entries (
+  id      TEXT PRIMARY KEY,
+  player  TEXT NOT NULL CHECK (player = lower(player) AND length(player) = 42 AND substr(player, 1, 2) = '0x'),
+  board   TEXT NOT NULL,
+  -- Wei and base units, as TEXT. Both are what the event said, kept so the
+  -- page can show what an entry actually bought rather than what it should have.
+  paid    TEXT NOT NULL,
+  bought  TEXT NOT NULL,
+  at      INTEGER NOT NULL,
+  -- Null until a score is taken against it.
+  used_at INTEGER
+);
+
+-- The question every read asks: has this wallet got one left on this board.
+CREATE INDEX IF NOT EXISTS board_entries_spare ON board_entries (player, board, used_at);

@@ -56,6 +56,28 @@ export async function prizeFor(board: string): Promise<string | null> {
 }
 
 /**
+ * What a board's own pot is holding, in base units, or null.
+ *
+ * The balance and not an allocation. A second PrizePot pays one board, so what
+ * it holds IS the prize — there is nothing else in it to take a share of, which
+ * is the difference between this and `prizeFor` above.
+ */
+export async function potOf(token: string, pot: string): Promise<string | null> {
+  try {
+    const answer = await rpc<string>(endpoints(), "eth_call", [
+      {
+        to: token,
+        data: selector("balanceOf(address)") + pot.replace(/^0x/, "").toLowerCase().padStart(64, "0"),
+      },
+      "latest",
+    ]);
+    return BigInt(answer).toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Why this wallet may not play this board, or null when it may.
  *
  * READING NOTHING IS BEING LOCKED OUT. An endpoint that will not answer means
@@ -66,6 +88,15 @@ export async function prizeFor(board: string): Promise<string | null> {
  * one of them is about the player.
  */
 export async function lockedOut(board: Board, wallet: string): Promise<string | null> {
+  // A board you pay for is gated on the payment and nothing else. The $LION
+  // holding rule was how this board was held back while there was no way to
+  // charge for it; charging for it is the better answer to the same question,
+  // and running both would be asking somebody to hold a token AND pay.
+  //
+  // Read off the deployed contract rather than a flag, so the two can never
+  // disagree: no contract means no way to pay, which means the old rule is
+  // still the only one there is.
+  if (board.entry?.contract != null) return null;
   if (board.needs === null) return null;
 
   const [held] = await tokenBalances(endpoints(), board.needs.token, [wallet]);

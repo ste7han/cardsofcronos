@@ -32,7 +32,7 @@ import { proofOf } from "@/lib/session";
 import { toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
 
-interface Answer {
+export interface Answer {
   id: string;
   name: string;
   blurb: string;
@@ -44,6 +44,10 @@ interface Answer {
   prize: string | null;
   /** Why a score would not count, or null when it would. */
   shut: string | null;
+  /** What a go costs and how many are paid for, or null when it is free. */
+  entry: { cro: number; contract: string; spare: number } | null;
+  /** This board's own pot, in its own token, or null when it has none. */
+  alsoPays: { symbol: string; pot: string | null } | null;
 }
 
 export function Opponents({
@@ -51,7 +55,15 @@ export function Opponents({
   onChoose,
 }: {
   chosen: string;
-  onChoose: (board: string) => void;
+  /**
+   * The whole board and not only its id.
+   *
+   * What it costs, what it pays and how many goes are paid for all come from
+   * /api/boards, which is fetched here — and the button that starts a match
+   * lives in PlayArea. Handing up the id alone meant the screen with the button
+   * knew nothing about whether the board could be played.
+   */
+  onChoose: (board: Answer) => void;
 }) {
   const [boards, setBoards] = useState<Answer[] | null>(null);
 
@@ -64,11 +76,20 @@ export function Opponents({
         body: JSON.stringify({ proof: proofOf() }),
       });
       if (!response.ok) return;
-      setBoards(((await response.json()) as { boards: Answer[] }).boards);
+      const answer = ((await response.json()) as { boards: Answer[] }).boards;
+      setBoards(answer);
+      // The one already chosen, handed up without a click. PlayArea opens on
+      // the first board and would otherwise know nothing about it until
+      // somebody picked a different one and came back.
+      const already = answer.find((board) => board.id === chosen);
+      if (already !== undefined) onChoose(already);
     } catch {
       // Left null, which draws nothing. A row of opponents that could not be
       // read is worse than no row: it would have to guess at the locks.
     }
+    // `chosen` and `onChoose` deliberately out of the deps: this fetches once,
+    // and re-running it on every parent render would be a request a second.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -95,7 +116,7 @@ export function Opponents({
             <button
               key={board.id}
               type="button"
-              onClick={() => onChoose(board.id)}
+              onClick={() => onChoose(board)}
               className={cx(
                 "group relative overflow-hidden border text-left transition-colors",
                 picked
@@ -141,17 +162,31 @@ export function Opponents({
                       : `${Math.round(toTokens(board.prize)).toLocaleString("en-US")} $CROCARD`}
                   </dd>
                 </div>
+                {board.alsoPays !== null && (
+                  <div>
+                    <dt className="text-[8px] tracking-[0.18em] text-faint">AND</dt>
+                    <dd className="display mt-0.5 text-sm tabular-nums text-gold">
+                      {board.alsoPays.pot === null
+                        ? "—"
+                        : `${Math.round(toTokens(board.alsoPays.pot)).toLocaleString("en-US")} ${board.alsoPays.symbol}`}
+                    </dd>
+                  </div>
+                )}
                 <div>
-                  <dt className="text-[8px] tracking-[0.18em] text-faint">TO COUNT</dt>
+                  <dt className="text-[8px] tracking-[0.18em] text-faint">
+                    {board.entry === null ? "TO PLAY" : "A GO COSTS"}
+                  </dt>
                   <dd
                     className={cx(
                       "display mt-0.5 text-sm tabular-nums",
-                      counts ? "text-pump" : "text-gold",
+                      board.entry !== null ? "text-gold" : counts ? "text-pump" : "text-gold",
                     )}
                   >
-                    {board.needs === null
-                      ? "ANYONE"
-                      : `${board.needs.toLocaleString("en-US")} $LION`}
+                    {board.entry !== null
+                      ? `${board.entry.cro} CRO`
+                      : board.needs === null
+                        ? "FREE"
+                        : `${board.needs.toLocaleString("en-US")} $LION`}
                   </dd>
                 </div>
               </dl>
@@ -162,6 +197,23 @@ export function Opponents({
                   about somebody's own wallet. */}
               {!counts && (
                 <p className="mt-2.5 text-[10px] leading-relaxed text-gold">{board.shut}</p>
+              )}
+
+              {/* What the fee turns into, said on the board that charges it.
+                  Somebody asked to pay ten CRO is owed the sentence about where
+                  it goes, and "half of it is the prize you are playing for" is
+                  the half that makes the other half reasonable. */}
+              {board.entry !== null && (
+                <p className="mt-2.5 text-[10px] leading-relaxed text-muted">
+                  Half of every {board.entry.cro} CRO buys {board.alsoPays?.symbol ?? "the prize"} and
+                  goes straight into the pot above, so it grows every time anybody plays. The other
+                  half goes where all of this game&apos;s money goes.
+                  {board.entry.spare > 0 && (
+                    <span className="mt-1 block text-pump">
+                      You have {board.entry.spare} paid {board.entry.spare === 1 ? "go" : "goes"} left.
+                    </span>
+                  )}
+                </p>
               )}
               </div>
             </button>

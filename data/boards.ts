@@ -36,7 +36,7 @@ import type { Card } from "@/engine/types";
 import { buildDeckPreferring, buildFamilyDeck } from "@/engine/deck";
 import { CARDS } from "@/data/cards";
 import { PRESET_DECKS } from "@/data/preset-decks";
-import { LION } from "@/lib/revenue";
+import { CONTRACTS, LION } from "@/lib/revenue";
 
 export interface Board {
   /** Eight bytes of ASCII at most: it is a bytes32 on chain. */
@@ -65,6 +65,26 @@ export interface Board {
    * cannot go missing: /api/boards resolves it the same way a card does.
    */
   face: string;
+  /**
+   * What one go costs, and the contract that takes it, or null for free.
+   *
+   * The contract is null until it is deployed, and that is a real state rather
+   * than a gap: a fee with nowhere to pay it is a board that looks paid for and
+   * takes nothing, so everything that reads this treats null as free.
+   *
+   * See contracts/BoardEntry.sol for what the money becomes. Half the fee is
+   * the game's revenue and half buys the prize token, in the same transaction.
+   */
+  entry: { cro: number; contract: string | null } | null;
+  /**
+   * A second pot, in another token, filled by the entries above.
+   *
+   * The weekly $CROCARD pot is the one every board shares. This is a board's
+   * own, and it exists because an entry has to become something — a fee that
+   * only fed the general pot would be a board charging money to play for a
+   * prize that everybody else is playing for too.
+   */
+  alsoPays: { contract: string | null; token: string; symbol: string } | null;
 }
 
 export const BOARDS: readonly Board[] = [
@@ -77,6 +97,9 @@ export const BOARDS: readonly Board[] = [
     // The market itself, as a card. It plays the themed decks, so no single
     // project stands for it — an event does.
     face: "supercycle",
+    // Free, and it stays free. It is the board anybody can walk up to.
+    entry: null,
+    alsoPays: null,
   },
   {
     id: "lions",
@@ -104,6 +127,8 @@ export const BOARDS: readonly Board[] = [
     // Their mythic: the one card the deck is built around, and the one somebody
     // will remember losing to.
     face: "lions-viii",
+    entry: { cro: 10, contract: CONTRACTS.lionEntry },
+    alsoPays: { contract: CONTRACTS.lionPot, token: LION, symbol: "$LION" },
   },
 ];
 

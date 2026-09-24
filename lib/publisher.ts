@@ -172,6 +172,33 @@ export async function runWeekly(
     boards.push(await payOne(db, rpcs, key, pot, week, one.board, one.winner, now));
   }
 
+  // ── A BOARD WITH ITS OWN POT IS CLOSED TWICE ───────────────────────────────
+  //
+  // Loaded Lions pays out of two: its share of the weekly $CROCARD above, and
+  // the $LION that entries bought. Two PrizePots, because the token is
+  // immutable in that contract — deliberately, so a pot pays one thing for its
+  // whole life — and the same week, board and winner go to each.
+  //
+  // Its own loop and after the first, so a second pot that will not close
+  // cannot cost anybody the prize they have already been allocated on the
+  // first. Everything here is per board and reported rather than thrown.
+  for (const one of won) {
+    const board = BOARDS.find((b) => b.id === one.board);
+    const extra = board?.alsoPays?.contract ?? null;
+    if (extra === null) continue;
+
+    try {
+      await send(rpcs, key, extra, closeWeekData(week, [one.board], [one.winner.wallet]));
+    } catch (error) {
+      const said = error instanceof Error ? error.message : String(error);
+      if (!/WeekAlreadyClosed|already/i.test(said)) {
+        boards.push({ board: one.board, winner: one.winner.wallet, paid: null, amount: null, skipped: said });
+        continue;
+      }
+    }
+    boards.push(await payOne(db, rpcs, key, extra, week, one.board, one.winner, now));
+  }
+
   return { week, closed, boards };
 }
 

@@ -55,6 +55,7 @@ import { recordBurns } from "@/lib/splitter";
 import { TRANSFER } from "@/lib/mint";
 import { BURN_ADDRESS, CONTRACTS, CROCARD, POOL } from "@/lib/revenue";
 import { cursorOf, setCursor } from "@/lib/store";
+import { recordEntries } from "@/lib/entries";
 import { EXPLORER } from "@/lib/units";
 import type { Database } from "@/lib/store";
 
@@ -87,7 +88,7 @@ export interface Log {
 export const idOf = (feed: string, log: Log): string =>
   `${feed}:${log.transactionHash.toLowerCase()}:${Number(BigInt(log.logIndex))}`;
 
-const wordAt = (data: string, n: number): bigint => {
+export const wordAt = (data: string, n: number): bigint => {
   const hex = data.replace(/^0x/, "");
   const at = hex.slice(n * 64, (n + 1) * 64);
   if (at.length !== 64) throw new Error(`Asked for word ${n} of ${hex.length / 64}.`);
@@ -95,7 +96,7 @@ const wordAt = (data: string, n: number): bigint => {
 };
 
 /** An indexed address topic, as an address. */
-const addressIn = (topic: string): string => "0x" + topic.slice(-40);
+export const addressIn = (topic: string): string => "0x" + topic.slice(-40);
 
 /**
  * When a log's block was mined, as an ISO string, or null when it cannot be had.
@@ -209,7 +210,7 @@ async function remember(db: Database, ids: readonly string[], at: number): Promi
 }
 
 /** Reads one contract's logs over a range, or [] when there is nothing. */
-async function logsBetween(
+export async function logsBetween(
   rpcs: readonly string[],
   address: string,
   topics: (string | string[] | null)[],
@@ -689,6 +690,28 @@ export async function runFeeds(
   // Last, and neither of these posts anything. If either fails, the three
   // channels have already had their say.
   feeds.push(await runOwners(db, logRpcs, head, now));
+
+  // Who paid to play a board, within a minute. A player who has just sent ten
+  // CRO is watching the screen, and "your entry has not arrived yet" for six
+  // hours is indistinguishable from the money having gone nowhere.
+  const entries = await recordEntries(db, logRpcs, head, now).catch((error: unknown) => [
+    {
+      from: null,
+      to: null,
+      recorded: 0,
+      why: error instanceof Error ? error.message : "the entry scan failed",
+    },
+  ]);
+  for (const [i, one] of entries.entries()) {
+    feeds.push({
+      feed: `entries:${i}`,
+      from: one.from,
+      to: one.to,
+      found: one.recorded,
+      posted: 0,
+      ...(one.why === undefined ? {} : { wrong: one.why }),
+    });
+  }
 
   // Burns, written down within a minute of happening rather than within six
   // hours. That mattered the moment the burn page grew a button anybody can
