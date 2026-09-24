@@ -20,6 +20,12 @@
 //
 // ── THE KEY ──────────────────────────────────────────────────────────────────
 //
+// DEPLOY_KEY is read from the environment, or out of .env.local when it is not
+// there — one variable by name, never the whole file, and never printed. That
+// fallback exists because this project keeps the key in .env.local and a shell
+// does not load it: without this, the answer to "deploy it" is an error about a
+// key that is sitting right there.
+//
 // DEPLOY_KEY is read from the environment and never from an argument: argv is
 // visible to anything that can run `ps`. It is also never written anywhere by
 // this script.
@@ -29,7 +35,7 @@
 // wallet — the one that never touches a server — and never the publisher, which
 // lives in a Worker. The script refuses if they are the same.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import { normalise } from "@/lib/address";
 import { BOARDS } from "@/data/boards";
@@ -78,6 +84,25 @@ const flag = (name: string): string | null => {
   return at === -1 ? null : process.argv[at + 1] ?? null;
 };
 
+/**
+ * One variable out of .env.local, by name.
+ *
+ * Not a dotenv parser and deliberately not: it reads the line it was asked for
+ * and nothing else, so a script that needs a signing key cannot quietly pick up
+ * everything else in the file as well. The same shape as
+ * scripts/nft/allowlist-root.ts, for the same reason.
+ */
+function fromEnvFile(name: string): string | undefined {
+  if (!existsSync(".env.local")) return undefined;
+  for (const line of readFileSync(".env.local", "utf8").split("\n")) {
+    const at = line.indexOf("=");
+    if (at === -1 || line.trimStart().startsWith("#")) continue;
+    if (line.slice(0, at).trim() !== name) continue;
+    return line.slice(at + 1).trim().replace(/^["']|["']$/g, "") || undefined;
+  }
+  return undefined;
+}
+
 async function main(): Promise<void> {
   const broadcast = process.argv.includes("--broadcast");
   /**
@@ -100,7 +125,7 @@ async function main(): Promise<void> {
   // what that costs — and none of it is signed. Requiring a key to find that out
   // would mean handing one over to ask a question, which is the shape of a bad
   // habit rather than a safe one.
-  const secret = process.env.DEPLOY_KEY;
+  const secret = process.env.DEPLOY_KEY ?? fromEnvFile("DEPLOY_KEY");
   const from = flag("from");
   if (!secret && (broadcast || !from)) {
     throw new Error(
