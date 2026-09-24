@@ -45,7 +45,8 @@
     "mint-control": "tsx --env-file=.env.local scripts/nft/mint-control.ts",
     "allowlist-root": "tsx scripts/nft/allowlist-root.ts",
     "promo-wall": "tsx scripts/promo-wall.ts",
-    "promo-all": "tsx scripts/promo-wall.ts --all"
+    "promo-all": "tsx scripts/promo-wall.ts --all",
+    "promo-all-square": "tsx scripts/promo-wall.ts --all --square"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",

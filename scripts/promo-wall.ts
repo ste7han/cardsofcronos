@@ -4,6 +4,7 @@
 //   npx tsx scripts/promo-wall.ts [out.png] [width] [height] [scale]
 //   npx tsx scripts/promo-wall.ts cronus.png --family cronus
 //   npx tsx scripts/promo-wall.ts --all            every project, into promo/
+//   npx tsx scripts/promo-wall.ts --all --square   the same, 1600x1600
 //
 // Defaults to 1600x900 at 2x, which is the shape X gives the most room to and
 // twice the pixels, so it stays sharp instead of being upscaled by the browser.
@@ -48,9 +49,12 @@ const flag = (name: string): string | null => {
 };
 const plain = args.filter((a, i) => !a.startsWith("--") && !args[i - 1]?.startsWith("--"));
 
-const OUT = plain[0] ?? "promo-wall.png";
+/** 1600x1600 rather than 1600x900, for the places that crop a wide one. */
+const SQUARE = args.includes("--square");
+
+const OUT = plain[0] ?? (SQUARE ? "promo-square.png" : "promo-wall.png");
 const W = Number(plain[1] ?? 1600);
-const H = Number(plain[2] ?? 900);
+const H = Number(plain[2] ?? (SQUARE ? 1600 : 900));
 const SCALE = Number(plain[3] ?? 2);
 const SITE = "http://localhost:3000";
 
@@ -104,8 +108,18 @@ function subjectOf(family: string | null): Subject {
 /** The card's own proportions, from the render: 1072 x 1676. */
 const RATIO = 1676 / 1072;
 
-/** How much of the frame the words take. The fan gets the rest. */
-const SAY_WIDTH = 520;
+/**
+ * Beside the words, or under them.
+ *
+ * Read off the shape rather than off the --square flag, so any size somebody
+ * asks for lands on the layout that suits it. A column of text down the left
+ * with a fan beside it needs a frame wider than it is tall; at 1:1 it leaves the
+ * words in a gutter and the cards too small to see.
+ */
+const STACKED = W / H < 1.3;
+
+/** How much of the frame the words take when they are beside the fan. */
+const SAY_WIDTH = STACKED ? W - 160 : 520;
 
 /**
  * A headline size that fits the name it was given.
@@ -148,6 +162,11 @@ function page({ front, name, span }: Subject): string {
     name === null ? ["CARDS", "OF", "CRONOS"] : [...name.split(/\s+/), "CARDS"],
   );
 
+  const blurb =
+    name === null
+      ? "A trading card game on Cronos. Ten turns, a marketing budget that grows, and the highest market cap wins."
+      : `${name} is in the game. ${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`;
+
   const wall = SET.map(
     (card) =>
       `<img src="${SITE}/render/${card.id}.webp" loading="eager" decoding="sync" alt="">`,
@@ -160,10 +179,15 @@ function page({ front, name, span }: Subject): string {
   // wide. It is cardW * (n - (n-1)*f). Guessing at that put a fan of eight over
   // the top of the words, which on a picture whose whole job is to be read at a
   // glance is the one thing it cannot do.
-  const OVERLAP = 0.26;
-  const room = W - SAY_WIDTH - 150;
+  // Stacked, the cards overlap more. Not for looks: a square frame gives the fan
+  // the whole width and about half the height, so at the wide layout's spacing
+  // the cards came out small with six hundred empty pixels above and below them.
+  // Overlapping further buys width back as size, and a third of a card covered
+  // still shows the art, which sits at the top of the face.
+  const OVERLAP = STACKED ? 0.34 : 0.26;
+  const room = STACKED ? W - 80 : W - SAY_WIDTH - 150;
   const spans = front.length - (front.length - 1) * OVERLAP;
-  const cardW = Math.min(200, Math.floor(room / spans));
+  const cardW = Math.min(STACKED ? 300 : 200, Math.floor(room / spans));
   const overlap = Math.round(cardW * OVERLAP);
 
   const heroes = front.map((id, i) => {
@@ -216,21 +240,35 @@ function page({ front, name, span }: Subject): string {
      get dark enough to read white text over. */
   .scrim {
     position: absolute; inset: 0;
-    background:
-      linear-gradient(100deg, #050314 26%, rgba(5,3,20,0.86) 46%, rgba(5,3,20,0.55) 70%, rgba(5,3,20,0.72) 100%),
-      radial-gradient(120% 90% at 18% 50%, rgba(5,3,20,0.92) 0%, rgba(5,3,20,0) 60%);
+    background: ${
+      STACKED
+        ? // Top and bottom, where the words sit, and lightest across the middle
+          // where the fan is. The wide one darkens the left instead — a gradient
+          // aimed at a gutter that this layout does not have.
+          `linear-gradient(180deg, #050314 12%, rgba(5,3,20,0.9) 30%, rgba(5,3,20,0.5) 50%, rgba(5,3,20,0.9) 72%, #050314 92%),
+           radial-gradient(90% 60% at 50% 50%, rgba(5,3,20,0) 0%, rgba(5,3,20,0.7) 100%)`
+        : `linear-gradient(100deg, #050314 26%, rgba(5,3,20,0.86) 46%, rgba(5,3,20,0.55) 70%, rgba(5,3,20,0.72) 100%),
+           radial-gradient(120% 90% at 18% 50%, rgba(5,3,20,0.92) 0%, rgba(5,3,20,0) 60%)`
+    };
   }
   /* A purple wash, because the palette is purple and four hundred card frames
      in every colour average out to grey. */
   .tint {
     position: absolute; inset: 0; mix-blend-mode: soft-light;
-    background: radial-gradient(90% 120% at 78% 40%, #9d4edd 0%, rgba(157,78,221,0) 62%);
+    background: radial-gradient(90% 120% at ${STACKED ? "50% 50%" : "78% 40%"}, #9d4edd 0%, rgba(157,78,221,0) 62%);
   }
 
   /* ── THE FAN ───────────────────────────────────────────────────────────── */
   .fan {
-    position: absolute; right: 95px; top: 50%;
-    transform: translateY(-50%) rotate(-3deg);
+    position: absolute;
+    ${
+      STACKED
+        ? // Forty-seven, not fifty. The outer cards are pushed downwards to make
+          // the fan, so its visual middle sits below its box — centring the box
+          // left more air above the cards than below them.
+          "left: 50%; top: 47%; transform: translate(-50%, -50%) rotate(-2deg);"
+        : "right: 95px; top: 50%; transform: translateY(-50%) rotate(-3deg);"
+    }
     display: flex; align-items: center;
   }
   .hero {
@@ -240,7 +278,16 @@ function page({ front, name, span }: Subject): string {
   }
 
   /* ── THE WORDS ─────────────────────────────────────────────────────────── */
-  .say { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); width: ${SAY_WIDTH}px; }
+  .say {
+    position: absolute; width: ${SAY_WIDTH}px;
+    ${STACKED ? "left: 80px; top: 88px; text-align: center;" : "left: 64px; top: 50%; transform: translateY(-50%);"}
+  }
+  /* Stacked, the closing lines go under the fan rather than under the title —
+     otherwise the whole block sits above the cards and the bottom third is a
+     dimmed wall with nothing on it. */
+  .foot {
+    position: absolute; left: 80px; bottom: 92px; width: ${SAY_WIDTH}px; text-align: center;
+  }
   .eyebrow {
     font-size: 15px; letter-spacing: 0.34em; color: #ffd700; font-weight: 700;
   }
@@ -255,7 +302,8 @@ function page({ front, name, span }: Subject): string {
   }
   .count span { color: #9d93b8; font-size: 20px; font-family: "JetBrains Mono", monospace; }
   p.line {
-    font-size: 18px; line-height: 1.6; color: #9d93b8; margin-top: 18px; max-width: 520px;
+    font-size: 18px; line-height: 1.6; color: #9d93b8; margin-top: 18px;
+    ${STACKED ? "max-width: 720px; margin-left: auto; margin-right: auto;" : "max-width: 520px;"}
   }
   .url {
     margin-top: 30px; font-size: 17px; letter-spacing: 0.22em; color: #00e08a; font-weight: 700;
@@ -269,13 +317,9 @@ function page({ front, name, span }: Subject): string {
     <div class="eyebrow">${name === null ? "SET 01 · CRONOS" : "CARDS OF CRONOS · SET 01"}</div>
     <h1>${title.html}</h1>
     <div class="count">${front.length} CARDS <span>· ${name === null ? "5,603 minted at most" : span}</span></div>
-    <p class="line">${
-      name === null
-        ? "A trading card game on Cronos. Ten turns, a marketing budget that grows, and the highest market cap wins."
-        : `${name} is in the game. ${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`
-    }</p>
-    <div class="url">CARDSOFCRONOS.COM</div>
+    ${STACKED ? "" : `<p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div>`}
   </div>
+  ${STACKED ? `<div class="foot"><p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div></div>` : ""}
 </body></html>`;
 }
 
@@ -323,11 +367,14 @@ async function main() {
     // One browser and one tab for all of them. The wall is four hundred and
     // forty-eight requests; served once, the rest come out of the browser's own
     // cache, which is the difference between twenty minutes and two.
-    mkdirSync("promo", { recursive: true });
+    // Two shapes, two folders. One folder with both in it means picking the
+    // right file by reading the name, forty-three times.
+    const dir = STACKED ? "promo-square" : "promo";
+    mkdirSync(dir, { recursive: true });
     let total = 0;
     for (const [i, family] of PROJECTS.entries()) {
       const subject = subjectOf(family);
-      const out = `promo/${family}-cards.jpg`;
+      const out = `${dir}/${family}-cards.jpg`;
       const size = await shoot(tab, subject, out, false);
       total += size;
       console.error(
@@ -335,7 +382,7 @@ async function main() {
       );
     }
     await browser.close();
-    console.log(`\n  ${PROJECTS.length} pictures in promo/, ${mb(total)} in all\n`);
+    console.log(`\n  ${PROJECTS.length} pictures in ${dir}/, ${mb(total)} in all\n`);
     return;
   }
 
