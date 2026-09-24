@@ -2,6 +2,7 @@
 //
 //   npm run dev                    (in another terminal — it serves the renders)
 //   npx tsx scripts/promo-wall.ts [out.png] [width] [height] [scale]
+//   npx tsx scripts/promo-wall.ts cronus.png --family cronus
 //
 // Defaults to 1600x900 at 2x, which is the shape X gives the most room to and
 // twice the pixels, so it stays sharp instead of being upscaled by the browser.
@@ -14,11 +15,19 @@
 // and drawing them again for a banner would be the third implementation of what
 // a card looks like.
 //
-// ── THE FIVE IN FRONT ARE THE HOMEPAGE'S FIVE ────────────────────────────────
+// ── WHAT IS IN FRONT ─────────────────────────────────────────────────────────
 //
-// SHOWCASE, imported rather than listed again, for the reason scripts/banner.ts
-// gives: a second list is a second answer to "which cards are the face of this",
-// and the two disagree within a week.
+// By default the homepage's SHOWCASE, imported rather than listed again, for the
+// reason scripts/banner.ts gives: a second list is a second answer to "which
+// cards are the face of this", and the two disagree within a week.
+//
+// `--family <project>` fans one project's cards instead, in set order, which is
+// rarity order — so a family reads left to right from common to whatever it tops
+// out at. That is the picture to send a project whose cards are in this game.
+//
+// The fan sizes itself to the number of cards. Five and eight are different
+// pictures, and a width that was right for one crops the other: the eight-card
+// families ran off the right edge until this measured instead of assuming.
 //
 // The wall behind them is every card in set order, which is the honest answer to
 // "how many are there" — it is not a flattering selection, it is all of it.
@@ -31,14 +40,54 @@ import sharp from "sharp";
 import { SET } from "@/lib/set";
 import { SHOWCASE } from "../app/page";
 
-const OUT = process.argv[2] ?? "promo-wall.png";
-const W = Number(process.argv[3] ?? 1600);
-const H = Number(process.argv[4] ?? 900);
-const SCALE = Number(process.argv[5] ?? 2);
+const args = process.argv.slice(2);
+const flag = (name: string): string | null => {
+  const at = args.indexOf(`--${name}`);
+  return at === -1 ? null : (args[at + 1] ?? null);
+};
+const plain = args.filter((a, i) => !a.startsWith("--") && !args[i - 1]?.startsWith("--"));
+
+const OUT = plain[0] ?? "promo-wall.png";
+const W = Number(plain[1] ?? 1600);
+const H = Number(plain[2] ?? 900);
+const SCALE = Number(plain[3] ?? 2);
 const SITE = "http://localhost:3000";
+
+/** One project's cards in front, or the homepage's five. */
+const FAMILY = flag("family");
+
+/**
+ * Which project a card belongs to, or none.
+ *
+ * Narrowed rather than asserted: a tactic has no project, so `card.project` is
+ * a type error on a third of the set and `as any` would have hidden the day a
+ * tactic slipped into a family fan.
+ */
+const projectOf = (card: (typeof SET)[number]): string | null =>
+  "project" in card && typeof card.project === "string" ? card.project : null;
+
+const front =
+  FAMILY === null ? SHOWCASE : SET.filter((c) => projectOf(c) === FAMILY).map((c) => c.id);
+if (front.length === 0) {
+  const known = [...new Set(SET.map(projectOf).filter((p): p is string => p !== null))].sort();
+  throw new Error(`No cards with project "${FAMILY}". There are: ${known.join(", ")}`);
+}
+
+/** What the family is called, as it is printed on the cards themselves. */
+const NAME = FAMILY === null ? null : SET.find((c) => projectOf(c) === FAMILY)!.name.toUpperCase();
+
+/** Lowest and highest rarity in the fan, which is the thing a family shows off. */
+const ORDER = ["common", "rare", "epic", "legendary", "mythic"];
+const rarities = front
+  .map((id) => SET.find((c) => c.id === id)!.rarity)
+  .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+const SPAN = `${rarities[0]!.toUpperCase()} TO ${rarities[rarities.length - 1]!.toUpperCase()}`;
 
 /** The card's own proportions, from the render: 1072 x 1676. */
 const RATIO = 1676 / 1072;
+
+/** How much of the frame the words take. The fan gets the rest. */
+const SAY_WIDTH = 520;
 
 function page(): string {
   const wall = SET.map(
@@ -46,20 +95,34 @@ function page(): string {
       `<img src="${SITE}/render/${card.id}.webp" loading="eager" decoding="sync" alt="">`,
   ).join("");
 
-  const heroes = SHOWCASE.map((id, i) => {
+  // Measured rather than assumed. The words take the left, the fan takes what is
+  // left over, and the cards shrink to fit it — eight at the width five wanted
+  // put the last one through the right edge.
+  // A fan of n cards overlapping by a fraction f of their width is not n cards
+  // wide. It is cardW * (n - (n-1)*f). Guessing at that put a fan of eight over
+  // the top of the words, which on a picture whose whole job is to be read at a
+  // glance is the one thing it cannot do.
+  const OVERLAP = 0.26;
+  const room = W - SAY_WIDTH - 150;
+  const spans = front.length - (front.length - 1) * OVERLAP;
+  const cardW = Math.min(200, Math.floor(room / spans));
+  const overlap = Math.round(cardW * OVERLAP);
+
+  const heroes = front.map((id, i) => {
     // A fan: the middle card upright and the others leaning away from it, each
     // one a little lower, the way a hand of cards actually sits.
-    const middle = (SHOWCASE.length - 1) / 2;
+    const middle = (front.length - 1) / 2;
     const off = i - middle;
     // Six degrees a step, not seven. At seven the outer card's corner swung
     // past the right edge of the frame and was cut in half — which on a fan of
     // five is the one card that looks like a mistake rather than a crop.
-    const tilt = off * 6;
-    const drop = Math.abs(off) * 30;
+    const tilt = off * (front.length > 6 ? 4.5 : 6);
+    const drop = Math.abs(off) * (cardW * 0.15);
     return `<img class="hero" style="
+      width: ${cardW}px;
       transform: rotate(${tilt}deg) translateY(${drop}px);
-      z-index: ${10 - Math.abs(off)};
-      margin-left: ${i === 0 ? 0 : -46}px;
+      z-index: ${front.length - Math.abs(off)};
+      margin-left: ${i === 0 ? 0 : -overlap}px;
     " src="${SITE}/render/${id}.webp" alt="">`;
   }).join("");
 
@@ -113,13 +176,13 @@ function page(): string {
     display: flex; align-items: center;
   }
   .hero {
-    width: 195px; aspect-ratio: 1072 / 1676;
+    aspect-ratio: 1072 / 1676;
     border-radius: 10px;
     box-shadow: 0 28px 60px rgba(0,0,0,0.75), 0 0 0 1px rgba(157,78,221,0.35);
   }
 
   /* ── THE WORDS ─────────────────────────────────────────────────────────── */
-  .say { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); max-width: 560px; }
+  .say { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); width: ${SAY_WIDTH}px; }
   .eyebrow {
     font-size: 15px; letter-spacing: 0.34em; color: #ffd700; font-weight: 700;
   }
@@ -145,10 +208,14 @@ function page(): string {
   <div class="tint"></div>
   <div class="fan">${heroes}</div>
   <div class="say">
-    <div class="eyebrow">SET 01 · CRONOS</div>
-    <h1>CARDS OF<br>CRONOS</h1>
-    <div class="count">${SET.length} CARDS <span>· 5,603 minted at most</span></div>
-    <p class="line">A trading card game on Cronos. Ten turns, a marketing budget that grows, and the highest market cap wins.</p>
+    <div class="eyebrow">${NAME === null ? "SET 01 · CRONOS" : "CARDS OF CRONOS · SET 01"}</div>
+    <h1>${NAME === null ? "CARDS OF<br>CRONOS" : `${NAME}<br>CARDS`}</h1>
+    <div class="count">${front.length} CARDS <span>· ${NAME === null ? "5,603 minted at most" : SPAN}</span></div>
+    <p class="line">${
+      NAME === null
+        ? "A trading card game on Cronos. Ten turns, a marketing budget that grows, and the highest market cap wins."
+        : `${NAME} is in the game. ${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`
+    }</p>
     <div class="url">CARDSOFCRONOS.COM</div>
   </div>
 </body></html>`;
@@ -188,7 +255,10 @@ async function main() {
   const { size: jpgSize } = await sharp(jpg).metadata().then(async () => ({
     size: (await import("node:fs")).statSync(jpg).size,
   }));
-  console.log(`\n  ${OUT}  ${W * SCALE}x${H * SCALE}  ${size(png.length)}  ·  ${SET.length} cards`);
+  console.log(
+    `\n  ${OUT}  ${W * SCALE}x${H * SCALE}  ${size(png.length)}  ·  ${SET.length} in the wall` +
+      `, ${front.length} in front${NAME === null ? "" : ` (${NAME})`}`,
+  );
   console.log(`  ${jpg}  ${size(jpgSize)}  — this is the one to post\n`);
 }
 
