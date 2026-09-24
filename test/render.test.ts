@@ -68,6 +68,18 @@ describe("the close-up that offers them", () => {
     expect(gallery).toMatch(/download=\{`\$\{card\.id\}\.webp`\}/);
   });
 
+  it("is the same gallery the profile draws, so the two cannot drift", () => {
+    // /cards and /profile/cards are one component, and that is why asking for
+    // the close-up on one of them was already asking for it on both. Written
+    // down because the cheap way to add a card grid to a second page is to copy
+    // the first one, and then a fix lands on one of them.
+    const whole = readFileSync(new URL("../components/YourCards.tsx", import.meta.url), "utf8");
+    const set = readFileSync(new URL("../app/cards/page.tsx", import.meta.url), "utf8");
+    expect(whole).toContain("<Gallery cards={cards} />");
+    expect(set).toContain("<Gallery cards={SET} />");
+    expect(whole).toContain('from "@/components/Gallery"');
+  });
+
   it("closes on the ground and not on the card", () => {
     // A close-up that shuts when you touch the thing you opened it to look at
     // is unusable on a phone, where the card fills most of the overlay.
