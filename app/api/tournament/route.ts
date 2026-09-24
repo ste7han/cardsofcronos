@@ -22,7 +22,7 @@ import { deckProblems } from "@/engine/deck";
 import { applyMove, newMatch } from "@/engine/match";
 import { RULES, type Move } from "@/engine/types";
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
-import { spendEntry } from "@/lib/entries";
+import { scoreEntry } from "@/lib/entries";
 import { PUBLIC_RPCS, rpc, tokenBalances } from "@/lib/cronos";
 import { selector } from "@/lib/evm-tx";
 import { asWord } from "@/lib/publisher";
@@ -159,23 +159,23 @@ export async function POST(request: Request) {
     return Response.json({ error: "Only a match you won counts." }, { status: 400 });
   }
 
-  // ── A PAID BOARD COSTS A GO ────────────────────────────────────────────────
+  // ── A PAID BOARD IS SCORED AGAINST THE MATCH IT DEALT ──────────────────────
   //
-  // Spent here and not when the match started. A disconnection then costs
-  // nothing, and the only way to spend an entry is to finish a match the server
-  // has replayed — which is the generous direction to be wrong in, and the one
-  // that cannot take somebody's ten CRO for a match nobody ever saw.
+  // The seed had to come from /api/boards/deal, which is where the go was
+  // spent. Checking it here is what makes the fee buy an attempt rather than a
+  // win: a seed the server never dealt is a shuffle the player found by
+  // replaying locally until one went their way.
   //
-  // After the replay, deliberately. Spending it before would charge for a
-  // submission the engine then refused.
+  // After the replay, deliberately. Marking it scored before would consume the
+  // deal for a submission the engine then refused.
   const now = Date.now();
   if (board.entry?.contract != null) {
-    if (!(await spendEntry(db(), wallet, board.id, now))) {
+    if (!(await scoreEntry(db(), wallet, board.id, seed as number, now))) {
       return Response.json(
         {
           error:
-            `This board costs ${board.entry.cro} CRO a go and this wallet has none left. ` +
-            `Pay for one and the score counts.`,
+            `That match was not dealt to this wallet, or it has already been scored. ` +
+            `This board costs ${board.entry.cro} CRO a go.`,
         },
         { status: 402 },
       );

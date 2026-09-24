@@ -182,10 +182,18 @@ export function Game({
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   stateRef.current = state;
 
-  const start = useCallback((asDemo: boolean) => {
+  /**
+   * Deals a match, from the server when the board charges for one.
+   *
+   * `dealt` is the seed /api/boards/deal handed out, or null on a free board
+   * where the browser picks as it always has. It matters that it is not picked
+   * here for a paid board: a browser that chooses the shuffle can keep choosing
+   * until one goes its way, and then a fee buys a win rather than a go.
+   */
+  const start = useCallback((asDemo: boolean, dealt: number | null = null) => {
     // The seed lives outside the engine: there is no Math.random in there, so a
     // match stays replayable from { seed, moves }.
-    const seed = Math.floor(Math.random() * 2_147_483_647);
+    const seed = dealt ?? Math.floor(Math.random() * 2_147_483_647);
     // Your saved deck, or the starter one if you have not built anything yet.
     //
     // The opponent used to get forty cards off a shuffle, which is not a deck —
@@ -245,8 +253,35 @@ export function Game({
     // to deal the moment the page loaded, which meant the choice of opponent —
     // and the reason each one exists — was never on screen: you arrived already
     // playing the first board in the list.
-    if (sessionReady && begin) start(false);
-  }, [start, sessionReady, wallet, begin]);
+    if (!sessionReady || !begin) return;
+
+    // Ask for a match before dealing one. On a free board this answers with
+    // null straight away and nothing changes; on a paid one it is where the go
+    // is spent, and asking again after a reconnection hands back the same seed
+    // rather than costing another ten CRO.
+    let current = true;
+    const proof = proofOf();
+    void (async () => {
+      let dealt: number | null = null;
+      if (proof !== null) {
+        try {
+          const answer = await fetch("/api/boards/deal", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ proof, board: board.id }),
+          });
+          if (answer.ok) dealt = ((await answer.json()) as { seed: number | null }).seed;
+        } catch {
+          // A free board does not need it, and a paid one will be refused at
+          // the score instead — which says the same thing with the real reason.
+        }
+      }
+      if (current) start(false, dealt);
+    })();
+    return () => {
+      current = false;
+    };
+  }, [start, sessionReady, wallet, begin, board.id]);
 
   useEffect(() => () => {
     if (flashTimer.current) clearTimeout(flashTimer.current);

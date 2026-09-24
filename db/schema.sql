@@ -452,9 +452,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS decks_playing ON decks (wallet) WHERE playing 
 -- Cronos, and the whole reason the fee is a contract call rather than a transfer
 -- to a wallet is that a wallet transfer cannot say which board it was for.
 --
--- ONE ENTRY IS ONE MATCH. `used_at` is set when a score is accepted against it,
--- and an entry that was paid for but never played stays unused — so a
--- disconnection costs nothing, and the only way to spend one is to finish.
+-- ONE ENTRY IS ONE MATCH, AND THE SERVER DEALS IT. `used_at` is set when the
+-- match is handed out, not when a score comes back, and `seed` is the shuffle it
+-- was handed out with.
+--
+-- It was the other way round for a day and it did not hold. The browser picks
+-- when to submit and only ever submitted a win, so a loss never reached the
+-- server and never spent anything — which is what the maker saw: paid once,
+-- played once, lost, and still had a go left. Worse than the missing
+-- bookkeeping was what it allowed: the browser also chose the seed, so one
+-- payment bought as many attempts as it took to find a shuffle that won.
+--
+-- Spending at the deal closes both. A disconnection does not cost the go
+-- either: coming back hands out THE SAME seed, so the match is still yours to
+-- finish and there is still only one of it.
 --
 -- Keyed on the log and not on the transaction: one transaction could hold two
 -- entries, and a primary key that could not tell them apart would quietly throw
@@ -468,8 +479,14 @@ CREATE TABLE IF NOT EXISTS board_entries (
   paid    TEXT NOT NULL,
   bought  TEXT NOT NULL,
   at      INTEGER NOT NULL,
-  -- Null until a score is taken against it.
-  used_at INTEGER
+  -- Null until the match is handed out.
+  used_at INTEGER,
+  -- The shuffle it was handed out with. Null until then, and the same number on
+  -- every read after — a second deal would be a second attempt.
+  seed    INTEGER,
+  -- Null until a score has been taken against it. An entry can be dealt once
+  -- and scored once, and the two are different moments.
+  scored_at INTEGER
 );
 
 -- The question every read asks: has this wallet got one left on this board.
