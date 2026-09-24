@@ -3,6 +3,7 @@
 //   npm run dev                    (in another terminal — it serves the renders)
 //   npx tsx scripts/promo-wall.ts [out.png] [width] [height] [scale]
 //   npx tsx scripts/promo-wall.ts cronus.png --family cronus
+//   npx tsx scripts/promo-wall.ts --all            every project, into promo/
 //
 // Defaults to 1600x900 at 2x, which is the shape X gives the most room to and
 // twice the pixels, so it stays sharp instead of being upscaled by the browser.
@@ -32,7 +33,7 @@
 // The wall behind them is every card in set order, which is the honest answer to
 // "how many are there" — it is not a flattering selection, it is all of it.
 
-import { writeFileSync } from "node:fs";
+import { mkdirSync, statSync, writeFileSync } from "node:fs";
 
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -55,6 +56,8 @@ const SITE = "http://localhost:3000";
 
 /** One project's cards in front, or the homepage's five. */
 const FAMILY = flag("family");
+/** Every project, one picture each, into promo/. */
+const ALL = args.includes("--all");
 
 /**
  * Which project a card belongs to, or none.
@@ -66,22 +69,37 @@ const FAMILY = flag("family");
 const projectOf = (card: (typeof SET)[number]): string | null =>
   "project" in card && typeof card.project === "string" ? card.project : null;
 
-const front =
-  FAMILY === null ? SHOWCASE : SET.filter((c) => projectOf(c) === FAMILY).map((c) => c.id);
-if (front.length === 0) {
-  const known = [...new Set(SET.map(projectOf).filter((p): p is string => p !== null))].sort();
-  throw new Error(`No cards with project "${FAMILY}". There are: ${known.join(", ")}`);
+/** Every project in the set, in the order the cards are in. */
+const PROJECTS = [...new Set(SET.map(projectOf).filter((p): p is string => p !== null))];
+
+const ORDER = ["common", "rare", "epic", "legendary", "mythic"];
+
+interface Subject {
+  /** The card ids in the fan, in set order, which is rarity order. */
+  front: string[];
+  /** What the family is called, as it is printed on the cards, or null. */
+  name: string | null;
+  /** Lowest to highest rarity in the fan, which is what a family shows off. */
+  span: string;
 }
 
-/** What the family is called, as it is printed on the cards themselves. */
-const NAME = FAMILY === null ? null : SET.find((c) => projectOf(c) === FAMILY)!.name.toUpperCase();
+function subjectOf(family: string | null): Subject {
+  const front =
+    family === null ? [...SHOWCASE] : SET.filter((c) => projectOf(c) === family).map((c) => c.id);
+  if (front.length === 0) {
+    throw new Error(`No cards with project "${family}". There are: ${PROJECTS.join(", ")}`);
+  }
 
-/** Lowest and highest rarity in the fan, which is the thing a family shows off. */
-const ORDER = ["common", "rare", "epic", "legendary", "mythic"];
-const rarities = front
-  .map((id) => SET.find((c) => c.id === id)!.rarity)
-  .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
-const SPAN = `${rarities[0]!.toUpperCase()} TO ${rarities[rarities.length - 1]!.toUpperCase()}`;
+  const rarities = front
+    .map((id) => SET.find((c) => c.id === id)!.rarity)
+    .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+
+  return {
+    front,
+    name: family === null ? null : SET.find((c) => projectOf(c) === family)!.name.toUpperCase(),
+    span: `${rarities[0]!.toUpperCase()} TO ${rarities[rarities.length - 1]!.toUpperCase()}`,
+  };
+}
 
 /** The card's own proportions, from the render: 1072 x 1676. */
 const RATIO = 1676 / 1072;
@@ -89,7 +107,47 @@ const RATIO = 1676 / 1072;
 /** How much of the frame the words take. The fan gets the rest. */
 const SAY_WIDTH = 520;
 
-function page(): string {
+/**
+ * A headline size that fits the name it was given.
+ *
+ * Ninety-two points suits CRONUS and puts FORTUNE FAVOURS THE BRAVE CARDS out
+ * of the frame and over the fan. Forty-three projects is too many to eyeball one
+ * at a time, so it is measured: wrap greedily at the width the column has, and
+ * shrink until the estimate says three lines or fewer.
+ *
+ * THE ESTIMATE IS OPTIMISTIC, DELIBERATELY. Archivo Black is reckoned at 0.62em
+ * to the character in caps, which is narrower than it really is, so the browser
+ * breaks a line or two more than this predicts — FORTUNE FAVOURS THE BRAVE lands
+ * on five. That is the direction to be wrong in: an extra line is a taller stack
+ * of words in a column that has the room, and the thing to avoid is a headline
+ * too wide for the column, which this cannot produce.
+ */
+function headline(words: string[]): { size: number; html: string } {
+  for (let size = 92; size >= 44; size -= 4) {
+    const perLine = Math.floor(SAY_WIDTH / (size * 0.62));
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const next = line === "" ? word : `${line} ${word}`;
+      if (next.length <= perLine || line === "") line = next;
+      else {
+        lines.push(line);
+        line = word;
+      }
+    }
+    if (line !== "") lines.push(line);
+    // Three lines at the largest size that gives three. Any word too long for
+    // its own line is accepted rather than looped on forever.
+    if (lines.length <= 3 || size === 44) return { size, html: lines.join("<br>") };
+  }
+  return { size: 44, html: words.join("<br>") };
+}
+
+function page({ front, name, span }: Subject): string {
+  const title = headline(
+    name === null ? ["CARDS", "OF", "CRONOS"] : [...name.split(/\s+/), "CARDS"],
+  );
+
   const wall = SET.map(
     (card) =>
       `<img src="${SITE}/render/${card.id}.webp" loading="eager" decoding="sync" alt="">`,
@@ -188,7 +246,7 @@ function page(): string {
   }
   h1 {
     font-family: "Archivo Black", sans-serif;
-    font-size: 92px; line-height: 0.92; color: #fff; margin-top: 16px;
+    font-size: ${title.size}px; line-height: 0.94; color: #fff; margin-top: 16px;
     letter-spacing: -0.015em;
   }
   .count {
@@ -208,27 +266,27 @@ function page(): string {
   <div class="tint"></div>
   <div class="fan">${heroes}</div>
   <div class="say">
-    <div class="eyebrow">${NAME === null ? "SET 01 · CRONOS" : "CARDS OF CRONOS · SET 01"}</div>
-    <h1>${NAME === null ? "CARDS OF<br>CRONOS" : `${NAME}<br>CARDS`}</h1>
-    <div class="count">${front.length} CARDS <span>· ${NAME === null ? "5,603 minted at most" : SPAN}</span></div>
+    <div class="eyebrow">${name === null ? "SET 01 · CRONOS" : "CARDS OF CRONOS · SET 01"}</div>
+    <h1>${title.html}</h1>
+    <div class="count">${front.length} CARDS <span>· ${name === null ? "5,603 minted at most" : span}</span></div>
     <p class="line">${
-      NAME === null
+      name === null
         ? "A trading card game on Cronos. Ten turns, a marketing budget that grows, and the highest market cap wins."
-        : `${NAME} is in the game. ${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`
+        : `${name} is in the game. ${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`
     }</p>
     <div class="url">CARDSOFCRONOS.COM</div>
   </div>
 </body></html>`;
 }
 
-async function main() {
-  const browser = await chromium.launch();
-  const tab = await browser.newPage({
-    viewport: { width: W, height: H },
-    deviceScaleFactor: SCALE,
-  });
-
-  await tab.setContent(page(), { waitUntil: "load" });
+/** One picture, written where it was asked for. Returns what it weighs. */
+async function shoot(
+  tab: import("playwright").Page,
+  subject: Subject,
+  out: string,
+  alsoPng: boolean,
+): Promise<number> {
+  await tab.setContent(page(subject), { waitUntil: "load" });
   // Every card decoded before the shutter. `load` fires when the requests are
   // done, which is not the same as the pixels being on screen — and a wall with
   // forty holes in it is the shape this would fail in.
@@ -238,28 +296,58 @@ async function main() {
       [...document.images].map((img) => (img.complete ? null : img.decode().catch(() => null))),
     );
   });
-  await tab.waitForTimeout(600);
+  await tab.waitForTimeout(alsoPng ? 600 : 250);
 
   const png = await tab.screenshot({ type: "png" });
-  await browser.close();
-  writeFileSync(OUT, png);
+  if (alsoPng) writeFileSync(out.replace(/\.jpe?g$/i, ".png"), png);
 
-  // And a JPEG beside it, because X refuses a PNG over five megabytes and a
-  // wall of four hundred pictures lands at four point nine. Quality 92 puts the
-  // same image at about a fifth of that, and nothing here is a flat colour or a
-  // hard gradient — the two things JPEG actually spoils.
-  const jpg = OUT.replace(/\.png$/i, ".jpg");
+  // JPEG is the one to post: X refuses a PNG over five megabytes and a wall of
+  // four hundred pictures lands at four point nine. Quality 92 puts the same
+  // image at about a fifth of that, and nothing here is a flat colour or a hard
+  // gradient — the two things JPEG actually spoils.
+  const jpg = out.replace(/\.png$/i, ".jpg");
   await sharp(png).jpeg({ quality: 92, chromaSubsampling: "4:4:4" }).toFile(jpg);
+  return statSync(jpg).size;
+}
 
-  const size = (n: number) => `${(n / 1024 / 1024).toFixed(1)} MB`;
-  const { size: jpgSize } = await sharp(jpg).metadata().then(async () => ({
-    size: (await import("node:fs")).statSync(jpg).size,
-  }));
+const mb = (n: number) => `${(n / 1024 / 1024).toFixed(1)} MB`;
+
+async function main() {
+  const browser = await chromium.launch();
+  const tab = await browser.newPage({
+    viewport: { width: W, height: H },
+    deviceScaleFactor: SCALE,
+  });
+
+  if (ALL) {
+    // One browser and one tab for all of them. The wall is four hundred and
+    // forty-eight requests; served once, the rest come out of the browser's own
+    // cache, which is the difference between twenty minutes and two.
+    mkdirSync("promo", { recursive: true });
+    let total = 0;
+    for (const [i, family] of PROJECTS.entries()) {
+      const subject = subjectOf(family);
+      const out = `promo/${family}-cards.jpg`;
+      const size = await shoot(tab, subject, out, false);
+      total += size;
+      console.error(
+        `  ${String(i + 1).padStart(2)}/${PROJECTS.length}  ${out.padEnd(34)} ${mb(size)}  ${subject.name}`,
+      );
+    }
+    await browser.close();
+    console.log(`\n  ${PROJECTS.length} pictures in promo/, ${mb(total)} in all\n`);
+    return;
+  }
+
+  const subject = subjectOf(FAMILY);
+  const size = await shoot(tab, subject, OUT, true);
+  await browser.close();
+
   console.log(
-    `\n  ${OUT}  ${W * SCALE}x${H * SCALE}  ${size(png.length)}  ·  ${SET.length} in the wall` +
-      `, ${front.length} in front${NAME === null ? "" : ` (${NAME})`}`,
+    `\n  ${OUT}  ${W * SCALE}x${H * SCALE}  ·  ${SET.length} in the wall` +
+      `, ${subject.front.length} in front${subject.name === null ? "" : ` (${subject.name})`}`,
   );
-  console.log(`  ${jpg}  ${size(jpgSize)}  — this is the one to post\n`);
+  console.log(`  ${OUT.replace(/\.png$/i, ".jpg")}  ${mb(size)}  — this is the one to post\n`);
 }
 
 main().catch((error) => {
