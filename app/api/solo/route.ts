@@ -134,12 +134,15 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, already: true, yourMC: yours, theirMC: theirs, won });
   }
 
-  const hook = env().DISCORD_SOLO;
+  // The board's own channel, falling back to the market's. Falling back rather
+  // than going quiet: a result nobody hears about is worse than one in the
+  // wrong room, and a board added without its secret set should still be heard.
+  const hook = env()[board.channel] ?? env().DISCORD_SOLO;
   if (hook) {
     const name = typeof deckName === "string" && deckName.trim() !== "" ? deckName.trim() : null;
     await post(hook, [
       {
-        author: from("Cards of Cronos · the market", "https://cardsofcronos.com/play"),
+        author: from(`Cards of Cronos · ${board.name.toLowerCase()}`, "https://cardsofcronos.com/play"),
         title:
           won === null
             ? `⚖️  ${short(wallet)} drew with ${board.name}`

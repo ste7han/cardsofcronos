@@ -91,6 +91,14 @@ export interface Board {
    */
   shareBps: number;
   /**
+   * The Worker secret holding the webhook this board's results go to.
+   *
+   * A name and not a URL: a webhook is a password — anybody holding one can
+   * post into that channel as that webhook, for ever — so it lives in a secret
+   * and this file names which one. lib/discord.ts says the same thing.
+   */
+  channel: "DISCORD_SOLO" | "DISCORD_PVE_LIONS";
+  /**
    * A second pot, in another token, filled by the entries above.
    *
    * The weekly $CROCARD pot is the one every board shares. This is a board's
@@ -121,6 +129,7 @@ export const BOARDS: readonly Board[] = [
     entry: null,
     // A quarter, unchanged since the pot was deployed.
     shareBps: 2_500,
+    channel: "DISCORD_SOLO",
     alsoPays: null,
   },
   {
@@ -159,6 +168,10 @@ export const BOARDS: readonly Board[] = [
      * twice, out of the free board's share.
      */
     shareBps: 1_000,
+    // Its own room. This board costs money, pays its own token and keeps its own
+    // leaderboard; its results were landing in the channel named after the free
+    // one, where every line had to be read twice to see which board it was.
+    channel: "DISCORD_PVE_LIONS",
     alsoPays: { contract: CONTRACTS.lionPot, token: LION, symbol: "$LION" },
   },
 ];

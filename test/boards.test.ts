@@ -100,6 +100,27 @@ describe("the boards", () => {
     }
   });
 
+  it("gives a board with its own pot its own channel", () => {
+    // A board with an entry fee and a prize of its own is its own competition.
+    // Its results went to the channel named after the free board, where every
+    // line had to be read twice to see which one it was about — the same thing
+    // lib/pve.ts warns about for leaderboards, one room instead of one table.
+    for (const board of BOARDS) {
+      if (board.alsoPays === null) continue;
+      expect(board.channel, `${board.id} shares a channel with the free board`)
+        .not.toBe("DISCORD_SOLO");
+    }
+  });
+
+  it("names a secret rather than carrying a webhook", () => {
+    // A webhook is a password: anybody holding one can post into that channel
+    // as that webhook, for ever. This file is in the repository.
+    for (const board of BOARDS) {
+      expect(board.channel).toMatch(/^DISCORD_[A-Z_]+$/);
+      expect(board.channel).not.toMatch(/https?:/);
+    }
+  });
+
   it("keeps the plain board called what every existing score is filed under", () => {
     // db/schema.sql defaults the column to 'bot' so the rows written before
     // boards existed stay where they are. Renaming it here orphans all of them.

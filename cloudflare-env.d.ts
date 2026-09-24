@@ -66,6 +66,18 @@ interface CloudflareEnv {
    */
   DISCORD_SOLO?: string;
   /**
+   * Loaded Lions results, in their own channel.
+   *
+   * A board with its own entry fee and its own prize pot is its own
+   * competition, and putting its results in the channel named after the market
+   * was the same mistake as one leaderboard for two boards — every reader has
+   * to remember which one a line is about.
+   *
+   * Unset falls back to DISCORD_SOLO rather than going quiet: a result nobody
+   * hears about is worse than one in the wrong room.
+   */
+  DISCORD_PVE_LIONS?: string;
+  /**
    * Where a finished PvP match is announced, split by what was at stake.
    *
    * Two channels because they are two different things to watch: a friendly is
