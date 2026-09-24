@@ -77,6 +77,19 @@ export interface Board {
    */
   entry: { cro: number; contract: string | null } | null;
   /**
+   * What this board plays for out of the SHARED weekly pot, in basis points.
+   *
+   * Here rather than only on chain, so it can be read, checked and changed in
+   * one place — scripts/board-share.ts is what pushes it, and it pushes this.
+   * A number that lives only in a transaction somebody once sent is a number
+   * nobody can look up.
+   *
+   * They do not have to add up to a hundred per cent and should not: what is not
+   * shared out stays in the pot and grows. A board's OWN pot is not here,
+   * because it is always all of it — one board in it, nothing to divide.
+   */
+  shareBps: number;
+  /**
    * A second pot, in another token, filled by the entries above.
    *
    * The weekly $CROCARD pot is the one every board shares. This is a board's
@@ -99,6 +112,8 @@ export const BOARDS: readonly Board[] = [
     face: "supercycle",
     // Free, and it stays free. It is the board anybody can walk up to.
     entry: null,
+    // A quarter, unchanged since the pot was deployed.
+    shareBps: 2_500,
     alsoPays: null,
   },
   {
@@ -128,6 +143,15 @@ export const BOARDS: readonly Board[] = [
     // will remember losing to.
     face: "lions-viii",
     entry: { cro: 10, contract: CONTRACTS.lionEntry },
+    /**
+     * A tenth, down from a quarter on 24 September 2026.
+     *
+     * The maker's call, and the trade is plain: this board stopped being free
+     * and gained a pot of its own that grows every time anybody plays it. A
+     * board that charged AND kept a quarter of the shared pot would be paid for
+     * twice, out of the free board's share.
+     */
+    shareBps: 1_000,
     alsoPays: { contract: CONTRACTS.lionPot, token: LION, symbol: "$LION" },
   },
 ];

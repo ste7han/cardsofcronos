@@ -66,6 +66,40 @@ describe("the boards", () => {
     }
   });
 
+  it("shares out less than the whole pot, so it never runs dry", () => {
+    // The contract refuses more than 10,000 between them, and refusing is the
+    // wrong place to find out: setShare reverts on the second of two and leaves
+    // the shares half moved. What is not shared out stays in the pot and grows,
+    // which is the point rather than a leftover.
+    const out = BOARDS.reduce((sum, board) => sum + board.shareBps, 0);
+    expect(out).toBeGreaterThan(0);
+    expect(out).toBeLessThanOrEqual(10_000);
+  });
+
+  it("does not let a paid board keep a free board's share as well", () => {
+    // A board that charges to play AND takes a quarter of the shared pot is
+    // paid for twice, the second time out of the free board's share. The trade
+    // for charging is a smaller slice of what everybody plays for.
+    for (const board of BOARDS) {
+      if (board.entry === null) continue;
+      const free = BOARDS.filter((other) => other.entry === null);
+      for (const other of free) {
+        expect(board.shareBps, `${board.id} charges and takes as much as ${other.id}`)
+          .toBeLessThan(other.shareBps);
+      }
+    }
+  });
+
+  it("gives a board with its own pot a reason to have one", () => {
+    // Its own pot is all of it — one board in it, nothing to divide — so a
+    // board that charges has somewhere for the money to land that is not the
+    // pot everybody else is already playing for.
+    for (const board of BOARDS) {
+      if (board.entry === null) continue;
+      expect(board.alsoPays, `${board.id} charges but pays nothing extra`).not.toBeNull();
+    }
+  });
+
   it("keeps the plain board called what every existing score is filed under", () => {
     // db/schema.sql defaults the column to 'bot' so the rows written before
     // boards existed stay where they are. Renaming it here orphans all of them.
