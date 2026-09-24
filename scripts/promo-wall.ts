@@ -5,6 +5,7 @@
 //   npx tsx scripts/promo-wall.ts cronus.png --family cronus
 //   npx tsx scripts/promo-wall.ts --all            every project, into promo/
 //   npx tsx scripts/promo-wall.ts --all --square   the same, 1600x1600
+//   npx tsx scripts/promo-wall.ts lions.png --board lions
 //
 // Defaults to 1600x900 at 2x, which is the shape X gives the most room to and
 // twice the pixels, so it stays sharp instead of being upscaled by the browser.
@@ -39,6 +40,10 @@ import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 import sharp from "sharp";
 
+import { BOARDS, boardOf, type Board } from "@/data/boards";
+import { CONTRACTS } from "@/lib/revenue";
+import { asWord } from "@/lib/publisher";
+import { selector } from "@/lib/evm-tx";
 import { SET } from "@/lib/set";
 import { SHOWCASE } from "../app/page";
 
@@ -62,6 +67,8 @@ const SITE = "http://localhost:3000";
 const FAMILY = flag("family");
 /** Every project, one picture each, into promo/. */
 const ALL = args.includes("--all");
+/** One board: its opponent's cards, and what it costs and pays. */
+const BOARD = flag("board");
 
 /**
  * Which project a card belongs to, or none.
@@ -85,6 +92,21 @@ interface Subject {
   name: string | null;
   /** Lowest to highest rarity in the fan, which is what a family shows off. */
   span: string;
+  /**
+   * A board, when the picture is about a board rather than a family.
+   *
+   * The same cards either way — a board's opponent IS its family — and a
+   * different set of words. A family picture says "these exist"; a board
+   * picture says what it costs to sit down opposite them and what is in the pot,
+   * which are the two questions somebody deciding has.
+   */
+  board?: {
+    name: string;
+    cro: number;
+    /** Read off the chain, so the numbers on the picture are the ones on the site. */
+    pot: string;
+    lion: string;
+  };
 }
 
 function subjectOf(family: string | null): Subject {
@@ -175,9 +197,13 @@ function headline(words: string[]): { size: number; html: string } {
   return { size: px(44), html: words.join("<br>") };
 }
 
-function page({ front, name, span }: Subject): string {
+function page({ front, name, span, board }: Subject): string {
   const title = headline(
-    name === null ? ["CARDS", "OF", "CRONOS"] : [...name.split(/\s+/), "CARDS"],
+    board !== undefined
+      ? ["BEAT", "THE", ...board.name.split(/\s+/).slice(-1)]
+      : name === null
+        ? ["CARDS", "OF", "CRONOS"]
+        : [...name.split(/\s+/), "CARDS"],
   );
 
   // The set for the general picture, the family for a family one. Folding the
@@ -185,8 +211,22 @@ function page({ front, name, span }: Subject): string {
   // whole game announced "5 CARDS" — the size of its own fan.
   const counts = name === null ? SET.length : front.length;
 
+  /** What the board costs and pays, as the two lines under the headline. */
+  const money =
+    board === undefined
+      ? null
+      : {
+          // The pot first. It is the reason to look, and it is the number that
+          // grows — leading with the fee leads with the reason not to.
+          big: `${board.pot} $CROCARD`,
+          small: `+ ${board.lion} $LION in the pot · ${board.cro} CRO a go`,
+        };
+
   const blurb =
-    name === null
+    board !== undefined
+      ? `Their whole family, and a deck built to hold them. Beat it and your best market cap of ` +
+        `the week takes the pot. Half of every entry buys $LION straight into it.`
+      : name === null
       ? "A trading card game on Cronos. Ten turns, a marketing budget that grows, and the highest market cap wins."
       : `${name} is in the game. ${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`;
 
@@ -323,7 +363,12 @@ function page({ front, name, span }: Subject): string {
     font-family: "Archivo Black", sans-serif;
     font-size: ${px(38)}px; color: #ffd700; margin-top: ${px(22)}px; letter-spacing: 0.01em;
   }
-  .count span { color: #9d93b8; font-size: ${px(20)}px; font-family: "JetBrains Mono", monospace; }
+  /* Its own line, not trailing the number. Inline it wrapped mid-phrase out of
+     the column and into the fan — and the longer the pot grows, the worse. */
+  .count span {
+    display: block; margin-top: ${px(8)}px;
+    color: #9d93b8; font-size: ${px(20)}px; font-family: "JetBrains Mono", monospace;
+  }
   p.line {
     font-size: ${px(18)}px; line-height: 1.6; color: #9d93b8; margin-top: ${px(18)}px;
     ${STACKED ? `max-width: ${px(720)}px; margin-left: auto; margin-right: auto;` : `max-width: ${SAY_WIDTH}px;`}
@@ -337,10 +382,16 @@ function page({ front, name, span }: Subject): string {
   <div class="tint"></div>
   <div class="fan">${heroes}</div>
   <div class="say">
-    <div class="eyebrow">${name === null ? "SET 01 · CRONOS" : "CARDS OF CRONOS · SET 01"}</div>
+    <div class="eyebrow">${
+      board !== undefined
+        ? "CARDS OF CRONOS · WEEKLY"
+        : name === null
+          ? "SET 01 · CRONOS"
+          : "CARDS OF CRONOS · SET 01"
+    }</div>
     <h1>${title.html}</h1>
-    <div class="count">${counts} CARDS <span>· ${
-      name === null ? "5,603 minted at most" : span
+    <div class="count">${money !== null ? money.big : `${counts} CARDS`}<span>${
+      money !== null ? money.small : `· ${name === null ? "5,603 minted at most" : span}`
     }</span></div>
     ${STACKED ? "" : `<p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div>`}
   </div>
@@ -385,6 +436,47 @@ async function shoot(
 
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(1)} MB`;
 
+/**
+ * What a board costs and what is in its pots, read off Cronos.
+ *
+ * Off the chain rather than out of a file, because these are the numbers on the
+ * site and a picture quoting a different one is worse than a picture quoting
+ * none. They move — the $LION pot grows every time anybody plays — so the
+ * answer is fetched the moment the picture is made.
+ */
+async function moneyOf(board: Board): Promise<Subject["board"]> {
+  const call = async (to: string, data: string) => {
+    const answer = await fetch("https://evm.cronos.org", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, "latest"] }),
+    });
+    const body = (await answer.json()) as { result?: string; error?: { message: string } };
+    if (body.error) throw new Error(body.error.message);
+    return BigInt(body.result ?? "0x0");
+  };
+  const whole = (n: bigint) => (n / 10n ** 18n).toLocaleString("en-US");
+
+  const pot = CONTRACTS.pot;
+  const share = pot === null ? 0n : await call(pot, selector("nextPrize(bytes32)") + asWord(board.id));
+
+  const own = board.alsoPays?.contract ?? null;
+  const lion =
+    own === null || board.alsoPays === null
+      ? 0n
+      : await call(
+          board.alsoPays.token,
+          selector("balanceOf(address)") + own.replace(/^0x/, "").toLowerCase().padStart(64, "0"),
+        );
+
+  return {
+    name: board.name,
+    cro: board.entry?.cro ?? 0,
+    pot: whole(share),
+    lion: whole(lion),
+  };
+}
+
 async function main() {
   const browser = await chromium.launch();
   const tab = await browser.newPage({
@@ -415,7 +507,22 @@ async function main() {
     return;
   }
 
-  const subject = subjectOf(FAMILY);
+  let subject: Subject;
+  if (BOARD !== null) {
+    const board = boardOf(BOARD);
+    if (board === undefined) {
+      throw new Error(`No board "${BOARD}". There are: ${BOARDS.map((b) => b.id).join(", ")}`);
+    }
+    // A board's opponent IS a family, so the fan is the same cards a
+    // --family run would draw. Taken off the board rather than named again,
+    // so the picture cannot show a deck the board does not field.
+    if (board.opponent.kind !== "family") {
+      throw new Error(`Board "${board.id}" fields a generated deck, so there is no family to show.`);
+    }
+    subject = { ...subjectOf(board.opponent.family), board: await moneyOf(board) };
+  } else {
+    subject = subjectOf(FAMILY);
+  }
   const size = await shoot(tab, subject, OUT, true);
   await browser.close();
 
