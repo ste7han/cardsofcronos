@@ -26,6 +26,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { CardArt } from "@/components/CardArt";
+import { CardBack } from "@/components/CardBack";
 import { cardById } from "@/engine/helpers";
 import { INDEX } from "@/lib/set";
 import { proofOf } from "@/lib/session";
@@ -36,8 +37,8 @@ export interface Answer {
   id: string;
   name: string;
   blurb: string;
-  /** The card whose art is this board's face. See data/boards.ts. */
-  face: string;
+  /** One of its cards, or the back of one. See data/boards.ts. */
+  face: { kind: "card"; id: string } | { kind: "back" };
   /** Whole $LION needed for a score to count, or null when anyone's counts. */
   needs: number | null;
   /** This board's share of the pot, in base units, or null when unreadable. */
@@ -118,7 +119,13 @@ export function Opponents({
               type="button"
               onClick={() => onChoose(board)}
               className={cx(
-                "group relative overflow-hidden border text-left transition-colors",
+                // A column, so the face sits at the top of the card. The grid
+                // stretches both buttons to the taller one's height, and a
+                // <button> centres what is inside it — so the board with less
+                // to say got thirty-nine pixels of nothing above its picture
+                // and the other did not. Two cards that should look alike,
+                // differing by how much text happens to be under them.
+                "group relative flex flex-col overflow-hidden border text-left transition-colors",
                 picked
                   ? "border-pump bg-pump/10"
                   : "border-line bg-panel hover:border-line-strong",
@@ -128,14 +135,37 @@ export function Opponents({
                   were choosing between and nothing about why you would want
                   either — on the page that starts a card game, showing no
                   cards at all. */}
-              <div className="relative h-32 w-full overflow-hidden">
-                <CardArt
-                  card={cardById(INDEX, board.face)}
-                  className={cx(
-                    "h-full w-full transition-transform duration-500",
-                    picked ? "scale-105" : "group-hover:scale-105",
-                  )}
-                />
+              <div className="relative h-32 w-full shrink-0 overflow-hidden">
+                {board.face.kind === "back" ? (
+                  // Filling the band, which crops the back to its middle —
+                  // where the mark is. Standing it upright shows the whole card
+                  // and was worse: at this height an upright back is ninety
+                  // pixels wide and the mark inside it is thirty, so the thing
+                  // that makes it this game is the thing you cannot see.
+                  //
+                  // The shape is on this box rather than passed to CardBack,
+                  // which carries its own `h-full w-full`: a class handed in
+                  // beside those does not reliably win, because which applies
+                  // comes down to the order Tailwind emits them in and not the
+                  // order in the attribute. The same trap is written down in
+                  // DeckBuilder about a `block` and a `hidden`.
+                  <div
+                    className={cx(
+                      "h-full w-full transition-transform duration-500",
+                      picked ? "scale-105" : "group-hover:scale-105",
+                    )}
+                  >
+                    <CardBack size="large" />
+                  </div>
+                ) : (
+                  <CardArt
+                    card={cardById(INDEX, board.face.id)}
+                    className={cx(
+                      "h-full w-full transition-transform duration-500",
+                      picked ? "scale-105" : "group-hover:scale-105",
+                    )}
+                  />
+                )}
                 {/* The panel colour poured back over the bottom, so the words
                     sit on the card's own ground rather than on a hard edge
                     between a picture and a box. */}

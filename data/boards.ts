@@ -54,7 +54,7 @@ export interface Board {
   /** Whole $LION needed to play for this board's prize, or null for open. */
   needs: { token: string; whole: number } | null;
   /**
-   * The card whose art is this board's face.
+   * What this board's face is: one of its cards, or the back of one.
    *
    * A portrait rather than a name in a box. This is a card game and the page
    * that starts one was showing no cards at all — two bordered rectangles of
@@ -62,9 +62,10 @@ export interface Board {
    * you would want either.
    *
    * A card id and not a file, so the picture is one this set already ships and
-   * cannot go missing: /api/boards resolves it the same way a card does.
+   * cannot go missing. "back" is the drawn card back — components/CardBack.tsx,
+   * the game's own mark — for a board that is not any one project.
    */
-  face: string;
+  face: { kind: "card"; id: string } | { kind: "back" };
   /**
    * What one go costs, and the contract that takes it, or null for free.
    *
@@ -107,9 +108,15 @@ export const BOARDS: readonly Board[] = [
     blurb: "The ordinary opponent, playing one of the themed decks.",
     opponent: { kind: "preset" },
     needs: null,
-    // The market itself, as a card. It plays the themed decks, so no single
-    // project stands for it — an event does.
-    face: "supercycle",
+    /**
+     * The back of a card, which is the game's own mark.
+     *
+     * It was the Supercycle event, on the reasoning that the market is not any
+     * one project so an event should stand for it. The art on that card is a
+     * bicycle — a cycle, which is the joke — and next to a Loaded Lion it read
+     * as a cycling card rather than as this game.
+     */
+    face: { kind: "back" },
     // Free, and it stays free. It is the board anybody can walk up to.
     entry: null,
     // A quarter, unchanged since the pot was deployed.
@@ -141,7 +148,7 @@ export const BOARDS: readonly Board[] = [
     needs: { token: LION, whole: 100_000 },
     // Their mythic: the one card the deck is built around, and the one somebody
     // will remember losing to.
-    face: "lions-viii",
+    face: { kind: "card", id: "lions-viii" },
     entry: { cro: 10, contract: CONTRACTS.lionEntry },
     /**
      * A tenth, down from a quarter on 24 September 2026.
@@ -180,8 +187,11 @@ export function boardOf(id: string): Board | undefined {
     // picker would fall back to a bordered rectangle of text and look exactly
     // like it did before the faces existed. data/cards.ts rather than lib/set,
     // which imports this file back.
-    if (!CARDS.some((card) => card.id === board.face)) {
-      throw new Error(`Board "${board.id}" has face "${board.face}", which is not a card.`);
+    // Narrowed into a const, because `board.face` inside the callback is not the
+    // same expression TypeScript just narrowed and it widens straight back.
+    const face = board.face;
+    if (face.kind === "card" && !CARDS.some((card) => card.id === face.id)) {
+      throw new Error(`Board "${board.id}" has face "${face.id}", which is not a card.`);
     }
     if (seen.has(board.id)) throw new Error(`Two boards share the id "${board.id}".`);
     seen.add(board.id);
