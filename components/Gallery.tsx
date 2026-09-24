@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CardSizePicker } from "@/components/CardSizePicker";
 import { sizeOf, useCardSize } from "@/lib/card-size";
 import { CardView } from "@/components/CardView";
-import { searchText } from "@/engine/format";
+import { cardLabel, searchText } from "@/engine/format";
 import type { Card, CardType, Rarity, Sector } from "@/engine/types";
 import { CARD_TYPES, RARITIES, SECTORS } from "@/engine/types";
 import { cx } from "@/lib/cx";
@@ -17,6 +17,8 @@ export function Gallery({ cards }: { cards: readonly Card[] }) {
   const [rarity, setRarity] = useState<Rarity | null>(null);
   const [sector, setSector] = useState<Sector | null>(null);
   const [search, setSearch] = useState("");
+  /** The card being looked at up close, or none. */
+  const [open, setOpen] = useState<Card | null>(null);
   const [size, setSize] = useCardSize();
   const step = sizeOf(size);
 
@@ -108,10 +110,89 @@ export function Gallery({ cards }: { cards: readonly Card[] }) {
           }}
         >
           {visible.map((card) => (
-            <CardView key={card.id} card={card} compact={step.compact} />
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => setOpen(card)}
+              aria-label={`Look at ${cardLabel(card)} up close`}
+              className="block w-full cursor-zoom-in text-left focus-visible:outline focus-visible:outline-1 focus-visible:outline-pump"
+            >
+              <CardView card={card} compact={step.compact} />
+            </button>
           ))}
         </div>
       )}
+
+      {open !== null && <CloseUp card={open} onClose={() => setOpen(null)} />}
+    </div>
+  );
+}
+
+/**
+ * One card, big, with the file behind it.
+ *
+ * The close-up is the easy half. The half worth building is the link under it:
+ * the picture is composed here out of HTML — a frame, an art window, a footer of
+ * stats — so there was no such thing as "the card as an image", and anybody who
+ * wanted to post their card somewhere had to screenshot it and crop.
+ *
+ * public/render holds the real file, 1072x1676, and it is the same picture the
+ * NFT uses rather than a second drawing of one: scripts/render-cards.ts
+ * screenshots /card/<id>/image, which renders this same CardView. So what
+ * somebody saves and posts is what they hold.
+ */
+function CloseUp({ card, onClose }: { card: Card; onClose: () => void }) {
+  // Escape closes it, the way every other overlay in this project does.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/85 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={cardLabel(card)}
+    >
+      <div
+        className="w-[min(360px,calc(100vw-2rem))]"
+        // Clicking the card should not close it. Only the ground around it.
+        onClick={(event) => event.stopPropagation()}
+      >
+        <CardView card={card} />
+
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          {/* `download` rather than a plain link, so it saves instead of
+              opening — the difference between "here is the file" and "here is
+              a tab you now have to right-click". */}
+          <a
+            href={`/render/${card.id}.webp`}
+            download={`${card.id}.webp`}
+            onClick={(event) => event.stopPropagation()}
+            className="glow-pump border border-pump bg-pump/10 px-4 py-2 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
+          >
+            SAVE THE IMAGE
+          </a>
+          <a
+            href={`/render/${card.id}.webp`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            className="border border-line-strong px-4 py-2 text-[10px] tracking-[0.18em] text-muted transition-colors hover:border-line-strong hover:text-fg"
+          >
+            OPEN IT
+          </a>
+        </div>
+
+        <p className="mt-2 text-center text-[9px] leading-relaxed text-faint">
+          1072 × 1676, the same picture the NFT uses. Click anywhere or press Esc to close.
+        </p>
+      </div>
     </div>
   );
 }

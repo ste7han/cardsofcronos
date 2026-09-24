@@ -30,6 +30,10 @@ wallet*.json
 # for good. Large art belongs in storage with a CDN in front of it.
 public/art/*
 !public/art/README.md
+# The full-size card images, for the same reason: served, not source, and sixty
+# megabytes of it. See public/render/README.md for how to make them again.
+public/render/*
+!public/render/README.md
 
 # The originals, kept as the master for anything printed or re-rendered later.
 # npm run art:optimise moves them here as it converts, and the NFT collections a
