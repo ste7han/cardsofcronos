@@ -20,7 +20,6 @@
     "art": "tsx scripts/art.ts",
     "art:optimise": "tsx scripts/optimise-art.ts",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "promo": "tsx scripts/promo-gif.ts",
     "logo": "tsx scripts/logo.tsx",
     "banner": "tsx scripts/banner.ts",
     "baseline": "tsx scripts/baseline.ts",
@@ -46,7 +45,8 @@
     "allowlist-root": "tsx scripts/nft/allowlist-root.ts",
     "promo-wall": "tsx scripts/promo-wall.ts",
     "promo-all": "tsx scripts/promo-wall.ts --all",
-    "promo-all-square": "tsx scripts/promo-wall.ts --all --square"
+    "promo-all-square": "tsx scripts/promo-wall.ts --all --square",
+    "promo-banner": "tsx scripts/promo-banner.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
