@@ -36,7 +36,7 @@ import { BOARDS } from "@/data/boards";
 import { asWord } from "@/lib/publisher";
 import { encodeParameters, type AbiType } from "@/lib/abi";
 import { PUBLIC_RPCS } from "@/lib/cronos";
-import { BURN_ADDRESS, CONTRACTS, CROCARD, LION, ROUTER } from "@/lib/revenue";
+import { BURN_ADDRESS, CONTRACTS, CROCARD, LION, LION_ROUTER, ROUTER } from "@/lib/revenue";
 import { CRONOS_CHAIN_ID, addressOfKey, selector, signTransaction, word } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
 
@@ -183,6 +183,34 @@ async function main(): Promise<void> {
     }
   }
 
+  /**
+   * A run that adds to a set has to be the wallet that owns the set.
+   *
+   * Whoever deploys becomes the owner, and an owner that is not the one holding
+   * the others is a rescue hatch on a different key — which is the one thing
+   * lib/revenue.ts says about the deployer wallet: it is cold, it never touches
+   * a server, and that is the whole reason it can be trusted with the hatches.
+   *
+   * Asked of the chain and not of the file. I reached for the wrong address on a
+   * dry run because it was the one in front of me, and the only thing that
+   * caught it was the maker reading the output. A number in a log is not a
+   * check.
+   */
+  async function mustOwnTheRest(what: string) {
+    const existing = CONTRACTS.pot ?? CONTRACTS.splitter;
+    if (existing === null) return;
+    const owner = normalise(
+      "0x" + (await rpc("eth_call", [{ to: existing, data: selector("owner()") }, "latest"])).slice(-40),
+    );
+    if (owner !== normalise(deployer)) {
+      throw new Error(
+        `${what} would be owned by ${deployer}, and everything already deployed is owned by ` +
+          `${owner}. Deploy from that wallet, or the new contracts have their hatches on a ` +
+          `different key from the old ones.`,
+      );
+    }
+  }
+
   const splitterOnly = process.argv.includes("--splitter-only");
   if (splitterOnly) {
     if (CONTRACTS.splitter !== null) {
@@ -208,6 +236,8 @@ async function main(): Promise<void> {
   if (chainId !== CRONOS_CHAIN_ID) {
     throw new Error(`That endpoint is chain ${chainId}, not Cronos (${CRONOS_CHAIN_ID}).`);
   }
+
+  if (lionsOnly || escrowOnly || nftOnly || splitterOnly) await mustOwnTheRest("This");
 
   const balance = BigInt(await rpc("eth_getBalance", [deployer, "latest"]));
   // Said out loud before anything is sent. If this is not the wallet you meant,
@@ -387,6 +417,7 @@ async function main(): Promise<void> {
     found.splitter = CONTRACTS.splitter!;
     console.log(`reusing splitter  ${found.splitter}`);
     console.log(`prize token       ${LION}  ($LION)`);
+    console.log(`prize router      ${LION_ROUTER}  (VVS, not EbisusBay)`);
 
     // The pot first. The door is given its address and it is immutable there, so
     // the order is not a preference — it is the only order that can work.
@@ -397,7 +428,10 @@ async function main(): Promise<void> {
       found.splitter,
       found.lionPot,
       LION,
-      ROUTER,
+      // NOT the router above. That one is where $CROCARD trades; $LION's
+      // EbisusBay pool holds four tokens and would sell an entry dust without
+      // reverting. See the note on LION_ROUTER.
+      LION_ROUTER,
     ]);
 
     console.log("\n--lions-only: a second prize pot holding $LION, and the door that buys into");

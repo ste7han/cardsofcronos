@@ -80,6 +80,35 @@ export const TEAM_WALLET = normalise("0x42BCc1355808aDf2344773c54e364257911CcC99
 export const ROUTER = normalise("0xa476c97d8d1ec7d263eafa0039645dbe0cc0a012");
 
 /**
+ * The DEX $LION is bought through, which is NOT the one above.
+ *
+ * ── WHY THERE ARE TWO ────────────────────────────────────────────────────────
+ *
+ * The note on ROUTER says EbisusBay is the only venue that can trade the token,
+ * and that is true of $CROCARD. It is not a fact about Cronos, and reading it as
+ * one nearly deployed contracts/BoardEntry.sol against a dead pool.
+ *
+ * Measured on 24 September 2026, before anything was deployed:
+ *
+ *   EbisusBay   0 WCRO / 4 LION          5 CRO buys 3.77 $LION, 98% price impact
+ *   VVS         17.5M WCRO / 731M LION   5 CRO buys 208 $LION, 0.000% impact
+ *
+ * Fifty-five times the token for the same money. The EbisusBay pair exists — so
+ * `getPair` finds it and `getAmountsOut` answers — and holds about four $LION in
+ * total, which is the worst shape this could have been in: it does not revert,
+ * it quietly pays dust.
+ *
+ * ── AND WHY THE SLIPPAGE GUARD WOULD NOT HAVE CAUGHT IT ──────────────────────
+ *
+ * BoardEntry floors a swap at 95% of what the router quotes. The router quoted
+ * 3.77, the swap would have delivered 3.77, and the guard would have passed it.
+ * A slippage guard is protection against the price moving between the quote and
+ * the trade; it is no protection at all against a bad venue. The only check for
+ * that is the one done here, by hand, before the router went into an immutable.
+ */
+export const LION_ROUTER = normalise("0x145863Eb42Cf62847A6Ca784e6416C1682b1b2Ae");
+
+/**
  * The CROCARD/WCRO pool the router trades against.
  *
  * Named here because of what it holds: 399 million $CROCARD, thirty-nine per
