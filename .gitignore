@@ -83,3 +83,10 @@ data/holders-progress.json
 # github.com/LoadedLions/OpenLicense, dus opnieuw op te halen en niets om te
 # bewaren in de geschiedenis.
 lions-keuze/
+
+# Pictures made for posting. They are output, not source: scripts/banner.ts and
+# scripts/promo-wall.ts remake them in a minute, and a five-megabyte PNG in the
+# history is there for good.
+/banner.png
+/promo-wall.png
+/promo-wall.jpg
