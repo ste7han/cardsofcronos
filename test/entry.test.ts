@@ -17,6 +17,7 @@ import { describe, expect, it } from "vitest";
 import { BOARDS, boardOf } from "@/data/boards";
 import { ENTERED, sparEntries, spendEntry } from "@/lib/entries";
 import { enterData, feeWei } from "@/lib/entry-pay";
+import { CONTRACTS } from "@/lib/revenue";
 import { topicOf } from "@/lib/evm-tx";
 import { selector } from "@/lib/evm-tx";
 import type { Database, Statement } from "@/lib/store";
@@ -141,15 +142,24 @@ describe("the boards as they stand", () => {
     expect(boardOf("bot")!.alsoPays).toBeNull();
   });
 
-  it("has a fee on Loaded Lions with nowhere to pay it yet", () => {
-    // The state today: the contract is written and not deployed. Everything
-    // that reads this treats a null contract as free, because half a paywall —
-    // a fee announced with nothing behind it — would take money nobody could
-    // spend.
+  it("charges ten CRO on Loaded Lions, at a door that exists", () => {
+    // This asserted the opposite until the contracts went up on 24 September:
+    // a fee with a null door, which everything treats as free. Both halves were
+    // worth a test, and this one is the half that can now take money — so it
+    // checks there is somewhere for it to go rather than that there is not.
     const lions = boardOf("lions")!;
     expect(lions.entry?.cro).toBe(10);
-    expect(lions.entry?.contract).toBeNull();
+    expect(lions.entry?.contract).toBe(CONTRACTS.lionEntry);
+    expect(lions.entry?.contract).not.toBeNull();
     expect(lions.alsoPays?.symbol).toBe("$LION");
+    expect(lions.alsoPays?.contract).toBe(CONTRACTS.lionPot);
+  });
+
+  it("pays a board's own pot out of a different contract from the shared one", () => {
+    // Two PrizePots, and they must never be the same address: one holds
+    // $CROCARD for every board and one holds $LION for this one. Closing a week
+    // on the same contract twice is a prize paid out of the wrong token.
+    expect(CONTRACTS.lionPot).not.toBe(CONTRACTS.pot);
   });
 
   it("keeps the $LION holding rule only while there is no gate", () => {

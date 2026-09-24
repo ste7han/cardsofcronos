@@ -418,17 +418,23 @@ export const CONTRACTS: Record<
    * pays out of both — its share of the weekly $CROCARD, and the $LION that
    * entries bought — and a week is closed on each with the same winner.
    */
-  lionPot: null,
+  lionPot: "0x9d36366c590557c2b9adc7f8056f0c796e4c5e85",
 
   /**
    * The door to that board. contracts/BoardEntry.sol.
    *
-   * Null is a board that cannot be paid for, which is why the fee is not shown
-   * and the old $LION holding rule still stands until this exists. Half a
-   * feature is worse than neither: a paywall announced with nothing behind it
-   * would take money nobody could spend.
+   * Deployed 24 September 2026 and read back off chain before being recorded
+   * here: ten CRO a go, half of it to the splitter above and half buying $LION
+   * into the pot above, through VVS and not EbisusBay — see LION_ROUTER for the
+   * measurement that settled which. One entry buys 208 $LION at the price on
+   * the day.
+   *
+   * It was null until now, and null is a board that cannot be paid for: the fee
+   * is not shown and the old $LION holding rule still stands. Half a feature is
+   * worse than neither, and a paywall announced with nothing behind it would
+   * take money nobody could spend.
    */
-  lionEntry: null,
+  lionEntry: "0x4da8271c5b578346c48505f846b2b438b39c8e31",
 };
 
 for (const [name, address] of Object.entries(CONTRACTS)) {

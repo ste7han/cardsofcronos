@@ -25,12 +25,20 @@ export async function POST(request: Request) {
   const wallet = await signedInWallet(request);
 
   const boards = await Promise.all(
-    BOARDS.map(async (board) => ({
+    BOARDS.map(async (board) => {
+      /** A board with a door that exists is gated on the door and nothing else. */
+      const paid = board.entry?.contract != null;
+      return {
       id: board.id,
       name: board.name,
       blurb: board.blurb,
       face: board.face,
-      needs: board.needs === null ? null : board.needs.whole,
+      // A board you pay for has no holding rule, and this is the second place
+      // that has to know it. lib/gate.ts got it right and this did not: the
+      // signed-out sentence below is built straight from `needs` and never asks
+      // lockedOut, so a visitor who was not signed in kept being told to hold a
+      // hundred thousand $LION for a board that now costs ten CRO.
+      needs: paid || board.needs === null ? null : board.needs.whole,
       prize: await prizeFor(board.id),
       // What a go costs, and how many this wallet has already paid for. Null
       // where the board is free, and null where the contract is not deployed —
@@ -53,12 +61,13 @@ export async function POST(request: Request) {
               pot: await potOf(board.alsoPays.token, board.alsoPays.contract),
             },
       shut:
-        board.needs === null
+        paid || board.needs === null
           ? null
           : wallet === null
             ? `Sign in with a wallet holding ${board.needs.whole.toLocaleString("en-US")} $LION for this to count.`
             : await lockedOut(board, wallet),
-    })),
+      };
+    }),
   );
 
   return Response.json({ boards });
