@@ -34,6 +34,7 @@
 
 import type { Card } from "@/engine/types";
 import { buildDeckPreferring, buildFamilyDeck } from "@/engine/deck";
+import { CARDS } from "@/data/cards";
 import { PRESET_DECKS } from "@/data/preset-decks";
 import { LION } from "@/lib/revenue";
 
@@ -52,6 +53,18 @@ export interface Board {
   opponent: { kind: "preset" } | { kind: "family"; family: string; seed: number };
   /** Whole $LION needed to play for this board's prize, or null for open. */
   needs: { token: string; whole: number } | null;
+  /**
+   * The card whose art is this board's face.
+   *
+   * A portrait rather than a name in a box. This is a card game and the page
+   * that starts one was showing no cards at all — two bordered rectangles of
+   * text, which told you what you were choosing between and nothing about why
+   * you would want either.
+   *
+   * A card id and not a file, so the picture is one this set already ships and
+   * cannot go missing: /api/boards resolves it the same way a card does.
+   */
+  face: string;
 }
 
 export const BOARDS: readonly Board[] = [
@@ -61,6 +74,9 @@ export const BOARDS: readonly Board[] = [
     blurb: "The ordinary opponent, playing one of the themed decks.",
     opponent: { kind: "preset" },
     needs: null,
+    // The market itself, as a card. It plays the themed decks, so no single
+    // project stands for it — an event does.
+    face: "supercycle",
   },
   {
     id: "lions",
@@ -85,6 +101,9 @@ export const BOARDS: readonly Board[] = [
      * playing, so it is easier to start low and mean it.
      */
     needs: { token: LION, whole: 100_000 },
+    // Their mythic: the one card the deck is built around, and the one somebody
+    // will remember losing to.
+    face: "lions-viii",
   },
 ];
 
@@ -107,6 +126,13 @@ export function boardOf(id: string): Board | undefined {
       throw new Error(
         `Board id "${board.id}" is not up to 31 lowercase bytes, which is what a bytes32 holds.`,
       );
+    }
+    // A face that is not a card draws nothing, and draws nothing quietly: the
+    // picker would fall back to a bordered rectangle of text and look exactly
+    // like it did before the faces existed. data/cards.ts rather than lib/set,
+    // which imports this file back.
+    if (!CARDS.some((card) => card.id === board.face)) {
+      throw new Error(`Board "${board.id}" has face "${board.face}", which is not a card.`);
     }
     if (seen.has(board.id)) throw new Error(`Two boards share the id "${board.id}".`);
     seen.add(board.id);

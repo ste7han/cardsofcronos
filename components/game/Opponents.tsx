@@ -25,6 +25,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { CardArt } from "@/components/CardArt";
+import { cardById } from "@/engine/helpers";
+import { INDEX } from "@/lib/set";
 import { proofOf } from "@/lib/session";
 import { toTokens } from "@/lib/units";
 import { cx } from "@/lib/cx";
@@ -33,6 +36,8 @@ interface Answer {
   id: string;
   name: string;
   blurb: string;
+  /** The card whose art is this board's face. See data/boards.ts. */
+  face: string;
   /** Whole $LION needed for a score to count, or null when anyone's counts. */
   needs: number | null;
   /** This board's share of the pot, in base units, or null when unreadable. */
@@ -92,12 +97,32 @@ export function Opponents({
               type="button"
               onClick={() => onChoose(board.id)}
               className={cx(
-                "border p-5 text-left transition-colors",
+                "group relative overflow-hidden border text-left transition-colors",
                 picked
                   ? "border-pump bg-pump/10"
                   : "border-line bg-panel hover:border-line-strong",
               )}
             >
+              {/* The face. Two bordered rectangles of text told you what you
+                  were choosing between and nothing about why you would want
+                  either — on the page that starts a card game, showing no
+                  cards at all. */}
+              <div className="relative h-32 w-full overflow-hidden">
+                <CardArt
+                  card={cardById(INDEX, board.face)}
+                  className={cx(
+                    "h-full w-full transition-transform duration-500",
+                    picked ? "scale-105" : "group-hover:scale-105",
+                  )}
+                />
+                {/* The panel colour poured back over the bottom, so the words
+                    sit on the card's own ground rather than on a hard edge
+                    between a picture and a box. */}
+                <div className="absolute inset-0 bg-gradient-to-t from-panel via-panel/40 to-transparent" />
+                {picked && <div className="absolute inset-0 bg-pump/15" />}
+              </div>
+
+              <div className="p-5 pt-3">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className={cx("display text-lg", picked && "text-pump")}>{board.name}</span>
                 {picked && (
@@ -138,6 +163,7 @@ export function Opponents({
               {!counts && (
                 <p className="mt-2.5 text-[10px] leading-relaxed text-gold">{board.shut}</p>
               )}
+              </div>
             </button>
           );
         })}

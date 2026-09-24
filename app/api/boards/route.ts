@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       id: board.id,
       name: board.name,
       blurb: board.blurb,
+      face: board.face,
       needs: board.needs === null ? null : board.needs.whole,
       prize: await prizeFor(board.id),
       shut:
