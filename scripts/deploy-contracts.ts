@@ -318,7 +318,10 @@ async function main(): Promise<void> {
   // Only when a collection is actually being deployed. Both of the narrow modes
   // leave it alone, and demanding a baseURI from a run that does not touch it
   // stops the run for a reason that does not apply to it.
-  if (!baseURI && broadcast && !moneyOnly && !splitterOnly && !escrowOnly) {
+  // Only for a run that actually deploys the collection. Every "--x-only" flag
+  // has to be listed here, and adding one and forgetting this is a deploy that
+  // stops on a check about art it is not deploying.
+  if (!baseURI && broadcast && !moneyOnly && !splitterOnly && !escrowOnly && !lionsOnly) {
     throw new Error("Pass --base-uri. A collection deployed without one has no art.");
   }
 
