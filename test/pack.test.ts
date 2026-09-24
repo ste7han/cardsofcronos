@@ -52,7 +52,13 @@ describe("buying cards", () => {
     });
   });
 
-  it("promises nothing above the odds", () => {
+  // A minute, and set here rather than globally for the reason match.test.ts
+  // gives: a timeout is a claim about hardware. This opens four thousand
+  // purchases and takes two or three seconds on a quiet machine — comfortably
+  // under vitest's default five, and over it on a busy one. It failed once that
+  // way, on a run where a browser and a deploy were going at the same time, and
+  // a test that fails when the laptop is busy is a test that gets ignored.
+  it("promises nothing above the odds", { timeout: 60_000 }, () => {
     // The replacement for "always has at least one rare or better". The
     // guarantee is gone, and the way to show it is gone is that its opposite
     // happens: ten straight commons, which the old draw made impossible.
