@@ -46,7 +46,8 @@
     "promo-wall": "tsx scripts/promo-wall.ts",
     "promo-all": "tsx scripts/promo-wall.ts --all",
     "promo-all-square": "tsx scripts/promo-wall.ts --all --square",
-    "promo-banner": "tsx scripts/promo-banner.ts"
+    "promo-banner": "tsx scripts/promo-banner.ts",
+    "promo-og": "tsx scripts/promo-wall.ts app/opengraph-image.jpg 1200 630 1"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",

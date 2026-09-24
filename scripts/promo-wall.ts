@@ -118,8 +118,26 @@ const RATIO = 1676 / 1072;
  */
 const STACKED = W / H < 1.3;
 
-/** How much of the frame the words take when they are beside the fan. */
-const SAY_WIDTH = STACKED ? W - 160 : 520;
+/**
+ * Everything typographic is a multiple of this.
+ *
+ * The sizes were written in pixels against a 1600-wide frame, which made them
+ * right at exactly one size. Asked for 1200x630 — what a link preview is — the
+ * same numbers came out half again too big: the headline filled the column, the
+ * count line wrapped mid-phrase and the paragraph ran to four lines. A frame
+ * twice as wide should get twice the type, not the same type with less room.
+ */
+const K = W / 1600;
+const px = (n: number) => Math.round(n * K);
+
+/**
+ * How much of the frame the words take when they are beside the fan.
+ *
+ * A share of the width rather than a fixed 520. At 1600 the two are the same
+ * number; at 1200 — the size a link preview is — a fixed column took forty-three
+ * per cent of the frame and squeezed the cards down to nothing.
+ */
+const SAY_WIDTH = STACKED ? W - 160 : Math.round(W * 0.33);
 
 /**
  * A headline size that fits the name it was given.
@@ -137,7 +155,7 @@ const SAY_WIDTH = STACKED ? W - 160 : 520;
  * too wide for the column, which this cannot produce.
  */
 function headline(words: string[]): { size: number; html: string } {
-  for (let size = 92; size >= 44; size -= 4) {
+  for (let size = px(92); size >= px(44); size -= Math.max(2, px(4))) {
     const perLine = Math.floor(SAY_WIDTH / (size * 0.62));
     const lines: string[] = [];
     let line = "";
@@ -152,15 +170,20 @@ function headline(words: string[]): { size: number; html: string } {
     if (line !== "") lines.push(line);
     // Three lines at the largest size that gives three. Any word too long for
     // its own line is accepted rather than looped on forever.
-    if (lines.length <= 3 || size === 44) return { size, html: lines.join("<br>") };
+    if (lines.length <= 3 || size <= px(44)) return { size, html: lines.join("<br>") };
   }
-  return { size: 44, html: words.join("<br>") };
+  return { size: px(44), html: words.join("<br>") };
 }
 
 function page({ front, name, span }: Subject): string {
   const title = headline(
     name === null ? ["CARDS", "OF", "CRONOS"] : [...name.split(/\s+/), "CARDS"],
   );
+
+  // The set for the general picture, the family for a family one. Folding the
+  // two into one line made this front.length for both, so the picture for the
+  // whole game announced "5 CARDS" — the size of its own fan.
+  const counts = name === null ? SET.length : front.length;
 
   const blurb =
     name === null
@@ -267,46 +290,46 @@ function page({ front, name, span }: Subject): string {
           // the fan, so its visual middle sits below its box — centring the box
           // left more air above the cards than below them.
           "left: 50%; top: 47%; transform: translate(-50%, -50%) rotate(-2deg);"
-        : "right: 95px; top: 50%; transform: translateY(-50%) rotate(-3deg);"
+        : `right: ${px(95)}px; top: 50%; transform: translateY(-50%) rotate(-3deg);`
     }
     display: flex; align-items: center;
   }
   .hero {
     aspect-ratio: 1072 / 1676;
-    border-radius: 10px;
+    border-radius: ${px(10)}px;
     box-shadow: 0 28px 60px rgba(0,0,0,0.75), 0 0 0 1px rgba(157,78,221,0.35);
   }
 
   /* ── THE WORDS ─────────────────────────────────────────────────────────── */
   .say {
     position: absolute; width: ${SAY_WIDTH}px;
-    ${STACKED ? "left: 80px; top: 88px; text-align: center;" : "left: 64px; top: 50%; transform: translateY(-50%);"}
+    ${STACKED ? `left: ${px(80)}px; top: ${px(88)}px; text-align: center;` : `left: ${px(64)}px; top: 50%; transform: translateY(-50%);`}
   }
   /* Stacked, the closing lines go under the fan rather than under the title —
      otherwise the whole block sits above the cards and the bottom third is a
      dimmed wall with nothing on it. */
   .foot {
-    position: absolute; left: 80px; bottom: 92px; width: ${SAY_WIDTH}px; text-align: center;
+    position: absolute; left: ${px(80)}px; bottom: ${px(92)}px; width: ${SAY_WIDTH}px; text-align: center;
   }
   .eyebrow {
-    font-size: 15px; letter-spacing: 0.34em; color: #ffd700; font-weight: 700;
+    font-size: ${px(15)}px; letter-spacing: 0.34em; color: #ffd700; font-weight: 700;
   }
   h1 {
     font-family: "Archivo Black", sans-serif;
-    font-size: ${title.size}px; line-height: 0.94; color: #fff; margin-top: 16px;
+    font-size: ${title.size}px; line-height: 0.94; color: #fff; margin-top: ${px(16)}px;
     letter-spacing: -0.015em;
   }
   .count {
     font-family: "Archivo Black", sans-serif;
-    font-size: 38px; color: #ffd700; margin-top: 22px; letter-spacing: 0.01em;
+    font-size: ${px(38)}px; color: #ffd700; margin-top: ${px(22)}px; letter-spacing: 0.01em;
   }
-  .count span { color: #9d93b8; font-size: 20px; font-family: "JetBrains Mono", monospace; }
+  .count span { color: #9d93b8; font-size: ${px(20)}px; font-family: "JetBrains Mono", monospace; }
   p.line {
-    font-size: 18px; line-height: 1.6; color: #9d93b8; margin-top: 18px;
-    ${STACKED ? "max-width: 720px; margin-left: auto; margin-right: auto;" : "max-width: 520px;"}
+    font-size: ${px(18)}px; line-height: 1.6; color: #9d93b8; margin-top: ${px(18)}px;
+    ${STACKED ? `max-width: ${px(720)}px; margin-left: auto; margin-right: auto;` : `max-width: ${SAY_WIDTH}px;`}
   }
   .url {
-    margin-top: 30px; font-size: 17px; letter-spacing: 0.22em; color: #00e08a; font-weight: 700;
+    margin-top: ${px(30)}px; font-size: ${px(17)}px; letter-spacing: 0.22em; color: #00e08a; font-weight: 700;
   }
 </style></head><body>
   <div class="wall">${wall}</div>
@@ -316,7 +339,9 @@ function page({ front, name, span }: Subject): string {
   <div class="say">
     <div class="eyebrow">${name === null ? "SET 01 · CRONOS" : "CARDS OF CRONOS · SET 01"}</div>
     <h1>${title.html}</h1>
-    <div class="count">${front.length} CARDS <span>· ${name === null ? "5,603 minted at most" : span}</span></div>
+    <div class="count">${counts} CARDS <span>· ${
+      name === null ? "5,603 minted at most" : span
+    }</span></div>
     ${STACKED ? "" : `<p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div>`}
   </div>
   ${STACKED ? `<div class="foot"><p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div></div>` : ""}
@@ -343,7 +368,11 @@ async function shoot(
   await tab.waitForTimeout(alsoPng ? 600 : 250);
 
   const png = await tab.screenshot({ type: "png" });
-  if (alsoPng) writeFileSync(out.replace(/\.jpe?g$/i, ".png"), png);
+  // Asked for a .jpg, you get a .jpg and nothing else. Writing the PNG beside it
+  // regardless is how `npm run promo-og` would leave both app/opengraph-image.png
+  // and .jpg in place — two files matching one Next.js file convention, with
+  // nothing saying which one a scraper is going to be handed.
+  if (alsoPng && !/\.jpe?g$/i.test(out)) writeFileSync(out.replace(/\.png$/i, ".png"), png);
 
   // JPEG is the one to post: X refuses a PNG over five megabytes and a wall of
   // four hundred pictures lands at four point nine. Quality 92 puts the same
