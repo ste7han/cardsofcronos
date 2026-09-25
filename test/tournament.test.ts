@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { weekEnds, weekOf } from "@/lib/tournament";
+import { marginOf, weekEnds, weekOf } from "@/lib/tournament";
 
 /**
  * The week boundary decides who wins a prize, so it is worth more than a glance.
@@ -60,5 +61,55 @@ describe("when the week closes", () => {
     const now = utc("2026-09-17T09:00:00Z");
     expect(weekOf(now)).toBe("2026-W38");
     expect(weekOf(weekEnds(now))).toBe("2026-W39");
+  });
+});
+
+describe("what puts you top of the board", () => {
+  /**
+   * THE MARGIN, and not your own market cap.
+   *
+   * The table ranked on `mc` alone, which asks the wrong question: a player who
+   * scraped a win with a big number beat one who took the opponent apart with a
+   * smaller one. That rewards the matches where the bot happened to do badly —
+   * the half of the result the player did not control — and it is the maker's
+   * call that it should not.
+   *
+   * These are arithmetic rather than queries on purpose. The ordering lives in
+   * SQL and the "is this your new best" test lives in an ON CONFLICT clause, and
+   * both have to agree with this; a third answer here is what marginOf exists to
+   * stop.
+   */
+  it("is the gap between the two figures", () => {
+    expect(marginOf({ mc: 3_000_000, opponentMC: 500_000 })).toBe(2_500_000);
+  });
+
+  it("puts a bigger win above a bigger number", () => {
+    // The whole point, in one comparison. Scraping past a strong bot with four
+    // million used to win the week; dismantling a weak one with two million
+    // now does.
+    const scraped = { mc: 4_000_000, opponentMC: 3_800_000 };
+    const dismantled = { mc: 2_000_000, opponentMC: 100_000 };
+    expect(marginOf(dismantled)).toBeGreaterThan(marginOf(scraped));
+    expect(dismantled.mc).toBeLessThan(scraped.mc);
+  });
+
+  it("is what the table is ordered by, and what a personal best is measured on", () => {
+    // Two places in SQL, and they have to be the same rule. Ordering on the gap
+    // while keeping the highest market cap would mean the row a wallet keeps is
+    // not the row that would have won.
+    const source = readFileSync(new URL("../lib/tournament.ts", import.meta.url), "utf8");
+    expect(source).toContain("ORDER BY mc - opponent_mc DESC, at ASC");
+    expect(source).toContain(
+      "WHERE excluded.mc - excluded.opponent_mc > tournament.mc - tournament.opponent_mc",
+    );
+    expect(source).not.toContain("ORDER BY mc DESC");
+    expect(source).not.toContain("WHERE excluded.mc > tournament.mc");
+  });
+
+  it("is the number the page shows, not a different one", () => {
+    // It printed the player's own market cap in gold and ordered by the gap, so
+    // the top row did not always carry the largest figure on screen.
+    const page = readFileSync(new URL("../components/Tournament.tsx", import.meta.url), "utf8");
+    expect(page).toContain("marginOf(one)");
   });
 });

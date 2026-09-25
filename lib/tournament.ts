@@ -72,6 +72,10 @@ export function weekEnds(now: number): number {
  * Best and not latest. A board where your last match replaces your best one
  * punishes playing again, which is the opposite of what a weekly prize is for.
  *
+ * Best BY MARGIN, the same as the ranking — see marginOf. Keeping the highest
+ * market cap while ranking on the gap would be two answers to "which of your
+ * matches was your best", and the row kept would not be the row that wins.
+ *
  * Returns whether this became the wallet's score for the week.
  */
 export async function record(
@@ -87,12 +91,34 @@ export async function record(
        ON CONFLICT (wallet, week, board) DO UPDATE SET
          mc = excluded.mc, opponent_mc = excluded.opponent_mc,
          seed = excluded.seed, at = excluded.at
-       WHERE excluded.mc > tournament.mc
+       WHERE excluded.mc - excluded.opponent_mc > tournament.mc - tournament.opponent_mc
        RETURNING wallet`,
     )
     .bind(score.wallet, week, board, score.mc, score.opponentMC, score.seed, score.at)
     .first<{ wallet: string }>();
   return written !== null;
+}
+
+/**
+ * What a result is worth on the board: THE MARGIN, not your own market cap.
+ *
+ * The board ranked on `mc` alone, and that asks the wrong question. A player who
+ * scraped a win with a big number beat a player who took the opponent apart with
+ * a smaller one — so the table rewarded the matches where the bot happened to do
+ * well, which is the half of the result the player did not control.
+ *
+ * The question a board about beating an opponent asks is who handled him best,
+ * and that is the gap between the two figures. TCG's lib/pve.ts says the same
+ * thing about the same table, and the maker asked for it here.
+ *
+ * Only a won match is ever recorded — app/api/tournament refuses the rest — so
+ * every margin on this board is positive. It is the size of the win that ranks.
+ *
+ * Computed rather than stored. A third column holding the difference of two
+ * others is a third thing that can disagree with them.
+ */
+export function marginOf(score: { mc: number; opponentMC: number }): number {
+  return score.mc - score.opponentMC;
 }
 
 /** One board's table for a week, best first. */
@@ -105,7 +131,8 @@ export async function standings(
   const { results } = await db
     .prepare(
       `SELECT wallet, mc, opponent_mc AS opponentMC, seed, at
-         FROM tournament WHERE week = ? AND board = ? ORDER BY mc DESC, at ASC LIMIT ?`,
+         FROM tournament WHERE week = ? AND board = ?
+        ORDER BY mc - opponent_mc DESC, at ASC LIMIT ?`,
     )
     .bind(week, board, limit)
     .all<Score>();

@@ -106,7 +106,7 @@ export function Opponents({
       <h2 className="display mt-2 text-2xl">PICK AN OPPONENT</h2>
       <p className="mt-2 max-w-xl text-[11px] leading-relaxed text-muted">
         Each one has its own weekly leaderboard and its own share of the prize pot. Beat it, and
-        your best market cap of the week goes on that board.
+        the week's biggest win goes on that board — how far you beat it by, not what you scored.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">

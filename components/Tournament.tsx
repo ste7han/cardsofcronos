@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { formatMCExact } from "@/engine/format";
+import { marginOf } from "@/lib/tournament";
 import { EXPLORER, toTokens } from "@/lib/units";
 import { MOST_PER_WEEK, STREAMS } from "@/lib/revenue";
 
@@ -139,7 +140,7 @@ export function Tournament() {
       </div>
 
       <p className="mt-4 max-w-2xl text-[11px] leading-relaxed text-muted">
-        Beat an opponent and your best market cap of the week goes on that opponent&rsquo;s board.
+        Beat an opponent and the week&rsquo;s biggest win goes on that opponent&rsquo;s board. What counts is the gap between your market cap and theirs, not your own figure — a narrow win on a big board is a worse result than taking them apart.
         Each board plays for its own share of the pot. Weeks run Monday 00:00 UTC to Sunday
         midnight, and the prize is paid out on the Monday.
       </p>
@@ -295,12 +296,17 @@ function OneBoard({ board }: { board: BoardRow }) {
                 <span className="display w-6 shrink-0 text-sm text-faint tabular-nums">{i + 1}</span>
                 <span className="truncate font-mono text-[11px]">{short(one.wallet)}</span>
               </span>
+              {/* The margin is the big number, because the margin is what the
+                  order is. It showed the player's own market cap in gold with
+                  the bot's underneath, while ranking on the gap between them —
+                  so the table read as though the top row had the largest figure
+                  on it, and sometimes it did not. */}
               <span className="shrink-0 text-right">
                 <span className="display block text-sm tabular-nums text-gold">
-                  {formatMCExact(one.mc)}
+                  +{formatMCExact(marginOf(one))}
                 </span>
                 <span className="block text-[9px] tracking-[0.14em] text-faint tabular-nums">
-                  BOT {formatMCExact(one.opponentMC)}
+                  {formatMCExact(one.mc)} vs {formatMCExact(one.opponentMC)}
                 </span>
               </span>
             </li>
