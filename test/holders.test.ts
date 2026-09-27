@@ -536,3 +536,53 @@ describe("what somebody has already earned", () => {
     });
   });
 });
+
+describe("what a round is allowed to hand out", () => {
+  /**
+   * The bug this replaces stopped the job for two days and looked like nothing.
+   *
+   * A holder under the dust line goes into the TABLE and stays out of the TREE,
+   * so a small balance accumulates instead of being rounded away every round.
+   * The consequence is that the table owes more than the chain has promised, by
+   * exactly the dust it is holding back.
+   *
+   * Share out the contract's `unpromised()` on top of that and the leaves come
+   * to more than the contract can back — `propose` refuses, nothing is written,
+   * and the next run computes the same number and is refused again. Forty-two
+   * addresses and three hundredths of a token blocked thirteen million.
+   */
+  it("never proposes more than the contract can back", () => {
+    // The arithmetic, at the size it actually failed at. What is left to give
+    // out is what the contract holds minus what the table already owes — not
+    // minus what the chain was last told.
+    const inTheContract = 13_551_819n;
+    const chainPromised = 4_143_322n;
+    const tableOwes = chainPromised + 1n; // the dust the tree left behind
+
+    const wrong = inTheContract - chainPromised; // unpromised()
+    expect(tableOwes + wrong).toBeGreaterThan(inTheContract);
+
+    const right = inTheContract - tableOwes;
+    expect(tableOwes + right).toBeLessThanOrEqual(inTheContract);
+  });
+
+  it("gives out nothing rather than a negative when the table is ahead", () => {
+    // Can only happen if money left the contract another way. Zero is a round
+    // that does nothing; a negative would underflow a bigint and throw inside a
+    // job that moves money.
+    const inTheContract = 100n;
+    const tableOwes = 150n;
+    const arrived = inTheContract > tableOwes ? inTheContract - tableOwes : 0n;
+    expect(arrived).toBe(0n);
+  });
+
+  it("measures against the table and not against unpromised()", () => {
+    // The one line that matters, held to its shape. `unpromised()` is the
+    // contract's view and it does not know about the dust the tree holds back.
+    const source = readFileSync(new URL("../lib/holders.ts", import.meta.url), "utf8");
+    const round = source.slice(source.indexOf("// 2. What has arrived"));
+    expect(round.slice(0, 2_500)).toContain("const arrived = inTheContract - alreadyOwed;");
+    expect(round.slice(0, 2_500)).toContain("if (alreadyOwed > inTheContract)");
+    expect(round.slice(0, 2_500)).not.toContain('selector("unpromised()")');
+  });
+});

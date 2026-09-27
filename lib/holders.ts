@@ -383,12 +383,43 @@ async function keepTheTreeMoving(
     return { ...none, adopted, why: why.join("; ") };
   }
 
-  // 2. What has arrived and is promised to nobody. Read after the adopt, so the
-  //    tree that just went live is counted as promised and its amount is not
-  //    handed out a second time.
-  const arrived = BigInt(
-    await rpc<string>(rpcs, "eth_call", [{ to: drop, data: selector("unpromised()") }, "latest"]),
-  );
+  // 2. What has arrived and is owed to nobody.
+  //
+  //    MEASURED AGAINST OUR OWN TABLE, not against the contract's `unpromised()`.
+  //    Those are different numbers and the difference is what stopped this job
+  //    dead for two days.
+  //
+  //    A holder under the dust line is written into the table and left out of
+  //    the tree — deliberately, so a small balance accumulates across rounds
+  //    instead of being rounded away every time. That means the table owes more
+  //    than the chain has ever promised, by exactly the dust it is holding back.
+  //    Sharing out `unpromised()` then builds a tree worth (what the chain
+  //    promised + what arrived), while the leaves carry (what the TABLE owes +
+  //    what arrived) — bigger by the dust, over what the contract can back, and
+  //    refused. Every run, with the gap never closing.
+  //
+  //    Forty-two addresses and 0.032 $CROCARD did it, against a pot of thirteen
+  //    million. The fix is to hand out what is left after what we already owe.
+  const [paidSoFar, heldNow] = await Promise.all([
+    rpc<string>(rpcs, "eth_call", [{ to: drop, data: selector("paidOut()") }, "latest"]),
+    rpc<string>(rpcs, "eth_call", [
+      { to: CROCARD, data: selector("balanceOf(address)") + word(drop) },
+      "latest",
+    ]),
+  ]);
+  const inTheContract = BigInt(paidSoFar) + BigInt(heldNow);
+  const alreadyOwed = (await earners(db)).reduce((sum, one) => sum + one.entitlement, 0n);
+  if (alreadyOwed > inTheContract) {
+    // The table owes more than has ever reached the contract. Nothing can be
+    // shared out on top of that, and saying "nothing arrived" would describe
+    // the symptom — this is a table to look at rather than a quiet round.
+    why.push(
+      `the table says ${alreadyOwed} is owed and the contract has had ${inTheContract}. ` +
+        `Nothing proposed; the table needs looking at rather than another run.`,
+    );
+    return { ...none, adopted, why: why.join("; ") };
+  }
+  const arrived = inTheContract - alreadyOwed;
   if (arrived < LEAST_WORTH_SHARING) {
     why.push(`only ${arrived} has arrived, which is not worth a tree`);
     return { ...none, adopted, why: why.join("; ") };
