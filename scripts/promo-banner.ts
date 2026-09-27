@@ -102,7 +102,14 @@ async function main() {
   // much, and it is the difference between seeing a project's art and seeing
   // its left edge.
   const OVERLAP = 0.4;
-  const cardW = Math.min(190, Math.floor(room / (FAN.length - (FAN.length - 1) * OVERLAP)));
+  // Capped by the height as well as by the width. A card is 1.563 times as tall
+  // as it is wide, so on a shorter banner the width that fits across is a height
+  // that does not: at 1600x400 the row filled three quarters of the frame and
+  // the words underneath it had nowhere to sit. 62% leaves the same margin above
+  // and below that 1500x500 has, and at that size this cap does not bite — 190
+  // is still the smaller of the two, so the DexScreener header is unchanged.
+  const tallest = Math.floor((H * 0.62) / 1.563);
+  const cardW = Math.min(190, tallest, Math.floor(room / (FAN.length - (FAN.length - 1) * OVERLAP)));
   const step = Math.round(cardW * (1 - OVERLAP));
   const rowW = cardW + step * (FAN.length - 1);
 

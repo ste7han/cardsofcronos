@@ -50,7 +50,8 @@
     "promo-og": "tsx scripts/promo-wall.ts app/opengraph-image.jpg 1200 630 1",
     "board-share": "tsx scripts/board-share.ts",
     "promo-board": "tsx scripts/promo-wall.ts",
-    "daily-why": "tsx scripts/daily-why.ts"
+    "daily-why": "tsx scripts/daily-why.ts",
+    "drop-dry-run": "tsx scripts/drop-dry-run.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
