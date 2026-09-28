@@ -113,3 +113,46 @@ describe("what puts you top of the board", () => {
     expect(page).toContain("marginOf(one)");
   });
 });
+
+describe("the weeks already closed", () => {
+  /**
+   * Three places pick a winner and they were not all changed together.
+   *
+   * `standings` orders the live board, `winnerOf` reads the top of it and is
+   * what the money follows, and `pastWeeks` writes the history. When the board
+   * moved from market cap to margin the first two moved and the third did not,
+   * so a closed week credited whoever posted the biggest number while the payout
+   * went to whoever beat the opponent by the most. Both were displayed. Neither
+   * said it was answering a different question.
+   *
+   * It applies to every board, so the Loaded Lions week was wrong the same way
+   * the market week was.
+   */
+  it("credits the biggest margin, the way the board and the payout do", () => {
+    const source = readFileSync(new URL("../lib/tournament.ts", import.meta.url), "utf8");
+    const history = source.slice(source.indexOf("export async function pastWeeks"));
+    const query = history.slice(0, history.indexOf("\n}\n"));
+
+    expect(query).toContain("MAX(m.mc - m.opponent_mc)");
+    // The tie-break has to be on the same figure, or a week with two equal
+    // margins picks the earliest row of a different comparison.
+    expect(query).toContain("m.mc - m.opponent_mc = t.mc - t.opponent_mc");
+    // And none of the old rule left anywhere in it.
+    expect(query).not.toContain("MAX(m.mc)");
+    expect(query).not.toMatch(/AND m\.mc = t\.mc/);
+  });
+
+  it("is board-agnostic, so both boards get the same rule", () => {
+    // One query with the board bound in, rather than a branch per board. The
+    // lions board is not special here and must never become so: two rules would
+    // mean two answers to "who won", which is the bug above with more places to
+    // hide.
+    const source = readFileSync(new URL("../lib/tournament.ts", import.meta.url), "utf8");
+    for (const fn of ["standings", "pastWeeks", "winnerOf"]) {
+      const body = source.slice(source.indexOf(`export async function ${fn}`));
+      const upTo = body.slice(0, body.indexOf("\n}\n"));
+      expect(upTo, `${fn} should take the board as an argument`).toMatch(/board: string/);
+      expect(upTo, `${fn} should not name a board`).not.toMatch(/"lions"|'lions'/);
+    }
+  });
+});

@@ -108,6 +108,38 @@ export class FeedTicker {
     } catch (error) {
       console.error("[alarm] the daily job could not be reached", error);
     }
+
+    // And the weekly one, which closes the week that ended and pays whoever won
+    // each board.
+    //
+    // ── WHY IT IS HERE, LATE ─────────────────────────────────────────────────
+    //
+    // It was not. When the cron stopped firing on 21 September 2026 this alarm
+    // was written to take over and was given the feed and the daily job. Nobody
+    // noticed the third one, because a weekly job failing looks like nothing for
+    // six days and like a quiet Monday on the seventh — so no week was closed
+    // for a month and nobody was paid, while both boards went on showing a
+    // winner all week. Whatever is added to the crons in wrangler.jsonc belongs
+    // here too, or it does not run at all.
+    //
+    // `soft` means "close last week if last week is not closed yet", so this is
+    // one read on the fifty-nine minutes an hour when there is nothing to do.
+    try {
+      const answer = await fetch("https://cardsofcronos.com/api/cron/weekly", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-cron-secret": this.env.CRON_SECRET ?? "",
+        },
+        body: JSON.stringify({ soft: true }),
+      });
+      const said = await answer.text();
+      if (!said.includes('"tooSoon":true')) {
+        console.log(`[alarm] weekly -> ${answer.status} ${said}`);
+      }
+    } catch (error) {
+      console.error("[alarm] the weekly job could not be reached", error);
+    }
   }
 }
 

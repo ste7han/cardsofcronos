@@ -70,3 +70,49 @@ describe("the crons", () => {
     expect(declared().length).toBeLessThanOrEqual(3);
   });
 });
+
+describe("the alarm, which is what actually runs them", () => {
+  /**
+   * The crons are a list Cloudflare stopped reading.
+   *
+   * It stopped invoking this Worker's scheduled handler on 21 September 2026 —
+   * docs/the-discord-feeds.md has what ruling that out took — so the Durable
+   * Object alarm was written to take its place. It was given the feed and the
+   * daily job. The weekly one was missed, and a weekly job that never runs looks
+   * like nothing for six days and like a quiet Monday on the seventh: no week
+   * was closed for a month, nobody was paid, and both boards went on showing a
+   * winner all week with nothing to say it would never be settled.
+   *
+   * So the list above is not the thing that runs. This is.
+   */
+  it("asks for every route the crons declare", () => {
+    const alarm = worker.slice(worker.indexOf("async alarm()"));
+    const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
+    for (const [cron, route] of routed()) {
+      expect(body, `${cron} -> ${route} is declared but the alarm never asks for it`)
+        .toContain(route);
+    }
+  });
+
+  it("sends the secret with each of them", () => {
+    // A call without it is refused, and the refusal looks like a job that ran.
+    const alarm = worker.slice(worker.indexOf("async alarm()"));
+    const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
+    const calls = [...body.matchAll(/fetch\("https:\/\/[^"]+\/api\/cron\/[^"]+"/g)];
+    expect(calls.length).toBe(routed().size);
+    expect([...body.matchAll(/"x-cron-secret"/g)]).toHaveLength(calls.length);
+  });
+
+  it("lets the job it asks more than once an hour decline for itself", () => {
+    // The alarm fires every minute and cannot know whether a job is due. Each
+    // one that is not per-minute work carries `soft`, and the route decides.
+    const alarm = worker.slice(worker.indexOf("async alarm()"));
+    const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
+    const perMinute = [...routed()].filter(([cron]) => cron === "* * * * *").map(([, route]) => route);
+    for (const [, route] of routed()) {
+      if (perMinute.includes(route)) continue;
+      const call = body.slice(body.indexOf(route));
+      expect(call.slice(0, 600), `${route} should say soft`).toContain("soft: true");
+    }
+  });
+});

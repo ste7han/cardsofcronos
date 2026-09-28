@@ -17,9 +17,45 @@
 // is that the route refuses. Which is why it says empty in the message.
 
 import { db, env } from "@/lib/api";
-import { runWeekly } from "@/lib/publisher";
+import { lastWeek, runWeekly } from "@/lib/publisher";
+import { setCursor } from "@/lib/store";
+import type { Database } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * The week this job last closed, filed the way the daily one files its day.
+ *
+ * ── WHY THERE IS A SOFT CALL AT ALL ──────────────────────────────────────────
+ *
+ * This ran off a Cloudflare cron and nothing else. Cloudflare stopped invoking
+ * this Worker's scheduled handler on 21 September 2026; the Durable Object alarm
+ * in worker/index.js was written to replace it and was given the feed and the
+ * daily job — and not this one. So no week was closed for a month and nobody was
+ * paid, while both boards kept showing a winner all week.
+ *
+ * The alarm fires every minute, so it says `soft`: close last week if last week
+ * has not been closed. Once done, the marker says which week it was and the
+ * other fifty-nine calls that hour cost one read each.
+ */
+const RAN = "weekly:ran";
+
+async function alreadyClosed(db: Database, week: string): Promise<boolean> {
+  const row = await db
+    .prepare(`SELECT block FROM cursors WHERE name = ?`)
+    .bind(RAN)
+    .first<{ block: number }>();
+  // The week is stored as its own digits — 2026-W39 becomes 202639 — so "later
+  // than" is a comparison a number can answer and a marker from an older week
+  // never looks like this one.
+  return row !== null && row.block >= weekAsNumber(week);
+}
+
+/** 2026-W39 → 202639. Sorts the way the weeks do, which is all it is for. */
+export function weekAsNumber(week: string): number {
+  const [year, number] = week.split("-W");
+  return Number(year) * 100 + Number(number);
+}
 
 export async function POST(request: Request) {
   // Falsy and not undefined. `wrangler secret put` accepts an empty value and
@@ -41,11 +77,34 @@ export async function POST(request: Request) {
     return Response.json({ error: "No." }, { status: 401 });
   }
 
+  const body = (await request.json().catch(() => ({}))) as { soft?: boolean };
+  const now = Date.now();
+  const week = lastWeek(now);
+
+  if (body.soft === true && (await alreadyClosed(db(), week))) {
+    return Response.json({ ok: true, tooSoon: true, week });
+  }
+
   const ran = await runWeekly(
     db(),
     { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC },
-    Date.now(),
+    now,
   );
+
+  // Marked after, and only when the week is actually settled.
+  //
+  // The daily job claims its slot BEFORE the work, because the alarm asks every
+  // minute and six overlapping runs each added a round of entitlements. Here the
+  // opposite is true: a week closes once, `closeWeek` reverts on a second
+  // attempt, and the expensive mistake is a run that failed halfway and is never
+  // tried again. So a failure leaves the marker alone and the next minute has
+  // another go.
+  //
+  // A week nobody played is settled too, and is marked. Leaving it open would
+  // have this ask both boards who won, every minute, for ever.
+  const settled =
+    ran.skipped === undefined || ran.skipped === "nobody won any board that week";
+  if (settled) await setCursor(db(), RAN, weekAsNumber(week), now);
 
   // Always 200 with what happened. A scheduled job that returns an error for
   // "nobody played last week" is a scheduled job whose alerts get muted, and a

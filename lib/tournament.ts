@@ -161,9 +161,15 @@ export interface PastWeek {
 /**
  * The closed weeks, most recent first, each with its winner and its payout.
  *
- * The winner is picked the same way the live board orders itself — highest
- * market cap, and on a tie whoever got there first. Any other rule here would
- * mean the board showed one name all week and the log showed another.
+ * The winner is picked the same way the live board orders itself — THE BIGGEST
+ * MARGIN, and on a tie whoever got there first. Any other rule here would mean
+ * the board showed one name all week and the log showed another.
+ *
+ * It did exactly that. When the board moved from ranking on market cap to
+ * ranking on margin, `standings` and `winnerOf` moved and this did not, so the
+ * history of closed weeks credited whoever posted the biggest market cap while
+ * the money went to whoever beat the opponent by the most. Two names, one week,
+ * and nothing anywhere saying they were answering different questions.
  *
  * A LEFT JOIN, so a week that has been won but not yet paid appears with a
  * missing payout rather than not appearing. Hiding it would turn an unpaid week
@@ -190,10 +196,11 @@ export async function pastWeeks(
          LEFT JOIN tournament_paid p ON p.week = t.week AND p.board = t.board
         WHERE t.week <> ?
           AND t.board = ?
-          AND t.mc = (SELECT MAX(m.mc) FROM tournament m
+          AND t.mc - t.opponent_mc = (SELECT MAX(m.mc - m.opponent_mc) FROM tournament m
                        WHERE m.week = t.week AND m.board = t.board)
           AND t.at = (SELECT MIN(m.at) FROM tournament m
-                       WHERE m.week = t.week AND m.board = t.board AND m.mc = t.mc)
+                       WHERE m.week = t.week AND m.board = t.board
+                         AND m.mc - m.opponent_mc = t.mc - t.opponent_mc)
         ORDER BY t.week DESC
         LIMIT ?`,
     )
