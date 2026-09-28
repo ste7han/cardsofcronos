@@ -127,8 +127,13 @@ export const BOARDS: readonly Board[] = [
     face: { kind: "back" },
     // Free, and it stays free. It is the board anybody can walk up to.
     entry: null,
-    // A quarter, unchanged since the pot was deployed.
-    shareBps: 2_500,
+    // A tenth. It was a quarter from the day the pot was deployed until
+    // September 2026, and lowering it is not about this board: it leaves more in
+    // the pot at the end of every week. Eighty per cent now rolls over instead
+    // of sixty-five, so the prize somebody plays for next week is bigger than
+    // the one they played for this week, which is the direction a pot wants to
+    // move while a game is finding its players.
+    shareBps: 1_000,
     channel: "DISCORD_SOLO",
     alsoPays: null,
   },

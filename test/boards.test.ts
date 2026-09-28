@@ -76,18 +76,39 @@ describe("the boards", () => {
     expect(out).toBeLessThanOrEqual(10_000);
   });
 
-  it("does not let a paid board keep a free board's share as well", () => {
-    // A board that charges to play AND takes a quarter of the shared pot is
-    // paid for twice, the second time out of the free board's share. The trade
-    // for charging is a smaller slice of what everybody plays for.
+  it("never lets a paid board outrank a free one for the shared pot", () => {
+    // This asked for STRICTLY less, on the reasoning that a board charging to
+    // play and taking as much of the shared pot as a free board is paid for
+    // twice — the second time out of the free board's share.
+    //
+    // What changed is where the second payment comes from. Loaded Lions has a
+    // pot of its own now, filled by its own entry fees and paid in its own
+    // token: charging buys that, not a bigger slice of what everybody plays
+    // for. So equal shares of the shared pot is the honest arrangement, and it
+    // is what the market board dropping from 25% to 10% in September 2026 made
+    // true of both boards.
+    //
+    // MORE is still wrong, and that is what this holds. A paid board taking a
+    // bigger cut than the board anybody can walk up to would be charging for
+    // the privilege of being charged.
     for (const board of BOARDS) {
       if (board.entry === null) continue;
       const free = BOARDS.filter((other) => other.entry === null);
       for (const other of free) {
-        expect(board.shareBps, `${board.id} charges and takes as much as ${other.id}`)
-          .toBeLessThan(other.shareBps);
+        expect(board.shareBps, `${board.id} charges and takes more than ${other.id}`)
+          .toBeLessThanOrEqual(other.shareBps);
       }
     }
+  });
+
+  it("leaves most of the pot in the pot, so next week is worth more", () => {
+    // The point of the September 2026 cut. What is not shared out stays and
+    // grows, so the prize somebody plays for next week is bigger than the one
+    // they played for this week — which is the direction a pot wants to move
+    // while a game is finding its players. Said as a number here so that adding
+    // a third board cannot quietly give the whole pot away.
+    const out = BOARDS.reduce((sum, board) => sum + board.shareBps, 0);
+    expect(out).toBeLessThanOrEqual(3_000);
   });
 
   it("gives a board with its own pot a reason to have one", () => {
