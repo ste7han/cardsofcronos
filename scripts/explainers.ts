@@ -72,12 +72,12 @@ interface Explainer {
 const EXPLAINERS: Explainer[] = [
   {
     id: "turns",
-    kicker: "THE SHAPE OF A MATCH",
-    title: "TEN TURNS,\nAND THE MONEY\nARRIVES LATE",
+    kicker: "YOUR BUDGET",
+    title: "THE BUDGET\nGROWS EVERY\nTURN",
     body:
-      `Turn ${word(RULES.turns)} hands you ten times what turn one did. It does not carry over, and whatever ` +
-      `you fail to spend comes straight off your market cap — so an expensive card is not ` +
-      `merely slower early, it is unplayable early.`,
+      `Every turn you get money to play cards with. Turn 1 gives you ${mc(RULES.budgetPerTurn)}. Turn ${RULES.turns} gives ` +
+      `you ${mc(RULES.budgetPerTurn * RULES.turns)}. You cannot save it: anything you do not spend is taken off your market ` +
+      `cap when the turn ends. So the expensive cards are simply out of reach early on.`,
     facts: [
       { label: "TURNS", value: String(RULES.turns) },
       { label: "TURN 1", value: mc(RULES.budgetPerTurn) },
@@ -87,56 +87,55 @@ const EXPLAINERS: Explainer[] = [
   {
     id: "marketcap",
     kicker: "HOW YOU WIN",
-    title: "MARKET CAP\nIS WHAT YOU\nARE HOLDING",
+    title: "HIGHEST\nMARKET CAP\nWINS",
     body:
-      `Highest market cap after ${word(RULES.turns)} turns takes it. A project pays its launch once and then ` +
-      `pumps every turn you leave it standing, so the board you built on turn three is still ` +
-      `earning on turn nine.`,
+      `After ${RULES.turns} turns, the bigger market cap takes it. When you play a project it pays you once. ` +
+      `Then it pays you again every turn you leave it on the board. A project you played early ` +
+      `keeps earning for the rest of the match.`,
     facts: [
-      { label: "WIN BY", value: "MARKET CAP" },
-      { label: "POSITIONS", value: String(RULES.portfolioSize) },
-      { label: "HAND", value: String(RULES.handSize) },
+      { label: "TURNS", value: String(RULES.turns) },
+      { label: "PROJECTS", value: String(RULES.portfolioSize) },
+      { label: "CARDS IN HAND", value: String(RULES.handSize) },
     ],
   },
   {
     id: "take-profit",
-    kicker: "THE DECISION",
+    kicker: "THE BIG DECISION",
     title: "TAKE PROFIT,\nOR KEEP\nBUILDING",
     body:
-      `Closing a position banks everything it made, and a rug cannot reach what you have banked. ` +
-      `It costs one of your plays for the turn — which is the whole point. Late in a match you ` +
-      `choose between putting more on the table and securing what is already on it.`,
+      `Close a project and you keep everything it has earned. Nobody can rug it after that. ` +
+      `But closing it uses one of your plays for the turn. So near the end of a match you have ` +
+      `to choose: play another card, or lock in what you already have.`,
     facts: [
       { label: "COSTS", value: mc(TURN_ACTION_COST) },
-      { label: "AND", value: "ONE PLAY" },
+      { label: "USES", value: "ONE PLAY" },
       { label: "SAFE FROM", value: "RUGS" },
     ],
   },
   {
     id: "merge",
-    kicker: "ONE CARD, SIX POSITIONS",
-    title: "FOLD THE\nWHOLE BOARD\nINTO ONE",
+    kicker: "ONE CARD, YOUR WHOLE BOARD",
+    title: "MERGE IT\nALL INTO\nONE PROJECT",
     body:
-      `A merge closes every other position you hold and moves what they earned, and what they ` +
-      `pump, onto the one you just played. Nothing is lost — you are closing them yourself. ` +
-      `But ${word(RULES.portfolioSize)} positions each take their own damage and one takes all of it, so what you leave ` +
-      `standing is a single point of failure.`,
+      `A merge card closes all your other projects and moves what they earned onto the one you ` +
+      `just played. You keep every dollar, because you closed them yourself. The risk is what ` +
+      `comes after: ${RULES.portfolioSize} projects each take damage on their own, but one project takes all of it.`,
     facts: [
-      { label: "FOLDS IN", value: `UP TO ${RULES.portfolioSize - 1}` },
-      { label: "KEEPS", value: "EVERY $" },
-      { label: "LEAVES", value: "ONE TARGET" },
+      { label: "CLOSES", value: `UP TO ${RULES.portfolioSize - 1}` },
+      { label: "YOU KEEP", value: "EVERYTHING" },
+      { label: "RISK", value: "ONE TARGET" },
     ],
   },
   {
     id: "portfolio",
     kicker: "BOARD SPACE",
-    title: `${RULES.portfolioSize} POSITIONS,\nAND THAT IS\nTHE WHOLE BOARD`,
+    title: `YOU CAN HOLD\n${word(RULES.portfolioSize).toUpperCase()} PROJECTS\nAT A TIME`,
     body:
-      `A full board is not a blocked one: you close a position to open a new one, and the market ` +
-      `cap it already made stays yours. What you give up is its future. That cap is also what ` +
-      `gives an attack teeth — rugging one of fifteen is noise, one of ${word(RULES.portfolioSize)} is a sixth of your engine.`,
+      `A full board does not stop you playing. You close one project to make room, and you keep ` +
+      `everything it has earned so far. All you give up is what it would have earned later. ` +
+      `The limit is also what makes attacks hurt: losing one project of ${RULES.portfolioSize} is a real loss.`,
     facts: [
-      { label: "POSITIONS", value: String(RULES.portfolioSize) },
+      { label: "PROJECTS", value: String(RULES.portfolioSize) },
       { label: "SWAP COSTS", value: mc(TURN_ACTION_COST) },
       { label: "YOU KEEP", value: "WHAT IT MADE" },
     ],
@@ -144,15 +143,15 @@ const EXPLAINERS: Explainer[] = [
   {
     id: "deck",
     kicker: "BEFORE THE MATCH",
-    title: "FORTY CARDS,\nAND YOU WILL\nSEE NEARLY ALL",
+    title: `${word(RULES.deckSize).toUpperCase()} CARDS,\nAND YOU WILL SEE\nMOST OF THEM`,
     body:
-      `A deck is ${word(RULES.deckSize)} cards on a points budget, cheapest cards costing one and mythics eight. ` +
-      `You draw a median of 31 of them in a match, so what you build is very nearly what you ` +
-      `get — which is the strongest thing there is against bad luck.`,
+      `You build a deck of ${RULES.deckSize} cards. Every card costs points and your deck has a points limit, ` +
+      `so you cannot simply fill it with the best ones. You draw about 31 cards in a match, ` +
+      `which means what you build is very close to what you get.`,
     facts: [
       { label: "DECK", value: String(RULES.deckSize) },
-      { label: "CHEAPEST", value: mc(MARKETING_COST.common) },
-      { label: "MYTHIC", value: mc(MARKETING_COST.mythic) },
+      { label: "CHEAPEST CARD", value: mc(MARKETING_COST.common) },
+      { label: "MYTHIC CARD", value: mc(MARKETING_COST.mythic) },
     ],
   },
 ];
