@@ -49,6 +49,10 @@ export async function GET() {
       name: board.name,
       blurb: board.blurb,
       needs: board.needs === null ? null : { token: board.needs.token, whole: board.needs.whole },
+      // What a board with a pot of its own pays out of it, so the page can name
+      // the token instead of calling everything $CROCARD. Loaded Lions wins two
+      // prizes for one week and the history showed one of them.
+      alsoPays: board.alsoPays === null ? null : { symbol: board.alsoPays.symbol },
       standings: await standings(db(), week, board.id),
       past: await pastWeeks(db(), week, board.id),
       prize: await prizeFor(board.id),

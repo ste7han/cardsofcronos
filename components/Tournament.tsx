@@ -32,6 +32,9 @@ interface PastWeek {
   wei: string | null;
   txHash: string | null;
   paidAt: number | null;
+  /** The same week out of the board's own pot, in its own token. */
+  alsoWei: string | null;
+  alsoTxHash: string | null;
 }
 
 /** One leaderboard: an opponent, who is on it, and what it pays. */
@@ -45,6 +48,8 @@ interface BoardRow {
   past: PastWeek[];
   /** This board's share of the pot, in base units, or null. */
   prize: string | null;
+  /** What it pays out of its own pot, when it has one. */
+  alsoPays: { symbol: string } | null;
 }
 
 interface Answer {
@@ -242,6 +247,22 @@ function Figure({ label, value }: { label: string; value: string }) {
 function OneBoard({ board }: { board: BoardRow }) {
   const whole = (value: string) => Math.round(toTokens(value)).toLocaleString("en-US");
 
+  /**
+   * The same, but it will not round a real payment down to nothing.
+   *
+   * The $CROCARD prizes are millions, so whole tokens is the right amount of
+   * detail for them. The pot a board fills itself is not: it holds what the
+   * entry fees bought, which can be a few hundred and could be a fraction. A
+   * line reading "0 $LION" beside a transaction that moved money looks like a
+   * payment that failed, and there is no way to tell from the page that it was
+   * a rounding choice.
+   */
+  const enough = (value: string) => {
+    const tokens = toTokens(value);
+    if (tokens >= 1_000) return Math.round(tokens).toLocaleString("en-US");
+    return tokens.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  };
+
   return (
     <section className="mt-10">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
@@ -328,7 +349,14 @@ function OneBoard({ board }: { board: BoardRow }) {
                   {week.entries === 1 ? "1 entry" : `${week.entries} entries`}
                 </span>
               </span>
-              <span className="shrink-0 text-right">
+              {/*
+                Both prizes, because a board with two pots wins two.
+                Loaded Lions takes a share of the $CROCARD every board plays for
+                AND the $LION its entry fees bought, and this showed only the
+                first — so the week read as smaller than it was, with nothing
+                saying a second payout existed.
+              */}
+              <span className="flex shrink-0 flex-col items-end gap-0.5 text-right">
                 {week.wei === null ? (
                   // Loud rather than hidden. A week that has been won and not
                   // paid is exactly the row somebody needs to be able to see.
@@ -341,6 +369,22 @@ function OneBoard({ board }: { board: BoardRow }) {
                     className="text-[10px] tracking-[0.14em] text-pump hover:underline"
                   >
                     {whole(week.wei)} $CROCARD
+                  </a>
+                )}
+                {/*
+                  Absent rather than zero when there was nothing to award. This
+                  pot fills as people pay to play, so a quiet week leaves it
+                  empty — and a line reading "0 $LION" would look like a payment
+                  that failed instead of a week where there was none.
+                */}
+                {board.alsoPays !== null && week.alsoWei !== null && (
+                  <a
+                    href={`${EXPLORER}/tx/${week.alsoTxHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] tracking-[0.14em] text-pump hover:underline"
+                  >
+                    + {enough(week.alsoWei)} {board.alsoPays.symbol}
                   </a>
                 )}
               </span>

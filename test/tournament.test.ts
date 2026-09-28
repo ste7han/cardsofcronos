@@ -156,3 +156,44 @@ describe("the weeks already closed", () => {
     }
   });
 });
+
+describe("a board that pays two tokens", () => {
+  /**
+   * Loaded Lions wins two prizes for one week: a share of the $CROCARD every
+   * board plays for, and the $LION its entry fees bought. The history showed the
+   * first and not the second, so the week read as smaller than it was with
+   * nothing on the page saying a second payout existed.
+   */
+  it("shows both payouts in the history", () => {
+    const page = readFileSync(new URL("../components/Tournament.tsx", import.meta.url), "utf8");
+    expect(page).toContain("week.alsoWei");
+    expect(page).toContain("week.alsoTxHash");
+    // Named from the board rather than written in, so it cannot say $LION about
+    // a board that pays something else.
+    expect(page).toContain("board.alsoPays.symbol");
+    expect(page).not.toMatch(/\+ \{[^}]+\} \$LION/);
+  });
+
+  it("carries the token's name from the data rather than the page", () => {
+    const route = readFileSync(new URL("../app/api/tournament/route.ts", import.meta.url), "utf8");
+    expect(route).toContain("alsoPays: board.alsoPays === null ? null");
+    expect(route).toContain("symbol: board.alsoPays.symbol");
+  });
+
+  it("does not round a real payment down to nothing", () => {
+    // The $CROCARD prizes are millions and whole tokens suit them. A pot that
+    // fills from entry fees can hold a few hundred or a fraction, and "0 $LION"
+    // beside a transaction that moved money reads as a failed payment.
+    const page = readFileSync(new URL("../components/Tournament.tsx", import.meta.url), "utf8");
+    const fn = page.slice(page.indexOf("const enough ="));
+    expect(fn.slice(0, 400)).toContain("maximumFractionDigits: 2");
+    expect(page).toContain("enough(week.alsoWei)");
+  });
+
+  it("says nothing at all when there was nothing to award", () => {
+    // Absent rather than zero: a pot that was empty that week is settled with no
+    // payout, and a line saying so would look like one that failed.
+    const page = readFileSync(new URL("../components/Tournament.tsx", import.meta.url), "utf8");
+    expect(page).toContain("board.alsoPays !== null && week.alsoWei !== null");
+  });
+});
