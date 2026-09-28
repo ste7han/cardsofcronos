@@ -53,7 +53,8 @@
     "daily-why": "tsx scripts/daily-why.ts",
     "drop-dry-run": "tsx scripts/drop-dry-run.ts",
     "weekly-winners": "tsx scripts/weekly-winners.ts",
-    "explainers": "tsx scripts/explainers.ts"
+    "explainers": "tsx scripts/explainers.ts",
+    "crooks-snapshot": "tsx scripts/crooks-snapshot.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
