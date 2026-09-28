@@ -122,3 +122,31 @@ describe("when a week counts as done", () => {
     expect(source).toContain('ran.skipped === "nobody won any board that week"');
   });
 });
+
+describe("the marker the weekly job keeps", () => {
+  /**
+   * A marker is a way of not doing work twice. It is not evidence the work was
+   * done — and week 2026-W39 is what the difference costs: the run did not
+   * throw, so the marker was written; both boards had in fact been skipped and
+   * both prizes sat allocated and unclaimed; and the marker then refused every
+   * retry. Nobody would ever have been paid without deleting a row by hand.
+   */
+  it("is checked against the payouts rather than believed", () => {
+    const source = readFileSync(new URL("../app/api/cron/weekly/route.ts", import.meta.url), "utf8");
+    const fn = source.slice(source.indexOf("async function alreadyClosed"));
+    const body = fn.slice(0, fn.indexOf("\n}\n"));
+
+    // The marker is the fast no. It must never be the last word.
+    expect(body).toContain("FROM tournament_paid WHERE week = ?");
+    expect(body).toContain("EXCEPT");
+    // A board with scores and no payout row leaves the week open.
+    expect(body).toContain("SELECT DISTINCT board FROM tournament WHERE week = ?");
+  });
+
+  it("still answers no work to do when everything was paid", () => {
+    const source = readFileSync(new URL("../app/api/cron/weekly/route.ts", import.meta.url), "utf8");
+    const fn = source.slice(source.indexOf("async function alreadyClosed"));
+    const body = fn.slice(0, fn.indexOf("\n}\n"));
+    expect(body).toMatch(/open \?\? 0\) === 0/);
+  });
+});

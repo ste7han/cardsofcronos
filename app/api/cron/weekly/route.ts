@@ -48,7 +48,31 @@ async function alreadyClosed(db: Database, week: string): Promise<boolean> {
   // The week is stored as its own digits — 2026-W39 becomes 202639 — so "later
   // than" is a comparison a number can answer and a marker from an older week
   // never looks like this one.
-  return row !== null && row.block >= weekAsNumber(week);
+  if (row === null || row.block < weekAsNumber(week)) return false;
+
+  // ── AND THE MARKER IS CHECKED AGAINST WHAT ACTUALLY HAPPENED ───────────────
+  //
+  // A marker is a way of not doing work twice. It is not evidence that the work
+  // was done, and treating it as evidence is how a week nobody was paid for
+  // stays that way for ever: the first version of this wrote the marker whenever
+  // the run had not thrown, week 2026-W39 came back with both boards skipped and
+  // both prizes unclaimed, and the marker then refused every retry.
+  //
+  // So it is the fast answer and the payouts are the real one. A board that has
+  // scores for the week and no payout row is a board still owed, whatever the
+  // marker says, and one read a minute is a cheap price for a claim that would
+  // otherwise never be retried.
+  const owing = await db
+    .prepare(
+      `SELECT COUNT(*) AS open FROM (
+         SELECT DISTINCT board FROM tournament WHERE week = ?
+         EXCEPT
+         SELECT board FROM tournament_paid WHERE week = ?
+       )`,
+    )
+    .bind(week, week)
+    .first<{ open: number }>();
+  return (owing?.open ?? 0) === 0;
 }
 
 /** 2026-W39 → 202639. Sorts the way the weeks do, which is all it is for. */
