@@ -62,6 +62,20 @@ async function alreadyClosed(db: Database, week: string): Promise<boolean> {
   // scores for the week and no payout row is a board still owed, whatever the
   // marker says, and one read a minute is a cheap price for a claim that would
   // otherwise never be retried.
+  // A board that somebody won and that has no payout at all is a board still
+  // owed, whatever the marker says.
+  //
+  // DELIBERATELY THE WEAK VERSION, and worth saying why. The exact question is
+  // per token — Loaded Lions is paid twice for one week, $CROCARD out of the
+  // shared pot and $LION out of its own — but a pot that is empty that week is
+  // settled with no row to show for it, so "every token has a row" would hold a
+  // week open for ever on a quiet one. Asking whether the board was paid at all
+  // does not have that failure, and the exact question is already answered where
+  // it can be answered properly: the run itself checks every board it touched
+  // and only writes the marker when all of them came back paid.
+  //
+  // So this is a backstop against a marker that should never have been written,
+  // not the rule that decides a payout.
   const owing = await db
     .prepare(
       `SELECT COUNT(*) AS open FROM (

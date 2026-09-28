@@ -246,9 +246,22 @@ CREATE TABLE IF NOT EXISTS tournament_paid (
            CHECK (tx_hash = lower(tx_hash) AND length(tx_hash) = 66
                   AND substr(tx_hash, 1, 2) = '0x'),
   at       INTEGER NOT NULL,
-  -- A week is paid once per board. Two rows for one board is either a mistake
-  -- or a story, and both want a loud failure rather than a second row.
-  PRIMARY KEY (week, board)
+  -- Which token this row was paid in, lowercased.
+  --
+  -- WHY THE KEY GREW. It was (week, board), on the reading that a week is paid
+  -- once per board. That stopped being true when Loaded Lions got a pot of its
+  -- own: that board is paid twice for one week, once in $CROCARD out of the
+  -- shared pot and once in $LION out of the pot its entry fees fill. The second
+  -- row collided with the first, and the insert that records a payout swallows a
+  -- key collision on purpose — it is how a re-run avoids writing a second row
+  -- for money that moved once. So the $LION payout would have been made and
+  -- never written down, and nothing anywhere would have said so.
+  --
+  -- A week is paid once per board PER TOKEN. That is the sentence that is true.
+  token    TEXT NOT NULL
+           CHECK (token = lower(token) AND length(token) = 42
+                  AND substr(token, 1, 2) = '0x'),
+  PRIMARY KEY (week, board, token)
 );
 
 -- How far a job has read the chain, one row per job.

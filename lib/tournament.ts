@@ -24,6 +24,8 @@
 // with MINT_OPEN. The moment either changes, this is the check that has to
 // arrive with it.
 
+import { BOARDS } from "@/data/boards";
+import { CROCARD } from "@/lib/revenue";
 import type { Database } from "@/lib/store";
 
 export interface Score {
@@ -156,6 +158,17 @@ export interface PastWeek {
   wei: string | null;
   txHash: string | null;
   paidAt: number | null;
+  /**
+   * The same week's payout out of the board's OWN pot, in its own token, when it
+   * has one. Null for a board with one pot, and null for a week where that pot
+   * was empty — which is a real answer and not a missing one.
+   *
+   * Loaded Lions is paid twice for a week it wins: $CROCARD out of the pot every
+   * board plays for, and $LION out of the pot its entry fees fill. A history
+   * showing only the first would be telling half of what somebody won.
+   */
+  alsoWei: string | null;
+  alsoTxHash: string | null;
 }
 
 /**
@@ -181,6 +194,10 @@ export async function pastWeeks(
   board: string,
   limit = 12,
 ): Promise<PastWeek[]> {
+  // The board's own token, when it has a pot of its own. Bound rather than
+  // written into the SQL, and never left out: a join with no token condition
+  // matches both payouts and returns the week twice.
+  const own = BOARDS.find((one) => one.id === board)?.alsoPays?.token ?? "";
   const { results } = await db
     .prepare(
       `SELECT t.week        AS week,
@@ -191,9 +208,14 @@ export async function pastWeeks(
                 WHERE e.week = t.week AND e.board = t.board) AS entries,
               p.wei         AS wei,
               p.tx_hash     AS txHash,
-              p.at          AS paidAt
+              p.at          AS paidAt,
+              q.wei         AS alsoWei,
+              q.tx_hash     AS alsoTxHash
          FROM tournament t
-         LEFT JOIN tournament_paid p ON p.week = t.week AND p.board = t.board
+         LEFT JOIN tournament_paid p
+                ON p.week = t.week AND p.board = t.board AND p.token = ?
+         LEFT JOIN tournament_paid q
+                ON q.week = t.week AND q.board = t.board AND q.token = ?
         WHERE t.week <> ?
           AND t.board = ?
           AND t.mc - t.opponent_mc = (SELECT MAX(m.mc - m.opponent_mc) FROM tournament m
@@ -204,7 +226,7 @@ export async function pastWeeks(
         ORDER BY t.week DESC
         LIMIT ?`,
     )
-    .bind(thisWeek, board, limit)
+    .bind(CROCARD.toLowerCase(), own.toLowerCase(), thisWeek, board, limit)
     .all<PastWeek>();
   return results;
 }
@@ -234,13 +256,23 @@ export async function recordPayout(
     wei: string;
     txHash: string;
     at: number;
+    /** What it was paid in. A board with two pots is paid twice, in two tokens. */
+    token: string;
   },
 ): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO tournament_paid (week, board, wallet, wei, tx_hash, at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tournament_paid (week, board, wallet, wei, tx_hash, at, token)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(paid.week, paid.board, paid.wallet, paid.wei, paid.txHash.toLowerCase(), paid.at)
+    .bind(
+      paid.week,
+      paid.board,
+      paid.wallet,
+      paid.wei,
+      paid.txHash.toLowerCase(),
+      paid.at,
+      paid.token.toLowerCase(),
+    )
     .run();
 }

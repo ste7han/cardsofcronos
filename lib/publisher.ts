@@ -29,7 +29,7 @@
 // has been paid is the last thing this wants.
 
 import { PUBLIC_RPCS, mined, rpc, send } from "@/lib/cronos";
-import { CONTRACTS } from "@/lib/revenue";
+import { CONTRACTS, CROCARD } from "@/lib/revenue";
 import { selector, word } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
 import type { Database } from "@/lib/store";
@@ -146,23 +146,49 @@ export async function runWeekly(
   const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
   const key = hexToBytes(secrets.publisherKey);
 
+  // ── ASKED, NOT INFERRED FROM A REVERT ──────────────────────────────────────
+  //
+  // This used to send `closeWeek` and decide what had happened by matching the
+  // error text against /WeekAlreadyClosed|already/. Cronos does not put the name
+  // of a custom error in the message: what comes back for every revert is the
+  // two words "execution reverted". So the one case the match existed for never
+  // matched, and a week that was already closed — the normal state on every run
+  // after the first — was treated as a fatal error and returned before anything
+  // could be claimed. Week 2026-W39 was closed, both prizes were allocated, and
+  // the job then gave up on it once a minute for hours.
+  //
+  // It is the oldest failure in this project written a new way: a name the code
+  // does not recognise falling through to the wrong branch, with a log line that
+  // reads like it knew what it was doing. So nothing is inferred from a revert
+  // any more. The contract is asked what it holds, and the answer decides.
+  const standing = await Promise.all(
+    won.map((one) =>
+      rpc<string>(rpcs, "eth_call", [
+        { to: pot, data: selector("prizes(bytes32,bytes32)") + asWord(week) + asWord(one.board) },
+        "latest",
+      ]),
+    ),
+  );
+  const openBoards = won.filter((_, i) => {
+    const winner = standing[i]!.replace(/^0x/, "").slice(24, 64);
+    return BigInt("0x" + winner) === 0n;
+  });
+
   let closed: string | null = null;
-  try {
-    closed = await send(
-      rpcs,
-      key,
-      pot,
-      closeWeekData(
-        week,
-        won.map((one) => one.board),
-        won.map((one) => one.winner.wallet),
-      ),
-    );
-  } catch (error) {
-    // Already closed is the expected answer on a second run and is not a
-    // problem. Anything else is, and is reported rather than swallowed.
-    const said = error instanceof Error ? error.message : String(error);
-    if (!/WeekAlreadyClosed|already/i.test(said)) {
+  if (openBoards.length > 0) {
+    try {
+      closed = await send(
+        rpcs,
+        key,
+        pot,
+        closeWeekData(
+          week,
+          openBoards.map((one) => one.board),
+          openBoards.map((one) => one.winner.wallet),
+        ),
+      );
+    } catch (error) {
+      const said = error instanceof Error ? error.message : String(error);
       return { ...nothing, boards: won.map((one) => ({ ...blank(one), skipped: said })), skipped: said };
     }
   }
@@ -191,7 +217,7 @@ export async function runWeekly(
 
   const boards: BoardResult[] = [];
   for (const one of won) {
-    boards.push(await payOne(db, rpcs, key, pot, week, one.board, one.winner, now));
+    boards.push(await payOne(db, rpcs, key, pot, week, one.board, one.winner, now, CROCARD));
   }
 
   // ── A BOARD WITH ITS OWN POT IS CLOSED TWICE ───────────────────────────────
@@ -209,16 +235,75 @@ export async function runWeekly(
     const extra = board?.alsoPays?.contract ?? null;
     if (extra === null) continue;
 
-    try {
-      await send(rpcs, key, extra, closeWeekData(week, [one.board], [one.winner.wallet]));
-    } catch (error) {
-      const said = error instanceof Error ? error.message : String(error);
-      if (!/WeekAlreadyClosed|already/i.test(said)) {
+    const pays = board?.alsoPays?.symbol ?? "its own pot";
+
+    // Asked first here too. A revert on this chain says "execution reverted" and
+    // nothing more, so "is this week already closed" and "is this pot empty" are
+    // read off the contract rather than guessed at from a message that does not
+    // carry the answer.
+    const already = await rpc<string>(rpcs, "eth_call", [
+      { to: extra, data: selector("prizes(bytes32,bytes32)") + asWord(week) + asWord(one.board) },
+      "latest",
+    ]);
+    const shutAlready = BigInt("0x" + already.replace(/^0x/, "").slice(24, 64)) !== 0n;
+
+    let shut: string | null = null;
+    if (!shutAlready) {
+      // What a close would allocate, worked out the way the contract does: this
+      // board's share of what is in the pot and not already spoken for. Zero
+      // means an empty pot, which is not a failure — this one fills up as people
+      // pay to play, so a quiet week leaves nothing to award. Counted as settled
+      // rather than retried, because a week held open for a prize that does not
+      // exist is a week retried for ever.
+      const holds = BigInt(
+        await rpc<string>(rpcs, "eth_call", [
+          { to: board!.alsoPays!.token, data: selector("balanceOf(address)") + word(extra) },
+          "latest",
+        ]),
+      );
+      const spoken = BigInt(
+        await rpc<string>(rpcs, "eth_call", [{ to: extra, data: selector("allocated()") }, "latest"]),
+      );
+      if (holds <= spoken) {
+        boards.push({
+          board: one.board,
+          winner: one.winner.wallet,
+          paid: null,
+          amount: "0",
+          why: `the ${pays} pot was empty this week, so there was nothing to award`,
+        });
+        continue;
+      }
+
+      try {
+        shut = await send(rpcs, key, extra, closeWeekData(week, [one.board], [one.winner.wallet]));
+      } catch (error) {
+        const said = error instanceof Error ? error.message : String(error);
         boards.push({ board: one.board, winner: one.winner.wallet, paid: null, amount: null, skipped: said });
         continue;
       }
     }
-    boards.push(await payOne(db, rpcs, key, extra, week, one.board, one.winner, now));
+
+    // The same wait as the first pot, and for the same reason: claiming a prize
+    // the chain has not allocated yet reverts, and `send` finds that out while
+    // estimating. This loop was missed when the first one was fixed, which is
+    // how the $LION half of a Loaded Lions week went unpaid while the $CROCARD
+    // half went out — two pots, one bug, and only one of them repaired.
+    if (shut !== null && !(await mined(rpcs, shut))) {
+      boards.push({
+        board: one.board,
+        winner: one.winner.wallet,
+        paid: null,
+        amount: null,
+        skipped: `the ${pays} week was closed in ${shut} but is not mined yet; the next run claims it`,
+      });
+      continue;
+    }
+
+    boards.push({
+      ...(await payOne(db, rpcs, key, extra, week, one.board, one.winner, now, board!.alsoPays!.token)),
+      why: `paid out of the ${pays} pot`,
+    });
   }
 
   return { week, closed, boards };
@@ -246,6 +331,8 @@ async function payOne(
   board: string,
   winner: Score,
   now: number,
+  /** What this pot pays in. Part of the key a payout is written under. */
+  token: string,
 ): Promise<BoardResult> {
   const result: BoardResult = { board, winner: winner.wallet, paid: null, amount: null };
 
@@ -253,6 +340,12 @@ async function payOne(
   // returns the winner, the amount and whether it has been paid; the amount is
   // the second word. Without this the payout happens and the board says NOT PAID
   // YET forever, which is the row somebody checks first.
+  // The same reading answers both questions: how much, and whether it has
+  // already gone out. Asked rather than inferred from a revert, for the reason
+  // written out at the top of runWeekly — this chain's reverts are the words
+  // "execution reverted" and nothing else, so matching on AlreadyPaid never
+  // matched and a prize that was already claimed looked like a broken run.
+  let alreadyPaid = false;
   try {
     const prize = await rpc<string>(rpcs, "eth_call", [
       {
@@ -261,10 +354,18 @@ async function payOne(
       },
       "latest",
     ]);
-    result.amount = BigInt("0x" + prize.replace(/^0x/, "").slice(64, 128)).toString();
+    const words = prize.replace(/^0x/, "");
+    result.amount = BigInt("0x" + words.slice(64, 128)).toString();
+    alreadyPaid = BigInt("0x" + words.slice(128, 192)) === 1n;
   } catch {
     // Not fatal. Paying the winner matters more than recording how much, and a
     // run that stopped here would leave them unpaid to protect a table.
+  }
+
+  if (alreadyPaid) {
+    // Nothing owed and nothing wrong. Said out loud so a run that does this
+    // every week reads as settled rather than as silence.
+    return { ...result, why: "the prize had already been claimed" };
   }
 
   try {
@@ -275,8 +376,7 @@ async function payOne(
       selector("claim(bytes32,bytes32)") + asWord(week) + asWord(board),
     );
   } catch (error) {
-    const said = error instanceof Error ? error.message : String(error);
-    if (!/AlreadyPaid|already/i.test(said)) return { ...result, skipped: said };
+    return { ...result, skipped: error instanceof Error ? error.message : String(error) };
   }
 
   if (result.paid !== null && result.amount !== null) {
@@ -288,11 +388,16 @@ async function payOne(
         wei: result.amount,
         txHash: result.paid,
         at: now,
+        token,
       });
     } catch (error) {
-      // Week and board are the primary key, so a second run throws here rather
-      // than writing a second row. That is the table working and not a failure:
-      // the money moved once and it is written down once.
+      // Week, board and token are the primary key, so a second run throws here
+      // rather than writing a second row. That is the table working and not a
+      // failure: the money moved once and it is written down once.
+      //
+      // The token is in that key because Loaded Lions is paid twice for one
+      // week, in two tokens, out of two pots. Without it the second payout
+      // collided with the first and was swallowed by this very catch.
       //
       // Anything else is a failure and is said out loud. It cannot be raised —
       // the winner has already been paid by this point and throwing would make
