@@ -78,6 +78,30 @@
   // just happened either way.
   //
   // SQLite-backed, which is what the Workers Free plan allows.
+  //
+  // ── EVERY DEPLOY WARNS ABOUT THIS CLASS, AND IT IS NOTHING ───────────────
+  //
+  //   workerd: A DurableObjectNamespace in the config referenced the class
+  //   "FeedTicker", but no such Durable Object class is exported from the
+  //   worker. Attempts to call to this Durable Object class will fail at
+  //   runtime.
+  //
+  // It is alarming and it is about a step that has nothing to do with what gets
+  // uploaded. Before deploying, OpenNext starts a LOCAL worker to populate the
+  // static-assets cache, and that one is entered at `.open-next/worker.js` —
+  // which does not export FeedTicker, because FeedTicker lives in
+  // worker/index.js, the file that WRAPS the OpenNext worker and is `main`
+  // above. Wrangler says as much in its own warning two lines earlier: "These
+  // will not work in local development, but they should work in production."
+  //
+  // Checked rather than assumed, on 28 September 2026:
+  //   - `opennextjs-cloudflare build` on its own prints no such warning;
+  //   - the deployed version lists `env.FEED_TICKER (FeedTicker) Durable
+  //     Object` among its bindings, with handlers fetch and scheduled;
+  //   - the alarm demonstrably runs — the feed cursors move every minute.
+  //
+  // So: not a symptom. If the clock ever does stop, the thing to look at is the
+  // alarm re-booking itself in worker/index.js, not this warning.
   "durable_objects": {
     "bindings": [
       {
