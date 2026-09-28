@@ -28,7 +28,7 @@
 // this file tracking what it has done, and a second source of truth about who
 // has been paid is the last thing this wants.
 
-import { PUBLIC_RPCS, rpc, send } from "@/lib/cronos";
+import { PUBLIC_RPCS, mined, rpc, send } from "@/lib/cronos";
 import { CONTRACTS } from "@/lib/revenue";
 import { selector, word } from "@/lib/evm-tx";
 import { hexToBytes } from "@/lib/address";
@@ -165,6 +165,28 @@ export async function runWeekly(
     if (!/WeekAlreadyClosed|already/i.test(said)) {
       return { ...nothing, boards: won.map((one) => ({ ...blank(one), skipped: said })), skipped: said };
     }
+  }
+
+  // ── AND WAITED FOR, BEFORE ANYTHING IS CLAIMED ─────────────────────────────
+  //
+  // Claiming a prize the chain has not allocated yet reverts with NoSuchWeek,
+  // and `send` finds that out while estimating gas — so the claim is never sent
+  // and the board comes back skipped. It happened on the first run that ever
+  // closed a week: both prizes were allocated seconds later and neither was
+  // paid, because the claims had already been attempted and given up.
+  //
+  // Not fatal if it times out. The prizes are allocated either way and the next
+  // run claims them; what must not happen is claiming before that is true.
+  if (closed !== null && !(await mined(rpcs, closed))) {
+    return {
+      week,
+      closed,
+      boards: won.map((one) => ({
+        ...blank(one),
+        skipped: `closeWeek ${closed} has not been mined yet; the prizes are allocated and the next run claims them`,
+      })),
+      skipped: "the week was closed but not yet mined, so nothing was claimed",
+    };
   }
 
   const boards: BoardResult[] = [];

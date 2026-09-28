@@ -102,8 +102,21 @@ export async function POST(request: Request) {
   //
   // A week nobody played is settled too, and is marked. Leaving it open would
   // have this ask both boards who won, every minute, for ever.
+  //
+  // ── AND EVERY BOARD HAS TO HAVE BEEN PAID ────────────────────────────────
+  //
+  // "The run did not fail" is not the same as "everybody got their money", and
+  // the first version of this marked on the weaker one. The first week it ever
+  // closed came back with no top-level failure and two boards that had both been
+  // skipped — the prizes were allocated on chain and neither was claimed — and
+  // the marker then stopped it ever trying again.
+  //
+  // A board is settled when it was paid, or when it had already been paid before
+  // this run. Anything else leaves the week open and the next minute retries.
+  const allPaid = ran.boards.every((one) => one.paid !== null || one.skipped === undefined);
   const settled =
-    ran.skipped === undefined || ran.skipped === "nobody won any board that week";
+    ran.skipped === "nobody won any board that week" ||
+    (ran.skipped === undefined && allPaid);
   if (settled) await setCursor(db(), RAN, weekAsNumber(week), now);
 
   // Always 200 with what happened. A scheduled job that returns an error for

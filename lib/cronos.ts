@@ -237,6 +237,43 @@ export async function rpc<T = string>(
 }
 
 /**
+ * Waits for a transaction to be mined. Answers true when it was, and succeeded.
+ *
+ * ── WHY ANYTHING WAITS AT ALL ────────────────────────────────────────────────
+ *
+ * `send` estimates gas before signing, and estimating runs the call against the
+ * chain as it is now. That is deliberate — it is how "the week is already
+ * closed" is found out for free — but it means a second transaction that depends
+ * on the first cannot be sent until the first has landed.
+ *
+ * The weekly job did exactly that on 28 September 2026. It sent `closeWeek`, and
+ * immediately estimated `claim` for the same week. On chain the week was not
+ * closed yet, so the claim reverted with NoSuchWeek, the estimate threw, and
+ * both boards were recorded as skipped. The prizes were allocated the moment
+ * closeWeek mined a few seconds later, and nobody was paid.
+ *
+ * Twelve tries a second and a half apart, which is about thirty seconds — long
+ * for a block on this chain and short against the minute the alarm leaves. False
+ * on running out, so the caller decides rather than being thrown at.
+ */
+export async function mined(
+  rpcs: readonly string[],
+  hash: string,
+  tries = 12,
+): Promise<boolean> {
+  for (let i = 0; i < tries; i++) {
+    // Before the wait as well as after it, so a chain that is keeping up costs
+    // one call rather than a second and a half.
+    const receipt = await rpc<{ status?: string } | null>(rpcs, "eth_getTransactionReceipt", [hash]);
+    // Null is the honest answer for a transaction still in the pool, which is
+    // why rpc() returns it rather than walking the endpoint list.
+    if (receipt !== null) return BigInt(receipt.status ?? "0x0") === 1n;
+    await new Promise((wake) => setTimeout(wake, 1_500));
+  }
+  return false;
+}
+
+/**
  * Signs one call to a contract and sends it. Returns the transaction hash.
  *
  * It lived in lib/publisher.ts while the weekly prize was the only thing that
