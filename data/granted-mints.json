@@ -6,6 +6,601 @@
       "mints": 30,
       "why": "Holds 383 Crooks Legends. Given by the maker on 22 September 2026, ahead of the Crooks programme.",
       "at": "2026-09-22"
+    },
+    {
+      "address": "0x79b7d6af38f4c54b149030b255651e80ffc432ff",
+      "mints": 18,
+      "why": "Crooks Finance Immortal — held 1202 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xd05c6c378d7cae2d668e69860f73658b32a02eef",
+      "mints": 18,
+      "why": "Crooks Finance Immortal — held 1009 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x926296a0ef031c7250e08e01c85f5fd7e7b383d1",
+      "mints": 18,
+      "why": "Crooks Finance Immortal — held 642 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x90b0edc71b95025ef65ca350350dd47bfcc06b5b",
+      "mints": 18,
+      "why": "Crooks Finance Immortal — held 572 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x9fca23ef19477482f12e396ae6100ee32f2f6a70",
+      "mints": 18,
+      "why": "Crooks Finance Immortal — held 545 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x5cc8e15c851a392dcaa0dfd4f10e65900c492ee7",
+      "mints": 18,
+      "why": "Crooks Finance Immortal — held 500 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x7eaebd301b75e9b81aeaef53b08253976111c313",
+      "mints": 15,
+      "why": "Crooks Finance Legend — held 440 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x5bbce79eff03d5617532d245e956a3396647e2cd",
+      "mints": 12,
+      "why": "Crooks Finance Icon — held 336 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x1d9b981b7aba1a747883833fb8a1b5072eac5d8f",
+      "mints": 12,
+      "why": "Crooks Finance Icon — held 316 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x2b20c5bcc1dd774afbc7ece0b05f6e27c5074f4d",
+      "mints": 12,
+      "why": "Crooks Finance Icon — held 306 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xc52f28005c8dfab7ea92bc2eb90be0e8fadfd88b",
+      "mints": 10,
+      "why": "Crooks Finance Overlord — held 264 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x8eee914a5b436724eff7790f60dc017cf092f8ac",
+      "mints": 10,
+      "why": "Crooks Finance Overlord — held 242 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x93fe43db40c997ae784143f060032db16293d93f",
+      "mints": 8,
+      "why": "Crooks Finance Kingpin — held 180 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xbc041877218efcc989095999f3e3a0fb20b174af",
+      "mints": 6,
+      "why": "Crooks Finance Boss — held 124 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x1321dfde14df2be8c042bfacad119071007564cc",
+      "mints": 6,
+      "why": "Crooks Finance Boss — held 122 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x04036b003c9c5f24e1296f3ec56e561d023b14fb",
+      "mints": 6,
+      "why": "Crooks Finance Boss — held 115 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x8ca6e31b4eaf70c1dc63bc672c50c159184f622a",
+      "mints": 6,
+      "why": "Crooks Finance Boss — held 107 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x353dcf198d99c82f7e3edb8528c3e0603c987f98",
+      "mints": 6,
+      "why": "Crooks Finance Boss — held 102 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xfafc672cf53eb51924d0aed069dc53c33b0dce2f",
+      "mints": 4,
+      "why": "Crooks Finance Gang Leader — held 87 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x1f726895db28bb9d3bea4c0cc4886df945410421",
+      "mints": 4,
+      "why": "Crooks Finance Gang Leader — held 85 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x1710e57e56c998ee91df87abd5a4dc2149a296de",
+      "mints": 4,
+      "why": "Crooks Finance Gang Leader — held 83 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x585e2ca5578ad0ed8f5298066d2be9703dae56dd",
+      "mints": 4,
+      "why": "Crooks Finance Gang Leader — held 78 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x5750ae7fa66c6427a1377a72d300351ccc2a06f7",
+      "mints": 4,
+      "why": "Crooks Finance Gang Leader — held 76 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x2b279ae855ce4371c48dd2204b7e9eddd40bf435",
+      "mints": 3,
+      "why": "Crooks Finance General — held 72 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xf8001af2a876c38096d87e047790f29fd60b1811",
+      "mints": 3,
+      "why": "Crooks Finance General — held 72 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xf69a80f3e31bef7643bc44817d593b52070be203",
+      "mints": 3,
+      "why": "Crooks Finance General — held 71 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x8653dd17d45914d33ea8a4388af9da945dfdcd1b",
+      "mints": 3,
+      "why": "Crooks Finance General — held 63 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xc7610b1f2855ce82f2cbfb2c462e33571219929b",
+      "mints": 3,
+      "why": "Crooks Finance General — held 63 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xeb1bd9b64a240c537408ee1f21aa7facdf7c923f",
+      "mints": 3,
+      "why": "Crooks Finance General — held 61 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xf3b52384117b4a08c6dd498ca65ce281683f2070",
+      "mints": 3,
+      "why": "Crooks Finance General — held 61 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xf4db9c7c6f94c7113c003e801a798befef89d48d",
+      "mints": 3,
+      "why": "Crooks Finance General — held 50 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x3ec42c9b63f500d298531063f8db053646301e59",
+      "mints": 3,
+      "why": "Crooks Finance General — held 50 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xd79852d5048e878e7c82afde396d2b54e82ce8fe",
+      "mints": 3,
+      "why": "Crooks Finance General — held 50 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x4626b023957e5cc642debdec92b46c513050feef",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 48 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x6f1296b5e0e4a7bd6022ccb54e3983bea80ca665",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 47 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x9deea3c4b9584e66328ebf0bb79db368abafc472",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 41 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x31bc38d6365072b6b557d70ef8250d7ac7d130de",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 33 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xfdc66fa2eb9744e85607ef6b8ba46c8bc1437c9a",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 32 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x385bf148ba61e5458e3405d90834a64ae02fb092",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 31 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x9343853356882a8bca5f5c3be3558be4e1b4d22b",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 30 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xb2e57abaaf2cc99118386f6881d4a6b89cc04021",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 30 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x3936e1ad42b9cbee569912d3bea579c1e9e444c9",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 29 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x397be8bbcc9831985f15c97ee5695c0b8336d83f",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 28 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x16f39f8ff59caead81bc680e6cd663069eb978be",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 27 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xb01471ff80d8568be57ebe37a5a68599cdf741a9",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 26 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x6cf2fc094a1ee99d55371a373222b7cf5c5817da",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 26 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x8ce5a129c597b61a904e86353be788c10321e279",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 26 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x48e93dce26145dc327ef10f2baf7999847e0bdc4",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 25 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xd17c4b865d7ce58ea600a14ef6f82cadf2b6927a",
+      "mints": 2,
+      "why": "Crooks Finance Captain — held 25 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x61fd5dd7954ef7519b2517ea7511006d8597c080",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 24 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x6c51dc7d53c41d158ab84a7c8c65495ddff1c867",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 24 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xe8eba2562bc0ad9fe5ac7797304bbeb558029a5d",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 23 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xa8985a99d53666e4d685432f03e10da769a02c7c",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 22 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x185d93b0f57a22e6cab7d9f0d4eb657341ff90b3",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 20 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xa848f90f37f5c4bff390cd887b96d59b63820ba3",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 19 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x4fb2e0afa34fa2033405ffcf6d84fce6b3dd433a",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 19 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xe97c3dee40405d35560746d7e3dbeb152d164bb0",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 18 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x6e9497fad34b9c554a7926989051b20d681abce2",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 18 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x19e3e29ec58b33b41d8394d338be2a20a6d28176",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 18 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xd533e636fbf5b0e0526d73e9525da71f9b506e38",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 18 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xe2bebb50991628b95c91be270cc115df7909511c",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 17 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x318a1a98c4817fe96c099e3634822fc408cd0e84",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 16 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x773cd64e52d435ce8bdad02aa61a679a7ee241e8",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 14 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x8e1f06ee0a86a5b33ab84bdea60420ed861a711d",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 14 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xb50ac7bbffac71b5b544663de425a10b613d5ef6",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 13 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x40874f18922267cc2ca7933828594ab5078c1065",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 12 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xf021349b9b465fadd88a307a2f864a5d61b24e7e",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 12 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xc1afc5e70ea724fc2af6c9ff7f9b09b1a532d250",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 11 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x183379144e7c8581f24b02b7eedd4e9995bb1048",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 11 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x1231dbb3f464e15fafe4d2443c6a5866f4065da5",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 11 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xef14a54d8241edfedeabafd12e4edae2b6c25394",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 11 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xf2626e0fbbcf7d4b7f9caf982f1330c28052b223",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x65df44dbd54fbc9fdc0325ed04bff6877491bf64",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x703419997f14669dd327e123dc5a98dc5aca5438",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x784836f1abff1f5a60c3ed2e6550f8aa5f6b2e8f",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x5659be89ea63da26e7f30dec53286d3703fef5d4",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x7cc645b70b74639e66c25c45d773a3351d6355f7",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xe712aa1e67d291e76fec9ede5134394831859b9f",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x3cf08dce10c22d7a09eaaf33472c3af233b27685",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xaa5c5e9a3605f130e4cd1c0320e29d92e7d9b13f",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xa95dd34cbc0db53969ca416570bb7f6f0e778b7a",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xc9cb144fe0091e7ca18763cc85f4ad4914525b32",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0xcb815b80e3c8e565b66ab776314cc56bdc8b5bd1",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x103bafc2989ecb0aece6bcd3d653c3ad3e87c6ea",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
+    },
+    {
+      "address": "0x1869d0b8ee03a7c806bdb72ad4274fcf68505a9d",
+      "mints": 1,
+      "why": "Crooks Finance Officer — held 10 Crooks Legends when the snapshot was read on 2026-09-28.",
+      "at": "2026-09-28",
+      "programme": "crooks"
     }
   ]
 }

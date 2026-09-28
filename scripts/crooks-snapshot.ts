@@ -29,6 +29,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
+import { RANKS, rankOf } from "@/lib/crooks";
 import { selector } from "@/lib/evm-tx";
 
 const CRKL = "0x44102b7ab3e2b8edf77d188cd2b173ecbda60967";
@@ -49,31 +50,6 @@ const RPCS = [
   "https://cronos-evm-rpc.publicnode.com",
   "https://cronos.drpc.org",
 ];
-
-/** The Crooks Finance ladder, as published. Lowest first. */
-export const RANKS: readonly { name: string; from: number }[] = [
-  { name: "Prospect", from: 0 },
-  { name: "Member", from: 1 },
-  { name: "Hustler", from: 2 },
-  { name: "Street Soldier", from: 3 },
-  { name: "Enforcer", from: 5 },
-  { name: "Officer", from: 10 },
-  { name: "Captain", from: 25 },
-  { name: "General", from: 50 },
-  { name: "Gang Leader", from: 75 },
-  { name: "Boss", from: 100 },
-  { name: "Kingpin", from: 150 },
-  { name: "Overlord", from: 200 },
-  { name: "Icon", from: 300 },
-  { name: "Legend", from: 400 },
-  { name: "Immortal", from: 500 },
-];
-
-export function rankOf(held: number): string {
-  let found = RANKS[0]!.name;
-  for (const rank of RANKS) if (held >= rank.from) found = rank.name;
-  return found;
-}
 
 interface Row {
   id: number;
