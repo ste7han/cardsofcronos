@@ -77,7 +77,16 @@ function fakeDb(): Database & { rows: Row[] } {
     all: async <T>() => ({ results: [] as T[] }),
     run: async () => ({}),
   });
-  return { rows, prepare: (sql: string) => statement(sql, []) };
+  return {
+    rows,
+    prepare: (sql: string) => statement(sql, []),
+    // Applied in order. The all-or-nothing part is D1's and not modelled here.
+    async batch(statements: readonly Statement[]) {
+      const out: unknown[] = [];
+      for (const one of statements) out.push(await one.run());
+      return out;
+    },
+  };
 }
 
 const give = (db: { rows: Row[] }, player: string, board: string, at: number) =>

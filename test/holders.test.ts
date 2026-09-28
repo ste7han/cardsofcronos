@@ -45,6 +45,15 @@ function fakeDb(seed?: {
   cursor?: number;
   /** A tree already live, so a run adopts nothing and proposes the next. */
   live?: { id: number; leaves: [string, string][] };
+  /**
+   * A tree stored here and still waiting on chain.
+   *
+   * Without one, a pending root on chain is a root this database has no leaves
+   * for — and the round now refuses to adopt that rather than taking claiming
+   * away from everybody. So a test about adopting has to say the tree was
+   * stored, because that is the difference between the two cases.
+   */
+  pending?: { id: number };
 }): Database & { holders: Map<string, { balance: string; entitlement: string; code: number | null }>; trees: { root: string; promised: string }[]; leaves: Map<string, string> } {
   const holders = new Map(
     (seed?.holders ?? []).map((h) => [
@@ -66,6 +75,13 @@ function fakeDb(seed?: {
     holders,
     trees,
     leaves,
+    // The fake applies a batch in order. It cannot model the all-or-nothing part
+    // — that is D1's — but it does model the shape the code now calls with.
+    async batch(statements: readonly Statement[]) {
+      const out: unknown[] = [];
+      for (const one of statements) out.push(await one.run());
+      return out;
+    },
     prepare(sql: string): Statement {
       let bound: unknown[] = [];
       const self: Statement = {
@@ -103,7 +119,19 @@ function fakeDb(seed?: {
               tx_hash: "0x" + "2".repeat(64),
             } as T;
           }
-          if (sql.includes("FROM drop_trees WHERE adopted_at IS NULL")) return null as T | null;
+          if (sql.includes("FROM drop_trees WHERE adopted_at IS NULL")) {
+            if (seed?.pending === undefined) return null as T | null;
+            return {
+              id: seed.pending.id,
+              root: "0x" + "3".repeat(64),
+              promised: "0",
+              holders: 1,
+              proposed_at: 0,
+              live_at: 0,
+              adopted_at: null,
+              tx_hash: "0x" + "4".repeat(64),
+            } as T;
+          }
           throw new Error(`The fake was not asked for this: ${sql}`);
         },
         async all<T>() {
@@ -468,6 +496,8 @@ describe("who a day is shared between", () => {
       const db = fakeDb({
         cursor: 1_000_000,
         holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+        // Stored here as well as pending on chain, which is the healthy case.
+        pending: { id: 7 },
       });
       const now = Date.parse("2026-09-18T00:10:00Z");
       const asked = fakeChain({
@@ -584,5 +614,149 @@ describe("what a round is allowed to hand out", () => {
     expect(round.slice(0, 2_500)).toContain("const arrived = inTheContract - alreadyOwed;");
     expect(round.slice(0, 2_500)).toContain("if (alreadyOwed > inTheContract)");
     expect(round.slice(0, 2_500)).not.toContain('selector("unpromised()")');
+  });
+});
+
+describe("a tree that reached the chain but not the database", () => {
+  /**
+   * What this is about, because it cost a night to find.
+   *
+   * The round proposes on chain, then writes. Those writes were loops of single
+   * statements — 207 reads, 207 writes, 168 inserts — and a Worker gets a
+   * thousand subrequests per request. On 28 September 2026 it ran out partway:
+   * the propose landed, the entitlements landed in part, and the tree was never
+   * stored.
+   *
+   * Nothing said so. Every run after it read `pendingAt` from the chain, saw a
+   * root waiting, and reported a tree quietly on its way — which is exactly what
+   * a healthy day looks like. The damage was going to arrive 24 hours later,
+   * when a run adopted a root nothing could make proofs for and took claiming
+   * away from everybody, including the holders who could claim before.
+   */
+  it("refuses to adopt a pending root it has no leaves for", () => {
+    const source = readFileSync(new URL("../lib/holders.ts", import.meta.url), "utf8");
+    const adopting = source.slice(
+      source.indexOf("} else if (now >= pendingAt * 1000) {"),
+      source.indexOf("  } else {"),
+    );
+    // The check comes before the send, which is the whole point: an adopt that
+    // has already gone out cannot be taken back.
+    expect(adopting.indexOf("await pendingTree(db)")).toBeLessThan(
+      adopting.indexOf('selector("adopt()")'),
+    );
+    expect(adopting).toContain("if (waiting === null)");
+    expect(adopting).toMatch(/NOT adopted/);
+  });
+
+  it("says so a day earlier, while it is still waiting", () => {
+    // The refusal above is the last line of defence and it arrives with the
+    // damage. This is the same hole found on the first run after it opened,
+    // with a full day left to put the tree back.
+    const source = readFileSync(new URL("../lib/holders.ts", import.meta.url), "utf8");
+    const waiting = source.slice(source.indexOf("a tree is waiting until"));
+    expect(waiting.slice(0, 800)).toContain("await pendingTree(db)) === null");
+    expect(waiting.slice(0, 800)).toMatch(/recover-tree/);
+  });
+
+  it("stores the tree before the entitlements", () => {
+    // Both can be lost. Losing the entitlements costs the next round's split,
+    // which this file's own arithmetic notices and which is recoverable money.
+    // Losing the tree costs everybody's ability to claim. So the expensive one
+    // is written first.
+    const source = readFileSync(new URL("../lib/holders.ts", import.meta.url), "utf8");
+    const after = source.slice(source.indexOf('selector("propose(bytes32,uint256)")'));
+    expect(after.indexOf("await recordTree(")).toBeLessThan(after.indexOf("await addEntitlements("));
+  });
+
+  it("writes in batches rather than a statement at a time", () => {
+    // The ceiling is the cause. A batch is one subrequest whatever its length,
+    // so this is what keeps the round inside its budget as the set grows.
+    const source = readFileSync(new URL("../lib/store.ts", import.meta.url), "utf8");
+    for (const fn of ["addEntitlements", "recordTree"]) {
+      const body = source.slice(source.indexOf(`export async function ${fn}`));
+      const upTo = body.slice(0, body.indexOf("\n}\n"));
+      expect(upTo, `${fn} should batch`).toContain("await db.batch(");
+      expect(upTo, `${fn} should not loop over .run()`).not.toMatch(/Promise\.all\([\s\S]*\.run\(\)/);
+    }
+  });
+
+  it("reads every entitlement in one query, not one per holder", () => {
+    const source = readFileSync(new URL("../lib/store.ts", import.meta.url), "utf8");
+    const body = source.slice(source.indexOf("export async function addEntitlements"));
+    const upTo = body.slice(0, body.indexOf("\n}\n"));
+    expect(upTo).toContain("SELECT address, entitlement FROM holders WHERE entitlement <> '0'");
+    expect(upTo).not.toContain("SELECT entitlement FROM holders WHERE address = ?");
+  });
+});
+
+describe("the night of 28 September, played back", () => {
+  it("adopts nothing and sends nothing when the leaves are missing", async () => {
+    await withDrop(async () => {
+      // A root pending on chain that has already waited its day, and a database
+      // with no tree stored — exactly the state the recovery had to be written
+      // for. The old code adopted it here without a word.
+      const db = fakeDb({
+        cursor: 1_000_000,
+        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+      });
+      const now = Date.parse("2026-09-29T00:20:00Z");
+      const asked = fakeChain({
+        head: 1_000_000,
+        unpromised: tokens(100_000),
+        pendingAt: Math.floor((now - 3_600_000) / 1000),
+      });
+      const ran = await runHolders(db, { publisherKey: KEY }, now);
+
+      expect(ran.adopted).toBeNull();
+      expect(ran.proposed).toBeNull();
+      // Nothing signed at all. Not the adopt, and not a propose on top of it.
+      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
+      expect(ran.why).toMatch(/no leaves for/i);
+      expect(ran.why).toMatch(/recover-tree/);
+    });
+  });
+
+  it("names the hole while the tree is still waiting, a day before it bites", async () => {
+    await withDrop(async () => {
+      const db = fakeDb({
+        cursor: 1_000_000,
+        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+      });
+      const now = Date.parse("2026-09-28T06:10:00Z");
+      const asked = fakeChain({
+        head: 1_000_000,
+        unpromised: tokens(100_000),
+        // Proposed six hours ago, so it has eighteen left to wait.
+        pendingAt: Math.floor((now + 18 * 3_600_000) / 1000),
+      });
+      const ran = await runHolders(db, { publisherKey: KEY }, now);
+
+      expect(asked.filter((one) => one.method === "eth_sendRawTransaction")).toHaveLength(0);
+      expect(ran.why).toMatch(/waiting until/i);
+      expect(ran.why).toMatch(/no leaves for it/i);
+      expect(ran.why).toMatch(/before it goes live/i);
+    });
+  });
+
+  it("says nothing unusual when the tree is stored and simply waiting", async () => {
+    // The check must not cry on a healthy day, or it becomes noise and the real
+    // one goes past unread.
+    await withDrop(async () => {
+      const db = fakeDb({
+        cursor: 1_000_000,
+        holders: [{ address: wallet(1), balance: tokens(100), isContract: false }],
+        pending: { id: 7 },
+      });
+      const now = Date.parse("2026-09-28T06:10:00Z");
+      fakeChain({
+        head: 1_000_000,
+        unpromised: tokens(100_000),
+        pendingAt: Math.floor((now + 18 * 3_600_000) / 1000),
+      });
+      const ran = await runHolders(db, { publisherKey: KEY }, now);
+
+      expect(ran.why).toMatch(/waiting until/i);
+      expect(ran.why).not.toMatch(/no leaves/i);
+    });
   });
 });

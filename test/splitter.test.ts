@@ -57,6 +57,13 @@ function fakeDb(): Database & { burns: Map<string, Record<string, unknown>> } {
 
   const db = {
     burns: rows,
+    // The fake applies a batch in order. It cannot model the all-or-nothing part
+    // — that is D1's — but it does model the shape the code now calls with.
+    async batch(statements: readonly Statement[]) {
+      const out: unknown[] = [];
+      for (const one of statements) out.push(await one.run());
+      return out;
+    },
     prepare(sql: string): Statement {
       let bound: unknown[] = [];
       const self: Statement = {

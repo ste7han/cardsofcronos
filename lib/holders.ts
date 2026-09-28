@@ -374,11 +374,40 @@ async function keepTheTreeMoving(
       why.push(`tree ${waiting.id} is no longer pending on chain`);
     }
   } else if (now >= pendingAt * 1000) {
-    adopted = await send(rpcs, key, drop, selector("adopt()"));
+    // ── NOT ADOPTED UNTIL WE CAN PROVE IT ────────────────────────────────────
+    //
+    // Adopting makes the pending root the live one, and a claim is checked
+    // against the live root. If the leaves behind it were never stored, adopting
+    // takes claiming away from everybody — including the holders who could claim
+    // against the root it replaces. That is the one move here that makes things
+    // worse, and it is the one that used to happen without a word.
+    //
+    // A run on 28 September 2026 proposed and then ran out of subrequests before
+    // storing the tree. Nothing said so; the next twenty runs reported a tree
+    // quietly waiting. scripts/recover-tree.ts is what putting it back took, and
+    // this is what stops the next one from ever being adopted unproved.
     const waiting = await pendingTree(db);
-    if (waiting !== null) await markAdopted(db, waiting.id, now);
+    if (waiting === null) {
+      why.push(
+        `the chain has a root pending since ${new Date(pendingAt * 1000).toISOString()} ` +
+          `that this database has no leaves for, so no proof can be made for it. ` +
+          `NOT adopted — adopting it would stop everybody claiming. ` +
+          `Put it back with scripts/recover-tree.ts, or have the owner call dropPending().`,
+      );
+      return { ...none, adopted, why: why.join("; ") };
+    }
+    adopted = await send(rpcs, key, drop, selector("adopt()"));
+    await markAdopted(db, waiting.id, now);
   } else {
     why.push(`a tree is waiting until ${new Date(pendingAt * 1000).toISOString()}`);
+    if ((await pendingTree(db)) === null) {
+      // Same hole, found a day earlier — while there is still time to fix it
+      // before the delay runs out and the branch above has to refuse.
+      why.push(
+        `and this database has no leaves for it, so nobody will be able to claim ` +
+          `against it. Put it back with scripts/recover-tree.ts before it goes live`,
+      );
+    }
     // Nothing else to do: the contract takes one pending root at a time.
     return { ...none, adopted, why: why.join("; ") };
   }
@@ -511,14 +540,28 @@ async function keepTheTreeMoving(
   // Now, and not a line earlier. The chain has accepted the promise, so the
   // table may hold what it promised — that is the whole of the ordering this
   // function exists to get right.
-  await addEntitlements(db, shares, now);
-
+  //
+  // ── AND THE TREE BEFORE THE ENTITLEMENTS ─────────────────────────────────
+  //
+  // These used to be the other way round, which put the cheap loss second. If
+  // the run dies between them:
+  //
+  //   tree first  — the leaves are stored, so every holder can still be given
+  //                 a proof. What is wrong is the split of the NEXT round, by
+  //                 whatever did not get written. Money, but recoverable, and
+  //                 the arithmetic in this function notices on its own.
+  //   tree second — the chain holds a root nothing can make proofs for. When it
+  //                 is adopted it replaces the live root, so nobody can claim,
+  //                 including everyone who could before.
+  //
+  // It died there on 28 September 2026 and it was the second one.
   const liveAt = now + PUBLISH_DELAY;
   await recordTree(
     db,
     { root: tree.root, promised, proposedAt: now, liveAt, txHash: proposed },
     leaves.map(([address, amount]) => [address, BigInt(amount)] as const),
   );
+  await addEntitlements(db, shares, now);
 
   return {
     adopted,

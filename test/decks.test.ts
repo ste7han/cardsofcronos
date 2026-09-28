@@ -105,7 +105,16 @@ function fakeDb(): Database & { rows: Map<string, Row> } {
     },
   });
 
-  return { rows, prepare: (sql: string) => statement(sql, []) };
+  return {
+    rows,
+    prepare: (sql: string) => statement(sql, []),
+    // Applied in order. The all-or-nothing part is D1's and not modelled here.
+    async batch(statements: readonly Statement[]) {
+      const out: unknown[] = [];
+      for (const one of statements) out.push(await one.run());
+      return out;
+    },
+  };
 }
 
 const forty = (from: string) => Array.from({ length: 40 }, (_, i) => `${from}-${i}`);

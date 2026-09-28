@@ -17,6 +17,21 @@ import type { Move, Player } from "@/engine/types";
 /** The slice of D1 this file uses. Small on purpose, so a fake is small too. */
 export interface Database {
   prepare(sql: string): Statement;
+  /**
+   * Several statements as one call, applied together or not at all.
+   *
+   * Here because of what a loop of `.run()` costs rather than for tidiness. A
+   * Worker gets a thousand subrequests per request and every statement is one:
+   * the nightly holder round spent 207 on reading entitlements, 207 on writing
+   * them and 168 on storing a tree, on top of its log scans, and on 28
+   * September 2026 it ran out partway through. The propose had already landed,
+   * so the chain held a tree the database had never stored and could not make
+   * proofs for — see scripts/recover-tree.ts for what getting that back took.
+   *
+   * A batch is one subrequest whatever its length, and D1 wraps it in a
+   * transaction, so it fixes the ceiling and the half-written state at once.
+   */
+  batch(statements: readonly Statement[]): Promise<unknown[]>;
 }
 export interface Statement {
   bind(...values: unknown[]): Statement;
@@ -712,30 +727,29 @@ export async function addEntitlements(
   if (rows.length === 0) return;
 
   // Read then write, with bigints, for the same reason moveBalances does.
+  //
+  // ONE QUERY, NOT ONE PER ADDRESS. This asked for each entitlement separately
+  // — two hundred round trips to learn two hundred numbers, in a request that
+  // has a thousand of them to spend in total. Every row that has one is fewer
+  // calls than every row we are about to write, and the map is the same map.
   const had = new Map<string, bigint>();
-  for (let i = 0; i < rows.length; i += 50) {
-    const slice = rows.slice(i, i + 50);
-    const found = await Promise.all(
-      slice.map(([address]) =>
-        db
-          .prepare(`SELECT entitlement FROM holders WHERE address = ?`)
-          .bind(address)
-          .first<{ entitlement: string }>(),
-      ),
-    );
-    for (const [j, row] of found.entries()) {
-      if (row !== null) had.set(slice[j]![0], BigInt(row.entitlement));
-    }
-  }
+  const { results } = await db
+    .prepare(`SELECT address, entitlement FROM holders WHERE entitlement <> '0'`)
+    .all<{ address: string; entitlement: string }>();
+  for (const row of results) had.set(row.address, BigInt(row.entitlement));
 
+  // And one call per fifty writes rather than one per write. Fifty keeps a
+  // batch small enough to read in a log line while turning two hundred
+  // subrequests into four.
   for (let i = 0; i < rows.length; i += 50) {
-    await Promise.all(
-      rows.slice(i, i + 50).map(([address, amount]) =>
-        db
-          .prepare(`UPDATE holders SET entitlement = ?, at = ? WHERE address = ?`)
-          .bind(((had.get(address) ?? 0n) + amount).toString(), at, address)
-          .run(),
-      ),
+    await db.batch(
+      rows
+        .slice(i, i + 50)
+        .map(([address, amount]) =>
+          db
+            .prepare(`UPDATE holders SET entitlement = ?, at = ? WHERE address = ?`)
+            .bind(((had.get(address) ?? 0n) + amount).toString(), at, address),
+        ),
     );
   }
 }
@@ -811,15 +825,14 @@ export async function recordTree(
 
   const id = row!.id;
   for (let i = 0; i < leaves.length; i += 50) {
-    await Promise.all(
+    await db.batch(
       leaves.slice(i, i + 50).map(([address, amount]) =>
         db
           .prepare(
             `INSERT INTO drop_leaves (tree, address, amount) VALUES (?, ?, ?)
              ON CONFLICT (tree, address) DO NOTHING`,
           )
-          .bind(id, address, amount.toString())
-          .run(),
+          .bind(id, address, amount.toString()),
       ),
     );
   }
