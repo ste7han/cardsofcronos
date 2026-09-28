@@ -17,7 +17,8 @@
 // is that the route refuses. Which is why it says empty in the message.
 
 import { db, env } from "@/lib/api";
-import { lastWeek, runWeekly } from "@/lib/publisher";
+import { PUBLIC_RPCS } from "@/lib/cronos";
+import { lastWeek, runWeekly, stillOwed } from "@/lib/publisher";
 import { setCursor } from "@/lib/store";
 import type { Database } from "@/lib/store";
 
@@ -40,7 +41,11 @@ export const dynamic = "force-dynamic";
  */
 const RAN = "weekly:ran";
 
-async function alreadyClosed(db: Database, week: string): Promise<boolean> {
+async function alreadyClosed(
+  db: Database,
+  rpcs: readonly string[],
+  week: string,
+): Promise<boolean> {
   const row = await db
     .prepare(`SELECT block FROM cursors WHERE name = ?`)
     .bind(RAN)
@@ -58,35 +63,11 @@ async function alreadyClosed(db: Database, week: string): Promise<boolean> {
   // the run had not thrown, week 2026-W39 came back with both boards skipped and
   // both prizes unclaimed, and the marker then refused every retry.
   //
-  // So it is the fast answer and the payouts are the real one. A board that has
-  // scores for the week and no payout row is a board still owed, whatever the
-  // marker says, and one read a minute is a cheap price for a claim that would
-  // otherwise never be retried.
-  // A board that somebody won and that has no payout at all is a board still
-  // owed, whatever the marker says.
-  //
-  // DELIBERATELY THE WEAK VERSION, and worth saying why. The exact question is
-  // per token — Loaded Lions is paid twice for one week, $CROCARD out of the
-  // shared pot and $LION out of its own — but a pot that is empty that week is
-  // settled with no row to show for it, so "every token has a row" would hold a
-  // week open for ever on a quiet one. Asking whether the board was paid at all
-  // does not have that failure, and the exact question is already answered where
-  // it can be answered properly: the run itself checks every board it touched
-  // and only writes the marker when all of them came back paid.
-  //
-  // So this is a backstop against a marker that should never have been written,
-  // not the rule that decides a payout.
-  const owing = await db
-    .prepare(
-      `SELECT COUNT(*) AS open FROM (
-         SELECT DISTINCT board FROM tournament WHERE week = ?
-         EXCEPT
-         SELECT board FROM tournament_paid WHERE week = ?
-       )`,
-    )
-    .bind(week, week)
-    .first<{ open: number }>();
-  return (owing?.open ?? 0) === 0;
+  // So it is the fast answer and the payouts are the real one. Counted PER
+  // TOKEN, and asked of the chain where the database cannot answer it: a board
+  // with a pot of its own is paid twice for one week. Counting per board instead
+  // called 2026-W39 finished with 848 $LION still allocated to nobody.
+  return (await stillOwed(db, rpcs, week)).length === 0;
 }
 
 /** 2026-W39 → 202639. Sorts the way the weeks do, which is all it is for. */
@@ -118,8 +99,10 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { soft?: boolean };
   const now = Date.now();
   const week = lastWeek(now);
+  const ourRpc = env().CRONOS_RPC;
+  const rpcs = ourRpc ? [ourRpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
 
-  if (body.soft === true && (await alreadyClosed(db(), week))) {
+  if (body.soft === true && (await alreadyClosed(db(), rpcs, week))) {
     return Response.json({ ok: true, tooSoon: true, week });
   }
 

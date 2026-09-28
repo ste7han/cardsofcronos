@@ -111,6 +111,72 @@ export function closeWeekData(
 }
 
 /**
+ * Every (board, token) that week still owes somebody, according to the chain.
+ *
+ * ── WHY THIS IS NOT A QUESTION THE DATABASE CAN ANSWER ───────────────────────
+ *
+ * The weekly job keeps a marker so the every-minute alarm does not redo a
+ * settled week, and a marker written wrongly once stops a week for ever. So it
+ * is checked against reality — and the first version checked it against
+ * `tournament_paid` by board, which is the wrong grain. Loaded Lions is paid
+ * twice for one week, $CROCARD out of the shared pot and $LION out of its own,
+ * and one row for the board made the week look finished when half of it had
+ * gone out. Week 2026-W39 sat exactly there: both $CROCARD prizes paid, 848
+ * $LION allocated to nobody, and the job answering "nothing to do" every minute.
+ *
+ * Asking per token instead has one trap, which is why it was not done that way
+ * at first: a pot that is empty that week is settled with no row to show for
+ * it, and demanding a row would hold the week open for ever on a quiet one. So
+ * the pot is asked whether it has anything to give. Nothing to give is nothing
+ * owed; anything to give and no payout recorded is a debt.
+ *
+ * Two eth_calls a minute in the worst case, against a prize that would otherwise
+ * never be paid.
+ */
+export async function stillOwed(
+  db: Database,
+  rpcs: readonly string[],
+  week: string,
+): Promise<{ board: string; token: string }[]> {
+  const { results: scored } = await db
+    .prepare(`SELECT DISTINCT board FROM tournament WHERE week = ?`)
+    .bind(week)
+    .all<{ board: string }>();
+  if (scored.length === 0) return [];
+
+  const { results: paid } = await db
+    .prepare(`SELECT board, token FROM tournament_paid WHERE week = ?`)
+    .bind(week)
+    .all<{ board: string; token: string }>();
+  const done = new Set(paid.map((row) => `${row.board}/${row.token.toLowerCase()}`));
+
+  const owed: { board: string; token: string }[] = [];
+  for (const { board: id } of scored) {
+    const token = CROCARD.toLowerCase();
+    if (!done.has(`${id}/${token}`)) owed.push({ board: id, token });
+
+    const also = BOARDS.find((one) => one.id === id)?.alsoPays ?? null;
+    if (also === null || also.contract === null) continue;
+    const own = also.token.toLowerCase();
+    if (done.has(`${id}/${own}`)) continue;
+
+    // Only a debt if there is something in the pot to pay it with.
+    const [holds, spoken] = await Promise.all([
+      rpc<string>(rpcs, "eth_call", [
+        { to: also.token, data: selector("balanceOf(address)") + word(also.contract) },
+        "latest",
+      ]),
+      rpc<string>(rpcs, "eth_call", [
+        { to: also.contract, data: selector("allocated()") },
+        "latest",
+      ]),
+    ]);
+    if (BigInt(holds) > BigInt(spoken)) owed.push({ board: id, token: own });
+  }
+  return owed;
+}
+
+/**
  * Closes the week that has just ended and pays every board's winner.
  *
  * Returns what it did rather than throwing on the ordinary nothing-to-do cases,

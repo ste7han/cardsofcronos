@@ -137,17 +137,31 @@ describe("the marker the weekly job keeps", () => {
     const body = fn.slice(0, fn.indexOf("\n}\n"));
 
     // The marker is the fast no. It must never be the last word.
-    expect(body).toContain("FROM tournament_paid WHERE week = ?");
-    expect(body).toContain("EXCEPT");
-    // A board with scores and no payout row leaves the week open.
-    expect(body).toContain("SELECT DISTINCT board FROM tournament WHERE week = ?");
+    expect(body).toContain("await stillOwed(");
+    expect(body).toMatch(/stillOwed\(db, rpcs, week\)\)\.length === 0/);
   });
 
-  it("still answers no work to do when everything was paid", () => {
-    const source = readFileSync(new URL("../app/api/cron/weekly/route.ts", import.meta.url), "utf8");
-    const fn = source.slice(source.indexOf("async function alreadyClosed"));
+  it("counts what is owed per token, not per board", () => {
+    // Counting per board called 2026-W39 finished while 848 $LION was still
+    // allocated to nobody: Loaded Lions is paid twice for one week, and one row
+    // for the board looked like both halves had gone out.
+    const source = readFileSync(new URL("../lib/publisher.ts", import.meta.url), "utf8");
+    const fn = source.slice(source.indexOf("export async function stillOwed"));
     const body = fn.slice(0, fn.indexOf("\n}\n"));
-    expect(body).toMatch(/open \?\? 0\) === 0/);
+    expect(body).toContain("SELECT board, token FROM tournament_paid WHERE week = ?");
+    expect(body).toMatch(/\$\{row\.board\}\/\$\{row\.token\.toLowerCase\(\)\}/);
+    expect(body).toContain("alsoPays");
+  });
+
+  it("does not call an empty pot a debt", () => {
+    // The trap that made the first version count per board: a pot with nothing
+    // in it is settled with no payout row to show for it, and demanding a row
+    // would hold a quiet week open for ever. So the pot is asked.
+    const source = readFileSync(new URL("../lib/publisher.ts", import.meta.url), "utf8");
+    const fn = source.slice(source.indexOf("export async function stillOwed"));
+    const body = fn.slice(0, fn.indexOf("\n}\n"));
+    expect(body).toContain('selector("allocated()")');
+    expect(body).toContain("if (BigInt(holds) > BigInt(spoken))");
   });
 });
 
