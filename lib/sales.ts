@@ -117,7 +117,25 @@ export async function runSales(
   now: number,
 ): Promise<RanSales> {
   const nothing: RanSales = { feed: "sales", found: 0, posted: 0, through: null };
-  if (!webhook) return { ...nothing, skipped: "no webhook set" };
+
+  // Empty and absent are told apart, because they look identical everywhere
+  // else and only one of them is a mistake.
+  //
+  // `wrangler secret put` takes an empty answer, says Success, and lists the
+  // name afterwards like any other secret — so a binding that exists proves
+  // nothing. It is set to nothing whenever the prompt cannot reach a terminal,
+  // which is what happens running it through a tool rather than a shell. This
+  // reported "no webhook set" three times while `wrangler secret list` showed
+  // the name, and the two sentences never met.
+  if (webhook === undefined) return { ...nothing, skipped: "DISCORD_SALES is not set" };
+  if (webhook.trim() === "") {
+    return {
+      ...nothing,
+      skipped:
+        "DISCORD_SALES is set to an empty value. `wrangler secret put` does that " +
+        "when its prompt cannot reach a terminal — run it in a shell, not through a tool.",
+    };
+  }
 
   const nft = CONTRACTS.nft;
   if (nft === null) return { ...nothing, skipped: "nothing deployed to watch" };

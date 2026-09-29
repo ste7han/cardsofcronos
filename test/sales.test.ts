@@ -196,6 +196,17 @@ describe("when EbisusBay changes or breaks", () => {
   it("does nothing at all without a webhook, and says which", async () => {
     const db = fakeDb();
     const ran = await runSales(db, undefined, 1_800_000_000_000);
-    expect(ran.skipped).toMatch(/no webhook/i);
+    expect(ran.skipped).toMatch(/not set/i);
+  });
+
+  it("tells an empty secret apart from a missing one", async () => {
+    // They look identical everywhere else. `wrangler secret put` stores an empty
+    // value whenever its prompt cannot reach a terminal, says Success, and lists
+    // the name like any other — so this said "no webhook set" three times while
+    // the secret was demonstrably bound. Naming the cause is the whole fix.
+    const db = fakeDb();
+    const ran = await runSales(db, "", 1_800_000_000_000);
+    expect(ran.skipped).toMatch(/empty/i);
+    expect(ran.skipped).toMatch(/terminal/i);
   });
 });
