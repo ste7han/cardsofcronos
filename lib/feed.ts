@@ -187,7 +187,7 @@ async function lastRunAt(db: Database): Promise<number | null> {
  * trusting `changes`: D1 batches, and a batch's per-statement change count is
  * not something to build a "did anybody already see this" answer on.
  */
-async function alreadyPosted(db: Database, ids: readonly string[]): Promise<Set<string>> {
+export async function alreadyPosted(db: Database, ids: readonly string[]): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
   const marks = ids.map(() => "?").join(",");
   const { results } = await db
@@ -197,7 +197,7 @@ async function alreadyPosted(db: Database, ids: readonly string[]): Promise<Set<
   return new Set((results ?? []).map((row) => row.id));
 }
 
-async function remember(db: Database, ids: readonly string[], at: number): Promise<void> {
+export async function remember(db: Database, ids: readonly string[], at: number): Promise<void> {
   // One at a time. lib/store.ts keeps the Database interface down to what this
   // project actually uses and `batch` is not in it — and the counts here are a
   // handful per run, not a migration.

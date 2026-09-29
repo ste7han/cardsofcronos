@@ -23,6 +23,7 @@
 
 import { db, env } from "@/lib/api";
 import { runFeeds } from "@/lib/feed";
+import { runSales } from "@/lib/sales";
 
 export const dynamic = "force-dynamic";
 
@@ -57,8 +58,17 @@ export async function POST(request: Request) {
     body.soft === true ? 45_000 : null,
   );
 
+  // Sales, separately and after.
+  //
+  // Not inside runFeeds, and that is deliberate. The three in there read the
+  // chain; this one reads EbisusBay's API, and an API that changes shape or
+  // stops answering must not be able to take the chain feeds down with it. It
+  // also runs whether or not the others declined as too soon — it is one request
+  // to somebody else's server, not a scan.
+  const sales = await runSales(db(), env().DISCORD_SALES, Date.now());
+
   // Always 200 with what happened. Most minutes there is nothing to say, and a
   // job that returns an error for the ordinary case is a job whose alerts get
   // muted — which is how a feed stays broken for a fortnight.
-  return Response.json({ ok: true, ...ran });
+  return Response.json({ ok: true, ...ran, sales });
 }

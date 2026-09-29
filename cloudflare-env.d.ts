@@ -57,6 +57,16 @@ interface CloudflareEnv {
   DISCORD_BUYS?: string;
   DISCORD_BURNS?: string;
   /**
+   * Cards sold on EbisusBay.
+   *
+   * The odd one out: the three above are read off the chain, and this is read
+   * off EbisusBay's own API — a sale happens inside their marketplace contract
+   * and their answer carries the card's name and the price in CRO, which a raw
+   * log does not. It runs on its own so that an API changing shape cannot take
+   * the chain feeds down with it. See lib/sales.ts.
+   */
+  DISCORD_SALES?: string;
+  /**
    * Where a finished match against the bot is announced.
    *
    * Unlike the three above, what goes here is not read off a log — a solo match
