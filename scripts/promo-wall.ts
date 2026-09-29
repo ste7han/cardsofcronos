@@ -69,6 +69,16 @@ const FAMILY = flag("family");
 const ALL = args.includes("--all");
 /** One board: its opponent's cards, and what it costs and pays. */
 const BOARD = flag("board");
+/**
+ * Named cards, comma separated, for a picture about those and nothing else.
+ *
+ * --family draws everything a project has, which is the right answer for
+ * introducing a project and the wrong one for showing three cards somebody
+ * wants to talk about. Ids rather than names, because two cards may share a
+ * name and an id never does — and an id that is not in the set throws here
+ * rather than rendering a gap nobody notices until it is posted.
+ */
+const CARDS = flag("cards");
 
 /**
  * Which project a card belongs to, or none.
@@ -100,6 +110,8 @@ interface Subject {
    * picture says what it costs to sit down opposite them and what is in the pot,
    * which are the two questions somebody deciding has.
    */
+  /** The card names, when the picture is about named cards rather than a family. */
+  cards?: string[];
   board?: {
     name: string;
     cro: number;
@@ -124,6 +136,27 @@ function subjectOf(family: string | null): Subject {
     front,
     name: family === null ? null : SET.find((c) => projectOf(c) === family)!.name.toUpperCase(),
     span: `${rarities[0]!.toUpperCase()} TO ${rarities[rarities.length - 1]!.toUpperCase()}`,
+  };
+}
+
+/** A picture about particular cards, named by id. */
+function subjectOfCards(ids: string[]): Subject {
+  for (const id of ids) {
+    if (!SET.some((c) => c.id === id)) throw new Error(`There is no card "${id}" in the set.`);
+  }
+  // Kept in the order they were asked for. The fan leans outwards from the
+  // middle, so which card sits in the centre is a choice somebody is making by
+  // the order they typed.
+  const rarities = ids
+    .map((id) => SET.find((c) => c.id === id)!.rarity)
+    .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+  return {
+    front: ids,
+    // Null, so the eyebrow and the count describe the set rather than these
+    // three. Three cards out of four hundred is context somebody needs.
+    name: null,
+    span: `${rarities[0]!.toUpperCase()} TO ${rarities[rarities.length - 1]!.toUpperCase()}`,
+    cards: ids.map((id) => SET.find((c) => c.id === id)!.name),
   };
 }
 
@@ -176,7 +209,15 @@ const SAY_WIDTH = STACKED ? W - 160 : Math.round(W * 0.33);
  * of words in a column that has the room, and the thing to avoid is a headline
  * too wide for the column, which this cannot produce.
  */
-function headline(words: string[]): { size: number; html: string } {
+function headline(words: string[], oneEach = false): { size: number; html: string } {
+  // A list of names is not a sentence. Packing "PAMPA FRANCIS 21MILLION" onto
+  // one line reads as a single long name, which is the opposite of what a
+  // picture naming three cards is for.
+  if (oneEach) {
+    const longest = Math.max(...words.map((one) => one.length));
+    const size = Math.max(px(44), Math.min(px(92), Math.floor(SAY_WIDTH / (longest * 0.62))));
+    return { size, html: words.join("<br>") };
+  }
   for (let size = px(92); size >= px(44); size -= Math.max(2, px(4))) {
     const perLine = Math.floor(SAY_WIDTH / (size * 0.62));
     const lines: string[] = [];
@@ -197,13 +238,18 @@ function headline(words: string[]): { size: number; html: string } {
   return { size: px(44), html: words.join("<br>") };
 }
 
-function page({ front, name, span, board }: Subject): string {
+function page({ front, name, span, board, cards }: Subject): string {
   const title = headline(
     board !== undefined
       ? ["BEAT", "THE", ...board.name.split(/\s+/).slice(-1)]
-      : name === null
-        ? ["CARDS", "OF", "CRONOS"]
-        : [...name.split(/\s+/), "CARDS"],
+      : cards !== undefined
+        // The names, and nothing else. A headline reading CARDS OF CRONOS over
+        // three named cards wastes the one line that could say who they are.
+        ? cards.map((one) => one.toUpperCase())
+        : name === null
+          ? ["CARDS", "OF", "CRONOS"]
+          : [...name.split(/\s+/), "CARDS"],
+    cards !== undefined,
   );
 
   // The set for the general picture, the family for a family one. Folding the
@@ -223,7 +269,10 @@ function page({ front, name, span, board }: Subject): string {
         };
 
   const blurb =
-    board !== undefined
+    cards !== undefined
+      ? `${cards.slice(0, -1).join(", ")} and ${cards[cards.length - 1]} are in the game. ` +
+        `${SET.length} cards on Cronos, ten turns, and the highest market cap wins.`
+      : board !== undefined
       ? `Their whole family, and a deck built to hold them. Beat it and your best market cap of ` +
         `the week takes the pot. Half of every entry buys $LION straight into it.`
       : name === null
@@ -247,10 +296,16 @@ function page({ front, name, span, board }: Subject): string {
   // the cards came out small with six hundred empty pixels above and below them.
   // Overlapping further buys width back as size, and a third of a card covered
   // still shows the art, which sits at the top of the face.
-  const OVERLAP = STACKED ? 0.34 : 0.26;
+  // How far the cards sit over each other, and how large they may be, both
+  // depend on how many there are. Eight cards need the compression or the fan
+  // runs off the frame; three do not, and at the eight-card spacing they cover
+  // each other's text for no reason — which on a picture whose subject IS those
+  // three cards is the whole picture wasted.
+  const few = front.length <= 4;
+  const OVERLAP = few ? 0.16 : STACKED ? 0.34 : 0.26;
   const room = STACKED ? W - 80 : W - SAY_WIDTH - 150;
   const spans = front.length - (front.length - 1) * OVERLAP;
-  const cardW = Math.min(STACKED ? 300 : 200, Math.floor(room / spans));
+  const cardW = Math.min(few ? 430 : STACKED ? 300 : 200, Math.floor(room / spans));
   const overlap = Math.round(cardW * OVERLAP);
 
   const heroes = front.map((id, i) => {
@@ -390,9 +445,16 @@ function page({ front, name, span, board }: Subject): string {
           : "CARDS OF CRONOS · SET 01"
     }</div>
     <h1>${title.html}</h1>
-    <div class="count">${money !== null ? money.big : `${counts} CARDS`}<span>${
-      money !== null ? money.small : `· ${name === null ? "5,603 minted at most" : span}`
-    }</span></div>
+    ${
+      // Left out when the headline is a list of names. Three names take three
+      // lines, and the count line underneath them landed on top of the fan —
+      // and it is saying what the sentence at the foot already says.
+      cards !== undefined
+        ? ""
+        : `<div class="count">${money !== null ? money.big : `${counts} CARDS`}<span>${
+            money !== null ? money.small : `· ${name === null ? "5,603 minted at most" : span}`
+          }</span></div>`
+    }
     ${STACKED ? "" : `<p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div>`}
   </div>
   ${STACKED ? `<div class="foot"><p class="line">${blurb}</p><div class="url">CARDSOFCRONOS.COM</div></div>` : ""}
@@ -521,7 +583,9 @@ async function main() {
     }
     subject = { ...subjectOf(board.opponent.family), board: await moneyOf(board) };
   } else {
-    subject = subjectOf(FAMILY);
+    subject = CARDS === null
+      ? subjectOf(FAMILY)
+      : subjectOfCards(CARDS.split(",").map((one) => one.trim()).filter(Boolean));
   }
   const size = await shoot(tab, subject, OUT, true);
   await browser.close();
