@@ -42,6 +42,7 @@
     "placeholder": "tsx scripts/nft/placeholder.ts",
     "deploy:contracts": "tsx --env-file=.env.local scripts/deploy-contracts.ts",
     "mint-control": "tsx --env-file=.env.local scripts/nft/mint-control.ts",
+    "base-uri": "tsx --env-file=.env.local scripts/nft/base-uri.ts",
     "allowlist-root": "tsx scripts/nft/allowlist-root.ts",
     "promo-wall": "tsx scripts/promo-wall.ts",
     "promo-all": "tsx scripts/promo-wall.ts --all",
