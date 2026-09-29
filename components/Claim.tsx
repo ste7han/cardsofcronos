@@ -59,12 +59,32 @@ interface Answer {
 
 type Doing = "idle" | "asking" | "sent";
 
+/**
+ * How long until a moment, in the largest unit that is still true.
+ *
+ * "in 6h 12m" rather than a date and a time. A holder looking at this wants to
+ * know whether to wait or to come back tomorrow, and a timestamp makes them work
+ * that out — in their own timezone, against a clock they have to find.
+ */
+function until(when: number, now: number): string {
+  const left = when - now;
+  if (left <= 0) return "any moment now";
+  const days = Math.floor(left / 86_400_000);
+  const hours = Math.floor((left % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((left % 3_600_000) / 60_000);
+  if (days >= 1) return `in ${days}d ${hours}h`;
+  if (hours >= 1) return `in ${hours}h ${minutes}m`;
+  return `in ${Math.max(1, minutes)}m`;
+}
+
 export function Claim({ wallet }: { wallet: string | null }) {
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [failed, setFailed] = useState(false);
   const [doing, setDoing] = useState<Doing>("idle");
   const [sentAs, setSentAs] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string | null>(null);
+  // The one thing on this panel that goes stale while somebody looks at it.
+  const [now, setNow] = useState(() => Date.now());
 
   /**
    * Passed through to the route, which is where the preview lives.
@@ -78,6 +98,11 @@ export function Claim({ wallet }: { wallet: string | null }) {
    * which is the point — the first version kept the sample numbers here, and
    * they shipped in the production bundle where anybody could find them.
    */
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(tick);
+  }, []);
+
   const [preview] = useState(() =>
     typeof window === "undefined"
       ? null
@@ -157,46 +182,64 @@ export function Claim({ wallet }: { wallet: string | null }) {
   // empty space as somebody who had earned nothing, and reasonably concluded
   // the payout did not work. Saying what is coming turns the delay from a
   // silence into the thing it actually is.
-  if (answer.owed === null) {
-    const coming = answer.coming ?? null;
-    if (coming === null) return null;
-
-    const when = new Date(coming.liveAt);
-    const waiting = coming.liveAt > Date.now();
-
-    return (
+  // ── WHAT IS ON ITS WAY ─────────────────────────────────────────────────────
+  //
+  // A tree is proposed and then waits a day in the open before the contract will
+  // adopt it. That delay is the whole answer to a publisher key being stolen,
+  // and the reason this drop is safe to run from a server at all.
+  //
+  // Said as a countdown rather than a date. Somebody looking at this wants to
+  // know whether to wait or to come back tomorrow, and a timestamp makes them
+  // work that out in their own timezone against a clock they have to find.
+  //
+  // AND SHOWN ALONGSIDE WHAT IS CLAIMABLE, not instead of it. It used to render
+  // only when there was nothing to claim, so anybody who had claimed before saw
+  // no sign that more was coming — which is the same silence this block was
+  // written to remove, just moved to the people most likely to look.
+  const coming = answer.coming ?? null;
+  const onItsWay =
+    coming === null ? null : (
       <div className="mt-4 border border-gold/40 bg-gold/5 px-4 py-4">
-        <p className="text-[8px] tracking-[0.18em] text-faint">ON ITS WAY</p>
-        <p className="display mt-1 text-3xl tabular-nums text-gold">
-          {whole(coming.earned)} <span className="text-base text-muted">$CROCARD</span>
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-[8px] tracking-[0.18em] text-faint">ON ITS WAY</p>
+            <p className="display mt-1 text-3xl tabular-nums text-gold">
+              {whole(coming.earned)} <span className="text-base text-muted">$CROCARD</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[8px] tracking-[0.18em] text-faint">UNLOCKS</p>
+            <p className="display mt-1 text-xl tabular-nums text-gold">
+              {until(coming.liveAt, now)}
+            </p>
+          </div>
+        </div>
 
         <p className="mt-3 text-[10px] leading-relaxed text-muted">
-          Your share of {whole(coming.promised)} going to {coming.holders.toLocaleString("en-US")}{" "}
-          holders. It is not claimable yet: a share-out is published first and only counts a day
-          later, in the open, so that a key on a server can never pay anybody without a day in
-          which it can be thrown away. That is what makes this safe to run nightly.
+          Your share of {whole(coming.promised)} going to{" "}
+          {coming.holders.toLocaleString("en-US")} holders. A share-out is published first and
+          only counts a day later, in the open, so a key on a server can never pay anybody
+          without a day in which it can be thrown away.
         </p>
 
         <p className="mt-2 text-[10px] leading-relaxed text-gold">
-          {waiting
-            ? `The day is up at ${when.toLocaleString(undefined, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}, and it is adopted on the next nightly run after that.`
-            : `The day was up at ${when.toLocaleString(undefined, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}. It is adopted on the next nightly run, and the button appears here.`}
+          {coming.liveAt > now
+            ? `It is adopted on the first nightly run after ${new Date(coming.liveAt).toLocaleString(
+                undefined,
+                { dateStyle: "medium", timeStyle: "short" },
+              )}, and then the button below works on it too.`
+            : "The day is up. It is adopted on the next nightly run, and then it is claimable here."}
         </p>
       </div>
     );
-  }
+
+  if (answer.owed === null) return onItsWay;
 
   const claimable = BigInt(answer.owed.claimable);
 
   if (sentAs !== null) {
     return (
+      <>
       <div className="mt-4 border border-pump/40 bg-pump/5 px-4 py-3">
         <p className="text-[11px] leading-relaxed text-pump">
           Sent. It arrives when the transaction lands — a block on Cronos is under half a second,
@@ -221,6 +264,8 @@ export function Claim({ wallet }: { wallet: string | null }) {
           READ IT BACK
         </button>
       </div>
+      {onItsWay}
+      </>
     );
   }
 
@@ -229,15 +274,19 @@ export function Claim({ wallet }: { wallet: string | null }) {
   // empty space that reads like something is broken.
   if (claimable === 0n) {
     return (
-      <p className="mt-3 text-[11px] leading-relaxed text-muted">
-        You are up to date — everything earned so far has been paid out. It starts going up again
-        with the next share-out.
-      </p>
+      <>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted">
+          You are up to date — everything earned so far has been paid out.
+          {onItsWay === null ? " It starts going up again with the next share-out." : ""}
+        </p>
+        {onItsWay}
+      </>
     );
   }
 
   return (
-    <div className="mt-4 border border-pump/40 bg-pump/5 px-4 py-4">
+    <>
+      <div className="mt-4 border border-pump/40 bg-pump/5 px-4 py-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[8px] tracking-[0.18em] text-faint">READY TO CLAIM</p>
@@ -262,6 +311,8 @@ export function Claim({ wallet }: { wallet: string | null }) {
       </p>
 
       {wrong !== null && <p className="mt-2 text-[10px] text-dump">{wrong}</p>}
-    </div>
+      </div>
+      {onItsWay}
+    </>
   );
 }

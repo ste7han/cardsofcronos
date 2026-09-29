@@ -760,3 +760,38 @@ describe("the night of 28 September, played back", () => {
     });
   });
 });
+
+describe("the countdown on the profile", () => {
+  /**
+   * A holder with something queued used to be shown a timestamp, and only when
+   * they had nothing to claim. Both were wrong in the same direction: the day a
+   * tree waits is the reason this drop is safe to run from a server, and it was
+   * being presented as either a silence or a sum somebody had to do themselves.
+   */
+  it("says how long, not when", () => {
+    const page = readFileSync(new URL("../components/Claim.tsx", import.meta.url), "utf8");
+    const fn = page.slice(page.indexOf("function until("));
+    const body = fn.slice(0, fn.indexOf("\n}\n"));
+    expect(body).toContain("any moment now");
+    expect(body).toMatch(/in \$\{days\}d \$\{hours\}h/);
+    expect(body).toMatch(/in \$\{hours\}h \$\{minutes\}m/);
+  });
+
+  it("keeps ticking while somebody looks at it", () => {
+    // A countdown that is computed once is a countdown that is wrong by however
+    // long the page has been open.
+    const page = readFileSync(new URL("../components/Claim.tsx", import.meta.url), "utf8");
+    expect(page).toContain("setInterval(() => setNow(Date.now())");
+  });
+
+  it("shows what is coming alongside what is claimable, not instead of it", () => {
+    // It rendered only when owed was null, so anybody who had claimed before saw
+    // no sign that more was on its way — the same silence the block exists to
+    // remove, moved to the people most likely to be looking.
+    const page = readFileSync(new URL("../components/Claim.tsx", import.meta.url), "utf8");
+    const after = page.slice(page.indexOf("const onItsWay ="));
+    // Every branch that returns a panel puts it in.
+    expect([...after.matchAll(/\{onItsWay\}/g)].length).toBeGreaterThanOrEqual(3);
+    expect(after).toContain("if (answer.owed === null) return onItsWay;");
+  });
+});
