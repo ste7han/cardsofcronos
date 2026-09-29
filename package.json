@@ -56,7 +56,8 @@
     "explainers": "tsx scripts/explainers.ts",
     "crooks-snapshot": "tsx scripts/crooks-snapshot.ts",
     "crooks-grants": "tsx scripts/crooks-grants.ts",
-    "crooks-card": "tsx scripts/crooks-card.ts"
+    "crooks-card": "tsx scripts/crooks-card.ts",
+    "state-of-play": "tsx scripts/state-of-play.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
