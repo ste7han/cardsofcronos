@@ -113,16 +113,31 @@ const EXPLAINERS: Explainer[] = [
     ],
   },
   {
-    id: "merge",
-    kicker: "ONE CARD, YOUR WHOLE BOARD",
-    title: "MERGE IT\nALL INTO\nONE PROJECT",
+    id: "upgrade",
+    kicker: "GROWING A POSITION",
+    title: "PLAY THE BIGGER\nCARD STRAIGHT\nON TOP",
     body:
-      `A merge card closes all your other projects and moves what they earned onto the one you ` +
-      `just played. You keep every dollar, because you closed them yourself. The risk is what ` +
-      `comes after: ${RULES.portfolioSize} projects each take damage on their own, but one project takes all of it.`,
+      `Hold a bigger card of a project you already have on the board? Play it over the top. The ` +
+      `new card takes the position, keeps every dollar the old one earned, and inherits ` +
+      `everything it was pumping. One action instead of two — that is the whole reason to do it.`,
     facts: [
+      { label: "COSTS", value: "ONE PLAY" },
+      { label: "YOU KEEP", value: "EVERY $" },
+      { label: "AND INHERIT", value: "THE PUMP" },
+    ],
+  },
+  {
+    id: "merge",
+    kicker: "ONE CARD IN THE WHOLE SET",
+    title: "RECKLESS ROBOTS\nFOLDS YOUR BOARD\nINTO ONE",
+    body:
+      `One mythic does this, and only this one. Play it and every other project you hold closes, ` +
+      `moving what they earned and what they pump onto it. You keep all of it — you closed them ` +
+      `yourself. The risk comes after: ${word(RULES.portfolioSize)} projects each take damage on their own, ` +
+      `but one project takes all of it.`,
+    facts: [
+      { label: "THE CARD", value: "RECKLESS ROBOTS" },
       { label: "CLOSES", value: `UP TO ${RULES.portfolioSize - 1}` },
-      { label: "YOU KEEP", value: "EVERYTHING" },
       { label: "RISK", value: "ONE TARGET" },
     ],
   },
