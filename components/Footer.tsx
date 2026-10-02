@@ -46,6 +46,12 @@ export function Footer() {
               exist: it is the link somebody goes looking for when they want to
               check rather than to follow. */}
           <Link
+            href="/how-it-works"
+            className="tracking-[0.16em] transition-colors hover:text-pump"
+          >
+            HOW IT WORKS
+          </Link>
+          <Link
             href="/contracts"
             className="tracking-[0.16em] transition-colors hover:text-pump"
           >
