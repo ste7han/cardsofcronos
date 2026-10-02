@@ -77,11 +77,22 @@ export function CardPeek({
     const place = () => {
       const box = trigger.current?.getBoundingClientRect();
       if (!box) return;
-      const height = Math.round(WIDTH * 1.4) + 8;
+      // 7.8/5, which is the aspect a full-size card is drawn at — see the
+      // `aspect-[5/7.8]` in CardView. It said 1.4 here, which is the COMPACT
+      // ratio: the shape of a card in your hand, not the shape of the one this
+      // opens. Thirty-four pixels of difference at this width, all of it off the
+      // top of the screen, because the card was placed as if it ended where it
+      // did not.
+      const height = Math.round(WIDTH * (7.8 / 5)) + 8;
       // Above the tile by default, below it when there is no room above — a
       // position on the top row of the board has nothing over it.
       const above = box.top - GAP - height;
-      const top = above >= 8 ? above : Math.min(box.bottom + GAP, window.innerHeight - height - 8);
+      // Clamped at both ends, and not only computed. The ratio above can drift
+      // again — a card's shape is a design decision and this is a copy of it —
+      // and whatever it drifts to, a popover that opens off the edge of the
+      // screen is a popover nobody can read. Floor beats arithmetic.
+      const wanted = above >= 8 ? above : box.bottom + GAP;
+      const top = Math.max(8, Math.min(wanted, window.innerHeight - height - 8));
       const left = Math.min(
         Math.max(8, box.left + box.width / 2 - WIDTH / 2),
         window.innerWidth - WIDTH - 8,

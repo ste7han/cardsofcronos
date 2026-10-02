@@ -381,27 +381,33 @@ button:disabled {
    with the viewport. Bumping those overflows the frame, which is the one place
    where bigger text makes the thing harder to read rather than easier.
 
+   NOT INSIDE .dense EITHER. That marks the table — see components/game/PlayArea.
+   A page somebody reads can afford ten per cent more scrolling for type that
+   does not have to be squinted at. A game cannot: the board and your hand have
+   to be on screen together, and every pixel the labels grow comes out of that.
+   Legibility there was wanted on the CARDS, and the cards are full width now.
+
    Floors, not multipliers: everything lands on 11px or 12px, so the hierarchy
    between 7, 8 and 9 flattens at the bottom. That is deliberate. Three steps of
    emphasis below the readable threshold are three steps nobody can see.
    --------------------------------------------------------------------------- */
 @media (max-width: 639px) {
-  .text-\[7px\]:not(.card-frame *),
-  .text-\[8px\]:not(.card-frame *),
-  .text-\[9px\]:not(.card-frame *) {
+  .text-\[7px\]:not(.card-frame *):not(.dense *),
+  .text-\[8px\]:not(.card-frame *):not(.dense *),
+  .text-\[9px\]:not(.card-frame *):not(.dense *) {
     font-size: 11px;
   }
 
-  .text-\[10px\]:not(.card-frame *),
-  .text-\[11px\]:not(.card-frame *) {
+  .text-\[10px\]:not(.card-frame *):not(.dense *),
+  .text-\[11px\]:not(.card-frame *):not(.dense *) {
     font-size: 12px;
   }
 
   /* Letter-spacing is set in em, so it grew with the type and the uppercase
      labels started wrapping. Pulled back by the same proportion. */
-  .text-\[7px\]:not(.card-frame *),
-  .text-\[8px\]:not(.card-frame *),
-  .text-\[9px\]:not(.card-frame *) {
+  .text-\[7px\]:not(.card-frame *):not(.dense *),
+  .text-\[8px\]:not(.card-frame *):not(.dense *),
+  .text-\[9px\]:not(.card-frame *):not(.dense *) {
     letter-spacing: 0.12em;
   }
 }

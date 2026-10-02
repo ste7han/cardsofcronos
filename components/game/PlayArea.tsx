@@ -233,7 +233,17 @@ export function PlayArea() {
           </button>
         </div>
       )}
-      <Game key={board.id} board={board} onMatch={onMatch} begin />
+      {/* `dense` opts the table out of the small-type floor in globals.css.
+          
+          That floor is right for a page somebody reads: ten per cent more
+          scrolling buys type that does not have to be squinted at. The table is
+          not read, it is played — the board and your hand have to be on screen
+          at the same time, and every pixel the labels grow is a pixel of that
+          budget. The card type is where legibility was actually wanted here, and
+          the cards are full width now. */}
+      <div className="dense">
+        <Game key={board.id} board={board} onMatch={onMatch} begin />
+      </div>
     </>
   );
 }
