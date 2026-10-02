@@ -79,3 +79,34 @@ describe("the magnifier", () => {
     expect(peek).toMatch(/Math\.max\(8, Math\.min\(wanted, window\.innerHeight - height - 8\)\)/);
   });
 });
+
+describe("the card you magnify from your hand", () => {
+  const game = readFileSync(new URL("../components/game/Game.tsx", import.meta.url), "utf8");
+
+  it("is pinned to the screen, not to the table", () => {
+    // It was `absolute`, which measures from the top of the table rather than
+    // the top of the screen. On a phone you are scrolled down to your own hand,
+    // so the card you had just asked to see was drawn above the fold and you had
+    // to scroll up to read it. Both previews are fixed now.
+    const previews = [...game.matchAll(/className="pointer-events-none (absolute|fixed) top-\[4\.5rem\]/g)];
+    expect(previews.length).toBe(2);
+    for (const one of previews) expect(one[1]).toBe("fixed");
+  });
+
+  it("closes when you tap anywhere else", () => {
+    // On a touchscreen the magnifier was a toggle that only untoggled itself,
+    // which meant hitting a six-by-six button a second time — over a card now
+    // covered by the very thing you want gone.
+    const hand = game.slice(game.indexOf("function Hand({"));
+    const body = hand.slice(0, hand.indexOf("\n}\n"));
+    expect(body).toContain('document.addEventListener("pointerdown", away)');
+    expect(body).toContain("handRow.current?.contains");
+    expect(body).toContain("onHover(null)");
+  });
+
+  it("does not do that on a mouse, where the pointer already answers", () => {
+    const hand = game.slice(game.indexOf("function Hand({"));
+    const body = hand.slice(0, hand.indexOf("\n}\n"));
+    expect(body).toMatch(/hovered === null \|\| !usesTouch\(\)/);
+  });
+});

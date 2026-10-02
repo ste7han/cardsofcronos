@@ -965,7 +965,15 @@ export function Game({
           // all — and the hand card clamps its rules text to two lines, so
           // below 1024 there was no way to read the rest of a card. The width
           // gives way rather than the card being cut off.
-          className="pointer-events-none absolute top-[4.5rem] right-4 z-40 hidden w-[min(248px,calc(100vw-2rem))] max-[1439px]:block"
+          // FIXED, and it was absolute. Absolute put it 4.5rem from the top of
+          // the table rather than 4.5rem from the top of the screen — so on a
+          // phone, where you are scrolled down to your own hand, pressing the
+          // magnifier drew the card somewhere above the fold and you had to
+          // scroll up to read the thing you had just asked to see. The wide
+          // preview a few lines up has always been fixed; this one was not, and
+          // the difference only shows on the screens that cannot scroll it into
+          // view without losing sight of the hand.
+          className="pointer-events-none fixed top-[4.5rem] right-4 z-40 hidden w-[min(248px,calc(100vw-2rem))] max-[1439px]:block"
         >
           <CardView
             card={cardById(INDEX, lifted)}
