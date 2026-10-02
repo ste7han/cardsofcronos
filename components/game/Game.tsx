@@ -65,6 +65,7 @@ import { DEMO_DECK_NAME, demoDeck, demoDecks, demoOpponentTheme } from "@/lib/de
 import { deckKey, record as recordOutcome } from "@/lib/history";
 import { LESSON_IDS, nextLesson } from "@/lib/tutorial";
 import { cx } from "@/lib/cx";
+import { usesTouch } from "@/lib/pointer";
 import { useSession } from "@/lib/use-session";
 import { loadDeck, type LoadedDeck } from "@/lib/deck-storage";
 import { RARITY } from "@/lib/rarity";
@@ -1615,6 +1616,30 @@ function Hand({
   /** Why the move is refused, or null. The × greys itself and says so. */
   noDiscard: Refusal | null;
 }) {
+
+  /**
+   * A tap anywhere else closes the magnified card.
+   *
+   * On a touchscreen the magnifier is a toggle, and the only thing that cleared
+   * it was pressing that same six-by-six button again — which on a phone, over a
+   * card that is now covered by the very thing you want to dismiss, is a shot
+   * nobody should have to take. Tapping away is what everybody already tries.
+   *
+   * Only while something is open, and only on a touchscreen: on a mouse `hovered`
+   * is the hover, and the pointer puts it back the moment it moves.
+   */
+  const handRow = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (hovered === null || !usesTouch()) return;
+    const away = (event: PointerEvent) => {
+      // Inside the hand is not away. The row holds the cards and the buttons on
+      // them, and a tap on another card has its own meaning already.
+      if (!handRow.current?.contains(event.target as Node)) onHover(null);
+    };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [hovered, onHover]);
+
   return (
     <section className="shrink-0">
       {/* The card you are pointing at, at a size you can actually read.
@@ -1634,7 +1659,7 @@ function Hand({
       {/* The row's height follows its content: pt-4 for the hover lift, the card
           height, and pb-3. Nothing is cut off, and because it never shrinks below
           its content overflow-y-hidden clips nothing either. */}
-      <div className="flex gap-2 overflow-x-auto overflow-y-hidden px-0.5 pt-4 pb-2">
+      <div ref={handRow} className="flex gap-2 overflow-x-auto overflow-y-hidden px-0.5 pt-4 pb-2">
         <AnimatePresence mode="popLayout">
           {state.players.you.hand.map((id, i) => {
             const card = cardById(INDEX, id);

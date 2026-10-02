@@ -72,14 +72,25 @@ function clockOf(mode: MatchMode): string {
 export async function announceOffer(
   db: Database,
   offer: Offer,
-  secrets: { pvpFriendly?: string; pvpRanked?: string },
+  secrets: { pvpFriendly?: string; pvpRanked?: string; pvpGeneral?: string },
 ): Promise<void> {
   const staked = offer.stake > 0;
-  const hook = staked ? secrets.pvpRanked : secrets.pvpFriendly;
-  if (!hook) return;
+  // Its own channel, and the general one as well.
+  //
+  // The rooms are where somebody goes who is already looking for a game. Most
+  // people are not — they are in the general channel talking about something
+  // else, and a seat they never see expires in an hour having been seen by
+  // nobody. Two posts of one thing, rather than one post somewhere quiet.
+  const rooms = [staked ? secrets.pvpRanked : secrets.pvpFriendly, secrets.pvpGeneral].filter(
+    (one): one is string => Boolean(one),
+  );
+  if (rooms.length === 0) return;
+  // Once per offer, covering both rooms. A webhook that did not answer costs a
+  // missing line in one channel; saying it again would cost a duplicate in the
+  // other, which is the worse of the two.
   if (await alreadySaid(db, offer.id)) return;
 
-  await post(hook, [
+  const embeds = [
     {
       author: from(
         staked ? "Cards of Cronos · ranked" : "Cards of Cronos · friendly",
@@ -109,5 +120,9 @@ export async function announceOffer(
       },
       timestamp: new Date(offer.expiresAt - 60 * 60 * 1000).toISOString(),
     },
-  ]);
+  ];
+
+  // Settled rather than awaited in turn: one channel refusing must not keep the
+  // other from hearing about the seat.
+  await Promise.allSettled(rooms.map((hook) => post(hook, embeds)));
 }

@@ -67,6 +67,7 @@ export async function POST(request: Request) {
   await announceOffer(db(), offer, {
     pvpFriendly: env().DISCORD_PVP_FRIENDLY,
     pvpRanked: env().DISCORD_PVP_RANKED,
+    pvpGeneral: env().DISCORD_PVP_GENERAL,
   }).catch(() => {});
 
   return Response.json({ id });

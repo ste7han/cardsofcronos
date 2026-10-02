@@ -142,3 +142,62 @@ describe("announcing an offer", () => {
     expect(String(sent[0]!.body.embeds[0]!.description)).toContain("the pot is 200");
   });
 });
+
+describe("the general channel", () => {
+  const GENERAL = "https://discord.example/general";
+
+  it("hears about a seat as well as the room it belongs to", async () => {
+    // The two rooms are where somebody goes who is already looking for a game.
+    // Most people are not — they are in general talking about something else,
+    // and a seat they never see expires in an hour having been seen by nobody.
+    const sent = catchPosts();
+    await announceOffer(fakeDb(), offer(), { pvpFriendly: FRIENDLY, pvpGeneral: GENERAL });
+    expect(sent.map((one) => one.to).sort()).toEqual([FRIENDLY, GENERAL].sort());
+  });
+
+  it("hears about a staked seat too, in the same words", async () => {
+    const sent = catchPosts();
+    await announceOffer(fakeDb(), offer({ stake: 100 }), {
+      pvpRanked: RANKED, pvpGeneral: GENERAL,
+    });
+    expect(sent.map((one) => one.to).sort()).toEqual([GENERAL, RANKED].sort());
+    // One embed, built once and sent twice — not two that can drift apart.
+    expect(JSON.stringify(sent[0]!.body.embeds)).toBe(JSON.stringify(sent[1]!.body.embeds));
+  });
+
+  it("still says one seat once, however often it is asked", async () => {
+    const sent = catchPosts();
+    const db = fakeDb();
+    await announceOffer(db, offer(), { pvpFriendly: FRIENDLY, pvpGeneral: GENERAL });
+    await announceOffer(db, offer(), { pvpFriendly: FRIENDLY, pvpGeneral: GENERAL });
+    expect(sent).toHaveLength(2);
+  });
+
+  it("carries on without it when it is not set up", async () => {
+    const sent = catchPosts();
+    await announceOffer(fakeDb(), offer(), { pvpFriendly: FRIENDLY });
+    expect(sent).toHaveLength(1);
+    expect(sent[0]!.to).toBe(FRIENDLY);
+  });
+
+  it("still posts to general when the room webhook is missing", async () => {
+    // Absent is a real state, configured one at a time. A room nobody set up
+    // should not take the general announcement down with it.
+    const sent = catchPosts();
+    await announceOffer(fakeDb(), offer(), { pvpGeneral: GENERAL });
+    expect(sent.map((one) => one.to)).toEqual([GENERAL]);
+  });
+
+  it("does not let one channel refusing silence the other", async () => {
+    // One webhook rejecting is a missing line there, not a seat nobody hears
+    // about anywhere.
+    const sent: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      sent.push(url);
+      if (url === FRIENDLY) throw new Error("that webhook is gone");
+      return { ok: true, status: 204, json: async () => ({}) } as unknown as Response;
+    });
+    await announceOffer(fakeDb(), offer(), { pvpFriendly: FRIENDLY, pvpGeneral: GENERAL });
+    expect(sent).toContain(GENERAL);
+  });
+});

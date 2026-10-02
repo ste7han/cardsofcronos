@@ -22,6 +22,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { usesTouch } from "@/lib/pointer";
+
 import { CardView } from "@/components/CardView";
 import type { Card } from "@/engine/types";
 
@@ -30,16 +32,6 @@ const WIDTH = 260;
 /** Clear of the trigger, and of the finger that is on it. */
 const GAP = 12;
 
-/**
- * A touch device, asked of the pointer rather than of the screen width.
- *
- * A narrow window on a laptop is still a mouse, and a tablet in landscape is
- * still a finger. Width has never answered this question and every layout that
- * used it got one of the two wrong.
- */
-function usesTouch(): boolean {
-  return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-}
 
 export function CardPeek({
   card,

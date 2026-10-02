@@ -97,6 +97,15 @@ interface CloudflareEnv {
   DISCORD_PVP_FRIENDLY?: string;
   DISCORD_PVP_RANKED?: string;
   /**
+   * The general channel, which hears about an open seat as well.
+   *
+   * The two rooms above are where somebody goes who is already looking for a
+   * game. Most people are not — they are in general talking about something
+   * else, and a seat nobody sees expires in an hour. Absent means the rooms
+   * still get it and general does not, which is where this started.
+   */
+  DISCORD_PVP_GENERAL?: string;
+  /**
    * The Durable Object holding the feeds' clock. See worker/index.js.
    *
    * Optional because nothing in the app needs it: only the Worker wrapper winds
