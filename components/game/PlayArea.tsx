@@ -137,9 +137,21 @@ export function PlayArea() {
               <p className="text-[10px] tracking-[0.16em] text-faint">READING…</p>
             ) : !hasDeck ? (
               <>
+                {/* Which sentence depends on whether there is a wallet, and
+                    getting that wrong is worse than saying nothing.
+                    
+                    This said "a deck lives in the browser you built it in — so
+                    one made on a laptop is not here" long after that stopped
+                    being true. Decks moved to the server, tied to the wallet, in
+                    September 2026 — see lib/deck-storage.ts, whose own comment
+                    describes exactly this person: somebody who built decks on a
+                    laptop, opened /play on their phone, and was told they had
+                    none. The bug was fixed and the sentence announcing it was
+                    left behind, telling them not to bother. */}
                 <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-muted">
-                  You need a deck of {RULES.deckSize} cards first, and a deck lives in the browser
-                  you built it in — so one made on a laptop is not here.
+                  {wallet === null
+                    ? `Connect your wallet and your decks come with it — they belong to the wallet, not to this browser.`
+                    : `You need a deck of ${RULES.deckSize} cards first. It is saved to your wallet, so it is there on every device you sign in from.`}
                 </p>
                 <Link
                   href="/deck"
