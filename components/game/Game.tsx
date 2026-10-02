@@ -1703,7 +1703,13 @@ function Hand({
                 // container too, but the note is a sibling of it rather than a
                 // child, so it needs one here or its cqw resolves against
                 // whatever ancestor happens to be one.
-                className="group @container relative w-[132px] shrink-0 self-start sm:w-[160px]"
+                // 160 on a phone as well as on a laptop, and it used to be 132.
+                // The card sizes its own type in cqw, so a narrower card is
+                // a card with smaller writing on it — which put the
+                // smallest type in the game on the smallest screen. The row
+                // scrolls either way, so the only thing a wider card costs
+                // is how many are in view: 2.6 of them became 2.2.
+                className="group @container relative w-[160px] shrink-0 self-start"
               >
                 <button
                   type="button"

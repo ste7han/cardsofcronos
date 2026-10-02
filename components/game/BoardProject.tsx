@@ -132,7 +132,10 @@ export function BoardProject({
             : card.name
       }
       className={cx(
-        "relative w-[104px] shrink-0 overflow-visible border px-2 py-1.5 text-left transition-colors sm:w-[124px]",
+        // One width, the larger one. See the note in Game.tsx: a
+        // narrower card is a card with smaller writing on it, and the
+        // phone was getting the narrow one.
+        "relative w-[124px] shrink-0 overflow-visible border px-2 py-1.5 text-left transition-colors",
         marker?.hit && "hit",
         targetable ? "cursor-crosshair" : "cursor-default",
       )}
