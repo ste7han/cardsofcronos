@@ -359,3 +359,49 @@ button:disabled {
   background:
     linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0 1px, rgba(255, 255, 255, 0.06) 1px 2px);
 }
+
+/* ---------------------------------------------------------------------------
+   THE SMALL TYPE, ON A PHONE
+
+   This interface is set tight: 487 places ask for text between seven and eleven
+   pixels, and none of them asked for anything different on a small screen. At
+   arm's length on a laptop that reads as precision. On a phone held closer but
+   at a far higher pixel density it reads as squinting, and the match screen —
+   where the labels carry what a card costs and what it pays — is the worst of
+   it.
+
+   Done here rather than at the four hundred and eighty-seven call sites. Those
+   are spread over every component in the project, each one would have to grow a
+   `sm:` twin, and the next person adding a label would have no reason to think
+   they needed one. A floor set once holds for everything written after it too.
+
+   NOT INSIDE A CARD. A card's own type is sized in cqw against the card's width,
+   so it is already proportional at every size — and the fixed pixel sizes that
+   remain on a full-size card are measured against a frame that does not grow
+   with the viewport. Bumping those overflows the frame, which is the one place
+   where bigger text makes the thing harder to read rather than easier.
+
+   Floors, not multipliers: everything lands on 11px or 12px, so the hierarchy
+   between 7, 8 and 9 flattens at the bottom. That is deliberate. Three steps of
+   emphasis below the readable threshold are three steps nobody can see.
+   --------------------------------------------------------------------------- */
+@media (max-width: 639px) {
+  .text-\[7px\]:not(.card-frame *),
+  .text-\[8px\]:not(.card-frame *),
+  .text-\[9px\]:not(.card-frame *) {
+    font-size: 11px;
+  }
+
+  .text-\[10px\]:not(.card-frame *),
+  .text-\[11px\]:not(.card-frame *) {
+    font-size: 12px;
+  }
+
+  /* Letter-spacing is set in em, so it grew with the type and the uppercase
+     labels started wrapping. Pulled back by the same proportion. */
+  .text-\[7px\]:not(.card-frame *),
+  .text-\[8px\]:not(.card-frame *),
+  .text-\[9px\]:not(.card-frame *) {
+    letter-spacing: 0.12em;
+  }
+}
