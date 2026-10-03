@@ -283,3 +283,36 @@ export async function sendCall(
   if (typeof hash !== "string") throw new Error("The wallet did not return a transaction.");
   return hash;
 }
+
+/**
+ * Waits until a transaction has been mined, and says whether it worked.
+ *
+ * `sendCall` hands back a hash the moment the wallet submits it, which is the
+ * right thing for a transaction nothing waits on. It is the wrong thing when the
+ * next step asks a server to read the result: the round trip is faster than a
+ * block, so the server looks, sees nothing yet, and refuses.
+ *
+ * That is how a ranked seat took somebody's ten CRO and gave them no match on
+ * 3 October 2026 — the deposit landed a second after the join had already been
+ * turned away for not existing.
+ *
+ * Polls through the wallet's own provider rather than a public endpoint: it is
+ * already connected to the right chain, and an endpoint that lags behind the one
+ * the wallet broadcast to would reintroduce the same race one layer down.
+ */
+export async function waitForTx(hash: string, tries = 40): Promise<boolean> {
+  const wallet = provider();
+  if (wallet === null) throw new Error("No wallet in this browser.");
+  for (let i = 0; i < tries; i++) {
+    const receipt = (await wallet
+      .request({ method: "eth_getTransactionReceipt", params: [hash] })
+      .catch(() => null)) as { status?: string } | null;
+    // Null is a real answer for a transaction still in the pool, and not an
+    // error — see the same note in lib/cronos.ts.
+    if (receipt !== null && receipt !== undefined) {
+      return BigInt(receipt.status ?? "0x0") === 1n;
+    }
+    await new Promise((wake) => setTimeout(wake, 1_500));
+  }
+  return false;
+}

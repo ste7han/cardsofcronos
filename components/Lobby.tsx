@@ -19,7 +19,7 @@ import type { MatchMode } from "@/engine/record";
 import { CONTRACTS } from "@/lib/revenue";
 import { openData, joinData, stakeWei } from "@/lib/escrow";
 import { tierFor } from "@/data/holder-tiers";
-import { sendCall } from "@/lib/wallet";
+import { sendCall, waitForTx } from "@/lib/wallet";
 import { cx } from "@/lib/cx";
 import { proofOf } from "@/lib/session";
 import { useSession } from "@/lib/use-session";
@@ -134,14 +134,43 @@ export function Lobby() {
     await run(listing.id, async () => {
       if (listing.stake > 0) {
         if (wallet === null || !CONTRACTS.escrow) throw new Error("No wallet.");
-        await sendCall(
+        const hash = await sendCall(
           wallet,
           CONTRACTS.escrow,
           joinData(listing.id),
           stakeWei(listing.stake),
         );
+        // ── WAITED FOR, AND THAT IS THE WHOLE FIX ─────────────────────────
+        //
+        // The server reads the escrow to check both stakes are in before it
+        // makes the match. `sendCall` returns as soon as the wallet submits,
+        // and the round trip to the server is faster than a Cronos block — so
+        // the server looked, saw only the poster's side, and refused with "only
+        // one side has put its stake up". The deposit landed a second later,
+        // with no match behind it and the offer put back on the board.
+        //
+        // One wallet took ten CRO that way on 3 October 2026.
+        if (!(await waitForTx(hash))) {
+          throw new Error(
+            "The deposit did not go through. Nothing was taken — try the seat again.",
+          );
+        }
       }
-      return ask("join", { id: listing.id, deck: deck!.cardIds });
+      try {
+        return await ask("join", { id: listing.id, deck: deck!.cardIds });
+      } catch (error) {
+        // The money is in by this point. Saying only what the server said would
+        // leave somebody staring at a refusal with no idea where their stake
+        // went — which is the state this whole fix is about.
+        if (listing.stake > 0) {
+          throw new Error(
+            `${error instanceof Error ? error.message : "The seat could not be taken."} ` +
+              `Your ${listing.stake} CRO is in the escrow and is not lost — press the seat again, ` +
+              `and if it will not take, you can withdraw it from an unplayed match after 30 days.`,
+          );
+        }
+        throw error;
+      }
     });
   }
 

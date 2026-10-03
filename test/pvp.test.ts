@@ -157,3 +157,54 @@ describe("a seat whose stake is already in", () => {
     expect(button).toMatch(/nothing is owed/i);
   });
 });
+
+describe("taking a seat with money on it", () => {
+  const lobby = readFileSync(new URL("../components/Lobby.tsx", import.meta.url), "utf8");
+  const wallet = readFileSync(new URL("../lib/wallet.ts", import.meta.url), "utf8");
+
+  /**
+   * The race that stranded a deposit.
+   *
+   * The server reads the escrow before it makes a match, to check both stakes
+   * are in. `sendCall` hands back a hash the moment the wallet submits, and the
+   * round trip to the server is faster than a Cronos block — so the server
+   * looked, saw only the poster's side, and refused with "only one side has put
+   * its stake up". The deposit landed a second later with no match behind it.
+   *
+   * Ten CRO sat in the escrow that way on 3 October 2026, and the offer went
+   * back on the board as though nothing had happened.
+   */
+  it("waits for the deposit to be mined before asking the server", () => {
+    const fn = lobby.slice(lobby.indexOf("async function sitDown"));
+    const body = fn.slice(0, fn.indexOf("\n  }\n"));
+    expect(body.indexOf("waitForTx(hash)")).toBeGreaterThan(body.indexOf("sendCall("));
+    expect(body.indexOf("waitForTx(hash)")).toBeLessThan(body.indexOf('ask("join"'));
+  });
+
+  it("treats a receipt that is not there yet as not mined", () => {
+    const fn = wallet.slice(wallet.indexOf("export async function waitForTx"));
+    const body = fn.slice(0, fn.indexOf("\n}\n"));
+    expect(body).toContain("receipt !== null");
+    expect(body).toMatch(/=== 1n/);
+  });
+
+  it("polls through the wallet's own provider, not a public endpoint", () => {
+    // An endpoint lagging behind the one the wallet broadcast to would be the
+    // same race again, one layer down.
+    const fn = wallet.slice(wallet.indexOf("export async function waitForTx"));
+    const body = fn.slice(0, fn.indexOf("\n}\n"));
+    // Written across two lines, so matched on the parts rather than on one
+    // string that happens to span a newline.
+    expect(body).toContain("provider()");
+    expect(body).toMatch(/\.request\(\{ method: "eth_getTransactionReceipt"/);
+  });
+
+  it("says where the money is when the seat still will not take", () => {
+    // By that point the deposit is in. A bare server error leaves somebody
+    // staring at a refusal with no idea where their stake went.
+    const fn = lobby.slice(lobby.indexOf("async function sitDown"));
+    const body = fn.slice(0, fn.indexOf("\n  }\n"));
+    expect(body).toMatch(/is in the escrow and is not lost/);
+    expect(body).toMatch(/30 days/);
+  });
+});
