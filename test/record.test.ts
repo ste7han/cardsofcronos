@@ -12,7 +12,7 @@ import { CARDS } from "@/data/cards";
 import { chooseMove } from "@/engine/bot";
 import { buildDeck } from "@/engine/deck";
 import { applyMove, buildIndex, newMatch } from "@/engine/match";
-import { TURN_CLOCK, catchUp, newRecord, playInto, seatOf, stateOf } from "@/engine/record";
+import { OPENING_GRACE, TURN_CLOCK, arrive, catchUp, clockLabel, clockPhrase, newRecord, playInto, seatOf, stateOf } from "@/engine/record";
 import { IllegalMove } from "@/engine/types";
 import type { MatchRecord } from "@/engine/record";
 import type { Move } from "@/engine/types";
@@ -141,10 +141,14 @@ describe("a move against the clock", () => {
     expect(playable).toBeGreaterThanOrEqual(0);
 
     const at = T0 + 1000;
-    const afterPlay = playInto(r, ALICE, { kind: "playCard", handIndex: playable }, at, CARDS, index);
+    // Armed, because the rule under test is about a clock that is running. An
+    // unarmed match is still inside its opening grace and its first move pulls
+    // the deadline in on purpose — that is the test below this one.
+    const running: MatchRecord = { ...r, armed: T0 };
+    const afterPlay = playInto(running, ALICE, { kind: "playCard", handIndex: playable }, at, CARDS, index);
     // Still your turn, so still your original deadline. Playing a card must not
     // buy another twenty-four hours, or a match never has to end.
-    expect(afterPlay.deadline).toBe(r.deadline);
+    expect(afterPlay.deadline).toBe(running.deadline);
 
     const afterEnd = playInto(afterPlay, ALICE, { kind: "endTurn" }, at, CARDS, index);
     expect(afterEnd.deadline).toBe(at + TURN_CLOCK.correspondence);
@@ -158,5 +162,108 @@ describe("a move against the clock", () => {
     expect(() => playInto(r, ALICE, { kind: "endTurn" }, late, CARDS, index)).toThrow(
       /not .*'s turn/,
     );
+  });
+});
+
+// ── THE OPENING GRACE ────────────────────────────────────────────────────────
+//
+// A match begins when the SECOND player sits down. The first one posted the
+// offer and may have posted it an hour ago, so the clock used to start on
+// somebody who was not in the room — and `catchUp` ends a turn whose window has
+// passed, so they came back to a game that had been playing itself.
+describe("the opening grace", () => {
+  /** Whose clock the opening turn is, and which wallet that is. */
+  function opener(r: MatchRecord) {
+    const toMove = stateOf(r, CARDS, index).toMove;
+    return { toMove, seat: toMove, wallet: r.seats[toMove] };
+  }
+
+  it("does not hand the opening turn an ordinary clock", () => {
+    const r = record("live");
+    expect(r.armed).toBeNull();
+    expect(r.deadline).toBe(T0 + OPENING_GRACE.live);
+    // Longer than a turn, or it would not be waiting for anybody.
+    expect(OPENING_GRACE.live).toBeGreaterThan(TURN_CLOCK.live);
+  });
+
+  it("starts the clock when the player it belongs to looks at the board", () => {
+    const r = record("live");
+    const { seat, toMove } = opener(r);
+    const at = T0 + 4 * 60 * 1000;
+
+    const armed = arrive(r, seat, toMove, at);
+    expect(armed).not.toBeNull();
+    expect(armed!.armed).toBe(at);
+    // A full turn from when they arrived, not what was left of the grace.
+    expect(armed!.deadline).toBe(at + TURN_CLOCK.live);
+  });
+
+  it("is not started by the other player looking", () => {
+    // The joiner is at the table by definition — they just pressed the button.
+    // Their polling must not start the clock on the person they are waiting for.
+    const r = record("live");
+    const { toMove } = opener(r);
+    const other = toMove === "you" ? "opponent" : "you";
+    expect(arrive(r, other, toMove, T0 + 1000)).toBeNull();
+  });
+
+  it("cannot be pushed out by looking again", () => {
+    // Otherwise a stake could be held hostage at turn one by somebody sitting on
+    // the page reloading, which is a cheaper attack than playing.
+    const r = record("live");
+    const { seat, toMove } = opener(r);
+    const armed = arrive(r, seat, toMove, T0 + 1000)!;
+    expect(arrive(armed, seat, toMove, T0 + 4 * 60 * 1000)).toBeNull();
+  });
+
+  it("gives up waiting and plays on when nobody comes", () => {
+    const r = record("live");
+    const caught = catchUp(r, T0 + OPENING_GRACE.live + 1, CARDS, index);
+    // The turn passed, so the match is not stuck.
+    expect(caught.moves).toEqual([{ kind: "endTurn" }]);
+    // And the clock counts as started from the moment the grace ran out, not
+    // from whenever somebody next happened to look.
+    expect(caught.armed).toBe(T0 + OPENING_GRACE.live);
+    expect(caught.deadline).toBe(T0 + OPENING_GRACE.live + TURN_CLOCK.live);
+  });
+
+  it("lets a late arrival still get a whole turn, right up to the cap", () => {
+    const r = record("live");
+    const { seat, toMove } = opener(r);
+    const at = T0 + OPENING_GRACE.live - 1;
+    const armed = arrive(r, seat, toMove, at)!;
+    expect(armed.deadline).toBe(at + TURN_CLOCK.live);
+  });
+
+  it("replaces the grace with a real turn on the first move", () => {
+    // Moving proves they are there. Leaving the grace in place would hand the
+    // opening turn the whole waiting window to play in.
+    const r = record("live");
+    const { wallet } = opener(r);
+    const at = T0 + 1000;
+    const played = playInto(r, wallet, { kind: "endTurn" }, at, CARDS, index);
+    expect(played.armed).toBe(at);
+    expect(played.deadline).toBe(at + TURN_CLOCK.live);
+  });
+
+  it("leaves a slow match where it was, because a day was already the wait", () => {
+    // Nothing about correspondence needed fixing, and the fix must not quietly
+    // change it: its grace is its clock.
+    expect(OPENING_GRACE.correspondence).toBe(TURN_CLOCK.correspondence);
+    expect(record("correspondence").deadline).toBe(T0 + TURN_CLOCK.correspondence);
+  });
+});
+
+describe("the clock in words", () => {
+  it("counts the minutes the engine actually gives you", () => {
+    // Written out by hand in six places before this, and every one of them said
+    // two minutes after the clock had moved to five.
+    expect(clockLabel("live")).toBe(`${TURN_CLOCK.live / 60_000} min a turn`);
+    expect(clockPhrase("live")).toBe(`${TURN_CLOCK.live / 60_000} minutes a turn`);
+  });
+
+  it("says a day for a slow match rather than 1440 minutes", () => {
+    expect(clockLabel("correspondence")).toBe("a day a turn");
+    expect(clockPhrase("correspondence")).toBe("a day a turn");
   });
 });

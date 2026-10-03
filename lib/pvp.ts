@@ -27,7 +27,7 @@ import type { CardIndex } from "@/engine/types";
  * whenever anybody looks — a window nobody answered becomes an endTurn, so a
  * missed turn costs the turn and not the match — and the board polls while it
  * is the opponent's move. What live actually needed was a clock somebody can
- * read at two minutes and a poll that does not sleep through it, and those are
+ * read at a live clock and a poll that does not sleep through it, and those are
  * in components/pvp/MatchBoard.tsx now.
  *
  * The rest of live has been here the whole time and untakeable: TURN_CLOCK,

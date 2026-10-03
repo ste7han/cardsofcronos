@@ -200,17 +200,18 @@ function fakeDb(): Database & {
             // In the order putMatch binds them. A column added to the real
             // schema and not here comes back null and the round-trip test is
             // the only thing that notices.
-            const [id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent, moves, created_at, deadline, wager] = bound;
+            const [id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent, moves, created_at, deadline, armed, wager] = bound;
             matches.set(id as string, {
               id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent,
-              moves, created_at, deadline, wager: wager ?? null, finished_at: null,
+              moves, created_at, deadline, armed: armed ?? null, wager: wager ?? null,
+              finished_at: null,
             });
             return;
           }
           if (sql.startsWith("UPDATE matches")) {
-            const [moves, deadline, finished_at, id] = bound;
+            const [moves, deadline, finished_at, armed, id] = bound;
             const row = matches.get(id as string);
-            if (row) Object.assign(row, { moves, deadline, finished_at });
+            if (row) Object.assign(row, { moves, deadline, finished_at, armed });
             return;
           }
           if (sql.startsWith("DELETE FROM listings")) {
@@ -351,6 +352,7 @@ const record = (over: Partial<MatchRecord> = {}): MatchRecord => ({
   moves: [],
   createdAt: T0,
   deadline: T0 + 1000,
+  armed: null,
   ...over,
 });
 
@@ -460,7 +462,7 @@ describe("a match in storage", () => {
   it("writes moves back and marks a finish", async () => {
     const db = fakeDb();
     await putMatch(db, record());
-    await saveMoves(db, "m1", [{ kind: "endTurn" }], T0 + 5000, T0 + 9000);
+    await saveMoves(db, "m1", [{ kind: "endTurn" }], T0 + 5000, T0 + 9000, T0);
 
     const back = await getMatch(db, "m1");
     expect(back!.moves).toEqual([{ kind: "endTurn" }]);

@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       pvpRanked: env().DISCORD_PVP_RANKED,
     });
   } else {
-    await saveMoves(db(), played.id, played.moves, played.deadline, null);
+    await saveMoves(db(), played.id, played.moves, played.deadline, null, played.armed);
   }
 
   return Response.json({ view: viewFor(state, seat, INDEX), deadline: played.deadline });

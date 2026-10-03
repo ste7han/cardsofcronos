@@ -51,6 +51,13 @@ CREATE TABLE IF NOT EXISTS matches (
   moves         TEXT NOT NULL DEFAULT '[]',
   created_at    INTEGER NOT NULL,
   deadline      INTEGER NOT NULL,
+  -- When the turn clock actually started, or NULL while it has not.
+  --
+  -- A match begins when the second player sits down, which can be long after
+  -- the first one posted the offer. Until the player to move turns up, the
+  -- deadline above is the opening grace in engine/record.ts and not a turn.
+  -- See MatchRecord.armed.
+  armed         INTEGER,
   finished_at   INTEGER,
   -- Which wager in contracts/MatchEscrow.sol holds this match's stakes, or
   -- NULL for a friendly one. It is the LISTING's id and not this match's, and

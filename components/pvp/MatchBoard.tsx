@@ -30,7 +30,7 @@ import { Icon } from "@/components/Icon";
 import { Log } from "@/components/game/Log";
 import { cardById } from "@/engine/helpers";
 import { formatMC } from "@/engine/format";
-import { EMPTY_PREVIEW, previewOf } from "@/engine/preview";
+import { EMPTY_PREVIEW, previewOf, type Preview } from "@/engine/preview";
 import { FIRST_MOVER, withinFreeCap, discardRequirementOf} from "@/engine/match";
 import { budgetNote, freePlayNote } from "@/engine/rules-text";
 import { snapshotOfView, type Snapshot } from "@/engine/snapshot";
@@ -45,9 +45,17 @@ import { INDEX } from "@/lib/set";
 interface Answer {
   id: string;
   opponent: string;
-  /** Two minutes a turn, or a day. It changes how this screen behaves. */
+  /** A live clock, or a day. It changes how this screen behaves. */
   mode: "live" | "correspondence";
   deadline: number;
+  /**
+   * Whether that deadline is a turn or only how long the match will wait.
+   *
+   * A match starts when the second player sits down, which can be long after
+   * the first one offered the seat — so the opening deadline is a grace window
+   * and counting it down as a turn would be a lie told once a second.
+   */
+  armed: boolean;
   view: PlayerView;
   /** CRO a side, or zero for a friendly match. Held by contracts/MatchEscrow.sol. */
   stake: number;
@@ -84,9 +92,9 @@ const STAYS_QUICK = 90_000;
  * How long is left, in units somebody can act on.
  *
  * Seconds below ten minutes. This read `${minutes}m` at every size, with a
- * floor of one — so a live match's whole two minutes was "2m", then "1m", then
- * "1m" again, then "expired". On a day-long clock that is fine; on a two-minute
- * one it is a countdown that never counts.
+ * floor of one — so a live match's whole clock was "2m", then "1m", then "1m"
+ * again, then "expired". On a day-long clock that is fine; on a clock measured
+ * in minutes it is a countdown that never counts.
  */
 function timeLeft(deadline: number, now: number): string {
   const ms = deadline - now;
@@ -101,6 +109,177 @@ function timeLeft(deadline: number, now: number): string {
 function boardFor(target: ChoiceTarget, me: Player): Player {
   const wantsMine = target === "ownProject";
   return wantsMine ? me : me === "you" ? "opponent" : "you";
+}
+
+/**
+ * The shared half of a side's props.
+ *
+ * ── WHY THIS IS A PROP AND NOT A CLOSURE ─────────────────────────────────────
+ *
+ * `Side` used to be declared inside MatchBoard, which read fine and was a real
+ * bug: a function declared in a render body is a NEW function on every render,
+ * so React saw a different component type in that slot each time, threw the
+ * whole subtree away and built a fresh one. Every piece of state underneath
+ * went with it — including every CardPeek's open flag, which is how a magnified
+ * card closed on its own. A live match re-renders once a second to tick the
+ * clock, so a card held up to be read was gone before it had been read.
+ *
+ * None of the markup changed to fix that. It only had to stop being born again,
+ * and the eleven things it used to read off the enclosing scope are named here
+ * instead — which also makes them impossible to capture by accident.
+ */
+interface SideTable {
+  me: Player;
+  them: Player;
+  toMove: Player;
+  finished: boolean;
+  flash: Flash;
+  preview: Preview;
+  mcDelta: { you: number; opponent: number } | null;
+  aimingAt: Player | null;
+  aiming: Aiming | null;
+  blaming: number | null;
+  clickTarget: (side: Player, slot: number) => void;
+}
+
+function Side({ side, projects, support, mc, deckCount, finishedCount, wantsDiscard, label, shared }: {
+  side: Player;
+  projects: ViewProject[];
+  support: BoardSupport[];
+  mc: number;
+  deckCount: number;
+  finishedCount: number;
+  /** How many cards the hovered card wants in the discard, or null. */
+  wantsDiscard: number | null;
+  label: string;
+  /** Everything about the table that is the same for both sides. */
+  shared: SideTable;
+}) {
+  // The pump is already worked out per position by the server. Adding four
+  // numbers up is not a rule, and the total is the figure a player actually
+  // steers by — it was the one thing missing that you cannot play without.
+  const { me, them, toMove, finished, flash, preview, mcDelta, aimingAt, aiming, blaming,
+    clickTarget } = shared;
+  const pumpTotal = projects.reduce((sum, project) => sum + project.pump, 0);
+  const theirs = toMove === side && !finished;
+
+  return (
+  <section
+    className={cx(
+      "panel relative border px-3 py-3",
+      theirs ? "border-line-strong" : "border-line",
+    )}
+  >
+    {theirs && (
+      <span
+        className={cx(
+          "breathe absolute inset-x-0 top-0 h-px",
+          side === me ? "bg-pump" : "bg-dump",
+        )}
+      />
+    )}
+
+    <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <div className="flex items-baseline gap-3">
+        <span className="text-[9px] tracking-[0.2em] text-faint">{label}</span>
+        {/* The same counter the solo table uses. It was a plain span here, so
+            the market cap jumped where it counts on the other screen, and
+            nothing on it flashed, glowed or said what a hovered card would
+            do — four differences on the number the whole game is about. */}
+        <MCCounter
+          value={mc}
+          label="MC"
+          large={side === me}
+          delta={flash.mc[side]}
+          preview={preview.players.find((p) => p.player === side)?.impact}
+          projected={mcDelta === null ? null : mcDelta[side]}
+        />
+      </div>
+      <div className="flex items-center gap-4 text-[9px] tracking-[0.16em] text-faint">
+        <span className="flex items-center gap-1 text-pump">
+          <Icon name="pump" className="h-3 w-3" />+{formatMC(pumpTotal)}/TURN
+        </span>
+        <span className={cx(projects.length >= RULES.portfolioSize ? "text-gold" : "text-faint")}>
+          {projects.length}/{RULES.portfolioSize} POSITIONS
+        </span>
+        <span>DECK {deckCount}</span>
+        {/* The same rule the solo table shows, read off the same function, so
+            the two tables cannot disagree about what a card is asking for. */}
+        <span
+          className={cx(
+            wantsDiscard === null
+              ? undefined
+              : finishedCount >= wantsDiscard
+                ? "glow-pump text-pump"
+                : "text-dump",
+          )}
+          title={
+            wantsDiscard === null
+              ? undefined
+              : `${finishedCount} in the discard, and this card wants ${wantsDiscard}`
+          }
+        >
+          DISCARD {finishedCount}
+          {wantsDiscard !== null && ` / ${wantsDiscard}`}
+        </span>
+      </div>
+    </header>
+
+    {/* Influencers and tools, which were not drawn here at all — so an aura
+        doubling somebody's pump was invisible on both sides of the table.
+        A card you cannot see is a card you cannot play around. */}
+    {support.length > 0 && (
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {support.map((entry, i) => {
+          const card = cardById(INDEX, entry.cardId);
+          if (card.type !== "person" && card.type !== "tool") {
+            throw new Error(`A ${card.type} card ("${card.id}") is sitting in support.`);
+          }
+          const aura = auraOf(card);
+          return (
+            // Same peek as the solo board, from the same component. Two boards
+            // that answer "what is that card" two different ways is how one of
+            // them quietly stops answering it.
+            <CardPeek key={`${entry.cardId}-${i}`} card={card}>
+              <span className="block cursor-help border border-line-strong px-1.5 py-0.5 text-[9px] tracking-[0.1em] text-muted">
+                {card.ticker}
+              </span>
+            </CardPeek>
+          );
+        })}
+      </div>
+    )}
+
+    {projects.length === 0 ? (
+      <p className="mt-3 text-[10px] text-faint">No positions.</p>
+    ) : (
+      <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
+        {projects.map((project, slot) => {
+          const card = cardById(INDEX, project.cardId);
+          if (card.type !== "project") return null;
+          return (
+            <CardPeek
+              key={`${project.cardId}-${slot}`}
+              card={card}
+              disabled={aimingAt === side}
+            >
+            <BoardProject
+              card={card}
+              onBoard={project}
+              pump={project.pump}
+              targetable={aimingAt === side && (aiming?.reason === "profit" ? "bank" : "attack")}
+              blocking={side === them && blaming === slot}
+              preview={preview.slots.find((s) => s.owner === side && s.slot === slot)}
+              marker={flash.projects[flashKey(side, project.cardId)]}
+              onClick={() => clickTarget(side, slot)}
+            />
+            </CardPeek>
+          );
+        })}
+      </div>
+    )}
+  </section>
+  );
 }
 
 export function MatchBoard({ id }: { id: string }) {
@@ -322,6 +501,24 @@ export function MatchBoard({ id }: { id: string }) {
   const aimingAt = aiming ? boardFor(aiming.target, view.me) : null;
   const budgetLeft = view.budgetThisTurn - view.budgetSpentThisTurn;
 
+  // Rebuilt every render, and that is not the thing that used to be wrong. A new
+  // OBJECT is just new props; a new COMPONENT is a new type, and React answers
+  // the two completely differently — it diffs the first and remounts the second.
+  // See SideTable.
+  const shared: SideTable = {
+    me: view.me,
+    them,
+    toMove: view.toMove,
+    finished: view.finished,
+    flash,
+    preview,
+    mcDelta,
+    aiming,
+    aimingAt,
+    blaming,
+    clickTarget,
+  };
+
   // Where the budget lands if the hovered card is played. Off the view rather
   // than worked out here: this table cannot play a move, and subtracting the
   // card's price would get every card that hands budget back exactly backwards.
@@ -372,144 +569,16 @@ export function MatchBoard({ id }: { id: string }) {
     });
   }
 
-  const Side = ({ side, projects, support, mc, deckCount, finishedCount, wantsDiscard, label }: {
-    side: Player;
-    projects: ViewProject[];
-    support: BoardSupport[];
-    mc: number;
-    deckCount: number;
-    finishedCount: number;
-    /** How many cards the hovered card wants in the discard, or null. */
-    wantsDiscard: number | null;
-    label: string;
-  }) => {
-    // The pump is already worked out per position by the server. Adding four
-    // numbers up is not a rule, and the total is the figure a player actually
-    // steers by — it was the one thing missing that you cannot play without.
-    const pumpTotal = projects.reduce((sum, project) => sum + project.pump, 0);
-    const theirs = view.toMove === side && !view.finished;
-
-    return (
-    <section
-      className={cx(
-        "panel relative border px-3 py-3",
-        theirs ? "border-line-strong" : "border-line",
-      )}
-    >
-      {theirs && (
-        <span
-          className={cx(
-            "breathe absolute inset-x-0 top-0 h-px",
-            side === view.me ? "bg-pump" : "bg-dump",
-          )}
-        />
-      )}
-
-      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <div className="flex items-baseline gap-3">
-          <span className="text-[9px] tracking-[0.2em] text-faint">{label}</span>
-          {/* The same counter the solo table uses. It was a plain span here, so
-              the market cap jumped where it counts on the other screen, and
-              nothing on it flashed, glowed or said what a hovered card would
-              do — four differences on the number the whole game is about. */}
-          <MCCounter
-            value={mc}
-            label="MC"
-            large={side === view.me}
-            delta={flash.mc[side]}
-            preview={preview.players.find((p) => p.player === side)?.impact}
-            projected={mcDelta === null ? null : mcDelta[side]}
-          />
-        </div>
-        <div className="flex items-center gap-4 text-[9px] tracking-[0.16em] text-faint">
-          <span className="flex items-center gap-1 text-pump">
-            <Icon name="pump" className="h-3 w-3" />+{formatMC(pumpTotal)}/TURN
-          </span>
-          <span className={cx(projects.length >= RULES.portfolioSize ? "text-gold" : "text-faint")}>
-            {projects.length}/{RULES.portfolioSize} POSITIONS
-          </span>
-          <span>DECK {deckCount}</span>
-          {/* The same rule the solo table shows, read off the same function, so
-              the two tables cannot disagree about what a card is asking for. */}
-          <span
-            className={cx(
-              wantsDiscard === null
-                ? undefined
-                : finishedCount >= wantsDiscard
-                  ? "glow-pump text-pump"
-                  : "text-dump",
-            )}
-            title={
-              wantsDiscard === null
-                ? undefined
-                : `${finishedCount} in the discard, and this card wants ${wantsDiscard}`
-            }
-          >
-            DISCARD {finishedCount}
-            {wantsDiscard !== null && ` / ${wantsDiscard}`}
-          </span>
-        </div>
-      </header>
-
-      {/* Influencers and tools, which were not drawn here at all — so an aura
-          doubling somebody's pump was invisible on both sides of the table.
-          A card you cannot see is a card you cannot play around. */}
-      {support.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {support.map((entry, i) => {
-            const card = cardById(INDEX, entry.cardId);
-            if (card.type !== "person" && card.type !== "tool") {
-              throw new Error(`A ${card.type} card ("${card.id}") is sitting in support.`);
-            }
-            const aura = auraOf(card);
-            return (
-              // Same peek as the solo board, from the same component. Two boards
-              // that answer "what is that card" two different ways is how one of
-              // them quietly stops answering it.
-              <CardPeek key={`${entry.cardId}-${i}`} card={card}>
-                <span className="block cursor-help border border-line-strong px-1.5 py-0.5 text-[9px] tracking-[0.1em] text-muted">
-                  {card.ticker}
-                </span>
-              </CardPeek>
-            );
-          })}
-        </div>
-      )}
-
-      {projects.length === 0 ? (
-        <p className="mt-3 text-[10px] text-faint">No positions.</p>
-      ) : (
-        <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
-          {projects.map((project, slot) => {
-            const card = cardById(INDEX, project.cardId);
-            if (card.type !== "project") return null;
-            return (
-              <CardPeek
-                key={`${project.cardId}-${slot}`}
-                card={card}
-                disabled={aimingAt === side}
-              >
-              <BoardProject
-                card={card}
-                onBoard={project}
-                pump={project.pump}
-                targetable={aimingAt === side && (aiming?.reason === "profit" ? "bank" : "attack")}
-                blocking={side === them && blaming === slot}
-                preview={preview.slots.find((s) => s.owner === side && s.slot === slot)}
-                marker={flash.projects[flashKey(side, project.cardId)]}
-                onClick={() => clickTarget(side, slot)}
-              />
-              </CardPeek>
-            );
-          })}
-        </div>
-      )}
-    </section>
-    );
-  };
 
   return (
-    <div className="space-y-3">
+    // `dense` opts this table out of the small-type floor in globals.css, the
+    // same way PlayArea does for the solo one — which is where that exemption
+    // was added and where it stopped. The floor is right for a page somebody
+    // reads; this is a screen somebody plays, where every pixel the labels grow
+    // comes off the budget that keeps the board and your hand visible together.
+    // The card type is where legibility was wanted, and the cards are exempt
+    // separately via .card-frame.
+    <div className="dense space-y-3">
       <div className="flex items-baseline justify-between gap-3 text-[10px] tracking-[0.16em] text-faint">
         <span className="min-w-0 truncate">
           VS {short(answer.opponent)} · {view.them.handCount} IN HAND
@@ -528,6 +597,7 @@ export function MatchBoard({ id }: { id: string }) {
         finishedCount={view.them.finishedCount}
         wantsDiscard={null}
         label="THEM"
+        shared={shared}
       />
 
       <div className="panel-raised flex flex-wrap items-center justify-between gap-3 border border-line px-3 py-2">
@@ -618,7 +688,9 @@ export function MatchBoard({ id }: { id: string }) {
                 broken look identical — which is what sent somebody back to the
                 lobby to click the match again. */}
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-pump" aria-hidden="true" />
-            THEIR TURN · {timeLeft(answer.deadline, now)} LEFT
+            {answer.armed
+              ? `THEIR TURN · ${timeLeft(answer.deadline, now)} LEFT`
+              : `WAITING FOR THEM TO SIT DOWN · ${timeLeft(answer.deadline, now)}`}
           </span>
         )}
       </div>
@@ -632,6 +704,7 @@ export function MatchBoard({ id }: { id: string }) {
         finishedCount={view.you.finishedCount}
         wantsDiscard={wantsDiscard}
         label="YOU"
+        shared={shared}
       />
 
       {view.finished && (
@@ -681,7 +754,16 @@ export function MatchBoard({ id }: { id: string }) {
             const note = says?.canPlay ? null : (says?.reason ?? null);
 
             return (
-              <div key={`${cardId}-${i}`} className="group @container relative w-[128px] shrink-0 sm:w-[150px]">
+              <div
+                key={`${cardId}-${i}`}
+                // The same width the solo hand uses, and for the reason in
+                // b043e26: a card sets its own type in cqw against its width,
+                // so a narrower card is a card with smaller letters on it —
+                // which handed the smallest screen the smallest text in the
+                // game. The row already scrolls sideways, so the only cost is
+                // how many cards you see at once.
+                className="group @container relative w-[160px] shrink-0"
+              >
                 <button
                   type="button"
                   disabled={!mine || !says?.canPlay || busy}

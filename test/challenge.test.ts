@@ -13,6 +13,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { announceOffer } from "@/lib/challenge";
+import { clockPhrase } from "@/engine/record";
 import type { Database, Statement } from "@/lib/store";
 
 const FRIENDLY = "https://discord.example/friendly";
@@ -125,13 +126,21 @@ describe("announcing an offer", () => {
     expect(String(sent[0]!.body.embeds[0]!.description)).toMatch(/stake is being put up/i);
   });
 
-  it("names the clock, because two minutes and a day are different games", async () => {
+  it("names the clock, because a live one and a day are different games", async () => {
+    // Read off TURN_CLOCK rather than written out here. The live clock has moved
+    // twice, and both times this announcement went on telling Discord the old
+    // number — somebody sat down to a game whose rules the invitation had wrong.
     const sent = catchPosts();
     const db = fakeDb();
     await announceOffer(db, offer({ id: "a", mode: "live" }), { pvpFriendly: FRIENDLY });
     await announceOffer(db, offer({ id: "b", mode: "correspondence" }), { pvpFriendly: FRIENDLY });
-    expect(String(sent[0]!.body.embeds[0]!.description)).toMatch(/two minutes a turn/i);
-    expect(String(sent[1]!.body.embeds[0]!.description)).toMatch(/a day a turn/i);
+    // Case-insensitive: both branches open a sentence with the clock, so the
+    // slow one capitalises it. The live phrase is the one that carries a number
+    // and therefore the one that drifts.
+    expect(String(sent[0]!.body.embeds[0]!.description)).toContain(clockPhrase("live"));
+    expect(String(sent[1]!.body.embeds[0]!.description)).toMatch(
+      new RegExp(clockPhrase("correspondence"), "i"),
+    );
   });
 
   it("quotes the pot as both sides, not one", async () => {

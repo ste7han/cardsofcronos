@@ -16,8 +16,8 @@ const escrow = readFileSync(new URL("../contracts/MatchEscrow.sol", import.meta.
 const rescuable = readFileSync(new URL("../contracts/Rescuable.sol", import.meta.url), "utf8");
 
 describe("the two clocks", () => {
-  it("gives a live match two minutes a turn", () => {
-    expect(TURN_CLOCK.live).toBe(2 * 60 * 1000);
+  it("gives a live match five minutes a turn", () => {
+    expect(TURN_CLOCK.live).toBe(5 * 60 * 1000);
   });
 
   it("gives a slow match a day", () => {

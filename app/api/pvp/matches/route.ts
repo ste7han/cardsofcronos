@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     // time somebody does, and there is no cron here to do it for them.
     const current = catchUp(record, now, CARDS, INDEX);
     if (current.moves.length !== record.moves.length) {
-      await saveMoves(db(), current.id, current.moves, current.deadline, null);
+      await saveMoves(db(), current.id, current.moves, current.deadline, null, current.armed);
     }
 
     const state = stateOf(current, CARDS, INDEX);

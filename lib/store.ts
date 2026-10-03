@@ -84,6 +84,7 @@ interface MatchRow {
   moves: string;
   created_at: number;
   deadline: number;
+  armed: number | null;
   finished_at: number | null;
   wager: string | null;
 }
@@ -113,6 +114,7 @@ const toRecord = (row: MatchRow): MatchRecord => ({
   moves: JSON.parse(row.moves) as Move[],
   createdAt: row.created_at,
   deadline: row.deadline,
+  armed: row.armed ?? null,
 });
 
 export async function putListing(db: Database, listing: Listing): Promise<void> {
@@ -168,8 +170,8 @@ export async function putMatch(db: Database, record: MatchRecord): Promise<void>
     .prepare(
       `INSERT INTO matches
          (id, mode, stake, seat_you, seat_opponent, seed, deck_you, deck_opponent,
-          moves, created_at, deadline, wager)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          moves, created_at, deadline, armed, wager)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       record.id,
@@ -183,6 +185,7 @@ export async function putMatch(db: Database, record: MatchRecord): Promise<void>
       JSON.stringify(record.moves),
       record.createdAt,
       record.deadline,
+      record.armed,
       record.wager ?? null,
     )
     .run();
@@ -207,10 +210,16 @@ export async function saveMoves(
   moves: Move[],
   deadline: number,
   finishedAt: number | null,
+  /**
+   * Passed every time rather than defaulted, because the safe-looking default
+   * is the wrong one: a caller that left it out would write NULL over a running
+   * clock and hand that match a fresh opening grace.
+   */
+  armed: number | null,
 ): Promise<void> {
   await db
-    .prepare(`UPDATE matches SET moves = ?, deadline = ?, finished_at = ? WHERE id = ?`)
-    .bind(JSON.stringify(moves), deadline, finishedAt, id)
+    .prepare(`UPDATE matches SET moves = ?, deadline = ?, finished_at = ?, armed = ? WHERE id = ?`)
+    .bind(JSON.stringify(moves), deadline, finishedAt, armed, id)
     .run();
 }
 

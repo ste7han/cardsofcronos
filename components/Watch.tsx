@@ -16,6 +16,7 @@ import { cardById } from "@/engine/helpers";
 import { cx } from "@/lib/cx";
 import { INDEX } from "@/lib/set";
 import { formatMC } from "@/engine/format";
+import { clockLabel } from "@/engine/record";
 import { RULES, type LogEntry } from "@/engine/types";
 import type { OpponentView } from "@/engine/view";
 
@@ -158,7 +159,10 @@ export function Watch({ id }: { id: string }) {
         <span>
           TURN <span className="tabular-nums text-muted">{view.turn}</span> / {RULES.turns}
         </span>
-        <span>{answer.mode === "live" ? "LIVE · 2 MIN A TURN" : "A DAY A TURN"}</span>
+        <span>
+          {(answer.mode === "live" ? `live · ${clockLabel("live")}` : clockLabel(answer.mode))
+            .toUpperCase()}
+        </span>
         {answer.stake > 0 && (
           <span className="text-gold">{answer.stake * 2} CRO IN THE POT</span>
         )}

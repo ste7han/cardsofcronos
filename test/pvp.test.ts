@@ -49,7 +49,7 @@ describe("sitting down", () => {
       expect(TURN_CLOCK[mode], mode).toBeGreaterThan(0);
       expect(CONCURRENT[mode], mode).toBeGreaterThan(0);
     }
-    expect(TURN_CLOCK.live).toBe(2 * 60 * 1000);
+    expect(TURN_CLOCK.live).toBe(5 * 60 * 1000);
     expect(TURN_CLOCK.correspondence).toBe(24 * 60 * 60 * 1000);
     // One live match at a time, several slow ones. A live match you are not at
     // is turns being lost, so having six of them is not a thing to allow.

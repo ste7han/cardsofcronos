@@ -27,7 +27,7 @@
 import { post } from "@/lib/discord";
 import { from } from "@/lib/flair";
 import type { Database } from "@/lib/store";
-import type { MatchMode } from "@/engine/record";
+import { clockPhrase, type MatchMode } from "@/engine/record";
 
 export interface Offer {
   id: string;
@@ -65,7 +65,7 @@ async function alreadySaid(db: Database, id: string): Promise<boolean> {
 /** How long a seat gives you to answer, in the words the lobby uses. */
 function clockOf(mode: MatchMode): string {
   return mode === "live"
-    ? "**Live.** Two minutes a turn, and a turn you do not answer is a turn you lose."
+    ? `**Live.** ${clockPhrase("live")}, and a turn you do not answer is a turn you lose.`
     : "**Slow.** A day a turn, so it can be played across a week from a phone.";
 }
 

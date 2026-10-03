@@ -15,7 +15,7 @@ import { loadDeck } from "@/lib/deck-storage";
 import { useDecks } from "@/lib/use-decks";
 import { STAKES } from "@/lib/pvp";
 import { CONCURRENT } from "@/lib/store";
-import type { MatchMode } from "@/engine/record";
+import { clockLabel, clockPhrase, type MatchMode } from "@/engine/record";
 import { CONTRACTS } from "@/lib/revenue";
 import { openData, joinData, stakeWei } from "@/lib/escrow";
 import { tierFor } from "@/data/holder-tiers";
@@ -428,7 +428,7 @@ export function Lobby() {
       <section>
         <h2 className="display text-xl">OPEN OFFERS</h2>
         <p className="mt-2 max-w-2xl text-[11px] leading-relaxed text-muted">
-          Two minutes a turn if you want it over with, or a day a turn so a match runs across a
+          {clockPhrase("live")} if you want it over with, or a day a turn so a match runs across a
           week and nobody has to be anywhere. Play for nothing, or put CRO up: both sides stake the
           same and the winner takes the pot, less a cut that falls the more $CROCARD you hold. It is
           held by a contract neither of you can reach — not us either, beyond CRO that belongs to
@@ -459,14 +459,14 @@ export function Lobby() {
                       : "border-line text-muted hover:border-line-strong hover:text-fg",
                   )}
                 >
-                  {one === "live" ? "2 MINUTES · LIVE" : "A DAY · SLOW"}
+                  {one === "live" ? `${clockPhrase("live").toUpperCase()} · LIVE` : "A DAY · SLOW"}
                 </button>
               ))}
             </div>
             <p className="mt-2 max-w-2xl text-[10px] leading-relaxed text-muted">
               {mode === "live"
                 ? `Both of you at the table, ${RULES.turns} turns in a sitting. A turn you do not ` +
-                  `answer in two minutes ends — it costs the turn, not the match. One live match ` +
+                  `answer in ${clockPhrase("live")} ends — it costs the turn, not the match. One live match ` +
                   `at a time.`
                 : `A day to answer, so it plays out over a week from wherever you are. Up to ` +
                   `${CONCURRENT.correspondence} of these at once.`}
@@ -578,7 +578,7 @@ export function Lobby() {
                   </span>
                   {/* Which clock you would be sitting down to. Every offer was
                       a day long when this row was written, so it did not have
-                      to say — and sitting down to two minutes without being
+                      to say — and sitting down to a live clock without being
                       told is losing turns to a rule nobody mentioned. */}
                   <span
                     className={cx(
@@ -586,7 +586,7 @@ export function Lobby() {
                       listing.mode === "live" ? "text-pump" : "text-faint",
                     )}
                   >
-                    {listing.mode === "live" ? "2 min a turn" : "a day a turn"}
+                    {clockLabel(listing.mode)}
                   </span>
                   <span className="ml-3 text-[10px] text-faint">
                     {timeLeft(listing.expiresAt, now)}
