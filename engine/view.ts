@@ -309,3 +309,69 @@ export function viewFor(state: State, player: Player, index: CardIndex): PlayerV
     },
   });
 }
+
+/**
+ * What somebody watching sees, which is neither player's view.
+ *
+ * ── WHY THIS IS ITS OWN TYPE AND NOT A PLAYERVIEW WITH BITS REMOVED ──────────
+ *
+ * A spectator must not see a hand. Not the one belonging to the side they are
+ * rooting for, not either. On a ranked match somebody who can read a hand can
+ * tell the other player what is coming, and that is not spying on a game, it is
+ * taking money off the person holding those cards.
+ *
+ * So this does not build a PlayerView and delete things: it has no field a hand
+ * could be put in. `OwnView` carries `hand`, `playable`, and the rest of what
+ * only you may know; a watcher gets two `OpponentView`s, which carry counts.
+ * Redaction that happens by shape cannot be forgotten in a later edit, and this
+ * file has already had the other kind go wrong — see the note on OwnView, where
+ * a player was handed their own deck in draw order.
+ */
+export interface WatchView {
+  turn: number;
+  toMove: Player;
+  finished: boolean;
+  winner: Player | null;
+  /** Public from the moment it happens: both players already see all of it. */
+  log: LogEntry[];
+  /** The seat that opened the match, as the match itself names them. */
+  you: OpponentView;
+  opponent: OpponentView;
+}
+
+/**
+ * Both sides, as the other side sees them.
+ *
+ * `budgetThisTurn` is left out on purpose. It belongs to whoever is moving, and
+ * handing it over says how much they have left to spend before they have spent
+ * it — which is the one public-looking number that tells you what somebody is
+ * about to be able to do.
+ */
+export function watchView(state: State, index: CardIndex): WatchView {
+  const side = (player: Player): OpponentView => {
+    const them = state.players[player];
+    return {
+      mc: them.mc,
+      projects: them.projects.map((project, slot) => ({
+        ...project,
+        pump: pumpOf(state, player, slot, index),
+      })),
+      support: them.support,
+      discard: them.discard,
+      pendingBudget: them.pendingBudget,
+      handCount: them.hand.length,
+      deckCount: them.deck.length,
+      finishedCount: them.discard.length,
+    };
+  };
+
+  return structuredClone({
+    turn: state.turn,
+    toMove: state.toMove,
+    finished: state.finished,
+    winner: state.winner,
+    log: state.log,
+    you: side("you"),
+    opponent: side("opponent"),
+  });
+}

@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import { CARDS } from "@/data/cards";
 import { chooseMove } from "@/engine/bot";
 import { applyMove, applyMoveAs, buildIndex, newMatch, pumpOf } from "@/engine/match";
-import { viewFor } from "@/engine/view";
+import { viewFor, watchView } from "@/engine/view";
 import { IllegalMove } from "@/engine/types";
 import type { State } from "@/engine/types";
 
@@ -218,5 +218,81 @@ describe("what the view answers about your own hand", () => {
     view.you.projects.forEach((project, slot) => {
       expect(project.pump).toBe(pumpOf(state, "you", slot, INDEX));
     });
+  });
+});
+
+describe("what somebody watching is allowed to see", () => {
+  /**
+   * A spectator must not see a hand. Not the one belonging to the side they are
+   * rooting for, not either. On a ranked match somebody who can read a hand can
+   * tell the other player what is coming, and that is not watching a game, it is
+   * taking money off the person holding those cards.
+   */
+  it("carries neither hand and neither deck", () => {
+    const state = midMatch();
+    const wire = JSON.stringify(watchView(state, INDEX));
+
+    // Every card that is hidden from BOTH sides. A card on a board is in the
+    // payload legitimately; one that is only in somebody's hand or deck is not.
+    const onBoard = new Set<string>();
+    for (const side of ["you", "opponent"] as const) {
+      for (const project of state.players[side].projects) onBoard.add(project.cardId);
+      for (const one of state.players[side].support) onBoard.add(one.cardId);
+      for (const id of state.players[side].discard) onBoard.add(id);
+    }
+    const hidden = [
+      ...state.players.you.hand,
+      ...state.players.opponent.hand,
+      ...state.players.you.deck,
+      ...state.players.opponent.deck,
+    ].filter((id) => !onBoard.has(id));
+
+    expect(hidden.length, "the fixture should have something to hide").toBeGreaterThan(0);
+    for (const id of hidden) expect(wire).not.toContain(`"${id}"`);
+  });
+
+  it("has nowhere to put a hand, rather than having it removed", () => {
+    // Redaction by shape. A view built by deleting fields from a player's view
+    // is one edit away from carrying them again; this one has no field they
+    // would go in.
+    const view = watchView(midMatch(), INDEX);
+    expect(view).not.toHaveProperty("me");
+    expect(view.you).not.toHaveProperty("hand");
+    expect(view.you).not.toHaveProperty("playable");
+    expect(view.opponent).not.toHaveProperty("hand");
+    expect(view.opponent).not.toHaveProperty("playable");
+  });
+
+  it("leaves out what the player to move is about to be able to spend", () => {
+    // The one public-looking number that says what somebody can do before they
+    // have done it.
+    const view = watchView(midMatch(), INDEX);
+    expect(view).not.toHaveProperty("budgetThisTurn");
+    expect(view).not.toHaveProperty("budgetSpentThisTurn");
+  });
+
+  it("keeps the seed out, the way a player's view does", () => {
+    const wire = JSON.stringify(watchView(midMatch(918_273_645), INDEX));
+    expect(wire).not.toContain("918273645");
+  });
+
+  it("still shows what makes a match worth watching", () => {
+    const state = midMatch();
+    const view = watchView(state, INDEX);
+
+    for (const [seat, side] of [["you", "you"], ["opponent", "opponent"]] as const) {
+      expect(view[seat].mc).toBe(state.players[side].mc);
+      expect(view[seat].projects.length).toBe(state.players[side].projects.length);
+      expect(view[seat].handCount).toBe(state.players[side].hand.length);
+    }
+    expect(view.turn).toBe(state.turn);
+    expect(view.toMove).toBe(state.toMove);
+    expect(view.log).toEqual(state.log);
+  });
+
+  it("says who won once it is over, and not before", () => {
+    const early = watchView(midMatch(), INDEX);
+    expect(early.finished).toBe(false);
+    expect(early.winner).toBeNull();
   });
 });
