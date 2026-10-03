@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { WalletButton } from "@/components/WalletButton";
 import { cx } from "@/lib/cx";
+import { useYourTurn } from "@/lib/use-your-turn";
 
 const LINKS = [
   { href: "/play", label: "PLAY" },
@@ -24,16 +25,24 @@ const LINKS = [
 ];
 
 export function Nav() {
-  const pathname = usePathname();
-  // The card render route is a picture, not a page. Anything around the card
-  // would be captured with it.
-  if (pathname?.startsWith("/card/")) return null;
+  // ── EVERY HOOK BEFORE THE EARLY RETURN ──────────────────────────────────
+  //
+  // `useState` and `useEffect` sat underneath it, which means React saw a
+  // different number of hooks on a /card/ route than on any other — the exact
+  // thing the rules of hooks forbid. It survived because that route returns null
+  // every time, so the order never changed mid-life, but a client-side
+  // navigation onto one is all it would have taken.
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const waiting = useYourTurn();
 
   // Close it on the way to somewhere. Without this the menu is still open
   // underneath the page you just asked for, which reads as the tap not working.
   useEffect(() => setOpen(false), [path]);
+
+  // The card render route is a picture, not a page. Anything around the card
+  // would be captured with it.
+  if (path?.startsWith("/card/")) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-ground/70 backdrop-blur-xl">
@@ -91,6 +100,18 @@ export function Nav() {
                 )}
               >
                 {link.label}
+                {/* A correspondence match gives each side a day, which is long
+                    enough to forget you are in one. Nothing said so unless you
+                    went to /pvp, so a match could run out of time while its
+                    player was three clicks away on the mint page. */}
+                {link.href === "/pvp" && waiting > 0 && (
+                  <span
+                    aria-label={`${waiting} ${waiting === 1 ? "match is" : "matches are"} waiting on you`}
+                    className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-pump px-1 text-[9px] leading-none font-bold text-ground tabular-nums align-middle shadow-[0_0_10px_2px_rgba(0,224,138,0.45)]"
+                  >
+                    {waiting}
+                  </span>
+                )}
                 {active && (
                   <span className="absolute inset-x-3 -bottom-px h-px bg-pump shadow-[0_0_10px_2px_rgba(0,224,138,0.5)]" />
                 )}
@@ -127,6 +148,14 @@ export function Nav() {
                 )}
               >
                 {link.label}
+                {link.href === "/pvp" && waiting > 0 && (
+                  <span
+                    aria-label={`${waiting} ${waiting === 1 ? "match is" : "matches are"} waiting on you`}
+                    className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-pump px-1 text-[9px] leading-none font-bold text-ground tabular-nums align-middle"
+                  >
+                    {waiting}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
