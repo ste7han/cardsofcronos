@@ -221,3 +221,39 @@ describe("taking a seat with money on it", () => {
     expect(body).toMatch(/30 days/);
   });
 });
+
+describe("a seat you cannot take", () => {
+  const lobby = readFileSync(new URL("../components/Lobby.tsx", import.meta.url), "utf8");
+
+  /**
+   * The button went grey and said nothing.
+   *
+   * The reason was at the top of the page — "you need a legal deck of 40 first" —
+   * which is out of sight the moment somebody scrolls down to an offer, and on a
+   * phone that is always. So the seat read as broken: pressing it did nothing and
+   * nothing explained it. engine/view.ts already says this about a card in your
+   * hand, and it was fixed there and not here.
+   */
+  it("says which of the three reasons it is", () => {
+    for (const reason of ["NEED A DECK OF 40", "STAKE NOT IN YET", "ALREADY TAKEN"]) {
+      expect(lobby, reason).toContain(reason);
+    }
+  });
+
+  it("is never a disabled button with no explanation", () => {
+    // `busy` is the only thing left that greys it, and that one is a press in
+    // progress — which explains itself by being a press you just made.
+    const seat = lobby.slice(lobby.indexOf("onClick={() => void sitDown(listing)}"));
+    const button = seat.slice(0, seat.indexOf("</button>"));
+    expect(button).toContain("disabled={busy !== null}");
+    expect(button).not.toContain("!hasDeck");
+    expect(button).not.toContain("listing.funded");
+  });
+
+  it("sends somebody to the deck builder rather than stopping them", () => {
+    // Of the three reasons, a missing deck is the only one the reader can go and
+    // fix. The other two are waiting on somebody else, so they are a label.
+    const seat = lobby.slice(lobby.indexOf("NEED A DECK OF 40") - 400);
+    expect(seat.slice(0, 1200)).toContain('href="/deck"');
+  });
+});

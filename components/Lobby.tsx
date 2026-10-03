@@ -676,21 +676,62 @@ export function Lobby() {
                   </button>
                   </span>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => void sitDown(listing)}
-                    disabled={
-                      busy !== null || !hasDeck || !listing.funded ||
-                      (listing.taken && !listing.finishable)
+                  (() => {
+                    /**
+                     * Why you cannot sit down, on the button itself.
+                     *
+                     * It went grey and said nothing. The reason was at the top of
+                     * the page — "you need a legal deck of 40 first" — which is
+                     * out of sight the moment somebody scrolls to an offer, and on
+                     * a phone that is always. So the seat read as broken: pressing
+                     * it did nothing and nothing explained it.
+                     *
+                     * engine/view.ts already says this about a card in your hand:
+                     * "a card at forty percent opacity that will not say why is the
+                     * whole of 'I suddenly could not play'". It was fixed there and
+                     * not here.
+                     */
+                    const why = !hasDeck
+                      ? "NEED A DECK OF 40"
+                      : !listing.funded
+                        ? "STAKE NOT IN YET"
+                        : listing.taken && !listing.finishable
+                          ? "ALREADY TAKEN"
+                          : null;
+
+                    if (why !== null) {
+                      // A link where the answer is, rather than a dead button.
+                      // Everything else here is waiting on somebody else; a
+                      // missing deck is the one the reader can go and fix.
+                      return !hasDeck ? (
+                        <Link
+                          href="/deck"
+                          className="shrink-0 border border-gold px-3 py-1.5 text-[9px] tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ground"
+                        >
+                          {why} →
+                        </Link>
+                      ) : (
+                        <span className="shrink-0 border border-line-strong px-3 py-1.5 text-[9px] tracking-[0.16em] text-faint">
+                          {why}
+                        </span>
+                      );
                     }
-                    className="border border-pump px-3 py-1.5 text-[9px] tracking-[0.16em] text-pump transition-colors hover:bg-pump hover:text-ground disabled:cursor-not-allowed disabled:border-line-strong disabled:text-muted"
-                  >
-                    {busy === listing.id
-                      ? "…"
-                      : listing.finishable
-                        ? "FINISH SITTING DOWN"
-                        : "SIT DOWN"}
-                  </button>
+
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => void sitDown(listing)}
+                        disabled={busy !== null}
+                        className="border border-pump px-3 py-1.5 text-[9px] tracking-[0.16em] text-pump transition-colors hover:bg-pump hover:text-ground disabled:cursor-not-allowed disabled:border-line-strong disabled:text-muted"
+                      >
+                        {busy === listing.id
+                          ? "…"
+                          : listing.finishable
+                            ? "FINISH SITTING DOWN"
+                            : "SIT DOWN"}
+                      </button>
+                    );
+                  })()
                 )}
               </li>
             ))}
