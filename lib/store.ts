@@ -214,6 +214,30 @@ export async function saveMoves(
     .run();
 }
 
+/**
+ * Matches anybody may look in on, newest first.
+ *
+ * Everybody's, not one player's — this is what makes a spectator page findable
+ * rather than a URL you have to be sent. What it returns is the record; what a
+ * watcher is shown is decided by engine/view.ts, which has no field a hand could
+ * go in.
+ *
+ * Running ones first and a few finished ones after, because a game that has just
+ * been decided is the one worth opening. Capped rather than paged: this is a
+ * list to glance at, and a lobby that needs paging is a problem to have.
+ */
+export async function watchableMatches(db: Database, limit = 12): Promise<MatchRecord[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM matches
+        ORDER BY finished_at IS NOT NULL ASC, created_at DESC
+        LIMIT ?`,
+    )
+    .bind(limit)
+    .all<MatchRow>();
+  return results.map(toRecord);
+}
+
 /** Every match a player is in, newest first. */
 export async function matchesOf(
   db: Database,

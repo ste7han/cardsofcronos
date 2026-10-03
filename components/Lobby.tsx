@@ -43,6 +43,19 @@ function timeLeft(deadline: number, now: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} left`;
 }
 
+/** One row in the list of matches anybody may look in on. */
+interface Watchable {
+  id: string;
+  mode: "live" | "correspondence";
+  stake: number;
+  seats: { you: string; opponent: string };
+  turn: number;
+  finished: boolean;
+  winner: "you" | "opponent" | null;
+  mc: { you: number; opponent: number };
+  startedAt: number;
+}
+
 export function Lobby() {
   const { wallet, ready } = useSession();
   // Called for the effect rather than the value: it fetches this wallet's decks
@@ -53,6 +66,14 @@ export function Lobby() {
   const [listings, setListings] = useState<LobbyListing[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  /**
+   * Everybody's matches, for looking in on.
+   *
+   * Open without a wallet and fetched separately from the rest: this is the only
+   * thing on the page a signed-out visitor can use, and hanging it off the
+   * signed-in refresh would have hidden it from exactly them.
+   */
+  const [watchable, setWatchable] = useState<Watchable[]>([]);
   const [now, setNow] = useState(() => Date.now());
 
   /**
@@ -215,6 +236,28 @@ export function Lobby() {
     }
   }, []);
 
+  // Its own effect, with no session in its dependencies.
+  useEffect(() => {
+    let current = true;
+    const look = () => {
+      void fetch("/api/pvp/live")
+        .then((answer) => (answer.ok ? answer.json() : Promise.reject(new Error())))
+        .then((found: { matches: Watchable[] }) => {
+          if (current) setWatchable(found.matches);
+        })
+        .catch(() => {
+          // Left as it was. This is the least important list on the page and
+          // must not be able to put an error in front of somebody mid-match.
+        });
+    };
+    look();
+    const timer = setInterval(look, 20_000);
+    return () => {
+      current = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   useEffect(() => {
     if (!ready || wallet === null) return;
     void refresh();
@@ -335,6 +378,52 @@ export function Lobby() {
           </ul>
         )}
       </section>
+
+      {/* Everybody's matches, and the only part of this page that works signed
+          out. A spectator view nobody can find is a URL you have to be sent. */}
+      {watchable.length > 0 && (
+        <section>
+          <h2 className="display text-xl">WATCH A MATCH</h2>
+          <p className="mt-2 max-w-xl text-[11px] leading-relaxed text-muted">
+            Both boards as the players see each other&rsquo;s. No hands — a hand somebody can read
+            is a hand they can tell the other side about.
+          </p>
+          <ul className="mt-4 divide-y divide-line border border-line">
+            {watchable.map((one) => (
+              <li key={one.id}>
+                <Link
+                  href={`/pvp/watch/${one.id}`}
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-panel"
+                >
+                  <span className="min-w-0">
+                    <span className="text-[11px] text-fg">
+                      {short(one.seats.you)} vs {short(one.seats.opponent)}
+                    </span>
+                    <span className="ml-3 text-[10px] text-faint">
+                      turn {Math.min(one.turn, RULES.turns)}/{RULES.turns}
+                    </span>
+                    {one.stake > 0 && (
+                      <span className="ml-3 text-[10px] text-gold">{one.stake * 2} CRO</span>
+                    )}
+                  </span>
+                  <span className="flex items-center gap-3 text-[10px] tabular-nums">
+                    <span className="text-muted">
+                      {formatMC(one.mc.you)} · {formatMC(one.mc.opponent)}
+                    </span>
+                    <span
+                      className={
+                        one.finished ? "text-faint tracking-[0.16em]" : "text-pump tracking-[0.16em]"
+                      }
+                    >
+                      {one.finished ? "FINISHED" : one.mode === "live" ? "LIVE" : "RUNNING"}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h2 className="display text-xl">OPEN OFFERS</h2>
