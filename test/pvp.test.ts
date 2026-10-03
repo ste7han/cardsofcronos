@@ -146,7 +146,20 @@ describe("a seat whose stake is already in", () => {
   });
 
   it("does not offer a taken seat to anybody else", () => {
-    expect(lobby).toMatch(/!listing\.funded \|\| listing\.taken/);
+    expect(lobby).toMatch(/listing\.taken && !listing\.finishable/);
+  });
+
+  it("does offer it to the one whose stake is in it", () => {
+    // Paying and being seated are two steps and the second can fail after the
+    // first. The deposit is in either way, so the person who made it gets to
+    // finish rather than waiting out a thirty-day abandonment on a seat they
+    // already bought.
+    expect(lobby).toContain("FINISH SITTING DOWN");
+    const fn = lobby.slice(lobby.indexOf("async function sitDown"));
+    const body = fn.slice(0, fn.indexOf("\n  }\n"));
+    // And it must not try to pay a second time: joining a full wager is refused
+    // by the contract, so that would only cost the gas to find out.
+    expect(body).toContain("listing.stake > 0 && !listing.finishable");
   });
 
   it("asks the chain again before it signs anything", () => {

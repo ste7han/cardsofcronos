@@ -60,6 +60,15 @@ export interface LobbyListing {
    * what says the seat is gone.
    */
   taken: boolean;
+  /**
+   * Your stake is in this seat and there is still no match behind it.
+   *
+   * Paying and being seated are two steps and the second can fail after the
+   * first has succeeded. The deposit is in the escrow either way, so the only
+   * sensible thing to offer is the chance to finish — otherwise the alternative
+   * is waiting out the thirty-day abandonment on a seat you already bought.
+   */
+  finishable: boolean;
 }
 
 export interface MatchSummary {

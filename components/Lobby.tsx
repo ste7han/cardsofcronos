@@ -132,7 +132,11 @@ export function Lobby() {
    */
   async function sitDown(listing: LobbyListing) {
     await run(listing.id, async () => {
-      if (listing.stake > 0) {
+      // Not again. `finishable` means this wallet's deposit is already in the
+      // escrow and only the match is missing — joining a wager that is full is
+      // refused by the contract, so paying twice is not even possible, it just
+      // costs the gas to find out.
+      if (listing.stake > 0 && !listing.finishable) {
         if (wallet === null || !CONTRACTS.escrow) throw new Error("No wallet.");
         const hash = await sendCall(
           wallet,
@@ -502,7 +506,12 @@ export function Lobby() {
                       the deposit are two steps; this is the gap between them,
                       and without saying so the seat would simply refuse anybody
                       who tried it after choosing a deck. */}
-                  {listing.taken ? (
+                  {listing.finishable ? (
+                    <span className="mt-1 block text-[10px] leading-relaxed text-gold">
+                      Your stake is in this seat but the match was never made. Sit down again to
+                      finish it — nothing more is charged.
+                    </span>
+                  ) : listing.taken ? (
                     <span className="mt-1 block text-[10px] leading-relaxed text-pump">
                       {listing.mine
                         ? "Both stakes are in. The match is on — it is in your games above."
@@ -581,10 +590,17 @@ export function Lobby() {
                   <button
                     type="button"
                     onClick={() => void sitDown(listing)}
-                    disabled={busy !== null || !hasDeck || !listing.funded || listing.taken}
+                    disabled={
+                      busy !== null || !hasDeck || !listing.funded ||
+                      (listing.taken && !listing.finishable)
+                    }
                     className="border border-pump px-3 py-1.5 text-[9px] tracking-[0.16em] text-pump transition-colors hover:bg-pump hover:text-ground disabled:cursor-not-allowed disabled:border-line-strong disabled:text-muted"
                   >
-                    {busy === listing.id ? "…" : "SIT DOWN"}
+                    {busy === listing.id
+                      ? "…"
+                      : listing.finishable
+                        ? "FINISH SITTING DOWN"
+                        : "SIT DOWN"}
                   </button>
                 )}
               </li>

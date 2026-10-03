@@ -57,6 +57,17 @@ export async function POST(request: Request) {
         funded: mine && wager.state !== "none",
         // And somebody is already in the other seat.
         taken: mine && wager.state !== "open",
+        /**
+         * …and that somebody is you, with no match to show for it.
+         *
+         * Paying and being seated are two steps, and the second one can fail
+         * after the first has succeeded — a refused join, a closed tab, a seat
+         * whose offer expired in between. The deposit is in the escrow either
+         * way, so the only sensible thing to offer the person who made it is the
+         * chance to finish. Without this they would wait thirty days for the
+         * abandonment window on a seat they had already bought.
+         */
+        finishable: mine && wager.state === "full" && normalise(wager.joiner) === normalise(wallet),
       };
     }),
   );
@@ -82,6 +93,8 @@ export async function POST(request: Request) {
        * and nobody else must be offered a seat that is no longer there.
        */
       taken: checked[i]?.taken ?? false,
+      /** Yours to finish: your stake is in and there is still no match. */
+      finishable: checked[i]?.finishable ?? false,
     })),
   });
 }
