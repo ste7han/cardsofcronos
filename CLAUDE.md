@@ -120,6 +120,39 @@ art goes in `art-source/`. `public/` is what the site serves.
 
 ---
 
+## Lessons from the rebuild
+
+Same rule: paid for, so written down.
+
+**A component declared in a render body is a new component on every render.**
+`Side` sat inside `MatchBoard`, which read fine and was a remount every time:
+React compares the component *type* at a position in the tree, and a fresh
+function identity is a fresh type, so it threw the subtree away and built a new
+one. All the state underneath went with it. A live match re-renders once a second
+to tick its clock, so a magnified card closed before it could be read — which
+arrives as "the game feels janky", not as a bug with a name. Declare components
+at module level and hand them what they need as props. A prop that changes
+identity is only a prop; a component that changes identity is a different
+component.
+
+**Some faults are invisible to both the type checker and the tests.** That one
+was, and so was the match table missing `.dense`, the opt-out from the small-type
+floor: `tsc` clean and 1157 tests green while both were wrong, because neither is
+a claim about behaviour — one is component identity, the other is a stylesheet.
+What catches those is reading the source and asserting its shape:
+`test/live-board.test.ts`, and `test/watch.test.ts` before it. A blunt
+instrument, and the only one that fits.
+
+**Copy that quotes a number drifts away from the number.** The live turn clock
+moved twice. Both times the engine was right and the lobby, the spectator page,
+the Discord invitation and the page description went on saying two minutes — so
+people were invited to a game under rules it no longer used. Anything that states
+a rule in words reads it from the rule: `clockLabel` and `clockPhrase` off
+`TURN_CLOCK`, the same way `DESIGN.md` is checked against the engine rather than
+trusted. This is **one file, one truth** again, in prose instead of in data.
+
+---
+
 ## Working agreements
 
 - Rules first, then code.
