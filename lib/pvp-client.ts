@@ -51,6 +51,15 @@ export interface LobbyListing {
    * happens in a wallet. Read off the chain by /api/pvp/lobby.
    */
   funded: boolean;
+  /**
+   * Whether somebody has already matched the stake on chain.
+   *
+   * Separate from `funded`, and the separation is the point: those two used to
+   * be one flag, and it meant that the moment a seat was taken its poster was
+   * told their own stake had not arrived. Funded only ever goes true; taken is
+   * what says the seat is gone.
+   */
+  taken: boolean;
 }
 
 export interface MatchSummary {

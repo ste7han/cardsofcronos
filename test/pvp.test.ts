@@ -5,6 +5,8 @@
 // accepting case is one line and the refusals are where matches get stolen,
 // staked by accident, or started with a deck that cannot be played.
 
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { MODES, MOST_AT_STAKE, STAKES, newId, whyNotSeated } from "@/lib/pvp";
@@ -108,5 +110,50 @@ describe("match ids", () => {
     // sharing a row.
     const seen = new Set(Array.from({ length: 500 }, () => newId()));
     expect(seen.size).toBe(500);
+  });
+});
+
+describe("a seat whose stake is already in", () => {
+  const route = readFileSync(new URL("../app/api/pvp/lobby/route.ts", import.meta.url), "utf8");
+  const lobby = readFileSync(new URL("../components/Lobby.tsx", import.meta.url), "utf8");
+
+  /**
+   * What this is about, because it cost somebody real gas.
+   *
+   * `funded` was computed as `state === "open"` and asked to answer two
+   * questions: has the poster's deposit landed, and is the seat still free.
+   * Those come apart the instant somebody joins — the state goes to `full` — and
+   * the poster, whose money went in an hour earlier, was told their stake had
+   * not arrived and shown a button to put it up again. That button calls open()
+   * on a wager that exists, which the contract refuses with AlreadyExists.
+   *
+   * On 3 October 2026 a host pressed it and watched the transaction fail, which
+   * from where they were sitting looks exactly like losing ten CRO.
+   */
+  it("counts the deposit as landed for every state but none", () => {
+    expect(route).toContain('wager.state !== "none"');
+    // The old rule, which is the bug.
+    expect(route).not.toMatch(/funded:.*state === "open"/);
+  });
+
+  it("says separately that somebody has taken it", () => {
+    expect(route).toContain('taken: mine && wager.state !== "open"');
+    expect(route).toContain("taken: checked[i]?.taken ?? false");
+  });
+
+  it("does not offer a deposit to somebody who has made one", () => {
+    expect(lobby).toContain("!listing.funded && !listing.taken && listing.stake > 0");
+  });
+
+  it("does not offer a taken seat to anybody else", () => {
+    expect(lobby).toMatch(/!listing\.funded \|\| listing\.taken/);
+  });
+
+  it("asks the chain again before it signs anything", () => {
+    // The screen can be minutes old. One request is cheaper than a refused
+    // transaction, and a refused transaction reads like a lost deposit.
+    const button = lobby.slice(lobby.indexOf("openData(listing.id)") - 2000);
+    expect(button).toContain('ask<{ listings: LobbyListing[] }>("lobby")');
+    expect(button).toMatch(/nothing is owed/i);
   });
 });

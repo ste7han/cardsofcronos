@@ -473,22 +473,58 @@ export function Lobby() {
                       the deposit are two steps; this is the gap between them,
                       and without saying so the seat would simply refuse anybody
                       who tried it after choosing a deck. */}
-                  {!listing.funded && (
-                    <span className="mt-1 block text-[10px] leading-relaxed text-gold">
+                  {listing.taken ? (
+                    <span className="mt-1 block text-[10px] leading-relaxed text-pump">
                       {listing.mine
-                        ? "Your stake has not arrived yet. Put it up below, or take the offer down."
-                        : "Waiting on the poster's stake. It cannot be taken until that lands."}
+                        ? "Both stakes are in. The match is on — it is in your games above."
+                        : "Somebody has already taken this one."}
                     </span>
+                  ) : (
+                    !listing.funded && (
+                      <span className="mt-1 block text-[10px] leading-relaxed text-gold">
+                        {listing.mine
+                          ? "Your stake has not arrived yet. Put it up below, or take the offer down."
+                          : "Waiting on the poster's stake. It cannot be taken until that lands."}
+                      </span>
+                    )
                   )}
                 </span>
                 {listing.mine ? (
                   <span className="flex shrink-0 flex-wrap gap-2">
-                  {!listing.funded && listing.stake > 0 && (
+                  {/* Not while it is taken. `funded` goes false the instant the
+                      state leaves `open`, so this button was being offered to
+                      the one person who could not use it — the host, whose money
+                      was already in. open() on an existing wager is refused by
+                      the contract, so pressing it cost gas and read like a lost
+                      deposit. */}
+                  {!listing.funded && !listing.taken && listing.stake > 0 && (
                     <button
                       type="button"
                       onClick={() =>
                         void run(listing.id, async () => {
                           if (wallet === null || !CONTRACTS.escrow) return;
+                          // Asked again, right before signing.
+                          //
+                          // This screen can be minutes old — somebody leaves the
+                          // tab open and comes back — and in that time the seat
+                          // may have been taken, which puts the stake in and
+                          // makes this call something the contract refuses. A
+                          // refusal costs gas and reads like a lost deposit, so
+                          // it is worth one request to not send it.
+                          const fresh = await ask<{ listings: LobbyListing[] }>("lobby");
+                          const now = fresh.listings.find((one) => one.id === listing.id);
+                          setListings(fresh.listings);
+                          if (now === undefined) {
+                            throw new Error(
+                              "That offer is no longer in the lobby. Nothing was sent.",
+                            );
+                          }
+                          if (now.funded) {
+                            throw new Error(
+                              "Your stake is already in the escrow — nothing was sent, and nothing is owed. " +
+                                "If the seat has been taken the match is in your games above.",
+                            );
+                          }
                           await sendCall(
                             wallet,
                             CONTRACTS.escrow,
@@ -516,7 +552,7 @@ export function Lobby() {
                   <button
                     type="button"
                     onClick={() => void sitDown(listing)}
-                    disabled={busy !== null || !hasDeck || !listing.funded}
+                    disabled={busy !== null || !hasDeck || !listing.funded || listing.taken}
                     className="border border-pump px-3 py-1.5 text-[9px] tracking-[0.16em] text-pump transition-colors hover:bg-pump hover:text-ground disabled:cursor-not-allowed disabled:border-line-strong disabled:text-muted"
                   >
                     {busy === listing.id ? "…" : "SIT DOWN"}
