@@ -359,7 +359,7 @@ export const DISCOUNT_CAP = HOLDER_TIERS[0]!.off;
  * Read back off chain on 22 September 2026, after adding 30 mints for a holder.
  */
 export const ALLOWLIST_ROOT =
-  "0x6e2289cb48dbaa0641bb55d43bef4dfa6b71419de235fe1dfddc14cdc38ae516";
+  "0x5d9fefb01d3ebb92bf8056b60d56b185d61f2f993548e6ecfb61bcc67c11a35b";
 
 /**
  * The contracts, once they exist.
