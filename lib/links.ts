@@ -36,7 +36,7 @@
 // Cronos, then fill in all three. Telegram linking additionally needs
 // `/setdomain` pointed at the live site or the widget silently declines to work.
 
-export type Network = "x" | "telegram";
+export type Network = "x" | "telegram" | "discord";
 
 /**
  * The bot behind the Telegram button.
@@ -89,6 +89,12 @@ export const LINKABLE: Record<Network, Linkable> = {
     name: "X",
     why: "How the maker reaches you about a match or a prize. One X account, one wallet — wallets are free and X accounts are not.",
     env: "X_CLIENT_ID",
+    built: true,
+  },
+  discord: {
+    name: "DISCORD",
+    why: "Where the game is talked about. Links an account to a wallet so the bot can tag you in the match room when it is your turn — no DM permission to grant, just a mention you will see on your phone.",
+    env: "DISCORD_CLIENT_ID",
     built: true,
   },
   telegram: {

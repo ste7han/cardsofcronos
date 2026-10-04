@@ -18,7 +18,7 @@
 // account attached to the wallet that asked, and it cannot be aimed.
 
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
-import { noteDelivery, telegramFor } from "@/lib/store";
+import { linkFor, noteDelivery } from "@/lib/store";
 import { sendDM } from "@/lib/telegram-dm";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const wallet = await signedInWallet(request);
   if (wallet === null) return UNAUTHORISED;
 
-  const link = await telegramFor(db(), wallet);
+  const link = await linkFor(db(), wallet, "telegram");
   if (link === null) {
     return Response.json({ error: "No Telegram account is attached to this wallet." }, { status: 400 });
   }

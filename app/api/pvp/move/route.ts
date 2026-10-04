@@ -72,7 +72,11 @@ export async function POST(request: Request) {
         state.toMove,
         state.turn,
         "your-turn",
-        env().TELEGRAM_BOT_TOKEN,
+        {
+          telegramBotToken: env().TELEGRAM_BOT_TOKEN,
+          pvpFriendly: env().DISCORD_PVP_FRIENDLY,
+          pvpRanked: env().DISCORD_PVP_RANKED,
+        },
       );
     }
   }

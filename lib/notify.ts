@@ -30,7 +30,8 @@
 // here throws: every outcome is recorded and swallowed.
 
 import { clockLabel, type MatchRecord } from "@/engine/record";
-import { noteDelivery, telegramFor, type Database } from "@/lib/store";
+import { linkFor, noteDelivery, type Database } from "@/lib/store";
+import { post } from "@/lib/discord";
 import { sendDM } from "@/lib/telegram-dm";
 import type { Player } from "@/engine/types";
 
@@ -83,6 +84,91 @@ async function alreadySent(db: Database, key: string): Promise<boolean> {
   return false;
 }
 
+/** Everywhere a player might be reachable. Absent means not configured. */
+export interface Channels {
+  telegramBotToken?: string;
+  /** The friendly room, for a match with nothing on it. */
+  pvpFriendly?: string;
+  /** The ranked room, for a staked one. */
+  pvpRanked?: string;
+}
+
+/**
+ * A private message, when they have a Telegram account attached.
+ *
+ * Telegram will not let a bot open a conversation, so a linked account that has
+ * never pressed Start is refused — recorded rather than thrown, so the profile
+ * can offer the button that fixes it. See lib/telegram-dm.ts.
+ */
+async function overTelegram(
+  db: Database,
+  wallet: string,
+  text: string,
+  token: string | undefined,
+): Promise<void> {
+  // Before anything is read or written: a Worker without the token is a fact
+  // about the server, and writing it onto a player's row would tell them on
+  // their own profile that they had done something wrong.
+  if (!token) return;
+  const link = await linkFor(db, wallet, "telegram");
+  if (link === null) return;
+  // Blocked is a decision they made. Asking again every turn is the thing
+  // being blocked was meant to stop.
+  if (link.dmProblem === "blocked") return;
+
+  const delivery = await sendDM(token, link.accountId, text);
+  const problem = delivery.sent ? null : delivery.because;
+  if (problem !== link.dmProblem) await noteDelivery(db, wallet, "telegram", problem);
+}
+
+/**
+ * A tag in the room the match belongs to, when they have Discord attached.
+ *
+ * ── WHY A MENTION AND NOT A DM ───────────────────────────────────────────────
+ *
+ * A bot may only DM somebody who shares a server with it and has not switched
+ * off messages from server members — which many people have, invisibly, so the
+ * send is refused for reasons neither side can see. A mention needs no
+ * permission and no Start: it reaches anybody who can read the channel, and it
+ * is a real notification on a phone.
+ *
+ * What it costs is that it is in public. That is a decision taken knowingly
+ * while there are a handful of players and one ranked match; it is the first
+ * thing to revisit when there are more, and lib/discord.ts already narrows
+ * allowed_mentions to the one id so this can never reach a role or @everyone.
+ *
+ * The room is chosen the same way lib/challenge.ts chooses it for an offer —
+ * staked in the ranked room, friendly in the friendly one. Not the general
+ * channel: that already carries every offer, and a tag per turn on top of it is
+ * the version of this nobody would keep switched on.
+ */
+async function overDiscord(
+  db: Database,
+  wallet: string,
+  record: MatchRecord,
+  title: string,
+  text: string,
+  rooms: Channels,
+): Promise<void> {
+  const room = record.stake > 0 ? rooms.pvpRanked : rooms.pvpFriendly;
+  if (!room) return;
+  const link = await linkFor(db, wallet, "discord");
+  if (link === null) return;
+
+  await post(
+    room,
+    [
+      {
+        title,
+        description: text,
+        url: `${SITE}/pvp/${record.id}`,
+        color: 0x9d4edd,
+      },
+    ],
+    link.accountId,
+  );
+}
+
 /**
  * Tell the player who is now to move, if there is anywhere to tell them.
  *
@@ -97,29 +183,26 @@ export async function tellItIsTheirTurn(
   toMove: Player,
   turn: number,
   occasion: Occasion,
-  botToken: string | undefined,
+  channels: Channels,
 ): Promise<void> {
   try {
     if (!worthTelling(record, occasion)) return;
-    // Before anything is read or written. A Worker without the token is a fact
-    // about the server, and writing it onto a player's row would tell them on
-    // their own profile that they had done something wrong.
-    if (!botToken) return;
 
     const wallet = record.seats[toMove];
-    const link = await telegramFor(db, wallet);
-    if (link === null) return;
-    // Blocked is a decision they made. Asking again every turn is the thing
-    // being blocked was meant to stop.
-    if (link.dmProblem === "blocked") return;
-
+    // One key for the occasion and not one per channel: this guards "they have
+    // been told about this turn", and a second pass that reached only the
+    // channel the first one failed on is a duplicate in the other.
     if (await alreadySent(db, `dm:${record.id}:${record.moves.length}`)) return;
 
-    const delivery = await sendDM(botToken, link.accountId, words(record, occasion, turn));
-    // Only ever touched when the answer changed, so an ordinary turn on a
-    // working account writes nothing.
-    const problem = delivery.sent ? null : delivery.because;
-    if (problem !== link.dmProblem) await noteDelivery(db, wallet, "telegram", problem);
+    const title =
+      occasion === "match-started" ? "Your match has started" : `Turn ${turn} is yours`;
+
+    // Settled rather than awaited in turn: one channel being down must not stop
+    // the other from reaching them.
+    await Promise.allSettled([
+      overTelegram(db, wallet, words(record, occasion, turn), channels.telegramBotToken),
+      overDiscord(db, wallet, record, title, words(record, occasion, turn), channels),
+    ]);
   } catch {
     // A notification is not worth a move. See the header.
   }

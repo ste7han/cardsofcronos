@@ -503,6 +503,7 @@ function outcomeOf(search: URLSearchParams): { tone: "good" | "bad"; text: strin
   switch (link) {
     case "x":
     case "telegram":
+    case "discord":
       return { tone: "good", text: `Linked to @${handle ?? "your account"}.` };
     case "taken":
       return {
@@ -510,17 +511,22 @@ function outcomeOf(search: URLSearchParams): { tone: "good" | "bad"; text: strin
         text: `@${handle ?? "That account"} is already attached to a different wallet. One account, one wallet — that rule is what makes the points worth anything.`,
       };
     case "cancelled":
-      return { tone: "bad", text: "You turned it down on X. Nothing happened." };
+      // Not "on X" any more. Three networks come back through here, and naming
+      // the wrong one is the sort of thing that reads as a bug in the site.
+      return { tone: "bad", text: "You turned it down. Nothing happened." };
     case "expired":
       return { tone: "bad", text: "That took too long and the request expired. Start it again." };
     case "mismatch":
       return { tone: "bad", text: "That callback did not belong to this request. Start it again." };
     case "signedout":
-      return { tone: "bad", text: "Your session ran out while you were on X. Sign in and try again." };
+      return {
+        tone: "bad",
+        text: "Your session ran out while you were away. Sign in and try again.",
+      };
     case "unconfigured":
       return { tone: "bad", text: "Linking is not configured on this server yet." };
     default:
-      return { tone: "bad", text: "X could not be reached. Nothing was linked." };
+      return { tone: "bad", text: "That account could not be reached. Nothing was linked." };
   }
 }
 
@@ -687,9 +693,10 @@ function LinkedAccounts() {
       {problem && <p className="mt-3 text-[10px] leading-relaxed text-dump">{problem}</p>}
 
       <p className="mt-4 max-w-2xl text-[10px] leading-relaxed text-faint">
-        Neither asks for more than who you are. X grants no posting and no email address; Telegram
-        is asked whether the bot may message you, which is what makes &ldquo;it is your turn&rdquo;
-        possible later. Take either off again here and the account is free for another wallet.
+        None of them asks for more than who you are. X grants no posting and no email address;
+        Discord is asked only to identify you, which is all a mention needs; Telegram is asked
+        whether the bot may message you. The last two are what make &ldquo;it is your
+        turn&rdquo; reach you at all. Take either off again here and the account is free for another wallet.
       </p>
     </section>
   );

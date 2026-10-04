@@ -357,16 +357,20 @@ const toLink = (row: LinkRow): Link => ({
 });
 
 /**
- * The Telegram account attached to a wallet, or null.
+ * One network's account for one wallet, or null.
  *
- * Narrower than linksOf on purpose: this is the one the notifier asks, it is
- * asked on the path of a move, and reading one row by primary key is what that
- * path can afford.
+ * Narrower than linksOf on purpose: this is what the notifier asks, it is asked
+ * on the path of a move, and reading one row by primary key is what that path
+ * can afford.
  */
-export async function telegramFor(db: Database, wallet: string): Promise<Link | null> {
+export async function linkFor(
+  db: Database,
+  wallet: string,
+  network: Network,
+): Promise<Link | null> {
   const row = await db
-    .prepare(`SELECT * FROM links WHERE wallet = ? AND network = 'telegram'`)
-    .bind(wallet)
+    .prepare(`SELECT * FROM links WHERE wallet = ? AND network = ?`)
+    .bind(wallet, network)
     .first<LinkRow>();
   return row ? toLink(row) : null;
 }

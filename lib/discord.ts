@@ -48,12 +48,29 @@ export interface Embed {
  * starts, and a webhook being rate-limited for longer than that is a thing to
  * report rather than to wait out.
  */
-export async function post(webhook: string, embeds: Embed[]): Promise<Posted> {
+export async function post(
+  webhook: string,
+  embeds: Embed[],
+  /**
+   * One account to tag, by Discord id.
+   *
+   * It goes in `content` and not in the embed, and that is the whole mechanism:
+   * a mention inside an embed renders as a name and notifies nobody. Only
+   * content pings.
+   *
+   * `allowed_mentions` is narrowed to this one id with `parse: []`, so no text
+   * in any embed can ever reach @everyone or a role — a webhook that could do
+   * that is one mistake away from pinging a whole server.
+   */
+  mention?: string,
+): Promise<Posted> {
   if (!webhook) return { ok: false, status: null, wrong: "no webhook configured" };
-  if (embeds.length === 0) return { ok: true, status: null, wrong: null };
+  if (embeds.length === 0 && mention === undefined) {
+    return { ok: true, status: null, wrong: null };
+  }
   // Discord takes at most ten embeds in one message.
   if (embeds.length > 10) {
-    const first = await post(webhook, embeds.slice(0, 10));
+    const first = await post(webhook, embeds.slice(0, 10), mention);
     if (!first.ok) return first;
     return post(webhook, embeds.slice(10));
   }
@@ -64,7 +81,15 @@ export async function post(webhook: string, embeds: Embed[]): Promise<Posted> {
       answer = await fetch(webhook, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ embeds }),
+        body: JSON.stringify(
+          mention === undefined
+            ? { embeds }
+            : {
+                embeds,
+                content: `<@${mention}>`,
+                allowed_mentions: { parse: [], users: [mention] },
+              },
+        ),
       });
     } catch (error) {
       return {

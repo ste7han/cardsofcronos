@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS players (
 -- without it, points are farmed by making wallets, and every wallet is free.
 CREATE TABLE IF NOT EXISTS links (
   wallet        TEXT NOT NULL CHECK (wallet = lower(wallet) AND length(wallet) = 42 AND substr(wallet, 1, 2) = '0x'),
-  network       TEXT NOT NULL CHECK (network IN ('x', 'telegram')),
+  network       TEXT NOT NULL CHECK (network IN ('x', 'telegram', 'discord')),
   -- The network's own id, which never changes. Handles do.
   account_id    TEXT NOT NULL,
   -- What to show. Kept as a convenience and never as an identity.

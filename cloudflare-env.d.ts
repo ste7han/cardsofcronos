@@ -15,6 +15,8 @@ interface CloudflareEnv {
   X_CLIENT_SECRET?: string;
   /** A Worker secret. It is also the HMAC key the login payload is signed with. */
   TELEGRAM_BOT_TOKEN?: string;
+  DISCORD_CLIENT_ID?: string;
+  DISCORD_CLIENT_SECRET?: string;
   /**
    * A Cronos RPC endpoint. Absent falls back to the public ones in
    * lib/cronos.ts, which are rate-limited but free and tried in order. A paid

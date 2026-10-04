@@ -23,6 +23,8 @@ const ALICE = "0x" + "a".repeat(40);
 const BOB = "0x" + "b".repeat(40);
 const T0 = 1_700_000_000_000;
 const TOKEN = "123:fake";
+/** Telegram only, which is what most of these are about. */
+const TG = { telegramBotToken: TOKEN };
 
 const match = (mode: "live" | "correspondence", over: Partial<MatchRecord> = {}): MatchRecord => ({
   ...newRecord({
@@ -37,15 +39,23 @@ const match = (mode: "live" | "correspondence", over: Partial<MatchRecord> = {})
   ...over,
 });
 
-/** Just enough database: one links row, and the once-only guard. */
-function fakeDb(link: { accountId: string; dmProblem: string | null } | null) {
+type Attach = { accountId: string; dmProblem: string | null } | null;
+
+/** Just enough database: a links row per network, and the once-only guard. */
+function fakeDb(telegram: Attach, discord: Attach = null) {
   const said = new Set<string>();
-  const row = link === null
-    ? null
-    : {
-        wallet: BOB, network: "telegram", account_id: link.accountId,
-        handle: "bob", linked_at: T0, dm_problem: link.dmProblem,
-      };
+  const asRow = (network: string, link: Attach) =>
+    link === null
+      ? null
+      : {
+          wallet: BOB, network, account_id: link.accountId,
+          handle: "bob", linked_at: T0, dm_problem: link.dmProblem,
+        };
+  const row = asRow("telegram", telegram);
+  const rows: Record<string, ReturnType<typeof asRow>> = {
+    telegram: row,
+    discord: asRow("discord", discord),
+  };
   const writes: (string | null)[] = [];
 
   const statement = (sql: string, values: unknown[]): Statement => ({
@@ -54,7 +64,8 @@ function fakeDb(link: { accountId: string; dmProblem: string | null } | null) {
       if (sql.includes("FROM feed_posted")) {
         return (said.has(values[0] as string) ? { id: values[0] } : null) as T | null;
       }
-      if (sql.includes("FROM links")) return row as T | null;
+      // linkFor binds (wallet, network), so the second value says which.
+      if (sql.includes("FROM links")) return rows[values[1] as string] as T | null;
       throw new Error(`unexpected read: ${sql}`);
     },
     all: async <T>() => ({ results: [] as T[] }),
@@ -88,10 +99,16 @@ function catchSends(answer: { ok: boolean; description?: string } = { ok: true }
   const sent: { url: string; body: Record<string, unknown> }[] = [];
   vi.stubGlobal("fetch", async (url: string, init: { body: string }) => {
     sent.push({ url, body: JSON.parse(init.body) as Record<string, unknown> });
-    return { json: async () => answer } as unknown as Response;
+    // `ok` for lib/discord, which reads the status; `json` for Telegram.
+    return { ok: answer.ok, status: 204, json: async () => answer } as unknown as Response;
   });
   return sent;
 }
+
+const RANKED = "https://discord.example/ranked";
+const FRIENDLY = "https://discord.example/friendly";
+/** Discord only, so a test about the tag is not also a test about Telegram. */
+const DC = { pvpRanked: RANKED, pvpFriendly: FRIENDLY };
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -120,7 +137,7 @@ describe("delivering it", () => {
   it("sends to the chat id the link stores, and nowhere else", async () => {
     const sent = catchSends();
     const { db } = fakeDb({ accountId: "99887766", dmProblem: null });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
 
     expect(sent).toHaveLength(1);
     expect(sent[0]!.url).toContain("/sendMessage");
@@ -130,14 +147,14 @@ describe("delivering it", () => {
   it("names the match, so the message is a way in and not an announcement", async () => {
     const sent = catchSends();
     const { db } = fakeDb({ accountId: "1", dmProblem: null });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(String(sent[0]!.body.text)).toContain("/pvp/m1");
   });
 
   it("sends nothing when nothing is linked", async () => {
     const sent = catchSends();
     const { db } = fakeDb(null);
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(sent).toEqual([]);
   });
 
@@ -146,7 +163,7 @@ describe("delivering it", () => {
     // row would tell them on their own profile that they had done something.
     const sent = catchSends();
     const { db, writes } = fakeDb({ accountId: "1", dmProblem: null });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", undefined);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", {});
     expect(sent).toEqual([]);
     expect(writes).toEqual([]);
   });
@@ -157,15 +174,15 @@ describe("delivering it", () => {
     const sent = catchSends();
     const { db } = fakeDb({ accountId: "1", dmProblem: null });
     const record = match("correspondence");
-    await tellItIsTheirTurn(db, record, "opponent", 3, "your-turn", TOKEN);
-    await tellItIsTheirTurn(db, record, "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, record, "opponent", 3, "your-turn", TG);
+    await tellItIsTheirTurn(db, record, "opponent", 3, "your-turn", TG);
     expect(sent).toHaveLength(1);
   });
 
   it("does not keep a working account's row being rewritten", async () => {
     const sent = catchSends();
     const { db, writes } = fakeDb({ accountId: "1", dmProblem: null });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(sent).toHaveLength(1);
     expect(writes).toEqual([]);
   });
@@ -175,7 +192,7 @@ describe("reading Telegram's refusals", () => {
   it("records a player who has never pressed Start, so the profile can say so", async () => {
     const { db, writes } = fakeDb({ accountId: "1", dmProblem: null });
     catchSends({ ok: false, description: "Forbidden: bot can't initiate conversation with a user" });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(writes).toEqual(["not-started"]);
   });
 
@@ -183,7 +200,7 @@ describe("reading Telegram's refusals", () => {
     // Two wordings for one fact: nobody has opened this chat.
     const { db, writes } = fakeDb({ accountId: "1", dmProblem: null });
     catchSends({ ok: false, description: "Bad Request: chat not found" });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(writes).toEqual(["not-started"]);
   });
 
@@ -191,7 +208,7 @@ describe("reading Telegram's refusals", () => {
     // Being pestered every turn is the thing blocking was meant to stop.
     const sent = catchSends();
     const { db } = fakeDb({ accountId: "1", dmProblem: "blocked" });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(sent).toEqual([]);
   });
 
@@ -200,7 +217,7 @@ describe("reading Telegram's refusals", () => {
     // ever find out it worked.
     const { db, writes } = fakeDb({ accountId: "1", dmProblem: "not-started" });
     catchSends({ ok: true });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(writes).toEqual([null]);
   });
 
@@ -208,7 +225,7 @@ describe("reading Telegram's refusals", () => {
     // Telegram being down is not "press Start". It is recorded as itself.
     const { db, writes } = fakeDb({ accountId: "1", dmProblem: null });
     catchSends({ ok: false, description: "Internal Server Error" });
-    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN);
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG);
     expect(writes).toEqual(["unreachable"]);
   });
 
@@ -220,7 +237,7 @@ describe("reading Telegram's refusals", () => {
       throw new Error("the network is gone");
     });
     await expect(
-      tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN),
+      tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TG),
     ).resolves.toBeUndefined();
   });
 });
@@ -241,7 +258,7 @@ describe("checking the bot can reach you", () => {
   it("can only ever send to the wallet that asked", () => {
     // Not aimable: no id, handle or wallet comes off the request body. A button
     // that could be pointed at somebody else is a way to message strangers.
-    expect(route).toContain("telegramFor(db(), wallet)");
+    expect(route).toContain('linkFor(db(), wallet, "telegram")');
     expect(route).toContain("signedInWallet(request)");
     expect(route).not.toMatch(/body\s*\.\s*(wallet|accountId|chatId)/);
   });
@@ -331,5 +348,111 @@ describe("the button that links an account", () => {
     // told not to, so this button spoke Dutch on a page that is English
     // everywhere else — and German to a German visitor.
     expect(widget).toContain('setAttribute("data-lang", "en")');
+  });
+});
+
+// ── THE TAG IN DISCORD ───────────────────────────────────────────────────────
+//
+// Chosen over a bot DM knowingly: a bot may only message somebody who shares a
+// server with it and has not switched off messages from server members, which
+// many people have and nobody can see. A mention needs no permission and no
+// Start. What it costs is that it is in public, which was accepted while there
+// are a handful of players and one ranked match — and is the first thing to
+// revisit when there are more.
+describe("tagging somebody in Discord", () => {
+  const turn = (db: ReturnType<typeof fakeDb>["db"], over = {}) =>
+    tellItIsTheirTurn(db, match("correspondence", over), "opponent", 3, "your-turn", DC);
+
+  it("puts the mention in content, because an embed notifies nobody", () => {
+    // This is the whole mechanism. A mention inside an embed renders as a name
+    // and pings no one, which would be a feature that looks finished and does
+    // nothing — the exact failure CLAUDE.md is about.
+    const sent = catchSends();
+    const { db } = fakeDb(null, { accountId: "4242", dmProblem: null });
+    return turn(db).then(() => {
+      expect(sent).toHaveLength(1);
+      expect(sent[0]!.body.content).toBe("<@4242>");
+    });
+  });
+
+  it("can only ever ping that one account", async () => {
+    // parse: [] means no text in any embed can reach @everyone or a role. A
+    // webhook that could is one mistake away from pinging a whole server.
+    const sent = catchSends();
+    const { db } = fakeDb(null, { accountId: "4242", dmProblem: null });
+    await turn(db);
+    expect(sent[0]!.body.allowed_mentions).toEqual({ parse: [], users: ["4242"] });
+  });
+
+  it("uses the room the match belongs to", async () => {
+    // The same rule lib/challenge.ts uses for an offer, rather than a second
+    // one that can disagree with it.
+    const sent = catchSends();
+    const { db } = fakeDb(null, { accountId: "1", dmProblem: null });
+    await turn(db, { stake: 50 });
+    expect(sent[0]!.url).toBe(RANKED);
+
+    const quiet = catchSends();
+    const { db: db2 } = fakeDb(null, { accountId: "1", dmProblem: null });
+    await turn(db2);
+    expect(quiet[0]!.url).toBe(FRIENDLY);
+  });
+
+  it("stays out of the general channel", async () => {
+    // General already carries every offer. A tag per turn on top of that is the
+    // version of this nobody would leave switched on.
+    const sent = catchSends();
+    const { db } = fakeDb(null, { accountId: "1", dmProblem: null });
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", {
+      ...DC,
+      // Deliberately offered and deliberately unused.
+      ...({ pvpGeneral: "https://discord.example/general" } as object),
+    });
+    expect(sent.map((one) => one.url)).toEqual([FRIENDLY]);
+  });
+
+  it("says nothing when no Discord account is attached", async () => {
+    const sent = catchSends();
+    const { db } = fakeDb(null, null);
+    await turn(db);
+    expect(sent).toEqual([]);
+  });
+
+  it("obeys the same policy as everything else", async () => {
+    // One worthTelling for every channel. A live match is not worth twenty tags
+    // any more than it is worth twenty private messages.
+    const sent = catchSends();
+    const { db } = fakeDb(null, { accountId: "1", dmProblem: null });
+    await tellItIsTheirTurn(db, match("live"), "opponent", 3, "your-turn", DC);
+    expect(sent).toEqual([]);
+  });
+
+  it("reaches both channels when both are attached", async () => {
+    const sent = catchSends();
+    const { db } = fakeDb({ accountId: "tg", dmProblem: null }, { accountId: "dc", dmProblem: null });
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", {
+      ...DC,
+      telegramBotToken: TOKEN,
+    });
+    expect(sent).toHaveLength(2);
+    expect(sent.some((one) => one.url.includes("telegram"))).toBe(true);
+    expect(sent.some((one) => one.url === FRIENDLY)).toBe(true);
+  });
+
+  it("still sends one of them when the other is down", async () => {
+    // Promise.allSettled and not a chain: one channel refusing must not keep
+    // the other from reaching them.
+    const sent: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      sent.push(url);
+      if (url === FRIENDLY) throw new Error("that webhook is gone");
+      return { ok: true, status: 204, json: async () => ({ ok: true }) } as unknown as Response;
+    });
+    const { db } = fakeDb({ accountId: "tg", dmProblem: null }, { accountId: "dc", dmProblem: null });
+    await tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", {
+      ...DC,
+      telegramBotToken: TOKEN,
+    });
+    expect(sent.some((url) => url.includes("telegram"))).toBe(true);
   });
 });
