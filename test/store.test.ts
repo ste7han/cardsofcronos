@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { CONCURRENT, LISTING_LIFE, addResult, claimListing, getMatch, hasRoomFor, linkAccount, linksOf, matchesOf, openListings, playerOf, putListing, putMatch, saveMoves, seePlayer, seedFor, unlinkAccount } from "@/lib/store";
+import { CONCURRENT, LISTING_LIFE, addResult, claimListing, getMatch, hasRoomFor, linkAccount, linksOf, matchesOf, matchesOnTheClock, openListings, playerOf, putListing, putMatch, saveMoves, seePlayer, seedFor, unlinkAccount } from "@/lib/store";
 import type { Database, Link, Listing, Statement } from "@/lib/store";
 import type { MatchRecord } from "@/engine/record";
 
@@ -179,6 +179,15 @@ function fakeDb(): Database & {
           if (sql.includes("FROM links")) {
             const wallet = bound[0] as string;
             return { results: [...links.values()].filter((l) => l.wallet === wallet) as T[] };
+          }
+          if (sql.includes("deadline <= ?")) {
+            const [now, limit] = bound as [number, number];
+            return {
+              results: [...matches.values()]
+                .filter((m) => m.finished_at === null && (m.deadline as number) <= now)
+                .sort((a, b) => (a.deadline as number) - (b.deadline as number))
+                .slice(0, limit) as T[],
+            };
           }
           if (sql.includes("FROM matches")) {
             const playerId = bound[0] as string;
@@ -554,5 +563,47 @@ describe("the seed", () => {
     expect(seedFor("abc")).toBe(seedFor("abc"));
     expect(seedFor("abc")).not.toBe(seedFor("abd"));
     expect(Number.isInteger(seedFor("abc"))).toBe(true);
+  });
+});
+
+// ── MATCHES WHOSE CLOCK HAS RUN OUT ──────────────────────────────────────────
+//
+// The one query behind enforcing the clock on a schedule. Before it, catchUp
+// only ran inside the routes a player reads a match through, so a slow turn did
+// not expire after a day — it expired the next time somebody opened that match,
+// and nothing told the player it had come back to them.
+describe("matches on the clock", () => {
+  const overdue = async () => {
+    const db = fakeDb();
+    await putMatch(db, record({ id: "late", deadline: T0 - 60_000 }));
+    await putMatch(db, record({ id: "later", deadline: T0 - 600_000 }));
+    await putMatch(db, record({ id: "fine", deadline: T0 + 60_000 }));
+    return db;
+  };
+
+  it("finds the ones past their deadline and leaves the rest alone", async () => {
+    const found = await matchesOnTheClock(await overdue(), T0);
+    expect(found.map((m) => m.id).sort()).toEqual(["late", "later"]);
+  });
+
+  it("takes the longest overdue first", async () => {
+    // Oldest first, or the most overdue match is the one always left to the
+    // next run — which on a busy day is never.
+    const found = await matchesOnTheClock(await overdue(), T0);
+    expect(found.map((m) => m.id)).toEqual(["later", "late"]);
+  });
+
+  it("is capped, because a tick that tries everything finishes nothing", async () => {
+    const found = await matchesOnTheClock(await overdue(), T0, 1);
+    expect(found.map((m) => m.id)).toEqual(["later"]);
+  });
+
+  it("ignores a match that has already finished", async () => {
+    // A finished match keeps its deadline, so without this every one of them
+    // would come back on this list for ever.
+    const db = fakeDb();
+    await putMatch(db, record({ id: "done", deadline: T0 - 60_000 }));
+    await saveMoves(db, "done", [{ kind: "endTurn" }], T0 - 60_000, T0, T0);
+    expect(await matchesOnTheClock(db, T0)).toEqual([]);
   });
 });

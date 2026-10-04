@@ -281,3 +281,41 @@ describe("the profile says what the silence means", () => {
     expect(profile).toContain("onChanged={load}");
   });
 });
+
+// ── THE CASE THE NOTIFICATIONS WERE BUILT FOR AND MISSED ─────────────────────
+//
+// A turn comes back to you one of two ways: the opponent moves, or the opponent
+// lets the day lapse. /api/pvp/move covered the first. For a slow match the
+// second is the more likely — somebody forgets — and it reached nobody, because
+// catchUp only ran when a player opened the match.
+describe("the clock that runs without anybody looking", () => {
+  const route = readFileSync(
+    new URL("../app/api/cron/clocks/route.ts", import.meta.url),
+    "utf8",
+  );
+
+  it("uses the same clock a player's request uses", () => {
+    // A second implementation of the clock is two sets of rules that drift, and
+    // the one nobody watches is the one that drifts.
+    expect(route).toContain("catchUp(record, now, CARDS, INDEX)");
+    expect(route).toContain("saveMoves(");
+  });
+
+  it("settles a match the clock finished, rather than leaving it open", () => {
+    // Ten turns can lapse in a row. The last one ends the match, and a staked
+    // match that nobody settles is a pot nobody can collect.
+    expect(route).toContain("settle(");
+  });
+
+  it("tells whoever it is now the turn of", () => {
+    expect(route).toContain("tellItIsTheirTurn(");
+    expect(route).toContain("state.toMove");
+  });
+
+  it("does not advance a match it did not have to touch", () => {
+    // Otherwise every tick rewrites every overdue row and the once-only guard
+    // in lib/notify is the only thing standing between that and a message a
+    // minute.
+    expect(route).toContain("caught.moves.length === record.moves.length");
+  });
+});

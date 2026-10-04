@@ -71,6 +71,15 @@ describe("the crons", () => {
   });
 });
 
+/** Everything the alarm actually runs, read off the JOBS table. */
+function jobs(): { name: string; route: string; soft: boolean }[] {
+  const block = worker.slice(worker.indexOf("const JOBS = ["));
+  const body = block.slice(0, block.indexOf("\n];"));
+  return [...body.matchAll(/\{\s*name:\s*"([^"]+)",\s*route:\s*"([^"]+)"([^}]*)\}/g)].map(
+    (m) => ({ name: m[1]!, route: m[2]!, soft: m[3]!.includes("soft: true") }),
+  );
+}
+
 describe("the alarm, which is what actually runs them", () => {
   /**
    * The crons are a list Cloudflare stopped reading.
@@ -83,36 +92,67 @@ describe("the alarm, which is what actually runs them", () => {
    * was closed for a month, nobody was paid, and both boards went on showing a
    * winner all week with nothing to say it would never be settled.
    *
-   * So the list above is not the thing that runs. This is.
+   * So the ROUTES list above is not the thing that runs. JOBS is.
    */
   it("asks for every route the crons declare", () => {
-    const alarm = worker.slice(worker.indexOf("async alarm()"));
-    const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
+    const asked = jobs().map((job) => job.route);
     for (const [cron, route] of routed()) {
-      expect(body, `${cron} -> ${route} is declared but the alarm never asks for it`)
+      expect(asked, `${cron} -> ${route} is declared but the alarm never asks for it`)
         .toContain(route);
     }
   });
 
-  it("sends the secret with each of them", () => {
-    // A call without it is refused, and the refusal looks like a job that ran.
-    const alarm = worker.slice(worker.indexOf("async alarm()"));
-    const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
-    const calls = [...body.matchAll(/fetch\("https:\/\/[^"]+\/api\/cron\/[^"]+"/g)];
-    expect(calls.length).toBe(routed().size);
-    expect([...body.matchAll(/"x-cron-secret"/g)]).toHaveLength(calls.length);
+  it("may run more than the crons declare, and those are jobs too", () => {
+    // Cloudflare allows three schedules on this plan and the clock needs a
+    // fourth job, so JOBS is deliberately the longer list. Everything on it is
+    // still a public URL behind the secret and still has to exist.
+    expect(jobs().length).toBeGreaterThanOrEqual(routed().size);
+    for (const job of jobs()) {
+      const file = new URL(`../app${job.route}/route.ts`, import.meta.url);
+      expect(() => readFileSync(file, "utf8"), `${job.name} -> ${job.route}`).not.toThrow();
+    }
   });
 
-  it("lets the job it asks more than once an hour decline for itself", () => {
-    // The alarm fires every minute and cannot know whether a job is due. Each
-    // one that is not per-minute work carries `soft`, and the route decides.
+  it("gates every job on the secret, declared as a cron or not", () => {
+    // The reason /api/cron/clocks is checked here and not only above: it has no
+    // cron of its own, so the loop over ROUTES would never have looked at it.
+    for (const job of jobs()) {
+      const source = readFileSync(new URL(`../app${job.route}/route.ts`, import.meta.url), "utf8");
+      expect(source, `${job.route} does not check CRON_SECRET`).toContain(
+        'request.headers.get("x-cron-secret") !== expected',
+      );
+      expect(source, `${job.route} treats an empty secret as set`).toMatch(/if \(!expected\)/);
+    }
+  });
+
+  it("sends the secret with whatever it asks for", () => {
+    // One call site now rather than one per job, which is the point of the
+    // table — but it still has to carry the header, and a call without it is
+    // refused in a way that looks exactly like a job that ran.
     const alarm = worker.slice(worker.indexOf("async alarm()"));
     const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
-    const perMinute = [...routed()].filter(([cron]) => cron === "* * * * *").map(([, route]) => route);
-    for (const [, route] of routed()) {
-      if (perMinute.includes(route)) continue;
-      const call = body.slice(body.indexOf(route));
-      expect(call.slice(0, 600), `${route} should say soft`).toContain("soft: true");
+    expect(body).toContain('"x-cron-secret"');
+    expect(body).toContain("for (const job of JOBS)");
+  });
+
+  it("lets the jobs that are not per-minute work decline for themselves", () => {
+    // The alarm fires every minute and cannot know whether a weekly job is due.
+    // Anything that is not per-minute carries `soft` and the route decides.
+    const perMinute = [...routed()]
+      .filter(([cron]) => cron === "* * * * *")
+      .map(([, route]) => route);
+    for (const job of jobs()) {
+      if (perMinute.includes(job.route)) continue;
+      // The clock runs every minute by design and has no cron of its own.
+      if (job.route === "/api/cron/clocks") continue;
+      expect(job.soft, `${job.name} should say soft`).toBe(true);
     }
+  });
+
+  it("re-arms before it works, so one failure does not stop the clock", () => {
+    // An alarm that throws before booking the next one is never woken again.
+    const alarm = worker.slice(worker.indexOf("async alarm()"));
+    const body = alarm.slice(0, alarm.indexOf("\n  }\n}"));
+    expect(body.indexOf("setAlarm")).toBeLessThan(body.indexOf("for (const job of JOBS)"));
   });
 });

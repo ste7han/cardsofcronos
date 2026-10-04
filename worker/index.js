@@ -27,6 +27,37 @@ import handler from "../.open-next/worker.js";
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "../.open-next/worker.js";
 
 /**
+ * Everything the alarm runs, and the whole of what "runs" means here.
+ *
+ * ── WHY A TABLE AND NOT THREE BLOCKS ─────────────────────────────────────────
+ *
+ * It was three copies of the same twelve lines, and that is how the weekly job
+ * came to be missing for a month: adding a job meant noticing that a third
+ * block existed, and a weekly job that never fires looks like nothing for six
+ * days and like a quiet Monday on the seventh. Nobody was paid, and both boards
+ * went on showing a winner all week.
+ *
+ * As a list, adding a job is one line and forgetting one is visible.
+ *
+ * `soft` marks work that is not due every minute: the route is asked anyway and
+ * declines for itself, because the alarm has no idea what day it is. `quiet`
+ * holds the words in an answer that mean "nothing to do", so the log keeps the
+ * runs that matter instead of a line a minute.
+ */
+const JOBS = [
+  // Every minute. The Discord feeds — the only one of these that is not about
+  // money or a clock; it reads the chain and posts.
+  { name: "feed", route: "/api/cron/feed", quiet: [] },
+  // Every minute. Ends turns whose window has passed and tells whoever it is
+  // now. Before this, a slow match's clock only ran when somebody opened it.
+  { name: "clocks", route: "/api/cron/clocks", quiet: ['"advanced":0'] },
+  // Daily: release what the splitter holds, record the burns.
+  { name: "daily", route: "/api/cron/daily", soft: true, quiet: ['"tooSoon":true'] },
+  // Weekly: close the week that ended and pay whoever won each board.
+  { name: "weekly", route: "/api/cron/weekly", soft: true, quiet: ['"tooSoon":true'] },
+];
+
+/**
  * A clock that is not a Cron Trigger.
  *
  * Cloudflare stopped invoking the scheduled handler on this Worker — see
@@ -70,75 +101,30 @@ export class FeedTicker {
     // First, always. See above.
     await this.ctx.storage.setAlarm(Date.now() + 60_000);
 
-    try {
-      const answer = await fetch("https://cardsofcronos.com/api/cron/feed", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-cron-secret": this.env.CRON_SECRET ?? "",
-        },
-        // Not soft: this is the clock, and a clock that asks permission is not
-        // one. Traffic-driven calls are the ones that defer to it.
-        body: JSON.stringify({ by: "alarm" }),
-      });
-      console.log(`[alarm] feed -> ${answer.status} ${await answer.text()}`);
-    } catch (error) {
-      console.error("[alarm] the feed could not be reached", error);
-    }
-
-    // And the daily job, which says `soft` — it declines unless it has not run
-    // in twenty hours. It lives here for the same reason the feed does: the
-    // cron that used to run it stopped, and the money from the first mint sat
-    // in the collection because of it.
-    try {
-      const answer = await fetch("https://cardsofcronos.com/api/cron/daily", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-cron-secret": this.env.CRON_SECRET ?? "",
-        },
-        body: JSON.stringify({ soft: true }),
-      });
-      const said = await answer.text();
-      // Quiet on the ordinary answer. It is declined fifty-nine minutes an
-      // hour, every hour, and logging that would bury the one run that matters.
-      if (!said.includes('"tooSoon":true')) {
-        console.log(`[alarm] daily -> ${answer.status} ${said}`);
+    for (const job of JOBS) {
+      try {
+        const answer = await fetch(`https://cardsofcronos.com${job.route}`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-cron-secret": this.env.CRON_SECRET ?? "",
+          },
+          // `soft` means "decline unless you are actually due". The alarm fires
+          // every minute and cannot know; the route decides. Per-minute work
+          // says nothing and gets an unconditional run — this is the clock, and
+          // a clock that asks permission is not one.
+          body: JSON.stringify(job.soft ? { soft: true } : { by: "alarm" }),
+        });
+        const said = await answer.text();
+        // Quiet on the ordinary answer for jobs that decline most of the time.
+        // Logging "too soon" fifty-nine minutes an hour buries the one run that
+        // matters, and `nothing` is the same idea for the per-minute jobs.
+        if (!job.quiet?.some((word) => said.includes(word))) {
+          console.log(`[alarm] ${job.name} -> ${answer.status} ${said}`);
+        }
+      } catch (error) {
+        console.error(`[alarm] ${job.name} could not be reached`, error);
       }
-    } catch (error) {
-      console.error("[alarm] the daily job could not be reached", error);
-    }
-
-    // And the weekly one, which closes the week that ended and pays whoever won
-    // each board.
-    //
-    // ── WHY IT IS HERE, LATE ─────────────────────────────────────────────────
-    //
-    // It was not. When the cron stopped firing on 21 September 2026 this alarm
-    // was written to take over and was given the feed and the daily job. Nobody
-    // noticed the third one, because a weekly job failing looks like nothing for
-    // six days and like a quiet Monday on the seventh — so no week was closed
-    // for a month and nobody was paid, while both boards went on showing a
-    // winner all week. Whatever is added to the crons in wrangler.jsonc belongs
-    // here too, or it does not run at all.
-    //
-    // `soft` means "close last week if last week is not closed yet", so this is
-    // one read on the fifty-nine minutes an hour when there is nothing to do.
-    try {
-      const answer = await fetch("https://cardsofcronos.com/api/cron/weekly", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-cron-secret": this.env.CRON_SECRET ?? "",
-        },
-        body: JSON.stringify({ soft: true }),
-      });
-      const said = await answer.text();
-      if (!said.includes('"tooSoon":true')) {
-        console.log(`[alarm] weekly -> ${answer.status} ${said}`);
-      }
-    } catch (error) {
-      console.error("[alarm] the weekly job could not be reached", error);
     }
   }
 }

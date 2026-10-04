@@ -224,6 +224,35 @@ export async function saveMoves(
 }
 
 /**
+ * Running matches whose clock has already run out.
+ *
+ * The one query behind enforcing the clock on a schedule rather than when
+ * somebody happens to look. Capped, because this runs every minute and a tick
+ * that tries to catch up a thousand matches is a tick that times out and
+ * catches up none — the next one takes the rest, and nothing is ever more than
+ * a minute behind.
+ *
+ * Oldest deadline first, so the longest-overdue match is never the one left to
+ * the next run.
+ */
+export async function matchesOnTheClock(
+  db: Database,
+  now: number,
+  limit = 25,
+): Promise<MatchRecord[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM matches
+        WHERE finished_at IS NULL AND deadline <= ?
+        ORDER BY deadline ASC
+        LIMIT ?`,
+    )
+    .bind(now, limit)
+    .all<MatchRow>();
+  return results.map(toRecord);
+}
+
+/**
  * Matches anybody may look in on, newest first.
  *
  * Everybody's, not one player's — this is what makes a spectator page findable
