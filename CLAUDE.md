@@ -151,6 +151,45 @@ a rule in words reads it from the rule: `clockLabel` and `clockPhrase` off
 `TURN_CLOCK`, the same way `DESIGN.md` is checked against the engine rather than
 trusted. This is **one file, one truth** again, in prose instead of in data.
 
+**Work that only happens when somebody looks is not scheduled.** `catchUp` ends
+a turn whose window has passed, and it ran in the two routes a player opens a
+match through and nowhere else. So a correspondence turn did not expire after a
+day — it expired whenever somebody next opened that match, which could be days.
+The notification built for exactly that case therefore missed it: a turn returns
+to you either because the opponent moved or because they let the day lapse, and
+only the first went through a request. `/api/cron/clocks` runs it on the alarm
+instead — calling the same `catchUp`, `saveMoves`, `settle` and `notify`, because
+a second implementation of a rule is two rules, and the one nobody watches is the
+one that drifts.
+
+**Repetition hides an omission.** The alarm in `worker/index.js` was three copies
+of the same twelve lines, one per job, and that is how the weekly job came to be
+missing for a month: adding one meant first noticing that a third block existed.
+A weekly job that never fires looks like nothing for six days and like a quiet
+Monday on the seventh — no week was closed, nobody was paid, and both boards went
+on naming a winner all week. As a table it is one line per job and a missing one
+is visible, which is also what let `test/cron.test.ts` start checking that every
+job sits behind `CRON_SECRET` rather than only the ones with a cron of their own.
+
+**An instruction with no observable outcome is a broken feature.** Telegram will
+not let a bot open a conversation, so a linked account needs one press of Start
+first — and pressing it tells the site nothing, because no webhook is registered.
+"Press Start" was therefore an instruction answered by silence from the bot and
+silence from the site, which is indistinguishable from a feature that does not
+work, and was read that way. Whenever a step happens somewhere this code cannot
+see, ship the way to check it: `/api/link/telegram/test` asks for the one piece
+of evidence that ever arrives and turns each refusal into the next thing to do.
+
+**One site, one hostname.** `wrangler.jsonc` claimed the apex and `www` as custom
+domains and both served the site. Two origins for one site is not untidy, it is a
+second site that is silently the wrong one: Telegram's login widget allows one
+domain per bot, so one of the two always answered "Bot domain invalid", and a
+wallet proof is a cookie — cookies are per host — so signing in on `www` and on
+the apex were two sessions and landing on the other read as being signed out.
+`test/hosts.test.ts` sweeps every route in the config rather than naming one, so
+a third domain without a redirect fails there instead of becoming another
+silently-wrong copy.
+
 ---
 
 ## Working agreements
