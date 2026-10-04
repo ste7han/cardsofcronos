@@ -17,7 +17,7 @@ const config = readFileSync(new URL("../next.config.mjs", import.meta.url), "utf
 
 /** The hostnames wrangler points at this Worker. */
 function routed(): string[] {
-  return [...wrangler.matchAll(/"pattern"\s*:\s*"([^"]+)"/g)].map((m) => m[1]);
+  return [...wrangler.matchAll(/"pattern"\s*:\s*"([^"]+)"/g)].map((m) => m[1]!);
 }
 
 describe("the hostnames this Worker answers on", () => {
