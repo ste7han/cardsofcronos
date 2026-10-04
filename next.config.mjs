@@ -5,6 +5,34 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  /**
+   * One site, one hostname.
+   *
+   * wrangler.jsonc takes both the apex and `www` as custom domains, and until
+   * now both of them served the site with no redirect. Two origins for one site
+   * is not untidy, it is a second site that is silently the wrong one:
+   *
+   *   · Telegram's login widget compares the page's hostname against the single
+   *     domain set with /setdomain in BotFather, so one of the two always
+   *     answered "Bot domain invalid".
+   *   · A wallet proof is a cookie, and cookies are scoped per host — so
+   *     signing in on `www` and signing in on the apex were two sessions, and
+   *     landing on the other one read as being signed out.
+   *
+   * The apex wins because that is what every link in this repo already points
+   * at. Matched on the exact host, so the destination cannot match its own rule
+   * and loop.
+   */
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.cardsofcronos.com" }],
+        destination: "https://cardsofcronos.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   turbopack: {
     // Without this Turbopack looks for a package-lock.json above this directory
     // and warns that it is ignoring one outside the repo.
