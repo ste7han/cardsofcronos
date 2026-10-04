@@ -364,13 +364,60 @@ function DeckTable({ rows }: { rows: readonly DeckRow[] }) {
 }
 
 /**
- * The one press that makes a linked Telegram account reachable.
+ * Whether the bot can actually reach you, and the one press that fixes it.
  *
- * Says which of the two states it is in, because they need different things
- * from the reader: nobody has opened the chat yet (press Start), or they
- * blocked the bot (unblock it first, and this button alone will not do it).
+ * ── WHY THIS IS NOT JUST A LINK TO THE BOT ───────────────────────────────────
+ *
+ * Telegram will not let a bot open a conversation, so a linked account is not a
+ * reachable one until Start has been pressed. But pressing Start tells the site
+ * nothing — no webhook is registered, so the bot does not answer and nothing
+ * here hears about it. "Press Start" was therefore an instruction with no
+ * outcome: the bot said nothing, this page said nothing, and the only honest
+ * reading was that it had not worked.
+ *
+ * A successful message is the only evidence that ever arrives, so there is a
+ * button that asks for one. It doubles as the diagnostic — Telegram's refusals
+ * mean different things, and the route turns the one it gave into the next step.
  */
-function TelegramStart({ problem }: { problem: string }) {
+function TelegramAlerts({
+  problem,
+  onChanged,
+}: {
+  problem: string | null;
+  onChanged: () => void | Promise<void>;
+}) {
+  const [trying, setTrying] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+
+  async function tryIt() {
+    const proof = proofOf();
+    if (proof === null) {
+      setSaid("Sign in with a wallet first.");
+      return;
+    }
+    setTrying(true);
+    setSaid(null);
+    try {
+      const response = await fetch("/api/link/telegram/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ proof }),
+      });
+      const body = (await response.json()) as { sent?: boolean; error?: string };
+      if (body.sent === true) {
+        setSaid("Sent. Look in Telegram.");
+        // Clears the warning above, because the row has just been updated.
+        await onChanged();
+        return;
+      }
+      setSaid(body.error ?? "That did not go through.");
+    } catch {
+      setSaid("Could not reach the server. Try again in a moment.");
+    } finally {
+      setTrying(false);
+    }
+  }
+
   if (TELEGRAM_BOT === null) {
     return (
       <p className="mt-4 border border-line-strong px-3 py-2 text-[10px] leading-relaxed text-faint">
@@ -380,21 +427,55 @@ function TelegramStart({ problem }: { problem: string }) {
   }
 
   const blocked = problem === "blocked";
+
   return (
-    <div className="mt-4">
+    <div className="mt-4 border border-line-strong p-3">
       <p className="text-[10px] leading-relaxed text-muted">
-        {blocked
-          ? `You blocked @${TELEGRAM_BOT}, so nothing can be sent. Unblock it in Telegram and press Start again.`
-          : "Linked, but nothing can be sent yet — Telegram only lets a bot message you after you have pressed Start once."}
+        {problem === null ? (
+          <>
+            <span className="text-pump">Turn alerts are on.</span> You will hear about a slow match
+            when it is your turn, and about a match starting in a seat you offered.
+          </>
+        ) : blocked ? (
+          <>
+            You blocked @{TELEGRAM_BOT}, so nothing can be sent. Unblock it in Telegram, then try
+            again below.
+          </>
+        ) : (
+          <>
+            Linked, but nothing has reached you yet. Telegram only lets a bot message you after you
+            have pressed Start once.{" "}
+            {/* Said out loud because the silence is what makes people think it
+                failed: the bot has no webhook and answers nothing. */}
+            <span className="text-faint">
+              The bot will not reply when you do — it only sends. Use the button to check.
+            </span>
+          </>
+        )}
       </p>
-      <a
-        href={`https://t.me/${TELEGRAM_BOT}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="glow-pump mt-2 block w-full border border-gold bg-gold/10 px-3 py-2 text-center text-[10px] tracking-[0.18em] text-gold transition-colors hover:bg-gold hover:text-ground"
-      >
-        {blocked ? "OPEN TELEGRAM" : "PRESS START IN TELEGRAM"} →
-      </a>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {problem !== null && (
+          <a
+            href={`https://t.me/${TELEGRAM_BOT}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-gold px-3 py-1.5 text-[10px] tracking-[0.18em] text-gold transition-colors hover:bg-gold hover:text-ground"
+          >
+            {blocked ? "OPEN TELEGRAM" : "PRESS START"} →
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={() => void tryIt()}
+          disabled={trying}
+          className="border border-line-strong px-3 py-1.5 text-[10px] tracking-[0.18em] text-muted transition-colors hover:border-pump hover:text-pump disabled:opacity-50"
+        >
+          {trying ? "SENDING…" : "SEND ME A TEST"}
+        </button>
+      </div>
+
+      {said !== null && <p className="mt-2 text-[10px] leading-relaxed text-fg">{said}</p>}
     </div>
   );
 }
@@ -574,8 +655,8 @@ function LinkedAccounts() {
                       message is refused. Without this the feature fails in the
                       quietest possible way — the account says LINKED, the
                       profile says nothing, and no notification ever arrives. */}
-                  {network === "telegram" && link.dmProblem !== null && (
-                    <TelegramStart problem={link.dmProblem} />
+                  {network === "telegram" && (
+                    <TelegramAlerts problem={link.dmProblem} onChanged={load} />
                   )}
                   <button
                     type="button"

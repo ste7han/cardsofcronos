@@ -11,6 +11,8 @@
 // stubbing the network checks what would actually arrive at Telegram instead of
 // checking that a line of code is still written the way it was.
 
+import { readFileSync } from "node:fs";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { tellItIsTheirTurn, worthTelling } from "@/lib/notify";
@@ -220,5 +222,62 @@ describe("reading Telegram's refusals", () => {
     await expect(
       tellItIsTheirTurn(db, match("correspondence"), "opponent", 3, "your-turn", TOKEN),
     ).resolves.toBeUndefined();
+  });
+});
+
+// ── THE ONE PRESS NOBODY COULD VERIFY ────────────────────────────────────────
+//
+// Telegram lets a bot send and not open, so a linked account needs a Start
+// before it is reachable. Pressing Start sends the site nothing — there is no
+// webhook — so the instruction had no outcome: the bot answered nothing, the
+// profile said nothing, and the maker reasonably read that as broken. These
+// guard the route that exists to produce the one piece of evidence there is.
+describe("checking the bot can reach you", () => {
+  const route = readFileSync(
+    new URL("../app/api/link/telegram/test/route.ts", import.meta.url),
+    "utf8",
+  );
+
+  it("can only ever send to the wallet that asked", () => {
+    // Not aimable: no id, handle or wallet comes off the request body. A button
+    // that could be pointed at somebody else is a way to message strangers.
+    expect(route).toContain("telegramFor(db(), wallet)");
+    expect(route).toContain("signedInWallet(request)");
+    expect(route).not.toMatch(/body\s*\.\s*(wallet|accountId|chatId)/);
+  });
+
+  it("records the outcome the same way a real notification does", () => {
+    // Otherwise the warning on the profile would survive a message that landed,
+    // and the button would prove nothing.
+    expect(route).toContain("noteDelivery");
+  });
+
+  it("turns each refusal into something the reader can act on", () => {
+    // Telegram's own description is written for whoever runs the bot. All four
+    // cases have to be answered, or one of them renders as undefined.
+    for (const because of ["unconfigured", "not-started", "blocked", "unreachable"]) {
+      expect(route, because).toContain(because);
+    }
+  });
+
+  it("does not pass Telegram's own wording through to the player", () => {
+    expect(route).not.toContain("delivery.detail");
+  });
+});
+
+describe("the profile says what the silence means", () => {
+  const profile = readFileSync(new URL("../components/Profile.tsx", import.meta.url), "utf8");
+
+  it("warns that the bot does not answer, which is what reads as failure", () => {
+    expect(profile).toContain("will not reply");
+  });
+
+  it("offers a way to find out rather than only an instruction", () => {
+    expect(profile).toContain("/api/link/telegram/test");
+    expect(profile).toContain("SEND ME A TEST");
+  });
+
+  it("refreshes the row after a message lands, so the warning clears itself", () => {
+    expect(profile).toContain("onChanged={load}");
   });
 });
