@@ -50,7 +50,7 @@ export type Network = "x" | "telegram";
  * silently declines to work. One domain per bot, so this is the live site and
  * local development cannot link Telegram.
  */
-export const TELEGRAM_BOT: string | null = null;
+export const TELEGRAM_BOT: string | null = "CrocardBot";
 
 /**
  * Where the project actually talks.

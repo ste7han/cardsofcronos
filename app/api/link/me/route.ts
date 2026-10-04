@@ -21,6 +21,11 @@ export async function POST(request: Request) {
       network: link.network,
       handle: link.handle,
       linkedAt: link.linkedAt,
+      // Why we cannot reach them, which the profile turns into the button that
+      // fixes it. Telegram's own wording is not passed on — only our name for
+      // the case — because the fix differs per case and the raw description is
+      // written for whoever runs the bot, not for whoever reads this page.
+      dmProblem: link.dmProblem,
     })),
   });
 }

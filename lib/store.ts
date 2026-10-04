@@ -299,6 +299,14 @@ export interface Link {
   accountId: string;
   handle: string;
   linkedAt: number;
+  /**
+   * Why we cannot reach this account, or null when the last attempt worked.
+   *
+   * 'never-started' on a fresh Telegram link, because the login widget proves
+   * who somebody is without opening a chat with the bot — and Telegram will not
+   * let a bot open one. See db/schema.sql.
+   */
+  dmProblem: string | null;
 }
 
 interface LinkRow {
@@ -307,6 +315,7 @@ interface LinkRow {
   account_id: string;
   handle: string;
   linked_at: number;
+  dm_problem: string | null;
 }
 
 const toLink = (row: LinkRow): Link => ({
@@ -315,7 +324,42 @@ const toLink = (row: LinkRow): Link => ({
   accountId: row.account_id,
   handle: row.handle,
   linkedAt: row.linked_at,
+  dmProblem: row.dm_problem ?? null,
 });
+
+/**
+ * The Telegram account attached to a wallet, or null.
+ *
+ * Narrower than linksOf on purpose: this is the one the notifier asks, it is
+ * asked on the path of a move, and reading one row by primary key is what that
+ * path can afford.
+ */
+export async function telegramFor(db: Database, wallet: string): Promise<Link | null> {
+  const row = await db
+    .prepare(`SELECT * FROM links WHERE wallet = ? AND network = 'telegram'`)
+    .bind(wallet)
+    .first<LinkRow>();
+  return row ? toLink(row) : null;
+}
+
+/**
+ * Remember whether we could reach somebody, so their profile can say so.
+ *
+ * Called with null after a message lands, which is the only thing that clears
+ * 'never-started' — pressing Start sends us nothing, so a successful send is
+ * the only evidence that ever arrives.
+ */
+export async function noteDelivery(
+  db: Database,
+  wallet: string,
+  network: Network,
+  problem: string | null,
+): Promise<void> {
+  await db
+    .prepare(`UPDATE links SET dm_problem = ? WHERE wallet = ? AND network = ?`)
+    .bind(problem, wallet, network)
+    .run();
+}
 
 /** Everything attached to one wallet. */
 export async function linksOf(db: Database, wallet: string): Promise<Link[]> {
@@ -345,7 +389,13 @@ export async function linksOf(db: Database, wallet: string): Promise<Link[]> {
  * Re-linking your own account is allowed and refreshes the handle. People
  * rename themselves, and the id is what identity rests on.
  */
-export async function linkAccount(db: Database, link: Link): Promise<string | null> {
+export async function linkAccount(
+  db: Database,
+  // Without dmProblem: whether we can reach somebody is not something the
+  // caller knows or decides. It is derived below from what linking actually
+  // proves, which for Telegram is an identity and not a chat.
+  link: Omit<Link, "dmProblem">,
+): Promise<string | null> {
   const holder = () =>
     db
       .prepare(`SELECT wallet FROM links WHERE network = ? AND account_id = ?`)
@@ -358,14 +408,24 @@ export async function linkAccount(db: Database, link: Link): Promise<string | nu
   try {
     await db
       .prepare(
-        `INSERT INTO links (wallet, network, account_id, handle, linked_at)
-         VALUES (?, ?, ?, ?, ?)
+        `INSERT INTO links (wallet, network, account_id, handle, linked_at, dm_problem)
+         VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT (wallet, network)
          DO UPDATE SET account_id = excluded.account_id,
                        handle = excluded.handle,
-                       linked_at = excluded.linked_at`,
+                       linked_at = excluded.linked_at,
+                       dm_problem = excluded.dm_problem`,
       )
-      .bind(link.wallet, link.network, link.accountId, link.handle, link.linkedAt)
+      .bind(
+        link.wallet,
+        link.network,
+        link.accountId,
+        link.handle,
+        link.linkedAt,
+        // Linking is not reachability. Telegram hands over an id and no chat;
+        // X is not messaged at all, so the column does not apply to it.
+        link.network === "telegram" ? "never-started" : null,
+      )
       .run();
   } catch (error) {
     // Only the race. Anything else is a real fault and has to keep travelling —

@@ -14,7 +14,7 @@ import Link from "next/link";
 import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { byDeck, history, tally, type DeckRow, type MatchOutcome } from "@/lib/history";
-import { LINKABLE, type Network } from "@/lib/links";
+import { LINKABLE, TELEGRAM_BOT, type Network } from "@/lib/links";
 import { Claim } from "@/components/Claim";
 import { CardsSummary } from "@/components/YourCards";
 import { HOLDER_TIERS, nextTier, tierFor } from "@/data/holder-tiers";
@@ -363,10 +363,48 @@ function DeckTable({ rows }: { rows: readonly DeckRow[] }) {
   );
 }
 
+/**
+ * The one press that makes a linked Telegram account reachable.
+ *
+ * Says which of the two states it is in, because they need different things
+ * from the reader: nobody has opened the chat yet (press Start), or they
+ * blocked the bot (unblock it first, and this button alone will not do it).
+ */
+function TelegramStart({ problem }: { problem: string }) {
+  if (TELEGRAM_BOT === null) {
+    return (
+      <p className="mt-4 border border-line-strong px-3 py-2 text-[10px] leading-relaxed text-faint">
+        Turn alerts are not switched on yet.
+      </p>
+    );
+  }
+
+  const blocked = problem === "blocked";
+  return (
+    <div className="mt-4">
+      <p className="text-[10px] leading-relaxed text-muted">
+        {blocked
+          ? `You blocked @${TELEGRAM_BOT}, so nothing can be sent. Unblock it in Telegram and press Start again.`
+          : "Linked, but nothing can be sent yet — Telegram only lets a bot message you after you have pressed Start once."}
+      </p>
+      <a
+        href={`https://t.me/${TELEGRAM_BOT}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="glow-pump mt-2 block w-full border border-gold bg-gold/10 px-3 py-2 text-center text-[10px] tracking-[0.18em] text-gold transition-colors hover:bg-gold hover:text-ground"
+      >
+        {blocked ? "OPEN TELEGRAM" : "PRESS START IN TELEGRAM"} →
+      </a>
+    </div>
+  );
+}
+
 interface Attached {
   network: Network;
   handle: string;
   linkedAt: number;
+  /** Why we cannot reach them there, or null when we can. See lib/notify.ts. */
+  dmProblem: string | null;
 }
 
 /**
@@ -527,14 +565,27 @@ function LinkedAccounts() {
                   NOT SWITCHED ON YET
                 </p>
               ) : link ? (
-                <button
-                  type="button"
-                  onClick={() => void disconnect(network)}
-                  disabled={busy === network}
-                  className="mt-4 w-full border border-line-strong px-3 py-2 text-[10px] tracking-[0.18em] text-muted transition-colors hover:border-dump hover:text-dump disabled:opacity-50"
-                >
-                  {busy === network ? "…" : "UNLINK"}
-                </button>
+                <>
+                  {/* Linked is not the same as reachable, and this is the only
+                      place that difference can be fixed.
+
+                      Telegram will not let a bot open a conversation: the
+                      person presses Start once, and until they have, every
+                      message is refused. Without this the feature fails in the
+                      quietest possible way — the account says LINKED, the
+                      profile says nothing, and no notification ever arrives. */}
+                  {network === "telegram" && link.dmProblem !== null && (
+                    <TelegramStart problem={link.dmProblem} />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void disconnect(network)}
+                    disabled={busy === network}
+                    className="mt-4 w-full border border-line-strong px-3 py-2 text-[10px] tracking-[0.18em] text-muted transition-colors hover:border-dump hover:text-dump disabled:opacity-50"
+                  >
+                    {busy === network ? "…" : "UNLINK"}
+                  </button>
+                </>
               ) : network === "telegram" ? (
                 <TelegramLink />
               ) : (

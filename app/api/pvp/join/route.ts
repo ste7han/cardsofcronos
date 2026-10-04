@@ -15,8 +15,10 @@ import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { wagerFor, whyNotFunded } from "@/lib/escrow";
 import { claimListing, hasRoomFor, putListing, putMatch, seedFor } from "@/lib/store";
 import { newId, whyNotSeated } from "@/lib/pvp";
-import { newRecord } from "@/engine/record";
+import { newRecord, stateOf } from "@/engine/record";
 import { INDEX } from "@/lib/set";
+import { tellItIsTheirTurn } from "@/lib/notify";
+import { CARDS } from "@/data/cards";
 
 export const dynamic = "force-dynamic";
 
@@ -74,9 +76,7 @@ export async function POST(request: Request) {
   }
 
   const matchId = newId();
-  await putMatch(
-    db(),
-    newRecord({
+  const record = newRecord({
       id: matchId,
       mode: listing.mode,
       stake: listing.stake,
@@ -91,7 +91,21 @@ export async function POST(request: Request) {
       // Friendly matches carry none, and settling one would find nothing.
       wager: listing.stake > 0 ? listing.id : null,
       now,
-    }),
+  });
+  await putMatch(db(), record);
+
+  // The seat was posted by somebody who may have left the house since. The
+  // opening grace in engine/record.ts stops them losing turns for it; this is
+  // what tells them to come back and use it. Read off the engine rather than
+  // assumed from the seat order, which is a rule that could change.
+  const opening = stateOf(record, CARDS, INDEX);
+  await tellItIsTheirTurn(
+    db(),
+    record,
+    opening.toMove,
+    opening.turn,
+    "match-started",
+    env().TELEGRAM_BOT_TOKEN,
   );
 
   return Response.json({ id: matchId });

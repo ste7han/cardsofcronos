@@ -336,6 +336,7 @@ const link = (over: Partial<Link> = {}): Link => ({
   accountId: "111",
   handle: "alice_x",
   linkedAt: T0,
+  dmProblem: null,
   ...over,
 });
 

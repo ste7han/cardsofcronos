@@ -129,6 +129,15 @@ CREATE TABLE IF NOT EXISTS links (
   -- What to show. Kept as a convenience and never as an identity.
   handle        TEXT NOT NULL,
   linked_at     INTEGER NOT NULL,
+  -- Why we cannot reach this account, in the network's own words, or NULL when
+  -- the last attempt worked.
+  --
+  -- Telegram will not let a bot open a conversation: the person has to press
+  -- Start once. So a freshly linked account is NOT reachable, and this is set
+  -- to 'never-started' when the link is made rather than left NULL — "we have
+  -- never managed to send" and "nothing has gone wrong" are different facts and
+  -- treating the first as the second is a notification nobody ever receives.
+  dm_problem    TEXT,
   PRIMARY KEY (wallet, network)
 );
 

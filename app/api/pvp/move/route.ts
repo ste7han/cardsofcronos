@@ -17,6 +17,7 @@ import { settle } from "@/lib/finish";
 import { viewFor } from "@/engine/view";
 import { INDEX } from "@/lib/set";
 import { IllegalMove, type Move } from "@/engine/types";
+import { tellItIsTheirTurn } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,19 @@ export async function POST(request: Request) {
     });
   } else {
     await saveMoves(db(), played.id, played.moves, played.deadline, null, played.armed);
+    // Only when it actually passed to the other side. Playing a card leaves the
+    // turn where it was, and lib/notify decides whether this mode is worth a
+    // message at all — a live match is not.
+    if (state.toMove !== seat) {
+      await tellItIsTheirTurn(
+        db(),
+        played,
+        state.toMove,
+        state.turn,
+        "your-turn",
+        env().TELEGRAM_BOT_TOKEN,
+      );
+    }
   }
 
   return Response.json({ view: viewFor(state, seat, INDEX), deadline: played.deadline });
