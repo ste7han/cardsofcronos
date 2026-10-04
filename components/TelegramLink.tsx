@@ -67,6 +67,11 @@ export function TelegramLink() {
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
     script.setAttribute("data-telegram-login", TELEGRAM_BOT);
+    // Pinned, or Telegram localises the button to whoever is looking: the maker
+    // in the Netherlands got "Inloggen met Telegram" in the middle of a page
+    // that is English everywhere else, and a German visitor would get German.
+    // The widget is Telegram's iframe, so this is the only say we have over it.
+    script.setAttribute("data-lang", "en");
     script.setAttribute("data-size", "medium");
     script.setAttribute("data-radius", "0");
     // A full page redirect to our own callback, rather than a JavaScript

@@ -319,3 +319,17 @@ describe("the clock that runs without anybody looking", () => {
     expect(route).toContain("caught.moves.length === record.moves.length");
   });
 });
+
+describe("the button that links an account", () => {
+  const widget = readFileSync(
+    new URL("../components/TelegramLink.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("is in the same language as the page around it", () => {
+    // Telegram's widget is an iframe and localises itself to the viewer unless
+    // told not to, so this button spoke Dutch on a page that is English
+    // everywhere else — and German to a German visitor.
+    expect(widget).toContain('setAttribute("data-lang", "en")');
+  });
+});
