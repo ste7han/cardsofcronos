@@ -30,27 +30,57 @@
 import { sendMessage } from "@/lib/telegram-send";
 import type { Embed } from "@/lib/discord";
 
+/** The three characters Telegram's HTML mode cares about, and no others. */
+const escape = (text: string): string =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 /**
- * One embed as Telegram Markdown.
+ * Discord's inline markup, in Telegram's.
  *
- * Deliberately plain. Field names are kept because they are what makes the
- * numbers mean anything — "4,812" on its own is not a fact — and the inline/
- * block distinction Discord uses is dropped, because a phone has one column.
+ * Runs on text that has ALREADY been escaped, so the tags it inserts are the
+ * only tags in the result. `**bold**` is Discord's; Telegram's legacy Markdown
+ * reads one asterisk, which is why every number used to arrive wearing its
+ * asterisks.
+ */
+function inline(escaped: string): string {
+  return escaped
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>');
+}
+
+/**
+ * One embed as Telegram HTML.
+ *
+ * Deliberately plain: this is the generic translation, used by the burns feed
+ * and the weekly result. Buys have their own shape — see sayBuysForTelegram in
+ * lib/feed.ts — because a buy bot is read at a glance and a translated embed is
+ * read like a document.
+ *
+ * Field names are kept because they are what makes the numbers mean anything:
+ * "4,812" on its own is not a fact. The inline/block distinction Discord uses is
+ * dropped, because a phone has one column.
  */
 export function asText(embed: Embed): string {
   const lines: string[] = [];
 
+  // The author line is who is talking, and dropping it was why these read as
+  // coming from nobody.
+  if (embed.author?.name) lines.push(`<b>${escape(embed.author.name)}</b>`);
+
   if (embed.title) {
+    const title = escape(embed.title);
     // Linked when there is somewhere to go, which is what makes the title the
     // way in rather than a headline.
-    lines.push(embed.url ? `*[${embed.title}](${embed.url})*` : `*${embed.title}*`);
+    lines.push(
+      embed.url ? `<a href="${escape(embed.url)}"><b>${title}</b></a>` : `<b>${title}</b>`,
+    );
   }
-  if (embed.description) lines.push(embed.description);
+  if (embed.description) lines.push(inline(escape(embed.description)));
 
   for (const field of embed.fields ?? []) {
-    lines.push(`${field.name}: ${field.value}`);
+    lines.push(`${escape(field.name)}: ${inline(escape(field.value))}`);
   }
-  if (embed.footer?.text) lines.push(`_${embed.footer.text}_`);
+  if (embed.footer?.text) lines.push(`<i>${escape(embed.footer.text)}</i>`);
 
   return lines.join("\n");
 }
@@ -67,24 +97,40 @@ export async function mirror(
   chat: string | undefined,
   embeds: readonly Embed[],
 ): Promise<void> {
-  if (!botToken || !chat || embeds.length === 0) return;
-  for (const embed of embeds) {
+  await sendLines(
+    botToken,
+    chat,
+    embeds.map((embed) => ({ what: embed.title ?? "a feed line", html: asText(embed) })),
+  );
+}
+
+/**
+ * Finished HTML, one message each, never throwing.
+ *
+ * The same loop `mirror` uses, reached directly by the feeds that write their
+ * own lines rather than translating an embed — see sayBuysForTelegram. One loop
+ * and two entry points, so the logging and the swallowing are written once.
+ */
+export async function sendLines(
+  botToken: string | undefined,
+  chat: string | undefined,
+  lines: readonly { what: string; html: string }[],
+): Promise<void> {
+  if (!botToken || !chat || lines.length === 0) return;
+  for (const line of lines) {
     try {
-      const sent = await sendMessage(botToken, chat, asText(embed));
+      const sent = await sendMessage(botToken, chat, line.html);
       if (!sent.sent) {
         // The reason, not just the fact. "not-started" on a channel means the
         // bot is not an administrator of it; "unreachable" is Telegram itself.
         // Telling them apart from the outside is impossible without this line.
-        console.error(
-          `[telegram] ${embed.title ?? "a feed line"} was refused: ` +
-            `${sent.because} — ${sent.detail}`,
-        );
+        console.error(`[telegram] ${line.what} was refused: ${sent.because} — ${sent.detail}`);
       }
     } catch (error) {
-      // Swallowed per message: one embed that cannot be rendered or sent must
-      // not take the rest of the batch with it. Logged, because a mirror that
-      // fails in silence looks exactly like a mirror nobody configured.
-      console.error(`[telegram] ${embed.title ?? "a feed line"} threw:`, error);
+      // Swallowed per message: one line that cannot be sent must not take the
+      // rest of the batch with it. Logged, because a mirror that fails in
+      // silence looks exactly like a mirror nobody configured.
+      console.error(`[telegram] ${line.what} threw:`, error);
     }
   }
 }

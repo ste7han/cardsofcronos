@@ -49,7 +49,7 @@
 import { LOG_RPCS, PUBLIC_RPCS, rpc } from "@/lib/cronos";
 import { selector, topicOf, word } from "@/lib/evm-tx";
 import { post, type Embed } from "@/lib/discord";
-import { mirror } from "@/lib/telegram-feed";
+import { mirror, sendLines } from "@/lib/telegram-feed";
 import { croUsd } from "@/lib/cro-price";
 import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 import { bar, from, grouped, share, sizeOf } from "@/lib/flair";
@@ -257,11 +257,18 @@ async function runOne(
        * Which logs are worth a line in the channel. Everything, when absent.
        *
        * On the LOGS and not on the finished messages, which is what lets the
-       * channel have a floor while Discord keeps showing every buy: the same
-       * renderer runs twice over two sets of logs, so there is no second way of
-       * describing a buy that could drift from the first.
+       * channel have a floor while Discord keeps showing every buy.
        */
       only?: (log: Log) => boolean;
+      /**
+       * How to write them, when a translated embed is the wrong shape.
+       *
+       * Absent means the embed goes through asText, which is right for a burn
+       * and for the weekly result. Buys have their own: a buy bot is scanned
+       * and an embed is read. The facts still come from the same functions —
+       * see sayBuysForTelegram.
+       */
+      lines?: (logs: Log[], rpcs: readonly string[]) => Promise<{ what: string; html: string }[]>;
     };
   },
 ): Promise<RanFeed> {
@@ -328,12 +335,22 @@ async function runOne(
   // it. That costs one more `say` on the runs that have something to post, and
   // buys the channel its own threshold without Discord losing a line or a
   // second description of a buy existing anywhere.
-  if (opts.telegram?.only === undefined) {
-    await mirror(opts.telegram?.botToken, opts.telegram?.chat, embeds);
-  } else if (opts.telegram.botToken && opts.telegram.chat) {
-    const worth = fresh.filter(opts.telegram.only);
+  const toTelegram = opts.telegram;
+  if (toTelegram?.botToken && toTelegram.chat) {
+    const worth = toTelegram.only ? fresh.filter(toTelegram.only) : fresh;
     if (worth.length > 0) {
-      await mirror(opts.telegram.botToken, opts.telegram.chat, await say(worth, opts.rpcs));
+      if (toTelegram.lines) {
+        await sendLines(toTelegram.botToken, toTelegram.chat, await toTelegram.lines(worth, opts.rpcs));
+      } else {
+        // Already rendered when nothing was filtered out, so the ordinary feed
+        // costs no second pass.
+        const same = worth.length === fresh.length;
+        await mirror(
+          toTelegram.botToken,
+          toTelegram.chat,
+          same ? embeds : await say(worth, opts.rpcs),
+        );
+      }
     }
   }
 
@@ -436,26 +453,50 @@ export async function sayMints(logs: Log[], rpcs: readonly string[]): Promise<Em
  * much of the pool it took. A buy is only big or small against the thing it was
  * bought from.
  */
-export async function sayBuys(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
-  const times = new Map<string, string | null>();
-  const buys = logs
+/** One buy, as the two words of a Swap that matter. */
+export interface Buy {
+  log: Log;
+  /** CRO that went in, in wei. */
+  croIn: bigint;
+  /** $CROCARD that came out. Zero means it was a sell, not a buy. */
+  gotOut: bigint;
+}
+
+/**
+ * The buys in a batch of Swap logs.
+ *
+ * Pulled out so Discord and Telegram read the same two words off the same logs.
+ * The messages differ — a buy bot is scanned and an embed is read — but the
+ * facts behind them are computed once, which is the half that must not drift.
+ */
+export function buysIn(logs: Log[]): Buy[] {
+  return logs
     .map((log) => ({ log, croIn: wordAt(log.data, 0), gotOut: wordAt(log.data, 3) }))
     .filter((one) => one.gotOut > 0n);
-  if (buys.length === 0) return [];
+}
 
-  // What the pool is holding, so "how big was that" has an answer. One call for
-  // the batch, and its absence costs a line rather than the message.
-  let inPool: bigint | null = null;
+/** What the pool holds, so "how big was that" has an answer. */
+async function inThePool(rpcs: readonly string[]): Promise<bigint | null> {
   try {
-    inPool = BigInt(
+    return BigInt(
       await rpc(rpcs, "eth_call", [
         { to: CROCARD, data: selector("balanceOf(address)") + word(POOL) },
         "latest",
       ]),
     );
   } catch {
-    // Left out.
+    return null;
   }
+}
+
+export async function sayBuys(logs: Log[], rpcs: readonly string[]): Promise<Embed[]> {
+  const times = new Map<string, string | null>();
+  const buys = buysIn(logs);
+  if (buys.length === 0) return [];
+
+  // One call for the batch, and its absence costs a line rather than the
+  // message.
+  const inPool = await inThePool(rpcs);
 
   const priceOf = (cro: bigint, got: bigint): string => {
     if (got === 0n) return "";
@@ -636,6 +677,107 @@ async function runOwners(
  * looking like a quiet minute.
  */
 /**
+ * A buy, written for Telegram rather than translated into it.
+ *
+ * ── WHY THIS IS NOT THE EMBED ────────────────────────────────────────────────
+ *
+ * The first version put the Discord embed through asText and the maker's answer
+ * was "visueel niet heel aantrekkelijk hoor", which was right twice over. The
+ * bold was Discord's `**` and arrived as asterisks on the screen; and even
+ * fixed, an embed is a shape that is READ — an author line, a title, a
+ * description, a footer — while a buy bot is a shape that is SCANNED. Four
+ * figures down the left edge, each with the same mark in front of it, is read in
+ * one second. A paragraph of the same four figures is not.
+ *
+ * The facts come from buysIn and inThePool, the same two functions the embed
+ * uses, so there is one computation and two presentations. What differs is the
+ * layout; nothing that could disagree about what happened.
+ *
+ * ── AND IT SAYS WHAT IT COST IN DOLLARS ──────────────────────────────────────
+ *
+ * Which the embed cannot: Discord has shown buys in CRO since it was built and
+ * this project prices nothing in dollars. But "500 CRO" is a number only
+ * somebody who follows CRO can weigh, and a buy bot is read by people deciding
+ * whether to look. The price is already in hand — the floor needs it — so it
+ * costs nothing to say.
+ */
+export async function sayBuysForTelegram(
+  logs: Log[],
+  rpcs: readonly string[],
+  croUsdPrice: number | null,
+): Promise<{ what: string; html: string }[]> {
+  const buys = buysIn(logs);
+  if (buys.length === 0) return [];
+
+  const inPool = await inThePool(rpcs);
+
+  /** Money, with its cents. grouped() drops a trailing zero and $34.4 is not a price. */
+  const money = (usd: number): string =>
+    usd < 100
+      ? usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : grouped(usd);
+  const dollars = (cro: number): string =>
+    croUsdPrice === null ? "" : ` · <b>$${money(cro * croUsdPrice)}</b>`;
+
+  /**
+   * The market cap this buy was made at, short enough to read.
+   *
+   * The figure a buy bot is actually read for: "500 CRO" says how much somebody
+   * spent and this says what they thought the thing was worth. Worked out from
+   * the price the buy itself paid — CRO per token, times the dollar, times the
+   * supply — so it needs no call of its own.
+   */
+  const marketCap = (croIn: bigint, gotOut: bigint): string => {
+    if (croUsdPrice === null || gotOut === 0n) return "";
+    const usd = (Number(croIn) / Number(gotOut)) * croUsdPrice * CROCARD_SUPPLY;
+    const short =
+      usd >= 1_000_000
+        ? `$${(usd / 1_000_000).toFixed(2)}M`
+        : usd >= 1_000
+          ? `$${(usd / 1_000).toFixed(1)}K`
+          : `$${money(usd)}`;
+    return `\n📊 ${short} market cap`;
+  };
+
+  // Many at once gets one line. Six separate notifications in a minute is a
+  // muted channel, which is the same as not having a buy bot.
+  if (buys.length > TOO_MANY) {
+    const cro = Number(buys.reduce((sum, one) => sum + one.croIn, 0n) / 10n ** 16n) / 100;
+    const got = buys.reduce((sum, one) => sum + one.gotOut, 0n);
+    return [
+      {
+        what: `${buys.length} buys`,
+        html:
+          `<b>${sizeOf(cro)} ${buys.length} $CROCARD buys</b>\n` +
+          `💰 <b>${grouped(cro, 2)} CRO</b>${dollars(cro)}\n` +
+          `🪙 ${amount(got)} $CROCARD` +
+          marketCap(buys.reduce((sum, one) => sum + one.croIn, 0n), got) +
+          `\n` +
+          `<a href="${EXPLORER}/address/${POOL}">the pool ↗</a>`,
+      },
+    ];
+  }
+
+  return buys.map((one) => {
+    const cro = Number(one.croIn / 10n ** 16n) / 100;
+    const took =
+      inPool === null || inPool === 0n
+        ? null
+        : share(Number(one.gotOut / 10n ** 18n), Number(inPool / 10n ** 18n));
+    return {
+      what: `a ${grouped(cro)} CRO buy`,
+      html:
+        `<b>${sizeOf(cro)} $CROCARD buy</b>\n` +
+        `💰 <b>${grouped(cro, 2)} CRO</b>${dollars(cro)}\n` +
+        `🪙 ${amount(one.gotOut)} $CROCARD` +
+        marketCap(one.croIn, one.gotOut) +
+        (took === null ? "" : `\n🌊 ${took} of the pool`) +
+        `\n<a href="${txLink(one.log.transactionHash)}">transaction ↗</a>`,
+    };
+  });
+}
+
+/**
  * The smallest buy worth telling the Telegram group about, in dollars.
  *
  * Set by the maker. It exists because there is no buy bot for Cronos on
@@ -754,6 +896,7 @@ export async function runFeeds(
         botToken: secrets.telegramBotToken,
         chat: secrets.telegramChat,
         only: (log) => bigEnoughToTell(log, croPrice),
+        lines: (worth, rpcs) => sayBuysForTelegram(worth, rpcs, croPrice),
       },
     }),
   );

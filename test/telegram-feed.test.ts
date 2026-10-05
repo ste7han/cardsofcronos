@@ -75,12 +75,16 @@ describe("an embed as Telegram text", () => {
   });
 
   it("makes the title the way in when there is somewhere to go", () => {
+    // HTML and not Markdown: these lines come from Discord embeds written with
+    // `**bold**`, which Telegram's legacy Markdown reads as one asterisk — so
+    // every number arrived wearing its asterisks. HTML needs three characters
+    // escaped and nothing else. See lib/telegram-send.ts.
     const text = asText({ title: "Burned", url: "https://example.com/tx" });
-    expect(text).toBe("*[Burned](https://example.com/tx)*");
+    expect(text).toBe('<a href="https://example.com/tx"><b>Burned</b></a>');
   });
 
   it("leaves a title alone when there is no link", () => {
-    expect(asText({ title: "Burned" })).toBe("*Burned*");
+    expect(asText({ title: "Burned" })).toBe("<b>Burned</b>");
   });
 });
 

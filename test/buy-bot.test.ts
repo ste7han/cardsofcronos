@@ -15,12 +15,28 @@ import { readFileSync } from "node:fs";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { TELEGRAM_BUY_FLOOR_USD, bigEnoughToTell, type Log } from "@/lib/feed";
+import {
+  TELEGRAM_BUY_FLOOR_USD,
+  TOO_MANY,
+  bigEnoughToTell,
+  sayBuysForTelegram,
+  type Log,
+} from "@/lib/feed";
+import { asText } from "@/lib/telegram-feed";
 import { REFRESH_AFTER, WCRO, croUsd, storedCroUsd } from "@/lib/cro-price";
 import { selector } from "@/lib/evm-tx";
 import type { Database, Statement } from "@/lib/store";
 
 const T0 = 1_700_000_000_000;
+
+/** A Swap with CRO in at word 0 and tokens out at word 3. */
+function buyGot(cro: number, got: number): Log {
+  const w = (n: bigint) => n.toString(16).padStart(64, "0");
+  return {
+    ...buyOf(cro),
+    data: "0x" + w(BigInt(Math.round(cro * 1e18))) + w(0n) + w(0n) + w(BigInt(Math.round(got * 1e18))),
+  };
+}
 
 /** A Swap log whose first word is the CRO that went in. */
 function buyOf(cro: number): Log {
@@ -217,7 +233,7 @@ describe("which feeds the floor applies to", () => {
     // asked for.
     const runOne = feed.slice(feed.indexOf("async function runOne"), feed.indexOf("async function runFeeds"));
     const post = runOne.indexOf("await post(webhook, embeds)");
-    const filter = runOne.indexOf("fresh.filter(opts.telegram.only)");
+    const filter = runOne.indexOf("fresh.filter(toTelegram.only)");
     expect(post).toBeGreaterThan(-1);
     expect(filter).toBeGreaterThan(post);
   });
@@ -247,5 +263,106 @@ describe("a deploy that lands before its migration", () => {
     } finally {
       console.error = was;
     }
+  });
+});
+
+// ── HOW IT READS ─────────────────────────────────────────────────────────────
+//
+// The first version put the Discord embed through asText and the maker's answer
+// was that it was not much to look at. Right twice over: the bold was Discord's
+// `**` and arrived as asterisks on the screen, and even fixed, an embed is a
+// shape that is read while a buy bot is a shape that is scanned.
+describe("what a buy looks like in Telegram", () => {
+  const line = async (cro: number, got: number, price: number | null = 0.0688) => {
+    const [one] = await sayBuysForTelegram([buyGot(cro, got)], [], price);
+    return one!.html;
+  };
+
+  it("says what it cost in dollars, which the Discord embed cannot", () => {
+    // Discord has shown buys in CRO since it was built and this project prices
+    // nothing in dollars. But "500 CRO" is a number only somebody who follows
+    // CRO can weigh, and a buy bot is read by people deciding whether to look.
+    return line(500, 1_240_000).then((html) => {
+      expect(html).toContain("500 CRO");
+      expect(html).toContain("$34.40");
+    });
+  });
+
+  it("writes money with its cents", async () => {
+    // grouped() drops a trailing zero, and $34.4 is not a price.
+    expect(await line(80, 198_000)).toContain("$5.50");
+  });
+
+  it("gives the market cap the buy was made at", async () => {
+    // The figure a buy bot is actually read for: the CRO figure says what
+    // somebody spent, this says what they thought the thing was worth. Worked
+    // out from the price the buy itself paid, so it costs no call.
+    expect(await line(500, 1_240_000)).toMatch(/\$27\.7K market cap/);
+  });
+
+  it("marks the size, so a whale is not read as a minnow", async () => {
+    expect(await line(5_000, 12_400_000)).toContain("🐳");
+    expect(await line(500, 1_240_000)).toContain("🦈");
+    expect(await line(80, 198_000)).toContain("🐬");
+  });
+
+  it("leaves the dollars out rather than inventing them", async () => {
+    // One window on one deployment: no price has ever been read. A line with
+    // "$NaN" on it is worse than a line in CRO.
+    const html = await line(500, 1_240_000, null);
+    expect(html).toContain("500 CRO");
+    // A dollar FIGURE, not the dollar in "$CROCARD" — which is why this is a
+    // pattern and not a substring.
+    expect(html).not.toMatch(/\$[\d.]/);
+    expect(html).not.toContain("NaN");
+    expect(html).not.toMatch(/market cap/);
+  });
+
+  it("is HTML, with no Discord bold left in it", async () => {
+    const html = await line(500, 1_240_000);
+    expect(html).toContain("<b>");
+    expect(html).not.toContain("**");
+  });
+
+  it("becomes one message when a batch is large", async () => {
+    // Seven notifications in a minute is a muted channel, which is the same as
+    // not having a buy bot.
+    const many = Array.from({ length: TOO_MANY + 1 }, () => buyGot(100, 250_000));
+    const lines = await sayBuysForTelegram(many, [], 0.0688);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]!.html).toContain(`${TOO_MANY + 1} $CROCARD buys`);
+  });
+
+  it("says nothing about a sell", async () => {
+    // A Swap with nothing coming out is somebody going the other way.
+    expect(await sayBuysForTelegram([buyGot(500, 0)], [], 0.0688)).toEqual([]);
+  });
+});
+
+describe("the generic translation, for the feeds that use it", () => {
+  it("turns Discord bold into Telegram bold", () => {
+    // This is the bug the maker saw: asterisks on the screen.
+    const html = asText({ title: "Bought", description: "**500 CRO** went in" });
+    expect(html).toContain("<b>500 CRO</b> went in");
+    expect(html).not.toContain("**");
+  });
+
+  it("escapes the three characters HTML mode cares about", () => {
+    // A card called "Ape & Co <3" would otherwise be a parse error, and
+    // Telegram answers a parse error by refusing the whole message.
+    expect(asText({ title: "Ape & Co <3" })).toBe("<b>Ape &amp; Co &lt;3</b>");
+  });
+
+  it("names who is talking", () => {
+    // Dropped in the first version, which is why those lines read as coming
+    // from nobody.
+    const html = asText({ title: "Burned", author: { name: "Cards of Cronos", icon_url: "" } });
+    expect(html.split("\n")[0]).toBe("<b>Cards of Cronos</b>");
+  });
+
+  it("makes a linked title the way in", () => {
+    expect(asText({ title: "Burned", url: "https://example.com/tx" })).toBe(
+      '<a href="https://example.com/tx"><b>Burned</b></a>',
+    );
   });
 });

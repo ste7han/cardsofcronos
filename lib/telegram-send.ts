@@ -82,7 +82,18 @@ export async function sendMessage(
       body: JSON.stringify({
         chat_id: chatId,
         text,
-        parse_mode: "Markdown",
+        // HTML and not Markdown, and that is not a preference.
+        //
+        // These messages are translated from Discord embeds, whose text is
+        // written in Discord's flavour — `**bold**`. Telegram's legacy Markdown
+        // means bold with ONE asterisk, so every number arrived wearing its
+        // asterisks: "**500 CRO**" on the screen. MarkdownV2 would fix the bold
+        // and demand that a dozen ordinary characters be escaped, including the
+        // full stops and hyphens these lines are full of.
+        //
+        // HTML needs three characters escaped and nothing else. See asText in
+        // lib/telegram-feed.ts, which does the escaping.
+        parse_mode: "HTML",
         // The link in these messages is the whole point of them, so a preview
         // card under every one would be noise on a phone.
         link_preview_options: { is_disabled: true },
