@@ -107,6 +107,28 @@ describe("mirroring", () => {
     expect(sent[0]!.body.chat_id).toBe(CHAT);
   });
 
+  it("says so when a message is refused, rather than only not sending it", async () => {
+    // It threw the Delivery away without looking at it, so a refused line was
+    // not merely unreported but unloggable: the only symptom was a channel that
+    // stayed empty while Discord filled up. Caught by sending one test line and
+    // realising nothing could have said whether it arrived.
+    const said: unknown[] = [];
+    const was = console.error;
+    console.error = (...args: unknown[]) => void said.push(args);
+    try {
+      vi.stubGlobal("fetch", async () => ({
+        ok: false,
+        status: 403,
+        json: async () => ({ ok: false, description: "Forbidden: bot is not a member" }),
+      } as unknown as Response));
+      await mirror(TOKEN, CHAT, [{ title: "Burned" }]);
+    } finally {
+      console.error = was;
+    }
+    expect(said).toHaveLength(1);
+    expect(JSON.stringify(said)).toContain("Burned");
+  });
+
   it("does not let one bad message take the batch with it", async () => {
     const seen: string[] = [];
     vi.stubGlobal("fetch", async (_url: string, init: { body: string }) => {
