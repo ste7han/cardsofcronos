@@ -32,7 +32,7 @@
 import { clockLabel, type MatchRecord } from "@/engine/record";
 import { linkFor, noteDelivery, type Database } from "@/lib/store";
 import { post } from "@/lib/discord";
-import { sendDM } from "@/lib/telegram-dm";
+import { sendMessage } from "@/lib/telegram-send";
 import type { Player } from "@/engine/types";
 
 const SITE = "https://cardsofcronos.com";
@@ -98,7 +98,7 @@ export interface Channels {
  *
  * Telegram will not let a bot open a conversation, so a linked account that has
  * never pressed Start is refused — recorded rather than thrown, so the profile
- * can offer the button that fixes it. See lib/telegram-dm.ts.
+ * can offer the button that fixes it. See lib/telegram-send.ts.
  */
 async function overTelegram(
   db: Database,
@@ -116,7 +116,7 @@ async function overTelegram(
   // being blocked was meant to stop.
   if (link.dmProblem === "blocked") return;
 
-  const delivery = await sendDM(token, link.accountId, text);
+  const delivery = await sendMessage(token, link.accountId, text);
   const problem = delivery.sent ? null : delivery.because;
   if (problem !== link.dmProblem) await noteDelivery(db, wallet, "telegram", problem);
 }

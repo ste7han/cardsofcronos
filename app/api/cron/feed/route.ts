@@ -53,6 +53,8 @@ export async function POST(request: Request) {
       mints: env().DISCORD_MINTS,
       buys: env().DISCORD_BUYS,
       burns: env().DISCORD_BURNS,
+      telegramBotToken: env().TELEGRAM_BOT_TOKEN,
+      telegramChat: env().TELEGRAM_FEED_CHAT,
     },
     Date.now(),
     body.soft === true ? 45_000 : null,

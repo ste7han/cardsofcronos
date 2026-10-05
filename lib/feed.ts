@@ -49,6 +49,7 @@
 import { LOG_RPCS, PUBLIC_RPCS, rpc } from "@/lib/cronos";
 import { selector, topicOf, word } from "@/lib/evm-tx";
 import { post, type Embed } from "@/lib/discord";
+import { mirror } from "@/lib/telegram-feed";
 import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 import { bar, from, grouped, share, sizeOf } from "@/lib/flair";
 import { recordBurns } from "@/lib/splitter";
@@ -247,6 +248,8 @@ async function runOne(
     now: number;
     /** Turns the logs into messages. Empty means there was nothing worth saying. */
     say: (logs: Log[], rpcs: readonly string[]) => Promise<Embed[]>;
+    /** Where to mirror this, in Telegram. Absent for feeds that are not. */
+    telegram?: { botToken?: string; chat?: string };
   },
 ): Promise<RanFeed> {
   const { feed, webhook, address, topics, logRpcs, head, now, say } = opts;
@@ -301,6 +304,14 @@ async function runOne(
 
   await remember(db, fresh.map((log) => idOf(feed, log)), now);
   await setCursor(db, `feed:${feed}`, to, now);
+
+  // After the ledger and the cursor, and on purpose. Those moved on the
+  // strength of the Discord post, so a Telegram failure here is one missing
+  // line in a channel — where holding them back until both succeeded would
+  // repost the Discord line every run until Telegram came back. A missing line
+  // beats a duplicated one. `mirror` never throws.
+  await mirror(opts.telegram?.botToken, opts.telegram?.chat, embeds);
+
   return { feed, from, to, found: fresh.length, posted: embeds.length };
 }
 
@@ -606,6 +617,9 @@ export async function runFeeds(
     mints?: string;
     buys?: string;
     burns?: string;
+    /** For mirroring the feeds that are mirrored. See the burns call below. */
+    telegramBotToken?: string;
+    telegramChat?: string;
   },
   now: number,
   /**
@@ -684,6 +698,14 @@ export async function runFeeds(
       // topic, so `null` in the second says "whoever sent it".
       topics: [TRANSFER, null, "0x" + word(BURN_ADDRESS)],
       say: sayBurns,
+      // Burns and not the other two, for now.
+      //
+      // Mints and buys fire in bursts — a mint is dozens of lines in an hour —
+      // and a channel that buzzes dozens of times is a channel people leave.
+      // A burn is the one of the three that is read as news rather than as
+      // activity: supply going down is the number this project is about.
+      // Mirroring another feed is this one line on another call.
+      telegram: { botToken: secrets.telegramBotToken, chat: secrets.telegramChat },
     }),
   );
 

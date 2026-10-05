@@ -19,6 +19,7 @@
 import { db, env } from "@/lib/api";
 import { PUBLIC_RPCS } from "@/lib/cronos";
 import { lastWeek, runWeekly, stillOwed } from "@/lib/publisher";
+import { announceWeek } from "@/lib/weekly-news";
 import { setCursor } from "@/lib/store";
 import type { Database } from "@/lib/store";
 
@@ -111,6 +112,21 @@ export async function POST(request: Request) {
     { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC },
     now,
   );
+
+  // Said out loud, before the marker. The week is closed and the prizes are
+  // pushed by now, so an announcement is the last thing to happen and the one
+  // thing that must not be able to fail the job — announceWeek never throws,
+  // and keeps its own once-per-board-per-week guard so a retried run does not
+  // say it twice.
+  await announceWeek(db(), ran, {
+    rooms: {
+      DISCORD_SOLO: env().DISCORD_SOLO,
+      DISCORD_PVE_LIONS: env().DISCORD_PVE_LIONS,
+    },
+    fallbackRoom: env().DISCORD_SOLO,
+    telegramBotToken: env().TELEGRAM_BOT_TOKEN,
+    telegramChat: env().TELEGRAM_FEED_CHAT,
+  });
 
   // Marked after, and only when the week is actually settled.
   //

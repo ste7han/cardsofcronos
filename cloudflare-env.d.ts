@@ -15,6 +15,19 @@ interface CloudflareEnv {
   X_CLIENT_SECRET?: string;
   /** A Worker secret. It is also the HMAC key the login payload is signed with. */
   TELEGRAM_BOT_TOKEN?: string;
+  /**
+   * The channel or group the public feeds and the weekly result are mirrored
+   * into, by chat id.
+   *
+   * A chat id and not a @name: a channel's name can be changed by whoever runs
+   * it and the id cannot. The bot has to be an administrator of it, or every
+   * send is refused — and refused in a way only the logs would show, which is
+   * why scripts/telegram-check.ts reports on this too.
+   *
+   * Unset means the mirroring is off. That is a real state: the Discord feeds
+   * carry on either way.
+   */
+  TELEGRAM_FEED_CHAT?: string;
   DISCORD_CLIENT_ID?: string;
   DISCORD_CLIENT_SECRET?: string;
   /**

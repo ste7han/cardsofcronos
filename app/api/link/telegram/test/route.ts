@@ -19,7 +19,7 @@
 
 import { db, env, signedInWallet, UNAUTHORISED } from "@/lib/api";
 import { linkFor, noteDelivery } from "@/lib/store";
-import { sendDM } from "@/lib/telegram-dm";
+import { sendMessage } from "@/lib/telegram-send";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   const token = env().TELEGRAM_BOT_TOKEN;
-  const delivery = await sendDM(
+  const delivery = await sendMessage(
     token,
     link.accountId,
     "*That worked.* This wallet is linked, and the bot can reach you.\n\n" +

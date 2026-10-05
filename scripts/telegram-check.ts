@@ -32,7 +32,7 @@ const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
 const body = (await response.json()) as {
   ok?: boolean;
   description?: string;
-  result?: { username?: string; first_name?: string; can_read_all_group_messages?: boolean };
+  result?: { id?: number; username?: string; first_name?: string };
 };
 
 if (body.ok !== true) {
@@ -55,3 +55,40 @@ if (TELEGRAM_BOT !== username) {
 }
 
 console.log("\nMatches. The Start link on /profile points at this bot.");
+
+// ── AND THE CHANNEL THE FEEDS GO TO ──────────────────────────────────────────
+//
+// A bot may only post to a channel it administrates, and the refusal for that
+// is one line in a Worker log at whatever hour the burn happened. Asked here
+// instead, where somebody is looking.
+const chat = process.env.TELEGRAM_FEED_CHAT;
+if (!chat) {
+  console.log("\nTELEGRAM_FEED_CHAT is not set, so the feeds are not mirrored.");
+} else {
+  const who = body.result?.id;
+  const member = await fetch(
+    `https://api.telegram.org/bot${token}/getChatMember?chat_id=${encodeURIComponent(chat)}` +
+      `&user_id=${who}`,
+  );
+  const said = (await member.json()) as {
+    ok?: boolean;
+    description?: string;
+    result?: { status?: string };
+  };
+  if (said.ok !== true) {
+    // Telegram's own words. "chat not found" means the id is wrong or the bot
+    // was never added; anything else is usually a permission.
+    console.error(`\nfeed chat ${chat}: Telegram said "${said.description ?? "no"}"`);
+    process.exit(1);
+  }
+  const status = said.result?.status ?? "unknown";
+  console.log(`feed chat    : ${chat} — the bot is "${status}" there`);
+  if (status !== "administrator" && status !== "creator") {
+    console.error(
+      `\nThe bot has to be an administrator of that chat to post in it. ` +
+        `Right now it is "${status}", and every mirrored line will be refused.`,
+    );
+    process.exit(1);
+  }
+  console.log("Can post there.");
+}
