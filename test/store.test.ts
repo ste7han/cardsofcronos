@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { CONCURRENT, LISTING_LIFE, addResult, claimListing, getMatch, hasRoomFor, linkAccount, linksOf, matchesOf, matchesOnTheClock, openListings, playerOf, putListing, putMatch, saveMoves, seePlayer, seedFor, unlinkAccount } from "@/lib/store";
+import { CONCURRENT, LISTING_LIFE, addResult, claimListing, getMatch, hasRoomFor, linkAccount, linksOf, matchesOf, matchesOnTheClock, openListings, playerOf, putListing, putMatch, recordStaked, saveMoves, seePlayer, seedFor, unlinkAccount } from "@/lib/store";
 import type { Database, Link, Listing, Statement } from "@/lib/store";
 import type { MatchRecord } from "@/engine/record";
 
@@ -294,6 +294,17 @@ function fakeDb(): Database & {
               });
             }
             const row = players.get(wallet)!;
+            // recordStaked: the rank moves by a delta and the match is counted.
+            // Modelled rather than skipped, because the thing worth testing is
+            // that it ADDS — a fake that assigned would pass a store that
+            // overwrites, which is the bug the delta exists to prevent.
+            if (sql.includes("rank = MAX(")) {
+              const floor = bound[1] as number;
+              const delta = bound[7] as number;
+              row.rank = Math.max(floor, (row.rank as number) + delta);
+              row.staked = (row.staked as number) + 1;
+              return;
+            }
             for (const column of ["wins", "losses", "draws"]) {
               if (sql.includes(`${column}, created_at`)) row[column] = (row[column] as number) + 1;
             }
@@ -605,5 +616,45 @@ describe("matches on the clock", () => {
     await putMatch(db, record({ id: "done", deadline: T0 - 60_000 }));
     await saveMoves(db, "done", [{ kind: "endTurn" }], T0 - 60_000, T0, T0);
     expect(await matchesOnTheClock(db, T0)).toEqual([]);
+  });
+});
+
+// ── THE RANK, WRITTEN AS A CHANGE ────────────────────────────────────────────
+//
+// Nothing wrote players.rank for a month while the lobby printed it. These are
+// about the one property that would be invisible if it were wrong: it adds to
+// whatever is there rather than assigning a number worked out earlier, so two
+// matches settling seconds apart both count.
+describe("a staked result", () => {
+  it("moves the rank and counts the match", async () => {
+    const db = fakeDb();
+    await recordStaked(db, ALICE, 16, T0);
+    const after = await playerOf(db, ALICE);
+    expect(after.rank).toBe(1016);
+    expect(after.staked).toBe(1);
+  });
+
+  it("adds to the rank rather than replacing it", async () => {
+    // The whole point of a delta. Two results, each worked out against the rank
+    // as it stood before its own match, have to end up stacking.
+    const db = fakeDb();
+    await recordStaked(db, ALICE, 16, T0);
+    await recordStaked(db, ALICE, -9, T0 + 1);
+    expect((await playerOf(db, ALICE)).rank).toBe(1007);
+    expect((await playerOf(db, ALICE)).staked).toBe(2);
+  });
+
+  it("starts a wallet nobody has seen at the opening rank", async () => {
+    // An upsert, because a wallet that has never been through another route
+    // still has to end up with a row.
+    const db = fakeDb();
+    await recordStaked(db, CAROL, -16, T0);
+    expect((await playerOf(db, CAROL)).rank).toBe(984);
+  });
+
+  it("will not take a rank below the floor", async () => {
+    const db = fakeDb();
+    await recordStaked(db, ALICE, -5000, T0);
+    expect((await playerOf(db, ALICE)).rank).toBe(100);
   });
 });

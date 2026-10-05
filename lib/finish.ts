@@ -17,7 +17,8 @@ import { RULES } from "@/engine/types";
 import { post } from "@/lib/discord";
 import { from, versus } from "@/lib/flair";
 import { settleMatch } from "@/lib/escrow";
-import { addResult, finishMatch, type Database } from "@/lib/store";
+import { addResult, finishMatch, playerOf, recordStaked, type Database } from "@/lib/store";
+import { move } from "@/lib/elo";
 
 /**
  * If this match has just ended, close it and write both players' records.
@@ -47,11 +48,16 @@ export async function settle(
   if (state.winner === null) {
     await addResult(db, you, "draw", now);
     await addResult(db, opponent, "draw", now);
+    // A drawn staked match pays nobody — the escrow has no draw — and still
+    // moves both ranks. The pot and the ladder are different questions, and a
+    // draw against somebody far above you is a real result.
+    await moveRanks(db, record, you, opponent, "draw", now);
   } else {
     const winner = record.seats[state.winner];
     const loser = winner === you ? opponent : you;
     await addResult(db, winner, "win", now);
     await addResult(db, loser, "loss", now);
+    await moveRanks(db, record, winner, loser, "win", now);
 
     // And the money, if there was any.
     //
@@ -95,6 +101,56 @@ export async function settle(
     // match. The result is written, the records are updated and the pot is
     // handled; this is the least important thing in the function.
   });
+}
+
+/**
+ * The ladder, for a staked match only.
+ *
+ * ── BOTH DELTAS COME OFF THE SAME SNAPSHOT ───────────────────────────────────
+ *
+ * Read both standings first, then work out both moves, then write both. Reading
+ * the second player's rank after writing the first would price the second half
+ * of the match against a rank the first half had already changed — the same
+ * match counted twice against itself.
+ *
+ * ── AND IT DOES NOT DECIDE THE MATCH ─────────────────────────────────────────
+ *
+ * Called after addResult and never instead of it, like the pot. The result is
+ * what the game is; the rank is a consequence. So a failure here is logged and
+ * swallowed: a ladder that could not be updated must not turn a match that was
+ * played into a match that was not recorded.
+ *
+ * Friendly matches are not on the ladder at all. DESIGN.md: rank "moves only on
+ * staked matches", which is what keeps it something you had to pay to lose.
+ */
+async function moveRanks(
+  db: Database,
+  record: MatchRecord,
+  first: string,
+  second: string,
+  /** The outcome from `first`'s side. `second` gets the opposite. */
+  outcome: "win" | "draw",
+  now: number,
+): Promise<void> {
+  if (record.stake <= 0) return;
+  try {
+    const [a, b] = await Promise.all([playerOf(db, first), playerOf(db, second)]);
+
+    const firstDelta = move({
+      mine: a.rank, theirs: b.rank, played: a.staked, outcome,
+    });
+    const secondDelta = move({
+      mine: b.rank,
+      theirs: a.rank,
+      played: b.staked,
+      outcome: outcome === "draw" ? "draw" : "loss",
+    });
+
+    await recordStaked(db, first, firstDelta, now);
+    await recordStaked(db, second, secondDelta, now);
+  } catch (error) {
+    console.error(`[settle] ${record.id} was recorded but its ranks did not move:`, error);
+  }
 }
 
 /** Which channel a result belongs in, and what it says. */

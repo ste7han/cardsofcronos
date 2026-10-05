@@ -9,6 +9,7 @@
 // be tempted to is a query and nothing else.
 
 import { fnv1a } from "@/lib/fnv";
+import { FLOOR, START } from "@/lib/elo";
 import type { Network } from "@/lib/links";
 import type { MatchMode, MatchRecord } from "@/engine/record";
 import { TURN_CLOCK } from "@/engine/record";
@@ -549,6 +550,43 @@ export async function addResult(
        ON CONFLICT (wallet) DO UPDATE SET ${column} = ${column} + 1, seen_at = excluded.seen_at`,
     )
     .bind(wallet, now, now)
+    .run();
+}
+
+/**
+ * Move a rank by a staked match, and count the match it rests on.
+ *
+ * ── A DELTA AND NOT A NEW VALUE ──────────────────────────────────────────────
+ *
+ * `rank = rank + ?` rather than `rank = ?`. The delta was worked out from the
+ * ranks as they stood before this match, and two matches finishing seconds
+ * apart would otherwise have the second write throw away the first: it would
+ * carry a number computed before the first one existed. Added instead, both
+ * count, which is also what Elo means by path-dependent.
+ *
+ * The floor is applied in SQL for the same reason — MAX() against the value
+ * being written, not against a value read a moment ago.
+ *
+ * An upsert, because a wallet that has never been seen by any other route still
+ * has to end up with a row. A new row starts from the opening rank and takes
+ * the delta from there.
+ */
+export async function recordStaked(
+  db: Database,
+  wallet: string,
+  delta: number,
+  now: number,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO players (wallet, rank, staked, created_at, seen_at)
+         VALUES (?, MAX(?, ? + ?), 1, ?, ?)
+       ON CONFLICT (wallet) DO UPDATE
+         SET rank = MAX(?, rank + ?),
+             staked = staked + 1,
+             seen_at = excluded.seen_at`,
+    )
+    .bind(wallet, FLOOR, START, delta, now, now, FLOOR, delta)
     .run();
 }
 

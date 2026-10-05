@@ -22,6 +22,7 @@ import { CARDS } from "@/data/cards";
 import { MAX_PER_TX, MINT_PRICE_CRO, STREAMS } from "@/lib/revenue";
 import { MARKETING_COST, RULES, SECTORS, TURN_ACTION_COST } from "@/engine/types";
 import { PULL_WEIGHTS } from "@/engine/draw";
+import { FLOOR, K_PLACING, K_SETTLED, SETTLED_AFTER, START } from "@/lib/elo";
 
 const DESIGN = readFileSync("DESIGN.md", "utf8");
 
@@ -133,5 +134,24 @@ describe("the design document still describes this game", () => {
       stream.shares.map((share) => `${share.to}:${share.percent}`).join(","),
     );
     expect(new Set(shapes).size, "the streams no longer divide the same way").toBe(1);
+  });
+});
+
+// The ladder. Added when Elo was finally built, because the document had
+// described a rank for a month that no line of code moved — and a figure in
+// prose beside a figure in code is the pairing this file exists for.
+describe("the rank", () => {
+  it("quotes where everybody starts", () => {
+    expect(DESIGN).toContain(`starts at ${START}`);
+  });
+
+  it("quotes both K-factors and the match count they switch on", () => {
+    expect(DESIGN).toContain(
+      `**K is ${K_PLACING} while a rank is being placed and ${K_SETTLED} once it rests on ${SETTLED_AFTER} staked`,
+    );
+  });
+
+  it("quotes the floor", () => {
+    expect(DESIGN).toContain(`never falls below ${FLOOR}`);
   });
 });

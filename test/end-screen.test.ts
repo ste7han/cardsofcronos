@@ -23,6 +23,13 @@ const board = readFileSync(
   "utf8",
 );
 
+/** Just the settlement function, which is where every one of these sentences is. */
+function settlementOf(source: string): string {
+  const from = source.indexOf("function settlement(");
+  expect(from).toBeGreaterThan(-1);
+  return source.slice(from, source.indexOf("\n}", from));
+}
+
 describe("the end of a match", () => {
   it("reads the stake off the match instead of assuming one", () => {
     // The whole of the bug: a sentence that could not be wrong because it was
@@ -32,10 +39,18 @@ describe("the end of a match", () => {
   });
 
   it("does not call a staked match friendly", () => {
-    // The literal sentence that was shown to somebody who had just lost CRO.
-    expect(screen).not.toContain("A friendly match. Nothing was staked and nothing moved —");
-    // Friendly still has to be said when it is true.
-    expect(screen).toContain("A friendly match. Nothing was staked and nothing moved.");
+    // The bug was never the wording — it was that the wording was
+    // unconditional. So this checks where the sentence lives, not whether it
+    // exists: it has to sit behind the stake test and nowhere else.
+    // Scoped to the function, because the header comment quotes the old
+    // sentence to explain it — and a test that reads its own file's prose is a
+    // test that passes or fails on documentation.
+    const body = settlementOf(screen);
+    const friendly = body.indexOf("A friendly match.");
+    expect(friendly).toBeGreaterThan(-1);
+    expect(body.indexOf("if (stake <= 0)")).toBeLessThan(friendly);
+    // Said once, so there is no second copy outside the branch.
+    expect(body.split("A friendly match.").length - 1).toBe(1);
   });
 
   it("answers all four endings", () => {
@@ -61,23 +76,33 @@ describe("the end of a match", () => {
     expect(screen).toMatch(/nothing to claim/i);
   });
 
-  it("claims nothing about a rank, because nothing moves one", () => {
-    // players.rank is DEFAULT 1000 and no statement in the repo writes it —
-    // Elo is designed in DESIGN.md and not built. The old sentence implied a
-    // staked match touches a rank.
-    expect(screen).not.toMatch(/touch(es)? a rank/i);
+  it("says the rank moved on a staked match, and not on a friendly one", () => {
+    // This said nothing about a rank for exactly one commit, because nothing
+    // wrote players.rank. lib/elo.ts exists now, so the sentence is back — and
+    // the friendly branch has to keep denying it, which is the half that makes
+    // the staked claim mean anything.
+    expect(screen).toMatch(/your rank moved/i);
+    expect(screen).toMatch(/does not touch\s*" \+\s*"your rank|does not touch your rank/i);
+  });
+
+  it("quotes no rank number, because none is stored per match", () => {
+    // The delta is worked out in lib/finish.ts and kept nowhere. A figure here
+    // would be either a second calculation that can disagree with the first or
+    // one invented for the screen.
+    expect(screen).not.toMatch(/\brank\b[^\n]*\$\{/);
   });
 });
 
-describe("the rank the end screen is right not to mention", () => {
-  it("is still never written anywhere", () => {
-    // The guard on the line above. If Elo is implemented later this fails, and
-    // the end screen is then exactly the place that should say so.
+describe("the ladder the end screen now points at", () => {
+  it("is actually written somewhere", () => {
+    // The mirror of the test above, and the reason the sentence came back. If
+    // Elo is ever taken out again, this fails and the screen has to stop
+    // claiming it.
     const store = readFileSync(new URL("../lib/store.ts", import.meta.url), "utf8");
     const code = store
       .split("\n")
       .filter((line) => !line.trimStart().startsWith("*") && !line.trimStart().startsWith("//"))
       .join("\n");
-    expect(code).not.toMatch(/SET\s+rank\s*=/i);
+    expect(code).toMatch(/SET\s+rank\s*=/i);
   });
 });

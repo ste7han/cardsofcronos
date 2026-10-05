@@ -15,6 +15,7 @@ import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { byDeck, history, tally, type DeckRow, type MatchOutcome } from "@/lib/history";
 import { LINKABLE, TELEGRAM_BOT, type Network } from "@/lib/links";
+import { SETTLED_AFTER } from "@/lib/elo";
 import { Claim } from "@/components/Claim";
 import { CardsSummary } from "@/components/YourCards";
 import { HOLDER_TIERS, nextTier, tierFor } from "@/data/holder-tiers";
@@ -26,7 +27,8 @@ import { useCallback, useEffect, useState } from "react";
 
 /** Settled in DESIGN.md, and the same numbers the ladder will start from. */
 const RANK_AT_FIRST_LOGIN = 1000;
-const TIERS_OPEN_AFTER = 10;
+// One of it, in lib/elo.ts: the same ten the K-factor switches on and the
+// players table counts. It was written out here as well.
 
 const short = (wallet: string) => `${wallet.slice(0, 4)}…${wallet.slice(-4)}`;
 
@@ -153,7 +155,7 @@ export function Profile() {
           />
           <Figure
             label="STAKED MATCHES"
-            value={`${standing?.staked ?? 0} / ${TIERS_OPEN_AFTER}`}
+            value={`${standing?.staked ?? 0} / ${SETTLED_AFTER}`}
             note="Top tiers open at ten"
           />
           <Figure

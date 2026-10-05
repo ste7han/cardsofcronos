@@ -506,6 +506,33 @@ recomputed, because Elo is path-dependent: it is the order results arrived in,
 not the set of them, and a number you can only rebuild by replaying every match
 in sequence is a number you should be storing.
 
+It was designed here and not built for a month: nothing wrote `players.rank` and
+nothing incremented `players.staked`, so every player sat on 1000 while the
+lobby printed it beside their name and the profile read `0 / 10` for ever. A
+number on a screen that cannot change is worse than no number, because it
+invites people to play for it. `lib/elo.ts` has it now.
+
+**K is 32 while a rank is being placed and 16 once it rests on 10 staked
+matches.** Ten is not a new figure — it is what the players table already counts
+and the profile already shows — so a rank becomes settled at the point the game
+already called settled. One K would be wrong at both ends: 16 takes a dozen
+matches to place somebody plainly stronger, and 32 keeps a long-established rank
+swinging on a single result.
+
+**A draw is half a win**, which is Elo's own answer. It moves both ranks even
+though a drawn staked match pays nobody — the escrow has no draw — because the
+pot and the ladder are different questions, and a draw against somebody far
+above you is a real result.
+
+**A rank never falls below 100.** Elo has no natural floor, and a number that
+can reach zero becomes an identity somebody keeps rather than a position they
+climb out of. The ladder is for ordering, not for punishing.
+
+**Both sides' moves are worked out from the ranks as they stood before the
+match**, and written as a change rather than a new value. Two matches settling
+seconds apart then both count, instead of the later write carrying a number
+computed before the earlier one existed.
+
 **When a correspondence clock runs out, the turn ends and the match does not.**
 Forfeiting would mean a bad connection costs a stake. Ending the turn is
 punishment enough on its own: the whole budget for that turn is lost and the
