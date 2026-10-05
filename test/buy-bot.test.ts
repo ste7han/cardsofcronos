@@ -16,7 +16,8 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { TELEGRAM_BUY_FLOOR_USD, bigEnoughToTell, type Log } from "@/lib/feed";
-import { REFRESH_AFTER, croUsd, storedCroUsd } from "@/lib/cro-price";
+import { REFRESH_AFTER, WCRO, croUsd, storedCroUsd } from "@/lib/cro-price";
+import { selector } from "@/lib/evm-tx";
 import type { Database, Statement } from "@/lib/store";
 
 const T0 = 1_700_000_000_000;
@@ -67,16 +68,37 @@ function fakeDb(start: { microUsd: number; at: number } | null) {
   return { db, writes };
 }
 
-/** Answers CoinGecko's shape, or refuses. */
-function catchPrice(answer: { ok: boolean; body?: unknown }) {
+/**
+ * Answers the pair's two eth_calls, or refuses.
+ *
+ * Stubbing fetch rather than the rpc helper: these go out as JSON-RPC over the
+ * same fetch everything else uses, so this checks what would actually be asked.
+ */
+function catchPrice(answer: {
+  ok: boolean;
+  /** Reserves as [token0, token1]. */
+  reserves?: [bigint, bigint];
+  /** Which address token0() reports. Defaults to WCRO. */
+  token0?: string;
+}) {
   const asked: string[] = [];
-  vi.stubGlobal("fetch", async (url: string) => {
-    asked.push(url);
-    if (!answer.ok) throw new Error("the network is gone");
-    return { ok: true, json: async () => answer.body } as unknown as Response;
+  vi.stubGlobal("fetch", async (_url: string, init: { body: string }) => {
+    if (!answer.ok) throw new Error("the chain is gone");
+    const call = JSON.parse(init.body) as { params: [{ data: string }] };
+    const data = call.params[0].data;
+    asked.push(data.slice(0, 10));
+    const [r0, r1] = answer.reserves ?? [0n, 0n];
+    // getReserves is three words; only the first two are read.
+    const result = data.startsWith(selector("getReserves()"))
+      ? "0x" + r0.toString(16).padStart(64, "0") + r1.toString(16).padStart(64, "0") + "0".repeat(64)
+      : "0x" + (answer.token0 ?? WCRO).replace(/^0x/, "").padStart(64, "0");
+    return { ok: true, json: async () => ({ jsonrpc: "2.0", id: 1, result }) } as unknown as Response;
   });
   return asked;
 }
+
+/** 46M WCRO against 3.19M USDC, which is 0.069 dollars a CRO. */
+const REAL: [bigint, bigint] = [46_000_000n * 10n ** 18n, 3_174_000n * 10n ** 6n];
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -113,10 +135,8 @@ describe("the floor", () => {
 });
 
 describe("what a CRO is worth", () => {
-  const body = { "crypto-com-chain": { usd: 0.0834 } };
-
   it("uses the kept price while it is fresh, and asks nobody", async () => {
-    const asked = catchPrice({ ok: true, body });
+    const asked = catchPrice({ ok: true, reserves: REAL });
     const { db } = fakeDb({ microUsd: 90_000, at: T0 });
     const priced = await croUsd(db, T0 + REFRESH_AFTER - 1);
     expect(priced?.usd).toBe(0.09);
@@ -124,19 +144,29 @@ describe("what a CRO is worth", () => {
     expect(asked).toEqual([]);
   });
 
-  it("asks again once the kept one is stale, and keeps the answer", async () => {
-    const asked = catchPrice({ ok: true, body });
+  it("reads the pair once the kept one is stale, and keeps the answer", async () => {
+    const asked = catchPrice({ ok: true, reserves: REAL });
     const { db, writes } = fakeDb({ microUsd: 90_000, at: T0 });
     const priced = await croUsd(db, T0 + REFRESH_AFTER + 1);
-    expect(priced?.usd).toBe(0.0834);
-    expect(priced?.from).toBe("api");
-    expect(asked).toHaveLength(1);
-    // Kept as an integer, because money through a float twice has a rounding
-    // story.
-    expect(writes).toEqual([{ microUsd: 83_400, at: T0 + REFRESH_AFTER + 1 }]);
+    expect(priced?.from).toBe("chain");
+    expect(priced?.usd).toBeCloseTo(0.069, 3);
+    // Both calls: the reserves, and which side of the pair is CRO.
+    expect(asked).toHaveLength(2);
+    expect(writes).toHaveLength(1);
+    expect(writes[0]!.microUsd).toBeCloseTo(69_000, -3);
   });
 
-  it("falls back to the kept price when the fetch fails", async () => {
+  it("does not care which side of the pair CRO is on", async () => {
+    // token0() is read rather than assumed, and that is the difference between
+    // a price and its reciprocal: the wrong way round turns 0.069 into 14.5,
+    // which would let every dust buy through while looking like a number.
+    catchPrice({ ok: true, reserves: [REAL[1], REAL[0]], token0: "0x" + "9".repeat(40) });
+    const { db } = fakeDb(null);
+    const priced = await croUsd(db, T0);
+    expect(priced?.usd).toBeCloseTo(0.069, 3);
+  });
+
+  it("falls back to the kept price when the chain cannot be reached", async () => {
     // A floor against an hour-old CRO price answers "was that five dollars"
     // just as well. Having no floor at all does not.
     catchPrice({ ok: false });
@@ -152,22 +182,14 @@ describe("what a CRO is worth", () => {
     expect(await croUsd(db, T0)).toBeNull();
   });
 
-  it("refuses a price of zero rather than storing it", async () => {
+  it("refuses a pair that holds nothing, rather than storing a zero", async () => {
     // Zero is not a price. Stored, it would be the floor applied against
     // nothing — every buy through, or none, depending on which way the
     // comparison fell.
-    catchPrice({ ok: true, body: { "crypto-com-chain": { usd: 0 } } });
+    catchPrice({ ok: true, reserves: [0n, 0n] });
     const { db, writes } = fakeDb(null);
     expect(await croUsd(db, T0)).toBeNull();
     expect(writes).toEqual([]);
-  });
-
-  it("refuses an answer with no price in it", async () => {
-    // A missing field is undefined, which becomes NaN in the comparison — and
-    // NaN compares false against everything, so every buy would be hidden.
-    catchPrice({ ok: true, body: { ethereum: { usd: 3000 } } });
-    const { db } = fakeDb(null);
-    expect(await croUsd(db, T0)).toBeNull();
   });
 
   it("reads back whatever is kept, however old", async () => {
@@ -203,7 +225,7 @@ describe("which feeds the floor applies to", () => {
   it("reads the price once for the run and not once per buy", () => {
     // Per buy would be a public API called as many times as there were swaps in
     // a minute, which is how a free endpoint starts refusing.
-    expect(feed).toContain("const priced = await croUsd(db, now);");
+    expect(feed).toContain("const priced = await croUsd(db, now, secrets.rpc);");
     expect(feed.split("await croUsd(").length - 1).toBe(1);
   });
 });

@@ -722,7 +722,7 @@ export async function runFeeds(
 
   // Once for the run, and only used by the buys mirror. Stale is fine and
   // absent is survivable — see lib/cro-price.ts.
-  const priced = await croUsd(db, now);
+  const priced = await croUsd(db, now, secrets.rpc);
   const croPrice = priced?.usd ?? null;
 
   const feeds: RanFeed[] = [];
