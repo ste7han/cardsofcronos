@@ -59,3 +59,17 @@ anybody who can run `ps`.
 - **29 September 2026** — first reveal, tokens 1…1325, CID
   `bafybeicwugnskyf5ehtwjjhs3xxaowppncieydnkrbvhm4ur4su35vlp2y`, set on chain in
   `0xc071d1c05b8ff6afcfe5e8dd8cab3aab8bc224ec87146ef7710580cc7cac555f`.
+- **5 October 2026** — second reveal, tokens 1…1629 (304 more), 3974 still face
+  down, CID `bafybeib4jpmokgckhq3fbd46fwfkdchqtye3us4j6nhmavsev5pkuxz7d4`, set on
+  chain in
+  `0x5a14a140a674435bc307f410f106b75fc16f56fe243e7789d35f658809d6b353`. The
+  boundary was read back from the new folder through an independent gateway
+  before and after: 1629 face up, 1630 the card back.
+
+## It needs doing again
+
+Every hundred cards sold is a hundred owners looking at a card back. There is
+nothing automatic about it — `nextTokenId` moving is the only signal, and nothing
+watches that — so the two commands above are a thing somebody has to remember.
+The CID has to be carried by hand from the first to the second, which is exactly
+where a typo goes.

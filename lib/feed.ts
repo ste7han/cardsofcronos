@@ -50,6 +50,7 @@ import { LOG_RPCS, PUBLIC_RPCS, rpc } from "@/lib/cronos";
 import { selector, topicOf, word } from "@/lib/evm-tx";
 import { post, type Embed } from "@/lib/discord";
 import { mirror } from "@/lib/telegram-feed";
+import { croUsd } from "@/lib/cro-price";
 import { CROCARD_SUPPLY } from "@/data/holder-tiers";
 import { bar, from, grouped, share, sizeOf } from "@/lib/flair";
 import { recordBurns } from "@/lib/splitter";
@@ -249,7 +250,19 @@ async function runOne(
     /** Turns the logs into messages. Empty means there was nothing worth saying. */
     say: (logs: Log[], rpcs: readonly string[]) => Promise<Embed[]>;
     /** Where to mirror this, in Telegram. Absent for feeds that are not. */
-    telegram?: { botToken?: string; chat?: string };
+    telegram?: {
+      botToken?: string;
+      chat?: string;
+      /**
+       * Which logs are worth a line in the channel. Everything, when absent.
+       *
+       * On the LOGS and not on the finished messages, which is what lets the
+       * channel have a floor while Discord keeps showing every buy: the same
+       * renderer runs twice over two sets of logs, so there is no second way of
+       * describing a buy that could drift from the first.
+       */
+      only?: (log: Log) => boolean;
+    };
   },
 ): Promise<RanFeed> {
   const { feed, webhook, address, topics, logRpcs, head, now, say } = opts;
@@ -310,7 +323,19 @@ async function runOne(
   // line in a channel — where holding them back until both succeeded would
   // repost the Discord line every run until Telegram came back. A missing line
   // beats a duplicated one. `mirror` never throws.
-  await mirror(opts.telegram?.botToken, opts.telegram?.chat, embeds);
+  //
+  // A feed with a floor is rendered a second time over the logs that cleared
+  // it. That costs one more `say` on the runs that have something to post, and
+  // buys the channel its own threshold without Discord losing a line or a
+  // second description of a buy existing anywhere.
+  if (opts.telegram?.only === undefined) {
+    await mirror(opts.telegram?.botToken, opts.telegram?.chat, embeds);
+  } else if (opts.telegram.botToken && opts.telegram.chat) {
+    const worth = fresh.filter(opts.telegram.only);
+    if (worth.length > 0) {
+      await mirror(opts.telegram.botToken, opts.telegram.chat, await say(worth, opts.rpcs));
+    }
+  }
 
   return { feed, from, to, found: fresh.length, posted: embeds.length };
 }
@@ -610,6 +635,39 @@ async function runOwners(
  * free RPC, started at the same moment, is three ways to be rate-limited into
  * looking like a quiet minute.
  */
+/**
+ * The smallest buy worth telling the Telegram group about, in dollars.
+ *
+ * Set by the maker. It exists because there is no buy bot for Cronos on
+ * Telegram and this bot is becoming one — and a buy bot that reports every
+ * two-cent swap is a channel people mute, which is the same as not having one.
+ *
+ * Dollars and not CRO, which is the whole reason lib/cro-price.ts exists. A CRO
+ * floor would mean a threshold that halves in real terms every time CRO
+ * doubles, and nobody would notice until the channel filled with dust.
+ *
+ * Discord is deliberately NOT filtered. Its buys channel has shown every buy
+ * since it was built, people read it that way, and quietly raising a floor
+ * under it would be a change nobody asked for.
+ */
+export const TELEGRAM_BUY_FLOOR_USD = 5;
+
+/**
+ * Was that buy worth a line, given what a CRO is worth.
+ *
+ * `null` for the price means there has never been one — one window on one
+ * deployment — and everything passes. A buy feed that goes silent looks broken;
+ * showing one small buy is the cheaper mistake, and lib/cro-price.ts has
+ * already said so in the log.
+ */
+export function bigEnoughToTell(log: Log, croUsdPrice: number | null): boolean {
+  if (croUsdPrice === null) return true;
+  // The CRO that went in is the first word of a Swap's data, the same word
+  // sayBuys reads to price it.
+  const cro = Number(wordAt(log.data, 0)) / 1e18;
+  return cro * croUsdPrice >= TELEGRAM_BUY_FLOOR_USD;
+}
+
 export async function runFeeds(
   db: Database,
   secrets: {
@@ -662,6 +720,11 @@ export async function runFeeds(
     };
   }
 
+  // Once for the run, and only used by the buys mirror. Stale is fine and
+  // absent is survivable — see lib/cro-price.ts.
+  const priced = await croUsd(db, now);
+  const croPrice = priced?.usd ?? null;
+
   const feeds: RanFeed[] = [];
   const common = { rpcs, logRpcs, head, now };
 
@@ -685,6 +748,13 @@ export async function runFeeds(
       address: POOL,
       topics: [SWAP],
       say: sayBuys,
+      // The buy bot. There is no buy bot for Cronos on Telegram, so this is
+      // one — above a floor, because every swap is a channel people mute.
+      telegram: {
+        botToken: secrets.telegramBotToken,
+        chat: secrets.telegramChat,
+        only: (log) => bigEnoughToTell(log, croPrice),
+      },
     }),
   );
 

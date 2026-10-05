@@ -301,6 +301,27 @@ CREATE TABLE IF NOT EXISTS cursors (
   at    INTEGER NOT NULL
 );
 
+-- The last price we managed to read, per symbol.
+--
+-- The first USD in this schema, and it is here for one reason: the Telegram buy
+-- feed has a floor in dollars and a buy is denominated in CRO. Everything else
+-- in this project is priced in CRO or in $CROCARD on purpose, so this is a
+-- conversion and never a unit anything is stored in.
+--
+-- Stored because a Worker isolate lives for one request: without it, every run
+-- that had a buy to filter would ask an external API, and the run that asked
+-- while the API was down would have no floor at all. The last known price is a
+-- better answer than no answer — CRO does not move enough in an hour to change
+-- whether a buy was five dollars.
+CREATE TABLE IF NOT EXISTS prices (
+  symbol    TEXT PRIMARY KEY,
+  -- USD times a million, as an integer. 0.085 is 85000. A float in SQLite is a
+  -- float, and money that has been through a float twice is money with a
+  -- rounding story.
+  micro_usd INTEGER NOT NULL,
+  at        INTEGER NOT NULL
+);
+
 -- Who holds $CROCARD and how much, kept up to date rather than rediscovered.
 --
 -- An ERC20 has no list of its holders. The balances are a mapping and a mapping
