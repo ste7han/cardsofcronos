@@ -708,7 +708,7 @@ export function MatchBoard({ id }: { id: string }) {
       />
 
       {view.finished && (
-        <EndScreen view={view} opponent={answer.opponent} />
+        <EndScreen view={view} opponent={answer.opponent} stake={answer.stake} />
       )}
 
       {problem && (
