@@ -70,10 +70,13 @@ describe("the end of a match", () => {
     expect(screen).toMatch(/thirty days/i);
   });
 
-  it("tells a winner there is nothing to claim", () => {
-    // lib/finish.ts pushes the pot with the publisher key. A winner who thinks
-    // they have to claim goes looking for a button that is not there.
-    expect(screen).toMatch(/nothing to claim/i);
+  it("tells a winner the game collects it for them", () => {
+    // And says it about the GAME and not the contract. Settling and paying are
+    // two calls and only the first was ever made, so "the contract sends it"
+    // was false for a day while twenty CRO sat in the escrow. lib/finish.ts
+    // claims it now and the clocks cron sweeps for any it missed.
+    expect(settlementOf(screen)).toMatch(/claims it for you/i);
+    expect(settlementOf(screen)).not.toMatch(/the contract sends it/i);
   });
 
   it("says the rank moved on a staked match, and not on a friendly one", () => {

@@ -16,7 +16,7 @@ import { formatMC } from "@/engine/format";
 import { RULES } from "@/engine/types";
 import { post } from "@/lib/discord";
 import { from, versus } from "@/lib/flair";
-import { settleMatch } from "@/lib/escrow";
+import { claimMatch, settleMatch } from "@/lib/escrow";
 import { addResult, finishMatch, playerOf, recordStaked, type Database } from "@/lib/store";
 import { move } from "@/lib/elo";
 
@@ -77,6 +77,19 @@ export async function settle(
       }));
       if (sent.tx === null) {
         console.error(`[settle] ${record.id} finished but its pot was not settled: ${sent.why}`);
+      } else {
+        // And paid. These are two calls in the contract — settle names the
+        // winner, claim moves the money, and the cut is worked out at claim
+        // time so that holding more in between counts — and nothing here ever
+        // made the second one. The first ranked match ever played ended
+        // `settled` with `paid: false`: twenty CRO in the escrow with a
+        // winner's name on it and nobody to press the button.
+        //
+        // Not fatal when it fails, and it does not have to be: the sweep in
+        // /api/cron/clocks tries again every minute, and after thirty days
+        // either player can walk away with their own deposit. What must not
+        // happen is what did — nobody trying at all.
+        await payOut(db, record, secrets);
       }
     }
   }
@@ -101,6 +114,56 @@ export async function settle(
     // match. The result is written, the records are updated and the pot is
     // handled; this is the least important thing in the function.
   });
+}
+
+/**
+ * Claim a settled pot, once.
+ *
+ * The marker is in feed_posted, the table the Discord announcements use for the
+ * same job, so a claim that has gone through is not attempted every minute for
+ * the next thirty days. Written only after the transaction is sent — a failed
+ * attempt has to stay claimable, which is the whole point of the sweep.
+ *
+ * Exported so the sweep in /api/cron/clocks uses this and not its own copy.
+ */
+export async function payOut(
+  db: Database,
+  record: MatchRecord,
+  secrets: { publisherKey?: string; rpc?: string },
+): Promise<{ tx: string | null; why?: string }> {
+  if (!record.wager) return { tx: null, why: "no wager" };
+
+  const marker = `claimed:${record.id}`;
+  const done = await db
+    .prepare(`SELECT id FROM feed_posted WHERE id = ?`)
+    .bind(marker)
+    .first<{ id: string }>();
+  if (done !== null) return { tx: null, why: "already claimed" };
+
+  const paid = await claimMatch(record.wager, secrets).catch((error: unknown) => ({
+    tx: null as string | null,
+    why: error instanceof Error ? error.message : "the claim could not be sent",
+  }));
+
+  if (paid.tx === null) {
+    // "already paid" is not a fault: somebody else called claim, which anybody
+    // may do. Marked so the sweep stops asking.
+    if (paid.why === "already paid") {
+      await db
+        .prepare(`INSERT OR IGNORE INTO feed_posted (id, at) VALUES (?, ?)`)
+        .bind(marker, Date.now())
+        .run();
+      return paid;
+    }
+    console.error(`[settle] ${record.id} was settled but its pot was not claimed: ${paid.why}`);
+    return paid;
+  }
+
+  await db
+    .prepare(`INSERT OR IGNORE INTO feed_posted (id, at) VALUES (?, ?)`)
+    .bind(marker, Date.now())
+    .run();
+  return paid;
 }
 
 /**

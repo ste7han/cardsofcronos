@@ -27,10 +27,18 @@
 import { db, env } from "@/lib/api";
 import { CARDS } from "@/data/cards";
 import { catchUp, stateOf } from "@/engine/record";
-import { matchesOnTheClock, saveMoves } from "@/lib/store";
-import { settle } from "@/lib/finish";
+import { matchesOnTheClock, potsToPay, saveMoves } from "@/lib/store";
+import { payOut, settle } from "@/lib/finish";
 import { tellItIsTheirTurn } from "@/lib/notify";
 import { INDEX } from "@/lib/set";
+
+/**
+ * The window the contract gives either player to walk away with their own
+ * deposit. Past it the escrow's own exit applies and a claim is asking the
+ * chain about something it can no longer change. ABANDON_AFTER in
+ * contracts/MatchEscrow.sol.
+ */
+const WALK_AWAY_AFTER = 30 * 86_400_000;
 
 export const dynamic = "force-dynamic";
 
@@ -95,5 +103,26 @@ export async function POST(request: Request) {
     told += 1;
   }
 
-  return Response.json({ looked: due.length, advanced, finished, told });
+  // ── AND THE POTS NOBODY CLAIMED ────────────────────────────────────────────
+  //
+  // Settling a match and paying it out are two calls, and for a month only the
+  // first was made: the first ranked match ever played ended `settled` with
+  // `paid: false` and twenty CRO sat in the escrow with a winner's name on it.
+  // lib/finish.ts claims it now at the moment of settling, and one attempt is
+  // not an attempt — a bad RPC at that second would put it right back where it
+  // was, silently, with nobody looking.
+  //
+  // Anybody may call claim and it always pays the winner, so retrying costs
+  // gas and can take nothing.
+  const pots = await potsToPay(db(), now, WALK_AWAY_AFTER);
+  let claimed = 0;
+  for (const record of pots) {
+    const paid = await payOut(db(), record, {
+      publisherKey: env().PUBLISHER_KEY,
+      rpc: env().CRONOS_RPC,
+    });
+    if (paid.tx !== null) claimed += 1;
+  }
+
+  return Response.json({ looked: due.length, advanced, finished, told, pots: pots.length, claimed });
 }

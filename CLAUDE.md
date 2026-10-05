@@ -190,6 +190,26 @@ the apex were two sessions and landing on the other read as being signed out.
 a third domain without a redirect fails there instead of becoming another
 silently-wrong copy.
 
+**The first of two calls succeeding is not the outcome.** `contracts/MatchEscrow.sol`
+splits winning into `settle`, which names the winner, and `claim`, which moves
+the money — deliberately, because the cut depends on what the winner holds at
+claim time. Nothing in this repo ever called the second one. The first ranked
+match ever played ended `settled` with `paid: false`: twenty CRO in the escrow
+with a winner's name on it, no error anywhere, and every log reading clean
+because settling had in fact worked. What finds this is checking the state you
+wanted — `paid` — and never the call you made. And one attempt is not an
+attempt: `/api/cron/clocks` sweeps for pots that stopped halfway, because a bad
+RPC in the one second it was tried puts it straight back with nobody looking.
+
+**A number on a screen that nothing can change invites people to play for it.**
+`players.rank` was `DEFAULT 1000` and no statement wrote it; `players.staked`
+was never incremented, so the profile read `0 / 10` for ever. Both were
+designed — DESIGN.md had the paragraph, the schema had a column comment
+explaining why Elo must be stored rather than recomputed — and neither was
+built, while the lobby printed the rank beside every player's name. A feature
+that exists as far as the screen is concerned is a feature people make
+decisions about. Either build it or do not show it.
+
 ---
 
 ## Working agreements

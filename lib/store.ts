@@ -254,6 +254,43 @@ export async function matchesOnTheClock(
 }
 
 /**
+ * Finished staked matches whose pot may still be sitting in the escrow.
+ *
+ * Settling a match and paying it out are two calls in
+ * contracts/MatchEscrow.sol, and for a month only the first was ever made — so
+ * this exists to find the ones that stopped halfway. A match is off this list
+ * once a `claimed:<id>` marker is filed against it, which is what keeps the
+ * work proportional to what is actually unpaid rather than to how many matches
+ * have ever been played.
+ *
+ * Capped, and only inside the thirty days the contract gives either player to
+ * walk away with their own deposit. After that the escrow's own exit applies
+ * and this would be asking the chain about something it can no longer change.
+ */
+export async function potsToPay(
+  db: Database,
+  now: number,
+  withinMs: number,
+  limit = 10,
+): Promise<MatchRecord[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT m.* FROM matches m
+        LEFT JOIN feed_posted f ON f.id = 'claimed:' || m.id
+        WHERE m.finished_at IS NOT NULL
+          AND m.stake > 0
+          AND m.wager IS NOT NULL
+          AND m.finished_at >= ?
+          AND f.id IS NULL
+        ORDER BY m.finished_at ASC
+        LIMIT ?`,
+    )
+    .bind(now - withinMs, limit)
+    .all<MatchRow>();
+  return results.map(toRecord);
+}
+
+/**
  * Matches anybody may look in on, newest first.
  *
  * Everybody's, not one player's — this is what makes a spectator page findable

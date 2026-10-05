@@ -152,6 +152,54 @@ export async function settleMatch(
   };
 }
 
+/**
+ * Pay a settled pot out to its winner.
+ *
+ * ── WHY THIS IS A SECOND TRANSACTION ─────────────────────────────────────────
+ *
+ * `settle` names the winner and `claim` pays. They are separate in the contract
+ * on purpose — the cut depends on what the winner holds and is worked out at
+ * claim time, so holding more between the two counts — and nothing in this
+ * codebase ever called the second one. The first ranked match ever played ended
+ * `settled` with `paid: false`, and twenty CRO sat in the escrow with a winner's
+ * name on it and no way for them to know.
+ *
+ * Anybody may call claim and it always pays the winner, so this spends the
+ * publisher's gas and can take nothing. That is also why it is safe to retry:
+ * a second attempt on a paid pot reverts with AlreadyPaid and changes nothing.
+ */
+export async function claimMatch(
+  matchId: string,
+  secrets: { publisherKey?: string; rpc?: string },
+): Promise<{ tx: string | null; why?: string }> {
+  const escrow = CONTRACTS.escrow;
+  if (escrow === null) return { tx: null, why: "no escrow contract" };
+  if (!secrets.publisherKey) return { tx: null, why: "no key to claim with" };
+
+  const digits = secrets.publisherKey.replace(/^0x/, "");
+  if (digits.length !== 64) return { tx: null, why: "PUBLISHER_KEY is not a private key" };
+
+  // Read first, for the reason settleMatch reads first: a pot that is not
+  // settled, or is already paid, would be a reverted transaction and a log line
+  // that reads like a fault.
+  const wager = await wagerFor(matchId, secrets.rpc);
+  if (wager === null) return { tx: null, why: "no such wager" };
+  if (wager.state !== "settled") {
+    return { tx: null, why: `nothing to claim: the wager is ${wager.state}` };
+  }
+  if (wager.paid) return { tx: null, why: "already paid" };
+
+  const rpcs = secrets.rpc ? [secrets.rpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
+  return {
+    tx: await send(
+      rpcs,
+      hexToBytes(secrets.publisherKey),
+      escrow,
+      selector("claim(bytes32)") + wagerId(matchId).slice(2),
+    ),
+  };
+}
+
 /** Which wallet the settling key belongs to, or null. Never the key itself. */
 export function settlerOf(publisherKey: string | undefined): string | null {
   if (!publisherKey) return null;

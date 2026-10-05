@@ -28,7 +28,18 @@
 // does, and nothing wrote players.rank at all. A screen is not the place to
 // announce a feature that does not exist.
 //
-// lib/elo.ts exists now, so the sentence is back and true. What it does not do
+// lib/elo.ts exists now, so the sentence is back and true.
+//
+// ── AND IT SAID THE WRONG THING ABOUT CLAIMING, FOR A DAY ────────────────────
+//
+// This said "the contract sends it, there is nothing to claim", which was not
+// true when it was written: settling a pot and paying it out are two calls in
+// contracts/MatchEscrow.sol and only the first was ever made. The first ranked
+// match ever played ended `settled` with `paid: false`. lib/finish.ts claims it
+// now and /api/cron/clocks sweeps for any it missed, so the sentence is true —
+// but it says what the GAME does rather than what the contract does, because
+// those are not the same thing and it was the gap between them that lost the
+// money for a day. What it does not do
 // is quote a number: the delta is worked out in lib/finish.ts and stored
 // nowhere per match, so printing one here would mean either a second
 // calculation that can disagree with the first or a figure invented for the
@@ -69,8 +80,8 @@ function settlement(stake: number, won: boolean, drawn: boolean, opponent: strin
   if (won) {
     return (
       `${stake} CRO a side. The pot of ${pot} goes to you, less the fee that falls ` +
-      `the more $CROCARD you hold — the contract sends it, there is nothing to claim. ` +
-      `Your rank moved with it.`
+      `the more $CROCARD you hold. The game claims it for you, so there is nothing ` +
+      `for you to press. Your rank moved with it.`
     );
   }
   return (
