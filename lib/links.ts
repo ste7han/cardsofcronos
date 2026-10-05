@@ -60,8 +60,14 @@ export const TELEGRAM_BOT: string | null = "CrocardBot";
  * because both of these are the maker's Telegram and changing one without
  * noticing the other is exactly how a dead link ends up in a footer nobody
  * clicks on their own site.
+ *
+ * A supergroup rather than a broadcast channel, which is why the bot had to be
+ * made an administrator of it to post: a group's members can all write, so
+ * posting is a permission and not the default. Its numeric id is the
+ * TELEGRAM_FEED_CHAT secret — the feeds are sent by id and never by this name,
+ * because whoever runs a group can change the name and cannot change the id.
  */
-export const TELEGRAM_CHANNEL: string | null = null;
+export const TELEGRAM_CHANNEL: string | null = "https://t.me/cardsofcronos";
 
 /**
  * The project's X account. Not the bot, not the maker's own.
