@@ -16,7 +16,8 @@ import { createPortal } from "react-dom";
 
 import { keepProof, signOut } from "@/lib/session";
 import { useSession } from "@/lib/use-session";
-import { connectAndProve, reasonFor } from "@/lib/wallet";
+import { connectAndProve, disconnectWallet, reasonFor } from "@/lib/wallet";
+import { QrConnect } from "@/components/QrConnect";
 
 type Status = "idle" | "asking" | "failed";
 
@@ -53,6 +54,8 @@ export function WalletButton() {
   const [status, setStatus] = useState<Status>("idle");
   const [problem, setProblem] = useState<string | null>(null);
   const [slow, setSlow] = useState(false);
+  /** Whether the QR panel is open. Nothing of WalletConnect loads until it is. */
+  const [qr, setQr] = useState(false);
   const [at, setAt] = useState<{ top: number; right: number } | null>(null);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -99,6 +102,7 @@ export function WalletButton() {
   }, [status]);
 
   async function connect() {
+    setQr(false);
     setStatus("asking");
     setProblem(null);
     setSlow(false);
@@ -166,6 +170,10 @@ export function WalletButton() {
                 type="button"
                 onClick={() => {
                   signOut();
+                  // And hang up the pairing, if the wallet is a phone. Leaving
+                  // it open would mean the next sign-in silently reused a
+                  // session the person thought they had ended.
+                  void disconnectWallet();
                   setOpen(false);
                 }}
                 className="mt-4 w-full border border-line-strong px-3 py-2 text-[10px] tracking-[0.16em] text-muted transition-colors hover:border-dump hover:text-dump"
@@ -188,6 +196,31 @@ export function WalletButton() {
               >
                 {status === "asking" ? "CHECK YOUR WALLET…" : "CONNECT AND SIGN"}
               </button>
+
+              {/* The second way in, for a wallet that lives on a phone.
+                  Deliberately the quieter of the two: most people here have an
+                  extension, and the loud button should be the one most people
+                  want. It loads nothing until it is pressed — the whole
+                  WalletConnect SDK is behind that click. */}
+              {qr ? (
+                <QrConnect
+                  onDone={() => {
+                    setQr(false);
+                    setOpen(false);
+                  }}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProblem(null);
+                    setQr(true);
+                  }}
+                  className="mt-2 w-full border border-line-strong px-3 py-2 text-[10px] tracking-[0.16em] text-muted transition-colors hover:border-pump hover:text-pump"
+                >
+                  USE A PHONE WALLET (QR)
+                </button>
+              )}
               {slow ? (
                 // Not an error: the request is still open and approving it still
                 // works. It is a place to look, which is the one thing a pending

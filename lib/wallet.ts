@@ -8,6 +8,26 @@
 // lot of dependency for one signature, and AppKit talks to this same injected
 // object underneath anyway.
 //
+// ── AND NOW A QR CODE, WHICH IS HALF OF THAT DECISION REVERSED ───────────────
+//
+// A player asked for it: a phone wallet connected to the site on a desktop,
+// which is what WalletConnect is for and what an injected provider cannot do.
+// The argument above was never wrong — it was about paying for a modal nobody
+// had asked for. Somebody has now asked.
+//
+// What is NOT reversed is the rest of it. There is no AppKit, no provider tree
+// and no chain adapter: @walletconnect/ethereum-provider hands back an
+// EIP-1193 object, which is the same shape this file already speaks to, so the
+// whole of the integration is which object `active()` returns. It is imported
+// dynamically, so a desktop with MetaMask downloads none of it.
+//
+// ── THE QR IS RENDERED HERE AND NOWHERE ELSE ─────────────────────────────────
+//
+// A WalletConnect URI carries the symmetric key for the pairing. Handing it to
+// an image service to be drawn would be handing that service the session, so
+// the QR is drawn in the browser from a local library. There is no version of
+// this that is worth one fewer dependency.
+//
 // ── IT SENDS ONE TRANSACTION NOW ─────────────────────────────────────────────
 //
 // This file used to say nothing here sends a transaction, and that when
@@ -58,6 +78,105 @@ export function provider(): Eip1193 | null {
 }
 
 /**
+ * The WalletConnect project this site pairs under.
+ *
+ * In the source and not in an environment variable, for the reason lib/links.ts
+ * gives about the Telegram bot's name: it is public — it ships in the browser
+ * bundle, so anybody who opens the site can read it — it does not change, and
+ * a NEXT_PUBLIC_ variable is inlined at build time, which means a build with it
+ * missing produces a site where the QR silently never appears.
+ *
+ * It is not nothing, though. Somebody else can point their own site at this id
+ * and spend this project's relay quota, so the allowed domains are set to
+ * cardsofcronos.com in the Reown dashboard. That restriction is the protection;
+ * hiding the id was never going to be.
+ *
+ * It is the same project the first dapp used, which is why that dashboard warns
+ * that an AppKit SDK is out of date. Nothing here is AppKit — see the header.
+ */
+export const WALLETCONNECT_PROJECT = "8d7572d8e272d20865722c1fe193e098";
+
+/** How this browser last connected. Remembered, for the reason below. */
+export type How = "injected" | "walletconnect";
+
+const HOW = "coc.wallet.how";
+
+export function howConnected(): How | null {
+  if (typeof window === "undefined") return null;
+  const kept = window.localStorage.getItem(HOW);
+  return kept === "injected" || kept === "walletconnect" ? kept : null;
+}
+
+function remember(how: How): void {
+  if (typeof window !== "undefined") window.localStorage.setItem(HOW, how);
+}
+
+export function forgetHow(): void {
+  if (typeof window !== "undefined") window.localStorage.removeItem(HOW);
+}
+
+/**
+ * The WalletConnect provider for this page, once there is one.
+ *
+ * Module-level and deliberately: a second init would be a second pairing, and
+ * the SDK keeps its session in localStorage, so asking it again after a reload
+ * restores the same session rather than starting one.
+ */
+let linked: Eip1193 | null = null;
+
+/** The SDK, loaded the first time somebody actually wants it and never before. */
+async function walletConnect(): Promise<Eip1193> {
+  if (linked !== null) return linked;
+
+  const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
+  const wc = await EthereumProvider.init({
+    projectId: WALLETCONNECT_PROJECT,
+    // Cronos, and only Cronos. A wallet that offers to connect on a chain this
+    // game cannot use is a wallet that connects and then fails at the first
+    // transaction.
+    chains: [25],
+    // Ours, from lib/wallet.ts. Their modal is the dependency this file is
+    // written to avoid — see the header.
+    showQrModal: false,
+    metadata: {
+      name: "Cards of Cronos",
+      description: "A card game on Cronos. Highest market cap wins.",
+      url: "https://cardsofcronos.com",
+      icons: ["https://cardsofcronos.com/icon.png"],
+    },
+  });
+  linked = wc as unknown as Eip1193;
+  return linked;
+}
+
+/**
+ * The wallet this page should be talking to.
+ *
+ * ── WHY THIS IS NOT JUST `provider()` ────────────────────────────────────────
+ *
+ * Somebody who connected a phone by QR may also have MetaMask installed. The
+ * signed proof in localStorage names ONE address, and sending a transaction
+ * through the other wallet would either fail or — worse — send from an account
+ * the person did not mean to use. So the choice is remembered and honoured:
+ * whichever wallet was signed in with is the one every later call goes to.
+ *
+ * Async, which it can afford to be: every caller inside this file is already
+ * async, and nothing outside it calls this at all.
+ */
+export async function active(): Promise<Eip1193 | null> {
+  if (howConnected() === "walletconnect") {
+    try {
+      return await walletConnect();
+    } catch {
+      // The session is gone, or the SDK would not load. Not the injected
+      // wallet as a fallback: that is a different address.
+      return null;
+    }
+  }
+  return provider();
+}
+
+/**
  * Connect, then ask the wallet to sign a challenge naming itself.
  *
  * Two steps and not one: connecting tells us which address is offering itself,
@@ -65,13 +184,73 @@ export function provider(): Eip1193 | null {
  * public — see lib/session.ts for why that matters here more than usual.
  */
 export async function connectAndProve(): Promise<WalletProof> {
+  // The INJECTED one, not `active()`. Somebody who connected by QR last time
+  // and is now pressing the browser-wallet button means the browser wallet —
+  // honouring the remembered choice here would quietly reconnect the phone.
+  // `remember` is called below, once this has worked, which is what makes the
+  // two buttons mean two different things.
   const wallet = provider();
   if (!wallet) {
     throw new Error(
-      "No wallet found in this browser. MetaMask and the Crypto.com wallet both work.",
+      "No wallet found in this browser. MetaMask and the Crypto.com wallet both work — " +
+        "or connect a phone wallet with the QR code.",
     );
   }
+  const proof = await proveWith(wallet);
+  // Only once it has worked. Remembering a choice that failed would send every
+  // later call at a wallet nobody is signed in to.
+  remember("injected");
+  return proof;
+}
 
+/**
+ * The same thing, with a phone.
+ *
+ * `onUri` is handed the WalletConnect URI the moment the SDK produces one,
+ * which is what gets drawn as the QR. It is called before `connect()` resolves,
+ * because `connect()` does not resolve until the phone has approved — so a flow
+ * that waited for it would show nothing to scan.
+ */
+export async function connectByQrAndProve(onUri: (uri: string) => void): Promise<WalletProof> {
+  const wc = (await walletConnect()) as unknown as {
+    on(event: string, handler: (uri: string) => void): void;
+    off?(event: string, handler: (uri: string) => void): void;
+    connect(): Promise<void>;
+    disconnect(): Promise<void>;
+    session?: unknown;
+    request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+  };
+
+  if (wc.session === undefined || wc.session === null) {
+    const show = (uri: string) => onUri(uri);
+    wc.on("display_uri", show);
+    try {
+      await wc.connect();
+    } finally {
+      wc.off?.("display_uri", show);
+    }
+  }
+
+  const proof = await proveWith(wc as unknown as Eip1193);
+  remember("walletconnect");
+  return proof;
+}
+
+/** Hangs up a WalletConnect session, so the next sign-in is a fresh pairing. */
+export async function disconnectWallet(): Promise<void> {
+  if (howConnected() === "walletconnect" && linked !== null) {
+    try {
+      await (linked as unknown as { disconnect(): Promise<void> }).disconnect();
+    } catch {
+      // Already gone on the other end. Nothing to do about it here.
+    }
+    linked = null;
+  }
+  forgetHow();
+}
+
+/** Ask for an account and a signature over the challenge. The half both share. */
+async function proveWith(wallet: Eip1193): Promise<WalletProof> {
   const accounts = await wallet.request({ method: "eth_requestAccounts" });
   if (!Array.isArray(accounts) || typeof accounts[0] !== "string") {
     throw new Error("The wallet connected but named no account.");
@@ -137,7 +316,7 @@ const CRONOS_CHAIN = {
  * confirmation while it happens.
  */
 export async function ensureCronos(): Promise<void> {
-  const wallet = provider();
+  const wallet = await active();
   if (wallet === null) throw new Error("No wallet in this browser.");
 
   const on = (await wallet.request({ method: "eth_chainId" })) as string;
@@ -186,7 +365,7 @@ export async function mintedBy(
   contract: string,
   transfer: string,
 ): Promise<number[]> {
-  const wallet = provider();
+  const wallet = await active();
   if (wallet === null) return [];
 
   interface Receipt {
@@ -271,7 +450,7 @@ export async function sendCall(
   data: string,
   value: bigint = 0n,
 ): Promise<string> {
-  const wallet = provider();
+  const wallet = await active();
   if (wallet === null) throw new Error("No wallet in this browser.");
   if (value < 0n) throw new Error("A transaction cannot send a negative amount.");
 
@@ -301,7 +480,7 @@ export async function sendCall(
  * the wallet broadcast to would reintroduce the same race one layer down.
  */
 export async function waitForTx(hash: string, tries = 40): Promise<boolean> {
-  const wallet = provider();
+  const wallet = await active();
   if (wallet === null) throw new Error("No wallet in this browser.");
   for (let i = 0; i < tries; i++) {
     const receipt = (await wallet

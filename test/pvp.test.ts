@@ -208,7 +208,12 @@ describe("taking a seat with money on it", () => {
     const body = fn.slice(0, fn.indexOf("\n}\n"));
     // Written across two lines, so matched on the parts rather than on one
     // string that happens to span a newline.
-    expect(body).toContain("provider()");
+    //
+    // `active()` and not `provider()` since the QR connection: it is the wallet
+    // that was signed in with, which for a phone pairing is not the injected
+    // one. The point of this test is unchanged — the receipt is read through
+    // the wallet that broadcast the transaction, whichever wallet that is.
+    expect(body).toContain("await active()");
     expect(body).toMatch(/\.request\(\{ method: "eth_getTransactionReceipt"/);
   });
 
