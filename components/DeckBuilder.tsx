@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
 
+import { CardPeek } from "@/components/game/CardPeek";
 import { CardSizePicker } from "@/components/CardSizePicker";
 import { CardView } from "@/components/CardView";
 import { Icon } from "@/components/Icon";
@@ -36,6 +37,7 @@ import { useDecks } from "@/lib/use-decks";
 import { useSession } from "@/lib/use-session";
 import { sizeOf, useCardSize } from "@/lib/card-size";
 import { cx } from "@/lib/cx";
+import { usesTouch } from "@/lib/pointer";
 import { RARITY, SECTOR_LABEL, TYPE_LABEL } from "@/lib/rarity";
 import { INDEX, SET } from "@/lib/set";
 
@@ -914,6 +916,24 @@ const DeckList = memo(function DeckList({
   picked: string[];
   onRemove: (card: Card) => void;
 }) {
+  // ── HOVER ON A MOUSE, A MAGNIFIER ON A FINGER ──────────────────────────────
+  //
+  // A name and a price do not say what a card does, and the maker asked to see
+  // the card itself while building. On a mouse that is a hover and costs
+  // nothing.
+  //
+  // On a touchscreen it cannot be the tap, and here more sharply than anywhere
+  // else this decision has come up: the tap on this row REMOVES the card. A peek
+  // that opened on it would show a card that is no longer in the deck, over the
+  // gap where its row used to be. So the row's own peek is switched off on touch
+  // and the magnifier beside it does the looking — the same split PeekButton
+  // made for the hand row, and for the same reason.
+  //
+  // Read after mount, never during render: matchMedia does not exist on the
+  // server, and a first render that guessed would be a hydration mismatch.
+  const [touch, setTouch] = useState(false);
+  useEffect(() => setTouch(usesTouch()), []);
+
   const grouped = useMemo(() => {
     const byType = new Map<CardType, Card[]>();
     for (const id of picked) {
@@ -947,31 +967,53 @@ const DeckList = memo(function DeckList({
           </p>
           <ul>
             {cards.map((card) => (
-              <li key={card.id}>
+              <li key={card.id} className="flex items-stretch">
                 {/* The whole row is the button. A small × would be the thing to
                     aim at, and this list exists to make swapping fast. */}
-                <button
-                  type="button"
-                  onClick={() => onRemove(card)}
-                  title={`Remove ${card.name}`}
-                  className="group flex w-full items-center gap-2 px-4 py-1 text-left transition-colors hover:bg-dump/10"
-                >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0"
-                    style={{ backgroundColor: RARITY[card.rarity].colour }}
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0 flex-1 truncate text-[11px] text-fg">{card.name}</span>
-                  <span className="shrink-0 text-[10px] tabular-nums text-gold">
-                    {formatMC(MARKETING_COST[card.rarity])}
-                  </span>
-                  {/* Only on hover, and only as a hint: the row already says
-                      what it does in its title, and forty crosses down the edge
-                      of a column is a column of crosses. */}
-                  <span className="w-3 shrink-0 text-center text-[10px] text-transparent group-hover:text-dump">
-                    ×
-                  </span>
-                </button>
+                <CardPeek card={card} disabled={touch} className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(card)}
+                    title={`Remove ${card.name}`}
+                    className={cx(
+                      "group flex w-full items-center gap-2 py-1 pl-4 text-left transition-colors hover:bg-dump/10",
+                      // The magnifier supplies the right-hand gap when it is
+                      // there; without it the row would run into the edge.
+                      touch ? "pr-1" : "pr-4",
+                    )}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 shrink-0"
+                      style={{ backgroundColor: RARITY[card.rarity].colour }}
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-fg">{card.name}</span>
+                    <span className="shrink-0 text-[10px] tabular-nums text-gold">
+                      {formatMC(MARKETING_COST[card.rarity])}
+                    </span>
+                    {/* Only on hover, and only as a hint: the row already says
+                        what it does in its title, and forty crosses down the
+                        edge of a column is a column of crosses. */}
+                    <span className="w-3 shrink-0 text-center text-[10px] text-transparent group-hover:text-dump">
+                      ×
+                    </span>
+                  </button>
+                </CardPeek>
+
+                {/* Its own target, so looking and removing never share a tap. */}
+                {touch && (
+                  <CardPeek card={card} className="shrink-0">
+                    {/* A glyph and not a button: the thing that takes the tap is
+                        CardPeek's own wrapper, and nesting a button inside it
+                        would be a second target in the same place. */}
+                    <span
+                      title={`Read ${card.name}`}
+                      className="flex h-full items-center px-3 text-[11px] text-faint"
+                    >
+                      ⌕
+                    </span>
+                  </CardPeek>
+                )}
               </li>
             ))}
           </ul>
