@@ -163,7 +163,9 @@ export function DeckBuilder() {
    * toggle stays; it just no longer starts pointed at the wrong thing.
    */
   const [onlyOwned, setOnlyOwned] = useState(DECK_FROM_COLLECTION);
-  const [size, setSize] = useCardSize();
+  // Medium rather than large, for somebody who has never chosen: this is a page
+  // you build on, and two cards across is a page you scroll.
+  const [size, setSize] = useCardSize("medium");
   const step = sizeOf(size);
 
   const inDeck = useMemo(() => new Set(picked), [picked]);
@@ -362,7 +364,11 @@ export function DeckBuilder() {
     // The bottom padding is the height of the bar below. Without it the bar
     // sits on top of the last row of cards, which are the ones somebody
     // scrolled all that way to reach.
-    <div className="grid gap-4 max-lg:pb-20 lg:grid-cols-[1fr_20rem] lg:items-start">
+    // Two working columns, not one column and a readout. The deck lives on the
+    // right and the collection on the left, which is what a player asked for and
+    // what makes swapping a card two clicks in one place. Wider than it was: the
+    // right-hand side now holds forty names rather than three figures.
+    <div className="grid gap-4 max-lg:pb-20 lg:grid-cols-[1fr_23rem] lg:items-start">
       <div className="min-w-0 space-y-4">
         <div className="panel space-y-3 border border-line p-4">
           <Row label="TYPE">
@@ -490,7 +496,7 @@ export function DeckBuilder() {
             whose height is its content, so max-h-full there resolves to the
             content height and constrains nothing. */}
         <div className="panel flex flex-col border border-line lg:max-h-[calc(100vh-5.5rem)]">
-          <div className="shrink-0 overflow-y-auto border-b border-line p-4">
+          <div className="shrink-0 border-b border-line p-4">
             <div className="flex items-baseline justify-between">
               <span className="text-[9px] tracking-[0.2em] text-faint">
                 CARDS
@@ -506,56 +512,48 @@ export function DeckBuilder() {
               </span>
             </div>
 
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-[9px] tracking-[0.2em] text-faint">
-                AVG COST
+            {/* Two figures on one line. They were a stacked block of three
+                headings with bars under each, which is a quarter of the column
+                spent on numbers ABOUT the deck while the deck itself was not
+                shown anywhere. The one that can refuse a save — projects — keeps
+                its colour. */}
+            <div className="mt-1 flex items-baseline justify-between text-[10px]">
+              <span className="text-faint">
+                PROJECTS{" "}
+                <span
+                  className={cx(
+                    "tabular-nums",
+                    projects < RULES.minProjects ? "text-dump" : "text-fg",
+                  )}
+                >
+                  {projects}/{RULES.minProjects}
+                </span>
               </span>
-              <span className="display text-xl text-gold">
-                {picked.length > 0 ? formatMC(Math.round(avgCost)) : "—"}
-                <span className="text-sm text-faint">
-                  /turn {formatMC(RULES.budgetPerTurn)}–
-                  {formatMC(RULES.budgetPerTurn * RULES.turns)}
+              <span className="text-faint">
+                AVG{" "}
+                <span className="tabular-nums text-gold">
+                  {picked.length > 0 ? formatMC(Math.round(avgCost)) : "—"}
                 </span>
               </span>
             </div>
 
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-[9px] tracking-[0.2em] text-faint">
-                PROJECTS
-              </span>
-              <span
-                className={cx(
-                  "display text-xl",
-                  projects < RULES.minProjects ? "text-dump" : "text-fg",
-                )}
-              >
-                {projects}
-                <span className="text-sm text-faint">
-                  /{RULES.minProjects} min
-                </span>
-              </span>
-            </div>
-
-            {/* Bars beat numbers: you see at a glance which limit you are about to
-                run into. */}
             <Bar value={picked.length / RULES.deckSize} tone="pump" />
-            <Bar
-              value={Math.min(1, avgCost / (RULES.budgetPerTurn / 2))}
-              tone="gold"
-            />
-            <Bar
-              value={Math.min(1, projects / RULES.minProjects)}
-              tone={projects < RULES.minProjects ? "dump" : "pump"}
-            />
           </div>
 
-          {/* Everything between the counters and the buttons scrolls. */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 max-lg:max-h-[17rem]">
-            {/* The curve. Under this system it is the thing you are building, so
-                it should be visible while you build it rather than something you
-                work out afterwards. */}
-            <div className="mt-3 border-t border-line pt-3">
-              <p className="text-[9px] tracking-[0.2em] text-faint">CURVE</p>
+          {/* The deck. This is what the column is for. */}
+          <div className="min-h-0 flex-1 overflow-y-auto max-lg:max-h-[18rem]">
+            <DeckList picked={picked} onRemove={toggle} />
+          </div>
+
+          {/* Shut by default, and both of them. They used to share the column's
+              only scrolling area with nothing else in it, which is how the deck
+              came to have nowhere to live. A curve is something you check; the
+              forty cards are something you work in. */}
+          <div className="shrink-0 border-t border-line px-4 pb-2">
+            <details className="group">
+              <summary className="cursor-pointer list-none py-2 text-[9px] tracking-[0.2em] text-faint transition-colors hover:text-muted">
+                CURVE <span className="float-right group-open:rotate-90 inline-block">›</span>
+              </summary>
               <div className="mt-2 flex items-end gap-1">
                 {curve.map(({ rarity, n }) => {
                   const tallest = Math.max(1, ...curve.map((c) => c.n));
@@ -590,15 +588,17 @@ export function DeckBuilder() {
                 on the table early; a deck of nothing but cheap ones cannot
                 spend it late.
               </p>
-            </div>
+            </details>
 
             {/* Your decks. The four ready-made ones and the random roll used to
                 be here, and they went: a player picks between decks they built.
                 Handing somebody a deck is also the thing this game decided
                 against everywhere else — see the note about the free starter in
                 lib/deck-storage.ts. */}
-            <div className="mt-4 border-t border-line pt-3">
-              <p className="text-[9px] tracking-[0.2em] text-faint">YOUR DECKS</p>
+            <details className="group border-t border-line">
+              <summary className="cursor-pointer list-none py-2 text-[9px] tracking-[0.2em] text-faint transition-colors hover:text-muted">
+                YOUR DECKS <span className="float-right group-open:rotate-90 inline-block">›</span>
+              </summary>
 
               {/* Forty of your own cards, in an order you did not have to click.
                   Not a saved deck and not somebody else's design — it fills the
@@ -702,7 +702,7 @@ export function DeckBuilder() {
                   })}
                 </div>
               )}
-            </div>
+            </details>
           </div>
 
           <div className="shrink-0 border-t border-line p-4">
@@ -886,6 +886,101 @@ export function DeckBuilder() {
  * Memoised: toggling one card re-renders the summary, and without this every one
  * of the cards in the set would redraw its chart along with it.
  */
+/**
+ * The forty cards, as a list you can work in.
+ *
+ * ── WHY THIS DID NOT EXIST ───────────────────────────────────────────────────
+ *
+ * The right-hand column has been here since the builder was written, and what
+ * it held was statistics ABOUT the deck — a count, an average cost, a curve —
+ * plus the saved decks and the save button. The deck itself was only ever
+ * visible as a ring around cards in the grid on the left, so seeing what you
+ * had built meant scrolling four hundred and forty-eight cards and remembering.
+ *
+ * A player asked for the obvious thing: the deck on one side, the collection on
+ * the other, so swapping a card is two clicks in one place. This is that side.
+ *
+ * ── GROUPED BY TYPE, BECAUSE THE RULES ARE ───────────────────────────────────
+ *
+ * Not alphabetical and not by cost. A deck is refused for having too few
+ * projects, and nothing else about the composition is a rule — so the grouping
+ * answers the question the deck can actually fail on, and the project count
+ * sits in its own heading rather than in a panel somewhere else.
+ */
+const DeckList = memo(function DeckList({
+  picked,
+  onRemove,
+}: {
+  picked: string[];
+  onRemove: (card: Card) => void;
+}) {
+  const grouped = useMemo(() => {
+    const byType = new Map<CardType, Card[]>();
+    for (const id of picked) {
+      const card = INDEX.get(id);
+      if (card === undefined) continue;
+      const row = byType.get(card.type);
+      if (row) row.push(card);
+      else byType.set(card.type, [card]);
+    }
+    // In the set's own order, so the sections do not reshuffle as you build.
+    return CARD_TYPES.filter((t) => byType.has(t)).map((t) => ({
+      type: t,
+      cards: [...byType.get(t)!].sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+  }, [picked]);
+
+  if (picked.length === 0) {
+    return (
+      <p className="px-4 py-6 text-center text-[10px] leading-relaxed text-faint">
+        Nothing in here yet. Press a card on the left and it lands here.
+      </p>
+    );
+  }
+
+  return (
+    <div className="pb-2">
+      {grouped.map(({ type, cards }) => (
+        <div key={type} className="mt-3 first:mt-0">
+          <p className="sticky top-0 z-10 bg-panel px-4 py-1 text-[9px] tracking-[0.2em] text-faint">
+            {TYPE_LABEL[type]} <span className="text-muted">{cards.length}</span>
+          </p>
+          <ul>
+            {cards.map((card) => (
+              <li key={card.id}>
+                {/* The whole row is the button. A small × would be the thing to
+                    aim at, and this list exists to make swapping fast. */}
+                <button
+                  type="button"
+                  onClick={() => onRemove(card)}
+                  title={`Remove ${card.name}`}
+                  className="group flex w-full items-center gap-2 px-4 py-1 text-left transition-colors hover:bg-dump/10"
+                >
+                  <span
+                    className="h-2.5 w-2.5 shrink-0"
+                    style={{ backgroundColor: RARITY[card.rarity].colour }}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-fg">{card.name}</span>
+                  <span className="shrink-0 text-[10px] tabular-nums text-gold">
+                    {formatMC(MARKETING_COST[card.rarity])}
+                  </span>
+                  {/* Only on hover, and only as a hint: the row already says
+                      what it does in its title, and forty crosses down the edge
+                      of a column is a column of crosses. */}
+                  <span className="w-3 shrink-0 text-center text-[10px] text-transparent group-hover:text-dump">
+                    ×
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+});
+
 const PickableCard = memo(function PickableCard({
   card,
   chosen,

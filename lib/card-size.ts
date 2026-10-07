@@ -37,10 +37,19 @@ const KEY = "tcg.cardsize.v1";
  *
  * localStorage does not exist on the server, so a first render that guessed at
  * it would be a hydration mismatch — the same reason the collection is loaded in
- * an effect. Everyone starts on large for one frame.
+ * an effect. Everyone starts on the fallback for one frame.
+ *
+ * `fallback` is only what somebody sees before they have ever chosen. The deck
+ * builder passes "medium": it is a page you work on, where seeing five cards
+ * across matters more than reading one, while /cards is a page you browse and
+ * large is right there. Once anybody picks a size it is theirs on both, which is
+ * the point of storing it — this is a preference about eyes and screens, not
+ * about which page you happen to be on.
  */
-export function useCardSize(): [CardSize, (next: CardSize) => void] {
-  const [size, setSize] = useState<CardSize>("large");
+export function useCardSize(
+  fallback: CardSize = "large",
+): [CardSize, (next: CardSize) => void] {
+  const [size, setSize] = useState<CardSize>(fallback);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(KEY);
