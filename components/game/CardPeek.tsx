@@ -38,10 +38,30 @@ export function CardPeek({
   children,
   className,
   disabled = false,
+  on = "hover",
 }: {
   card: Card;
   children: React.ReactNode;
   className?: string;
+  /**
+   * What opens it on a mouse.
+   *
+   * ── WHY THERE IS A SECOND MODE ───────────────────────────────────────────
+   *
+   * "hover" is right where the trigger is a thing you point AT: a position on
+   * the board, a supporter chip. You are already looking at it.
+   *
+   * It is wrong in a list. The deck builder shipped with the whole row of each
+   * of forty cards as the trigger, and moving the cursor down that column to
+   * find a card opened a full-size card over every row it passed. The maker's
+   * answer was that it hurt the page, which it did — a preview that arrives
+   * without being asked for is the same complaint as a board that redraws
+   * itself while you are reading it.
+   *
+   * "press" makes it a click on a mouse, which is what a button is. A finger
+   * taps either way.
+   */
+  on?: "hover" | "press";
   /**
    * Off while the thing underneath is waiting to be pressed.
    *
@@ -120,16 +140,19 @@ export function CardPeek({
       // browser fires these anyway on the first tap, which would open the card
       // and then immediately have to decide what the tap itself meant.
       onPointerEnter={(e) => {
-        if (e.pointerType === "mouse") setOpen(true);
+        if (on === "hover" && e.pointerType === "mouse") setOpen(true);
       }}
       onPointerLeave={(e) => {
-        if (e.pointerType === "mouse") setOpen(false);
+        if (on === "hover" && e.pointerType === "mouse") setOpen(false);
       }}
       // Tap toggles, and does not swallow the tap. The board tiles are also
       // buttons — a position is how you aim a card at it — so this must not stop
       // the click underneath from happening.
       onClick={() => {
-        if (!disabled && usesTouch()) setOpen((v) => !v);
+        if (disabled) return;
+        // A press opens it on any pointer. A hover trigger still toggles on a
+        // finger, because a touchscreen has no hover to open it with.
+        if (on === "press" || usesTouch()) setOpen((v) => !v);
       }}
     >
       {children}

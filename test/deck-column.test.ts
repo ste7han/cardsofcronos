@@ -35,11 +35,12 @@ describe("the deck has a column of its own", () => {
     expect(list).toContain("TYPE_LABEL[type]");
   });
 
-  it("makes the whole row the target", () => {
-    // A small × would be the thing to aim at, and this list exists to make
-    // swapping fast.
+  it("makes the rest of the row the target", () => {
+    // Not the whole row any more — the magnifier takes a slice at the left —
+    // but everything after it. A small × would be the thing to aim at, and this
+    // list exists to make swapping fast.
     expect(list).toContain("onClick={() => onRemove(card)}");
-    expect(list).toContain("w-full");
+    expect(list).toContain("flex min-w-0 flex-1 items-center");
   });
 
   it("says what to do when it is empty", () => {
@@ -48,28 +49,30 @@ describe("the deck has a column of its own", () => {
 });
 
 describe("reading a card while you build", () => {
-  it("shows it on hover", () => {
-    expect(list).toContain("<CardPeek card={card}");
+  it("is a button somebody presses, not something that arrives", () => {
+    // It was a hover over the whole row, and moving the cursor down forty rows
+    // to find a card opened a full-size card over every row it passed. The
+    // maker's answer was that it hurt the page, and it did.
+    expect(list).toContain('on="press"');
+    expect(list).not.toContain("disabled={touch}");
   });
 
-  it("never lets one tap mean both read and remove", () => {
-    // The sharpest version of a decision PeekButton already made for the hand
-    // row: the tap on this row REMOVES the card, so a peek opening on it would
-    // show a card that is no longer in the deck, over the gap its row left.
-    expect(list).toContain("disabled={touch}");
+  it("never lets one press mean both read and remove", () => {
+    // Sharper here than anywhere this came up before: the row REMOVES the card,
+    // so a peek opening on it would show a card that is no longer in the deck,
+    // over the gap its row left. Looking gets its own target.
+    const peek = list.indexOf("<CardPeek");
+    const remove = list.indexOf("onClick={() => onRemove(card)}");
+    expect(peek).toBeGreaterThan(-1);
+    expect(remove).toBeGreaterThan(peek);
+    // The remove button is not inside the peek's wrapper.
+    expect(list.slice(peek, remove)).toContain("</CardPeek>");
   });
 
-  it("gives a finger its own way in", () => {
-    // Switching the peek off on touch and stopping there would take reading a
-    // card away from every phone.
-    expect(list).toContain("{touch && (");
-    expect(list).toContain("usesTouch()");
-  });
-
-  it("asks the pointer after mount, not during render", () => {
-    // matchMedia does not exist on the server, and a first render that guessed
-    // would be a hydration mismatch.
-    expect(list).toContain("useEffect(() => setTouch(usesTouch()), [])");
+  it("is the same button on every device", () => {
+    // No pointer test and no second arrangement for touch: one target, one
+    // meaning, everywhere.
+    expect(list).not.toContain("usesTouch");
   });
 });
 
