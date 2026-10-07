@@ -579,6 +579,33 @@ export function MatchBoard({ id }: { id: string }) {
     // The card type is where legibility was wanted, and the cards are exempt
     // separately via .card-frame.
     <div className="dense space-y-3">
+      {/* The same figure the solo table shows, from the same diff. A rug on a
+          staked match is the moment with money on it, so it should not be the
+          one table that says nothing. */}
+      {flash.rug !== null && (
+        <div
+          key={view.log.length}
+          aria-hidden
+          className="rug-flash pointer-events-none fixed inset-0 z-30 flex items-center justify-center"
+          style={{
+            background:
+              "radial-gradient(120% 90% at 50% 50%, transparent 35%, rgba(255,77,77,0.28) 100%)",
+          }}
+        >
+          <div className="text-center">
+            <p
+              className="display text-5xl sm:text-7xl"
+              style={{ color: "#ff4d4d", textShadow: "0 0 32px rgba(255,77,77,0.65)" }}
+            >
+              −{formatMC(flash.rug.lost)}
+            </p>
+            <p className="mt-1 text-[10px] tracking-[0.28em] text-dump">
+              {flash.rug.player === view.me ? "RUGGED" : "THEY GOT RUGGED"}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-baseline justify-between gap-3 text-[10px] tracking-[0.16em] text-faint">
         <span className="min-w-0 truncate">
           VS {short(answer.opponent)} · {view.them.handCount} IN HAND

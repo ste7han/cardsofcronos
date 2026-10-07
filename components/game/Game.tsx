@@ -710,17 +710,39 @@ export function Game({
 
   return (
     <div className="relative mx-auto max-w-4xl overflow-hidden px-4 py-1 lg:h-[calc(100dvh-4.5rem)]">
-      {/* Red flash over the whole screen when something gets rugged. */}
-      {flash.rug && (
+      {/* ── WHAT A RUG COST, IN FIGURES ────────────────────────────────────
+          A red wash over the screen said something had happened and never what.
+          The maker's complaint was that positions were destroyed and no market
+          cap seemed to go — and the engine was right, it went; the amount was a
+          few per cent of a number in the millions that was climbing at the same
+          time. A counter ticking down by three per cent is not something anybody
+          sees.
+
+          So the flash says the figure now, and whose it was. The wash is red
+          either way because the moment is the same; the words are what separate
+          a disaster from a gift. */}
+      {flash.rug !== null && (
         <div
           key={state.log.length}
           aria-hidden
-          className="rug-flash pointer-events-none fixed inset-0 z-30"
+          className="rug-flash pointer-events-none fixed inset-0 z-30 flex items-center justify-center"
           style={{
             background:
               "radial-gradient(120% 90% at 50% 50%, transparent 35%, rgba(255,77,77,0.28) 100%)",
           }}
-        />
+        >
+          <div className="text-center">
+            <p
+              className="display text-5xl sm:text-7xl"
+              style={{ color: "#ff4d4d", textShadow: "0 0 32px rgba(255,77,77,0.65)" }}
+            >
+              −{formatMC(flash.rug.lost)}
+            </p>
+            <p className="mt-1 text-[10px] tracking-[0.28em] text-dump">
+              {flash.rug.player === "you" ? "RUGGED" : "THEY GOT RUGGED"}
+            </p>
+          </div>
+        </div>
       )}
 
       {/* A table, laid out the way a table is: their hand at the top, their
@@ -989,7 +1011,16 @@ export function Game({
             demo={demo}
             onBoard={onBoard}
             onNew={() => start(demo)}
-            onReview={() => setReviewing(true)}
+            onReview={() => {
+              // And open it. The button says READ THE LOG and it only took the
+              // end screen away: above lg the log is a margin panel that folds,
+              // so somebody who never opened it during the match pressed this
+              // and got a board with nothing to read and no way back to the
+              // screen they had just dismissed. Below lg the log is always in
+              // the flow, which is why this only ever bit on a desktop.
+              setLogOpen(true);
+              setReviewing(true);
+            }}
           />
         )}
       </AnimatePresence>

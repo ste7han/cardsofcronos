@@ -22,8 +22,23 @@ export interface Flash {
   projects: Record<string, Marker>;
   /** MC change per player, where there was one. */
   mc: Partial<Record<Player, number>>;
-  /** At least one project rugged: the screen may flash red. */
-  rug: boolean;
+  /**
+   * A position was taken from somebody, and what it cost them.
+   *
+   * ── WHY THIS IS NOT "A POSITION DISAPPEARED" ────────────────────────────────
+   *
+   * It was, and it fired on taking profit. Banking closes a position too, and so
+   * does playing a bigger card over one — so the screen flashed red for the two
+   * things a player does on purpose, which is how a warning stops being read.
+   *
+   * A rug is the one that takes the market cap back with it. That is the test
+   * now: a position left AND its owner's market cap fell on the same move.
+   * Banking does not move the number — the earnings were already paid out as
+   * they were made — and neither does an upgrade, so neither trips this.
+   *
+   * Null when nothing was taken.
+   */
+  rug: { player: Player; lost: number } | null;
   /** The last line from the log, as a caption for the beat. */
   beat: string | null;
   beatTone: "pump" | "dump" | "neutral" | "system";
@@ -32,7 +47,7 @@ export interface Flash {
 export const EMPTY_FLASH: Flash = {
   projects: {},
   mc: {},
-  rug: false,
+  rug: null,
   beat: null,
   beatTone: "neutral",
 };
@@ -66,7 +81,7 @@ export function key(player: Player, cardId: string): string {
  * same discipline as reading the outcome rather than the log.
  */
 export function makeFlash(before: Snapshot, after: Snapshot): Flash {
-  const flash: Flash = { projects: {}, mc: {}, rug: false, beat: null, beatTone: "neutral" };
+  const flash: Flash = { projects: {}, mc: {}, rug: null, beat: null, beatTone: "neutral" };
 
   for (const player of PLAYERS) {
     const mcDelta = after.players[player].mc - before.players[player].mc;
@@ -75,9 +90,17 @@ export function makeFlash(before: Snapshot, after: Snapshot): Flash {
     const earlier = new Map(before.players[player].projects.map((p) => [p.cardId, p]));
     const now = new Map(after.players[player].projects.map((p) => [p.cardId, p]));
 
-    for (const [cardId] of earlier) {
-      if (!now.has(cardId)) flash.rug = true;
+    // What left, and what it had made. `earned` is the launch plus every pump a
+    // position ever paid out, which is exactly what a rug claws back — so this
+    // is the figure to show rather than the move's net, which also carries the
+    // turn's pump and whatever else landed.
+    let taken = 0;
+    for (const [cardId, position] of earlier) {
+      if (!now.has(cardId)) taken += position.earned;
     }
+    // Only when it cost them. See the note on Flash.rug: banking and upgrading
+    // both remove a position and neither takes the market cap back.
+    if (taken > 0 && mcDelta < 0) flash.rug = { player, lost: taken };
 
     for (const [cardId, project] of now) {
       const old = earlier.get(cardId);
