@@ -163,3 +163,62 @@ describe("what the browser remembers", () => {
     expect(kept["coc.wallet.how"]).toBeUndefined();
   });
 });
+
+// ── THE DUPLICATE PROPOSAL ───────────────────────────────────────────────────
+//
+// A player reported this from Rabby and from Ult, while MetaMask worked:
+//
+//   Cannot handle a session proposal: UNIQUE constraint failed:
+//   ProposalDao.request_id (code 1555)
+//
+// That is the WALLET's own database — ProposalDao is from WalletConnect's
+// Kotlin SDK — rejecting a proposal id it had already stored. A second proposal
+// went out on a live pairing, which is ours to prevent: the dropdown closes on
+// a click outside it, unmounting the QR while `connect()` still waits for a
+// phone, and opening it again called `connect()` on the same provider.
+//
+// MetaMask tolerating it is why this was reported as "works in one wallet".
+describe("never two proposals on one pairing", () => {
+  it("refuses a second connect while one is in flight", () => {
+    expect(wallet).toContain("if (wc.connecting)");
+  });
+
+  it("gives the pairing back when the QR goes away", () => {
+    // On unmount, because clicking away is how most of these end — not on a
+    // close button somebody has to find.
+    expect(qr).toContain("abandonPairing()");
+    expect(qr).toMatch(/return \(\) => \{\s*abandonPairing\(\);/);
+  });
+
+  it("clears the old pairing before trying again", () => {
+    // Pressing TRY AGAIN after a failure is exactly the moment a second
+    // proposal would go out on a live topic.
+    const button = qr.slice(qr.indexOf("TRY AGAIN") - 900, qr.indexOf("TRY AGAIN"));
+    expect(button.indexOf("abandonPairing()")).toBeLessThan(button.indexOf("void begin()"));
+  });
+
+  it("aborts the attempt and clears what was never activated", () => {
+    // Both, and in that order: one stops the pairing in flight, the other
+    // removes the ones that were offered and never answered.
+    const fn = wallet.slice(wallet.indexOf("export function abandonPairing"));
+    const body = fn.slice(0, fn.indexOf("\n}"));
+    expect(body.indexOf("abortPairingAttempt")).toBeLessThan(
+      body.indexOf("cleanupPendingPairings"),
+    );
+  });
+
+  it("leaves a live session alone", () => {
+    // Abandoning a pairing that became a session would hang up on somebody who
+    // is connected.
+    const fn = wallet.slice(wallet.indexOf("export function abandonPairing"));
+    expect(fn.slice(0, fn.indexOf("\n}"))).toContain("if (wc.session) return;");
+  });
+
+  it("closes the QR panel when the dropdown closes", () => {
+    // Otherwise reopening the dropdown starts a pairing nobody asked for: a
+    // code on screen that nobody is going to scan, and one more live pairing.
+    const shell = readFileSync(new URL("../components/WalletButton.tsx", import.meta.url), "utf8");
+    const away = shell.slice(shell.indexOf("const away = "), shell.indexOf("const escape = "));
+    expect(away).toContain("setQr(false)");
+  });
+});

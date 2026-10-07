@@ -124,6 +124,22 @@ export function forgetHow(): void {
  */
 let linked: Eip1193 | null = null;
 
+/** The WalletConnect provider, in the shape this file uses it. */
+interface Linked extends Eip1193 {
+  on(event: string, handler: (uri: string) => void): void;
+  off?(event: string, handler: (uri: string) => void): void;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  session?: unknown;
+  /** True while a pairing is waiting for a phone. The guard against duplicates. */
+  connecting?: boolean;
+}
+
+/** The same provider, typed for the calls below. */
+async function linkedProvider(): Promise<Linked> {
+  return (await walletConnect()) as unknown as Linked;
+}
+
 /** The SDK, loaded the first time somebody actually wants it and never before. */
 async function walletConnect(): Promise<Eip1193> {
   if (linked !== null) return linked;
@@ -212,16 +228,33 @@ export async function connectAndProve(): Promise<WalletProof> {
  * that waited for it would show nothing to scan.
  */
 export async function connectByQrAndProve(onUri: (uri: string) => void): Promise<WalletProof> {
-  const wc = (await walletConnect()) as unknown as {
-    on(event: string, handler: (uri: string) => void): void;
-    off?(event: string, handler: (uri: string) => void): void;
-    connect(): Promise<void>;
-    disconnect(): Promise<void>;
-    session?: unknown;
-    request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-  };
+  const wc = await linkedProvider();
 
   if (wc.session === undefined || wc.session === null) {
+    // ── NEVER TWO PROPOSALS AT ONCE ──────────────────────────────────────────
+    //
+    // A player reported this from a wallet that refused to connect while
+    // MetaMask worked:
+    //
+    //   Cannot handle a session proposal: UNIQUE constraint failed:
+    //   ProposalDao.request_id (code 1555)
+    //
+    // That is the WALLET's own database. ProposalDao is from WalletConnect's
+    // Kotlin SDK, and it had already stored a proposal with that id — so a
+    // second one arrived carrying the same id on the same pairing topic.
+    //
+    // It is ours to prevent. The dropdown closes when you click outside it,
+    // which unmounts the QR panel while `connect()` is still waiting for a
+    // phone; opening it again called `connect()` on the same provider, and the
+    // SDK re-used the live pairing rather than starting a new one. MetaMask
+    // tolerates the duplicate. A wallet that keeps proposals in a table with a
+    // unique key cannot.
+    if (wc.connecting) {
+      throw new Error(
+        "There is already a code waiting to be scanned. Scan that one, or close this and start again.",
+      );
+    }
+
     const show = (uri: string) => onUri(uri);
     wc.on("display_uri", show);
     try {
@@ -234,6 +267,37 @@ export async function connectByQrAndProve(onUri: (uri: string) => void): Promise
   const proof = await proveWith(wc as unknown as Eip1193);
   remember("walletconnect");
   return proof;
+}
+
+/**
+ * Give up on a pairing nobody answered.
+ *
+ * Called when the QR goes away without a session — the panel closed, the
+ * dropdown was dismissed, somebody pressed TRY AGAIN. Without it the pairing
+ * stays live and the next attempt re-uses it, which is what sends a wallet the
+ * same proposal id twice. See the note above.
+ *
+ * Both calls, and in this order: `abortPairingAttempt` stops the one in flight,
+ * `cleanupPendingPairings` clears the ones that were never activated. Neither
+ * throws usefully, and a failure here only means the next attempt is the one
+ * that has to work.
+ */
+export function abandonPairing(): void {
+  if (linked === null) return;
+  const wc = linked as unknown as {
+    session?: unknown;
+    signer?: { abortPairingAttempt(): void; cleanupPendingPairings(): Promise<void> };
+  };
+  if (wc.session) return;
+  try {
+    wc.signer?.abortPairingAttempt();
+  } catch {
+    // Nothing in flight. Fine.
+  }
+  void wc.signer?.cleanupPendingPairings().catch(() => {
+    // Storage that would not clear. The next connect makes a new pairing
+    // regardless; this only keeps the old ones from piling up.
+  });
 }
 
 /** Hangs up a WalletConnect session, so the next sign-in is a fresh pairing. */

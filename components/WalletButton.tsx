@@ -74,10 +74,19 @@ export function WalletButton() {
 
     const away = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (!panel.current?.contains(target) && !button.current?.contains(target)) setOpen(false);
+      if (!panel.current?.contains(target) && !button.current?.contains(target)) {
+        setOpen(false);
+        // Back to the two buttons. Leaving the QR panel open means reopening
+        // the dropdown starts a pairing nobody asked for, which is a code on
+        // screen that nobody is going to scan — and one more live pairing.
+        setQr(false);
+      }
     };
     const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        setQr(false);
+      }
     };
 
     window.addEventListener("scroll", place, true);

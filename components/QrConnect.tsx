@@ -28,7 +28,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { connectByQrAndProve, reasonFor } from "@/lib/wallet";
+import { abandonPairing, connectByQrAndProve, reasonFor } from "@/lib/wallet";
 import { keepProof } from "@/lib/session";
 
 /** Big enough to scan across a desk, small enough for a dropdown. */
@@ -69,6 +69,25 @@ export function QrConnect({ onDone }: { onDone: () => void }) {
     void begin();
   }, [begin]);
 
+  // ── GIVE THE PAIRING BACK WHEN THIS GOES AWAY ────────────────────────────
+  //
+  // The dropdown closes when you click outside it, which unmounts this while
+  // `connect()` is still waiting for a phone. Left alone, that pairing stays
+  // live and the next attempt re-uses it — and a wallet that has already stored
+  // the first proposal refuses the second:
+  //
+  //   Cannot handle a session proposal: UNIQUE constraint failed:
+  //   ProposalDao.request_id (code 1555)
+  //
+  // which is what a player saw on Rabby and Ult while MetaMask worked. Done on
+  // unmount rather than on a close button, because clicking away is how most
+  // of these end.
+  useEffect(() => {
+    return () => {
+      abandonPairing();
+    };
+  }, []);
+
   // Drawn after the canvas is in the document, and redrawn if the URI changes —
   // which it does when a pairing expires and a new one is offered.
   useEffect(() => {
@@ -105,7 +124,12 @@ export function QrConnect({ onDone }: { onDone: () => void }) {
         <p className="text-[10px] leading-relaxed text-dump">{state.why}</p>
         <button
           type="button"
-          onClick={() => void begin()}
+          onClick={() => {
+            // The old pairing first. Pressing this after a failure is exactly
+            // the moment a second proposal would go out on a live topic.
+            abandonPairing();
+            void begin();
+          }}
           className="mt-3 w-full border border-line-strong px-3 py-2 text-[10px] tracking-[0.18em] text-muted transition-colors hover:border-pump hover:text-pump"
         >
           TRY AGAIN
