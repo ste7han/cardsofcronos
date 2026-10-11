@@ -2067,6 +2067,41 @@ export interface State {
    * outside the state stops that from coming out the same way twice.
    */
   pending: Pending[];
+  /**
+   * A card has been played that reveals the top of their deck, and is waiting to
+   * be told which one goes.
+   *
+   * ── WHY THIS IS IN THE STATE AND NOT ON A SERVER SOMEWHERE ─────────────────
+   *
+   * `peekAndBurn` reads "look at the top N and take one out". On the solo table
+   * the browser holds the whole match, so it can show them. In PvP it cannot:
+   * viewFor redacts their deck on purpose, because the deck — and the seed
+   * behind it — is every card they are about to draw.
+   *
+   * The obvious fix is for the server to reveal three cards and remember that
+   * it did. That is state beside the move list, and the note on `pending` above
+   * says why this codebase will not have it: a match is its seed and its moves,
+   * replayed on demand, and anything kept outside that stops it coming out the
+   * same way twice.
+   *
+   * So the pause is a MOVE. Playing the card without a choice lands here;
+   * answering is a second move; and replaying the two rebuilds this field
+   * exactly. Nothing is stored that the move list does not already say.
+   *
+   * Null except in the moment between those two moves.
+   */
+  awaiting: Awaiting | null;
+}
+
+/** The question a card is holding open. See State.awaiting. */
+export interface Awaiting {
+  kind: "burn";
+  /** Whose question it is. Only they may answer, and only on their own turn. */
+  player: Player;
+  /** The card that asked, for the log and so the effect can name itself. */
+  cardId: string;
+  /** How many of their cards are on offer. Never more than their deck holds. */
+  look: number;
 }
 
 /** One effect waiting for its turn. See the `after` effect. */
@@ -2095,6 +2130,17 @@ export interface Pending {
 // ---------------------------------------------------------------------------
 
 export type Move =
+  | {
+      /**
+       * Which of the revealed cards to take out.
+       *
+       * The second half of playing a peekAndBurn card. Counts from the top of
+       * their deck down, which is the order engine/match.ts peekedCards returns
+       * and the order the table shows them in.
+       */
+      kind: "burn";
+      index: number;
+    }
   | {
       kind: "playCard";
       handIndex: number;

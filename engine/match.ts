@@ -18,7 +18,7 @@ import { describeCondition, describeRestriction } from "./rules-text";
 import { draw, cardById, drawToFull, log, otherPlayer, projectById } from "./helpers";
 import { buildDeck } from "./deck";
 import { timesWord } from "./rules-text";
-import type { ProjectCard } from "./types";
+import type { Awaiting, ProjectCard } from "./types";
 import { nextInt, shuffle } from "./rng";
 import type {
   Boards,
@@ -71,6 +71,7 @@ export function newMatch(
   const state: State = {
     seed,
     rngState: secondShuffle.state,
+    awaiting: null,
     turn: 1,
     toMove: FIRST_MOVER,
     holdersLost: 0,
@@ -195,6 +196,21 @@ export function applyMove(state: State, move: Move, index: CardIndex): State {
   const next: State = structuredClone(state);
   const player = next.toMove;
 
+  // ── A QUESTION ON THE TABLE IS ANSWERED FIRST ──────────────────────────────
+  //
+  // Everything except answering and ending the turn is refused while a card is
+  // waiting to be told which card to take out. Letting other moves through
+  // would mean a card half-played sitting on the table while the board changed
+  // underneath it, and the answer arriving against a deck that had moved on.
+  //
+  // Ending the turn is allowed because the clock has to be able to: see
+  // endTurn, which answers for you.
+  if (next.awaiting !== null && move.kind !== "burn" && move.kind !== "endTurn") {
+    throw new IllegalMove(
+      `${cardById(index, next.awaiting.cardId).name} is waiting: take one of their cards out first.`,
+    );
+  }
+
   switch (move.kind) {
     case "playCard": {
       // The id is taken before the card leaves the hand and looked up after the
@@ -226,6 +242,14 @@ export function applyMove(state: State, move: Move, index: CardIndex): State {
       discard(next, player, move.handIndex, index);
       return next;
 
+    case "burn": {
+      const asked = next.awaiting;
+      if (asked === null) throw new IllegalMove("Nothing is waiting to be taken out.");
+      if (asked.player !== player) throw new IllegalMove("That is not your card to take out.");
+      resolveBurn(next, asked, move.index, index);
+      return next;
+    }
+
     case "endTurn":
       endTurn(next, player, index);
       return next;
@@ -233,6 +257,22 @@ export function applyMove(state: State, move: Move, index: CardIndex): State {
     default:
       return assertNever(move, "applyMove");
   }
+}
+
+/**
+ * Take the card out, and clear the question.
+ *
+ * The same effect the card would have resolved had it been played with a choice
+ * — applyEffect's peekAndBurn branch, reached with an index this time. One
+ * implementation, so the answered version and the walked-away version cannot
+ * drift apart.
+ */
+function resolveBurn(state: State, asked: Awaiting, pick: number, index: CardIndex): void {
+  const source = cardById(index, asked.cardId);
+  // Cleared first. applyEffect for this kind parks the question when it arrives
+  // without one, and leaving it set would park it straight back.
+  state.awaiting = null;
+  applyEffect(state, { kind: "peekAndBurn", look: asked.look }, asked.player, source, pick, index);
 }
 
 function playCard(
@@ -1029,6 +1069,27 @@ export function canTakeProfit(state: State, player: Player, index: CardIndex): b
 }
 
 function endTurn(state: State, player: Player, index: CardIndex): void {
+  // ── A QUESTION LEFT UNANSWERED ANSWERS ITSELF ──────────────────────────────
+  //
+  // Somebody plays a card that looks at the top of their opponent's deck and
+  // then walks away, or the clock runs out on them. The match cannot sit there:
+  // in a correspondence game catchUp ends turns by itself, with nobody at the
+  // screen to be asked.
+  //
+  // The top card goes, which is exactly what used to happen on every play
+  // before the question existed. No punishment and no card wasted — the outcome
+  // everybody already knows, applied when nobody chose another.
+  if (state.awaiting !== null) {
+    const asked = state.awaiting;
+    log(
+      state,
+      asked.player,
+      `${cardById(index, asked.cardId).name}: nobody chose, so the top card goes.`,
+      "neutral",
+    );
+    resolveBurn(state, asked, 0, index);
+  }
+
   tickPhase(state, player, index);
   pumpPhase(state, player, index);
   standingPhase(state, player, index);

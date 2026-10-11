@@ -22,9 +22,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CARDS } from "@/data/cards";
-import { buildIndex, newMatch, peekLookOf, peekedCards } from "@/engine/match";
+import { applyMove, budgetForTurn, buildIndex, newMatch, peekLookOf, peekedCards } from "@/engine/match";
+import { viewFor, watchView } from "@/engine/view";
 import { cardById } from "@/engine/helpers";
-import type { State } from "@/engine/types";
+import { RULES, type State } from "@/engine/types";
 
 const index = buildIndex(CARDS);
 const table = readFileSync(new URL("../components/game/Game.tsx", import.meta.url), "utf8");
@@ -94,22 +95,139 @@ describe("the order they are shown in", () => {
   });
 });
 
-describe("the table asks before it plays", () => {
-  it("has one door out of the hand", () => {
-    // The peek was missed because the play was dispatched from two places and
-    // neither asked. Both go through playOrPeek now.
-    expect(table).toContain("function playOrPeek(");
-    expect(table).toContain("playOrPeek(handIndex)");
-    expect(table).toContain("playOrPeek(aiming.handIndex, slot)");
+// ── THE PAUSE IS A MOVE ──────────────────────────────────────────────────────
+//
+// The solo table could lay the cards out itself; the PvP one cannot, because
+// viewFor redacts their deck on purpose. The obvious fix — server reveals three
+// and remembers it did — is state beside the move list, and the note on
+// State.pending says why this codebase will not have that: a match is its seed
+// and its moves, replayed on demand.
+//
+// So the question is a move. These are about it behaving the same way twice.
+describe("playing a card that peeks", () => {
+  const playTracker = (turn: number) => {
+    const state = board(turn);
+    state.players.you.hand = ["wallet-tracker", ...state.players.you.hand];
+    state.budgetThisTurn = budgetForTurn(RULES.turns);
+    state.budgetSpentThisTurn = 0;
+    state.toMove = "you";
+    return applyMove(state, { kind: "playCard", handIndex: 0 }, index);
+  };
+
+  it("asks instead of taking the top card", () => {
+    const after = playTracker(5);
+    expect(after.awaiting).toEqual({
+      kind: "burn",
+      player: "you",
+      cardId: "wallet-tracker",
+      look: 3,
+    });
+    // And nothing has left their deck yet.
+    expect(after.players.opponent.deck.length).toBe(35);
+    expect(after.players.opponent.discard.length).toBe(0);
   });
 
-  it("sends the chosen index and not the default", () => {
-    // `targetIndex ?? 0` in the engine is what took the top card every time.
-    expect(table).toContain("burnIndex: at");
+  it("does not ask when the payoff has not come due", () => {
+    expect(playTracker(1).awaiting).toBeNull();
   });
 
-  it("shows which one they draw next", () => {
-    // An order nobody can see is a choice nobody can make.
-    expect(table).toContain('{at === 0 ? "NEXT" : `${at + 1} DOWN`}');
+  it("takes the one named, not the one on top", () => {
+    // The whole bug: `targetIndex ?? 0` took the top card every time.
+    const asked = playTracker(5);
+    const deck = asked.players.opponent.deck;
+    const second = deck[deck.length - 2];
+    const done = applyMove(asked, { kind: "burn", index: 1 }, index);
+    expect(done.awaiting).toBeNull();
+    expect(done.players.opponent.discard).toContain(second);
+    expect(done.players.opponent.deck).not.toContain(second);
+  });
+
+  it("refuses everything else while it is waiting", () => {
+    // A card half-played while the board moves underneath it, and an answer
+    // arriving against a deck that had changed.
+    const asked = playTracker(5);
+    expect(() => applyMove(asked, { kind: "playCard", handIndex: 0 }, index)).toThrow(
+      /waiting/i,
+    );
+    expect(() => applyMove(asked, { kind: "discard", handIndex: 0 }, index)).toThrow(
+      /waiting/i,
+    );
+  });
+
+  it("refuses a card that was never on offer", () => {
+    const asked = playTracker(5);
+    expect(() => applyMove(asked, { kind: "burn", index: 3 }, index)).toThrow();
+    expect(() => applyMove(asked, { kind: "burn", index: -1 }, index)).toThrow();
+  });
+
+  it("answers itself when the turn ends", () => {
+    // The rule the maker chose: walk away, or let the clock run out in a
+    // correspondence match, and the top card goes. No punishment and no card
+    // wasted — the outcome everybody already knew.
+    const asked = playTracker(5);
+    const deck = asked.players.opponent.deck;
+    const top = deck[deck.length - 1];
+    const ended = applyMove(asked, { kind: "endTurn" }, index);
+    expect(ended.awaiting).toBeNull();
+    expect(ended.players.opponent.discard).toContain(top);
+  });
+
+  it("comes out the same way twice", () => {
+    // The reason the pause is a move at all. Two moves replayed are one state.
+    const once = applyMove(playTracker(5), { kind: "burn", index: 2 }, index);
+    const twice = applyMove(playTracker(5), { kind: "burn", index: 2 }, index);
+    expect(JSON.stringify(twice)).toBe(JSON.stringify(once));
+  });
+});
+
+describe("who gets to see them", () => {
+  const asked = () => {
+    const state = board(5);
+    state.players.you.hand = ["wallet-tracker", ...state.players.you.hand];
+    state.budgetThisTurn = budgetForTurn(RULES.turns);
+    state.budgetSpentThisTurn = 0;
+    state.toMove = "you";
+    return applyMove(state, { kind: "playCard", handIndex: 0 }, index);
+  };
+
+  it("shows them to the player who paid for the look", () => {
+    expect(viewFor(asked(), "you", index).peek).toHaveLength(3);
+  });
+
+  it("shows the other seat nothing, though the state has the answer", () => {
+    // They poll the same route against the same match. Redacting by whose
+    // question it is, not by whose turn it happens to be.
+    expect(viewFor(asked(), "opponent", index).peek).toEqual([]);
+  });
+
+  it("shows nothing at all when nothing is waiting", () => {
+    expect(viewFor(board(5), "you", index).peek).toEqual([]);
+  });
+
+  it("gives a spectator no field it could arrive in", () => {
+    // Redaction by shape, the rule engine/view.ts already holds for hands.
+    expect("peek" in watchView(asked(), index)).toBe(false);
+  });
+});
+
+describe("both tables ask the same way", () => {
+  const pvp = readFileSync(new URL("../components/pvp/MatchBoard.tsx", import.meta.url), "utf8");
+
+  it("reads the question off the engine, not off a useState", () => {
+    // The solo table held this in local state for a day. Two mechanisms for one
+    // card is the trap CLAUDE.md calls one name, two meanings.
+    expect(table).toContain('state.awaiting !== null && state.awaiting.player === "you"');
+    expect(table).not.toContain("setPeeking");
+  });
+
+  it("answers with a burn move on both", () => {
+    expect(table).toContain('doMove({ kind: "burn", index: at })');
+    expect(pvp).toContain('send({ kind: "burn", index: at })');
+  });
+
+  it("shows which one they draw next, on both", () => {
+    for (const [where, source] of [["solo", table], ["pvp", pvp]] as const) {
+      expect(source, where).toContain('{at === 0 ? "NEXT" : `${at + 1} DOWN`}');
+    }
   });
 });

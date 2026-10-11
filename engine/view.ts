@@ -21,6 +21,7 @@ import { otherPlayer } from "./helpers";
 import {
   needsPortfolioSlot,
   priceFor,
+  peekedCards,
   playable,
   pumpOf,
   targetRequirementOf,
@@ -188,6 +189,26 @@ export interface PlayerView {
    * screen, and so is what that seat is owed for it.
    */
   theirFreePlays: number;
+  /**
+   * The cards a peek has put on the table, waiting for you to take one out.
+   *
+   * ── WHY THIS IS ALLOWED TO BE HERE ─────────────────────────────────────────
+   *
+   * Their deck is redacted from this view on purpose: the deck is every card
+   * they are about to draw. These are the exception, and a narrow one — a card
+   * has been played whose whole text is "look at the top N of the opponent's
+   * deck", so looking is the thing that was paid for.
+   *
+   * Narrow in three ways, all of which matter. Only while a question is open,
+   * which is between two moves of the same turn. Only the cards that card
+   * revealed, never the rest of the deck. And only to the player who asked —
+   * `awaiting.player` is checked, so the other seat polling this route is
+   * handed an empty list even though the state they are being shown has the
+   * answer in it.
+   *
+   * Empty at every other moment, which is almost every moment.
+   */
+  peek: string[];
   turn: number;
   toMove: Player;
   budgetThisTurn: number;
@@ -277,6 +298,11 @@ export function viewFor(state: State, player: Player, index: CardIndex): PlayerV
     winner: state.winner,
     log: state.log,
     theirFreePlays: state.freePlays[them] ?? 0,
+    // Theirs to see only if the question is theirs. See the note on `peek`.
+    peek:
+      state.awaiting !== null && state.awaiting.player === player
+        ? peekedCards(state, player, state.awaiting.look)
+        : [],
     you: {
       mc: yours.mc,
       hand: yours.hand,

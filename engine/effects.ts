@@ -1076,7 +1076,30 @@ export function applyEffect(
       // from — so the cards on offer are the last `look` of it, and the index
       // the player picked counts from the top down.
       const seen = Math.min(effect.look, deck.length);
-      const pick = targetIndex ?? 0;
+
+      // ── NO CHOICE YET: ASK ───────────────────────────────────────────────
+      //
+      // This used to read `targetIndex ?? 0` and take the top card. Nothing in
+      // either table ever sent an index, so every human play took the top one
+      // unseen — while engine/bot.ts picked properly, which made the card worth
+      // less in a player's hand than in the bot's.
+      //
+      // Arriving without one now parks the question in the state instead. The
+      // player answers with a `burn` move and this branch is reached again with
+      // an index. Both halves are moves, so a replay of the pair rebuilds it
+      // exactly — see State.awaiting.
+      if (targetIndex === undefined) {
+        state.awaiting = { kind: "burn", player, cardId: source.id, look: seen };
+        log(
+          state,
+          player,
+          `${cardLabel(source)}: looking at the top ${seen} of their deck.`,
+          "neutral",
+        );
+        return;
+      }
+
+      const pick = targetIndex;
       if (!Number.isInteger(pick) || pick < 0 || pick >= seen) {
         throw new IllegalMove(
           `${cardLabel(source)} shows ${seen} cards; ${pick} is not one of them.`,

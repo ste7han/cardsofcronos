@@ -579,6 +579,51 @@ export function MatchBoard({ id }: { id: string }) {
     // The card type is where legibility was wanted, and the cards are exempt
     // separately via .card-frame.
     <div className="dense space-y-3">
+      {/* ── THE LOOK THE CARD PROMISED, OVER A SERVER ──────────────────────
+          The solo table can lay out the top of their deck because the browser
+          holds the whole match. This one cannot: viewFor redacts their deck on
+          purpose, since the deck is every card they are about to draw.
+
+          So the server reveals exactly the cards the played card paid for, to
+          exactly the player who played it, and only between the two moves —
+          see `peek` in engine/view.ts. Nothing else about that deck travels,
+          and a spectator's view has no field it could travel in. */}
+      {view.peek.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ground/92 p-4 backdrop-blur-md">
+          <div className="w-full max-w-3xl">
+            <p className="text-center text-[10px] tracking-[0.28em] text-faint">
+              THE TOP OF THEIR DECK
+            </p>
+            <h2 className="display mt-2 text-center text-2xl sm:text-3xl">TAKE ONE OUT</h2>
+            <p className="mx-auto mt-3 max-w-md text-center text-[11px] leading-relaxed text-muted">
+              They have not seen these yet, and they will never draw the one you pick. The rest
+              stay where they are, in this order.
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-start justify-center gap-3">
+              {view.peek.map((id, at) => (
+                <button
+                  key={`${id}-${at}`}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void send({ kind: "burn", index: at })}
+                  className="group w-[150px] text-left transition-transform hover:-translate-y-1 disabled:opacity-50"
+                >
+                  <p className="mb-1 text-center text-[9px] tracking-[0.2em] text-faint">
+                    {at === 0 ? "NEXT" : `${at + 1} DOWN`}
+                  </p>
+                  <CardView
+                    card={cardById(INDEX, id)}
+                    compact
+                    className="group-hover:ring-2 group-hover:ring-dump"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* The same figure the solo table shows, from the same diff. A rug on a
           staked match is the moment with money on it, so it should not be the
           one table that says nothing. */}

@@ -10,7 +10,7 @@
 
 import { applyEffect, assertNever, holds } from "./effects";
 import { cardById, otherPlayer } from "./helpers";
-import {
+import { peekLookOf,
   applyMove,
   canDiscard,
   canTakeProfit,
@@ -228,9 +228,14 @@ export function chooseMove(
     // top card every time, which is the mechanic with its whole point removed:
     // measured that way it was worth 0.4 points, because a random card off a
     // forty-card deck is replaced by one just like it.
-    const burn = card.effect?.kind === "peekAndBurn"
-      ? worstToLeaveThem(state, player, card.effect.look, index)
-      : null;
+    //
+    // Read off peekLookOf rather than off `card.effect`, which is what it did:
+    // that misses every card whose PAYOFF peeks — Wallet Tracker is one — so
+    // the bot took the top card on those for exactly the reason the note above
+    // says is worthless. One function answers "does this play reveal
+    // anything", and both the bot and the tables ask it.
+    const look = peekLookOf(state, card, player, index);
+    const burn = look === null ? null : worstToLeaveThem(state, player, look, index);
     const value = cardValue(state, card, player, index, turnsLeft, aimed, closing);
 
     options.push({

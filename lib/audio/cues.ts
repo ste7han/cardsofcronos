@@ -87,6 +87,11 @@ export function cuesFor(
       case "endTurn":
         cues.push("turn-ended");
         break;
+      // Taking a card out of their deck is a rug by another name: something of
+      // theirs is gone and they had no say in it.
+      case "burn":
+        cues.push("rug");
+        break;
       default: {
         // A move kind with no sound is a compile error, not a quiet table.
         const never: never = move;
