@@ -6,6 +6,20 @@
   // cron below needs.
   "main": "worker/index.js",
   "name": "cards-of-cronos",
+  // Which Cloudflare account this belongs to.
+  //
+  // Here because a deploy stopped working without it: once the login had more
+  // than one account attached, wrangler refused to guess and failed with "more
+  // than one account available but unable to select one in non-interactive
+  // mode" — which says nothing about which accounts, and is the kind of error
+  // that costs an evening the first time.
+  //
+  // Not a secret. It is in every dashboard URL and in the API path of the error
+  // itself; the token is what grants access. In the config rather than in an
+  // environment variable for the same reason the domain is: a fresh clone
+  // deploys to the same place without anybody having to know a fact that is not
+  // written down.
+  "account_id": "407d41c8869a66cfd6656455baca6430",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
