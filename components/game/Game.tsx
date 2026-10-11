@@ -20,6 +20,7 @@ import { MCCounter } from "@/components/game/MCCounter";
 import { chooseMove } from "@/engine/bot";
 import { BOARDS, opponentDeck, type Board } from "@/data/boards";
 import { cardLabel, formatMC, formatMCExact, formatMCPair, plural } from "@/engine/format";
+import { peekLookOf, peekedCards } from "@/engine/match";
 import { cardById } from "@/engine/helpers";
 import {
   FIRST_MOVER,
@@ -117,6 +118,19 @@ export function Game({
   const { wallet, admin, ready: sessionReady } = useSession();
   const [state, setState] = useState<State | null>(null);
   const [aiming, setAiming] = useState<Aiming | null>(null);
+  /**
+   * The top of their deck, laid out for you to take one out.
+   *
+   * `peekAndBurn` reads "look at the top N and take one out", and the engine has
+   * taken a `burnIndex` since it was written — but nothing ever sent one, so
+   * every human play fell through to the top card, unseen. The bot picked
+   * properly the whole time. See peekLookOf in engine/match.ts.
+   */
+  const [peeking, setPeeking] = useState<{
+    handIndex: number;
+    closeIndex?: number;
+    cards: string[];
+  } | null>(null);
   const [flash, setFlash] = useState<Flash>(EMPTY_FLASH);
   const [hovered, setHovered] = useState<number | null>(null);
   // The log opens on a click rather than sitting in the way of the table.
@@ -667,7 +681,31 @@ export function Game({
       setAiming({ handIndex, target: requirement, reason: "effect" });
       return;
     }
-    doMove({ kind: "playCard", handIndex });
+    playOrPeek(handIndex);
+  }
+
+  /**
+   * Play it, unless it owes you a look first.
+   *
+   * Every path out of the hand goes through here, which is the point: the peek
+   * was missed because `doMove({ playCard })` was written in two places and
+   * neither asked. One door, one question.
+   */
+  function playOrPeek(handIndex: number, closeIndex?: number) {
+    const current = stateRef.current;
+    if (!current) return;
+    const card = cardById(INDEX, current.players.you.hand[handIndex]!);
+    const look = peekLookOf(current, card, "you", INDEX);
+    if (look !== null) {
+      play("select");
+      setPeeking({ handIndex, closeIndex, cards: peekedCards(current, "you", look) });
+      return;
+    }
+    doMove({
+      kind: "playCard",
+      handIndex,
+      ...(closeIndex === undefined ? {} : { closeIndex }),
+    });
   }
 
   function clickTarget(slot: number) {
@@ -681,6 +719,14 @@ export function Game({
       // that now and keep the position just picked.
       if (aiming.reason === "close" && requirement) {
         setAiming({ handIndex: aiming.handIndex, target: requirement, reason: "effect", closed: slot });
+        return;
+      }
+      // A card that only had to be told which of yours closes may still owe a
+      // look. Anything aimed at a board goes straight out: nothing in the set
+      // both aims at a position and peeks.
+      if (aiming.reason === "close" && aiming.closed === undefined) {
+        setAiming(null);
+        playOrPeek(aiming.handIndex, slot);
         return;
       }
       doMove({
@@ -710,6 +756,60 @@ export function Game({
 
   return (
     <div className="relative mx-auto max-w-4xl overflow-hidden px-4 py-1 lg:h-[calc(100dvh-4.5rem)]">
+      {/* ── THE LOOK THE CARD PROMISED ─────────────────────────────────────
+          "Look at the top N of the opponent's deck and take one out." The
+          engine has taken a burnIndex since it was written and nothing sent
+          one, so this fell through to the top card every time — while the bot
+          chose properly. A card doing less in your hand than in theirs is the
+          worst version of this project's oldest fault, because the card text
+          described the version only one side got. */}
+      {peeking !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ground/92 p-4 backdrop-blur-md">
+          <div className="w-full max-w-3xl">
+            <p className="text-center text-[10px] tracking-[0.28em] text-faint">
+              THE TOP OF THEIR DECK
+            </p>
+            <h2 className="display mt-2 text-center text-2xl sm:text-3xl">
+              TAKE ONE OUT
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-center text-[11px] leading-relaxed text-muted">
+              They have not seen these yet, and they will never draw the one you
+              pick. The rest stay where they are, in this order.
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-start justify-center gap-3">
+              {peeking.cards.map((id, at) => {
+                const card = cardById(INDEX, id);
+                return (
+                  <button
+                    key={`${id}-${at}`}
+                    type="button"
+                    onClick={() => {
+                      const { handIndex, closeIndex } = peeking;
+                      setPeeking(null);
+                      doMove({
+                        kind: "playCard",
+                        handIndex,
+                        burnIndex: at,
+                        ...(closeIndex === undefined ? {} : { closeIndex }),
+                      });
+                    }}
+                    className="group w-[150px] text-left transition-transform hover:-translate-y-1"
+                  >
+                    {/* Numbered, because "the top of their deck" is an order and
+                        the one on the left is the one they draw next. */}
+                    <p className="mb-1 text-center text-[9px] tracking-[0.2em] text-faint">
+                      {at === 0 ? "NEXT" : `${at + 1} DOWN`}
+                    </p>
+                    <CardView card={card} compact className="group-hover:ring-2 group-hover:ring-dump" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── WHAT A RUG COST, IN FIGURES ────────────────────────────────────
           A red wash over the screen said something had happened and never what.
           The maker's complaint was that positions were destroyed and no market

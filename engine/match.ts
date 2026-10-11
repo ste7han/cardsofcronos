@@ -1638,6 +1638,63 @@ export function discardRequirementOf(card: Card): number | null {
   return when?.kind === "discardAtLeast" ? when.count : null;
 }
 
+/**
+ * How many of their cards this play reveals, or null if it reveals none.
+ *
+ * ── WHY A CARD NEEDS THIS ────────────────────────────────────────────────────
+ *
+ * `peekAndBurn` reads "look at the top N of the opponent's deck and take one
+ * out", and the engine has taken a `burnIndex` since it was written. Nothing in
+ * either table ever sent one, so every human play fell through to
+ * `targetIndex ?? 0` and took the top card — unseen, unchosen.
+ *
+ * The bot does NOT fall through: engine/bot.ts calls worstToLeaveThem and picks
+ * the one that hurts most, with a note saying that taking the top card every
+ * time is "the mechanic with its whole point removed… worth 0.4 points". So a
+ * player holding one of these four cards was playing a strictly worse card than
+ * the same card in the bot's hand, and the card's own text described the
+ * version only the bot got.
+ *
+ * This is what lets a table ask. Returns null when there is nothing to ask —
+ * the card does not peek, the payoff that peeks has not come due, or their deck
+ * is empty and there is nothing to show.
+ */
+export function peekLookOf(
+  state: State,
+  card: Card,
+  player: Player,
+  index: CardIndex,
+): number | null {
+  const look =
+    card.effect?.kind === "peekAndBurn"
+      ? card.effect.look
+      : card.payoff?.effect.kind === "peekAndBurn" &&
+          holds(card.payoff.when, state, player, index, undefined)
+        ? card.payoff.effect.look
+        : null;
+  if (look === null) return null;
+
+  const theirs = state.players[otherPlayer(player)].deck.length;
+  return theirs === 0 ? null : Math.min(look, theirs);
+}
+
+/**
+ * The cards that peek would show, top of their deck first.
+ *
+ * The top of a deck is the END of the array — that is where draw() takes from —
+ * so this reads backwards off the tail, and the index of each card here is the
+ * `burnIndex` the engine expects. Getting that order wrong would let somebody
+ * pick the card they wanted gone and burn a different one.
+ */
+export function peekedCards(state: State, player: Player, look: number): string[] {
+  const deck = state.players[otherPlayer(player)].deck;
+  const out: string[] = [];
+  for (let i = 0; i < look && deck.length - 1 - i >= 0; i++) {
+    out.push(deck[deck.length - 1 - i]!);
+  }
+  return out;
+}
+
 export function targetRequirementOf(card: Card): ChoiceTarget | null {
   const effect = card.effect;
   if (!effect) return null;

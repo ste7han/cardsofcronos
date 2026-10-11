@@ -219,6 +219,16 @@ function position(state: State) {
     supportYou: state.players.you.support,
     supportOpponent: state.players.opponent.support,
     handSizeYou: state.players.you.hand.length,
+    // Their deck and their discard belong here, and leaving them out hid a
+    // whole family. `peekAndBurn` moves a card from the top of their deck into
+    // their discard and touches nothing else — so four cards could have done
+    // nothing at all and this measurement would have called them alive on the
+    // strength of the three cards they also draw. They were not dead, as it
+    // turned out; the UI never asked which card to take, which no test could
+    // see either. Both halves of that are the same mistake: measuring a part of
+    // the outcome and calling it the outcome.
+    theirDeckSize: state.players.opponent.deck.length,
+    theirDiscardSize: state.players.opponent.discard.length,
     // The budget belongs in the snapshot: a card whose whole effect is to hand
     // you more of it changes nothing observable without this, and the A/B test
     // would call it dead. Bundle and Trench Warfare are exactly that card.
