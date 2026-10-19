@@ -57,6 +57,7 @@
     "explainers": "tsx scripts/explainers.ts",
     "crooks-snapshot": "tsx scripts/crooks-snapshot.ts",
     "crooks-grants": "tsx scripts/crooks-grants.ts",
+    "burn-card": "tsx scripts/burn-card.ts",
     "crooks-card": "tsx scripts/crooks-card.ts",
     "state-of-play": "tsx scripts/state-of-play.ts",
     "telegram:check": "tsx --env-file=.env.local scripts/telegram-check.ts",
