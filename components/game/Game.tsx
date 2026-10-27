@@ -8,6 +8,7 @@ import { CardBack } from "@/components/CardBack";
 import { CardView } from "@/components/CardView";
 import { Icon } from "@/components/Icon";
 import { BoardProject } from "@/components/game/BoardProject";
+import { BurnChoice } from "@/components/game/BurnChoice";
 import { CardPeek } from "@/components/game/CardPeek";
 import { PeekButton } from "@/components/game/PeekButton";
 import { EMPTY_FLASH, FLASH_MS, key, makeFlash, type Flash } from "@/components/game/diff";
@@ -725,41 +726,10 @@ export function Game({
           worst version of this project's oldest fault, because the card text
           described the version only one side got. */}
       {state.awaiting !== null && state.awaiting.player === "you" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ground/92 p-4 backdrop-blur-md">
-          <div className="w-full max-w-3xl">
-            <p className="text-center text-[10px] tracking-[0.28em] text-faint">
-              THE TOP OF THEIR DECK
-            </p>
-            <h2 className="display mt-2 text-center text-2xl sm:text-3xl">
-              TAKE ONE OUT
-            </h2>
-            <p className="mx-auto mt-3 max-w-md text-center text-[11px] leading-relaxed text-muted">
-              They have not seen these yet, and they will never draw the one you
-              pick. The rest stay where they are, in this order.
-            </p>
-
-            <div className="mt-6 flex flex-wrap items-start justify-center gap-3">
-              {peekedCards(state, "you", state.awaiting.look).map((id: string, at: number) => {
-                const card = cardById(INDEX, id);
-                return (
-                  <button
-                    key={`${id}-${at}`}
-                    type="button"
-                    onClick={() => doMove({ kind: "burn", index: at })}
-                    className="group w-[150px] text-left transition-transform hover:-translate-y-1"
-                  >
-                    {/* Numbered, because "the top of their deck" is an order and
-                        the one on the left is the one they draw next. */}
-                    <p className="mb-1 text-center text-[9px] tracking-[0.2em] text-faint">
-                      {at === 0 ? "NEXT" : `${at + 1} DOWN`}
-                    </p>
-                    <CardView card={card} compact className="group-hover:ring-2 group-hover:ring-dump" />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <BurnChoice
+          cards={peekedCards(state, "you", state.awaiting.look).map((id: string) => cardById(INDEX, id))}
+          onPick={(index) => doMove({ kind: "burn", index })}
+        />
       )}
 
       {/* ── WHAT A RUG COST, IN FIGURES ────────────────────────────────────

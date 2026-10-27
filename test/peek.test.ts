@@ -221,13 +221,15 @@ describe("both tables ask the same way", () => {
   });
 
   it("answers with a burn move on both", () => {
-    expect(table).toContain('doMove({ kind: "burn", index: at })');
-    expect(pvp).toContain('send({ kind: "burn", index: at })');
+    expect(table).toContain('onPick={(index) => doMove({ kind: "burn", index })}');
+    expect(pvp).toContain('onPick={(index) => void send({ kind: "burn", index })}');
   });
 
   it("shows which one they draw next, on both", () => {
-    for (const [where, source] of [["solo", table], ["pvp", pvp]] as const) {
-      expect(source, where).toContain('{at === 0 ? "NEXT" : `${at + 1} DOWN`}');
-    }
+    // Both draw the choice with components/game/BurnChoice.tsx, so the order is
+    // said once, there. test/burn-choice.test.ts checks both tables use it.
+    const choice = readFileSync(new URL("../components/game/BurnChoice.tsx", import.meta.url), "utf8");
+    expect(choice).toContain('(at === 0 ? "NEXT" : `${at + 1} DOWN`)');
+    expect(choice).toContain("{placeOf(at)}");
   });
 });
