@@ -121,6 +121,14 @@ interface CloudflareEnv {
    */
   DISCORD_PVP_GENERAL?: string;
   /**
+   * Where a project applying through /partners is announced.
+   *
+   * A private channel, unlike the feeds above: an application carries the
+   * sender's contact details. Unset, applications are still stored in D1 and
+   * only there — see app/api/partners/route.ts for how to read them.
+   */
+  DISCORD_PARTNERS?: string;
+  /**
    * The Durable Object holding the feeds' clock. See worker/index.js.
    *
    * Optional because nothing in the app needs it: only the Worker wrapper winds

@@ -541,3 +541,28 @@ CREATE TABLE IF NOT EXISTS board_entries (
 
 -- The question every read asks: has this wallet got one left on this board.
 CREATE INDEX IF NOT EXISTS board_entries_spare ON board_entries (player, board, used_at);
+
+-- A project on Cronos asking for a set of its own. Written by /api/partners,
+-- read by a person: nothing here is acted on automatically, because whether a
+-- project gets a set is decided by talking to it.
+--
+-- `sender` is a SHA-256 of the address the request came from, and it exists for
+-- one question — has this sender already applied three times today. Hashed so
+-- the table is not a list of IP addresses; it is a count, not an identity, and
+-- the hash is not pretending to be more than that.
+CREATE TABLE IF NOT EXISTS partner_applications (
+  id       TEXT PRIMARY KEY,
+  project  TEXT NOT NULL,
+  website  TEXT NOT NULL,
+  -- The project's token, which is what its holders would be discounted for.
+  token    TEXT CHECK (token IS NULL OR (token = lower(token) AND length(token) = 42
+                                         AND substr(token, 1, 2) = '0x')),
+  x        TEXT,
+  telegram TEXT,
+  contact  TEXT NOT NULL,
+  about    TEXT NOT NULL,
+  sender   TEXT NOT NULL,
+  at       INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS partner_applications_sender ON partner_applications (sender, at);

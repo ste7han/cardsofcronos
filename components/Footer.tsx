@@ -57,6 +57,13 @@ export function Footer() {
           >
             CONTRACTS
           </Link>
+          {/* For projects rather than players, so here and not in the nav. */}
+          <Link
+            href="/partners"
+            className="tracking-[0.16em] transition-colors hover:text-pump"
+          >
+            FOR PROJECTS
+          </Link>
           {/* Hidden rather than dead. An account that does not exist yet is a gap
               somebody can see; a link to the wrong one is not. See lib/links.ts. */}
           {X_ACCOUNT !== null && (

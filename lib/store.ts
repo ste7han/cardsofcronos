@@ -14,6 +14,7 @@ import type { Network } from "@/lib/links";
 import type { MatchMode, MatchRecord } from "@/engine/record";
 import { TURN_CLOCK } from "@/engine/record";
 import type { Move, Player } from "@/engine/types";
+import type { Application } from "@/lib/partners";
 
 /** The slice of D1 this file uses. Small on purpose, so a fake is small too. */
 export interface Database {
@@ -1247,3 +1248,43 @@ export function seedFor(id: string): number {
 
 export { TURN_CLOCK };
 export type { MatchMode, MatchRecord, Player };
+
+// ── PARTNER APPLICATIONS ─────────────────────────────────────────────────────
+
+/** Stores one. The id is the caller's, so the person can be told what it is. */
+export async function putApplication(
+  db: Database,
+  id: string,
+  application: Application,
+  sender: string,
+  at: number,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO partner_applications
+         (id, project, website, token, x, telegram, contact, about, sender, at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      id,
+      application.project,
+      application.website,
+      application.token,
+      application.x,
+      application.telegram,
+      application.contact,
+      application.about,
+      sender,
+      at,
+    )
+    .run();
+}
+
+/** How many this sender has made since a moment. */
+export async function applicationsSince(db: Database, sender: string, since: number): Promise<number> {
+  const row = await db
+    .prepare(`SELECT COUNT(*) AS n FROM partner_applications WHERE sender = ? AND at >= ?`)
+    .bind(sender, since)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
+}
