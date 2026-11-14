@@ -97,6 +97,7 @@ export function Game({
   board = BOARDS[0]!,
   onMatch,
   begin = true,
+  borrowed = false,
 }: {
   board?: Board;
   /**
@@ -112,6 +113,17 @@ export function Game({
    * an opinion still gets a match.
    */
   begin?: boolean;
+  /**
+   * Deal the demo — the borrowed deck, with the lessons — rather than your own.
+   *
+   * /play needs this because its own bar is the only way in. The table's
+   * NOTHING TO PLAY WITH screen has a demo button too, but /play stopped
+   * mounting the table for anyone without a deck when the opponent picker went
+   * in front of it, so from September to November 2026 that button sat behind
+   * a screen nobody could reach and the game had no way to try it without
+   * cards. test/demo.test.ts holds the door open.
+   */
+  borrowed?: boolean;
 }) {
   // Whose deck this is. Signing in or out mid-visit has to restart the table:
   // the deck it dealt from belongs to an address, and carrying on with the last
@@ -259,6 +271,12 @@ export function Game({
     // playing the first board in the list.
     if (!sessionReady || !begin) return;
 
+    // A demo is never charged and never filed, so there is no go to ask for.
+    if (borrowed) {
+      start(true);
+      return;
+    }
+
     // Ask for a match before dealing one. On a free board this answers with
     // null straight away and nothing changes; on a paid one it is where the go
     // is spent, and asking again after a reconnection hands back the same seed
@@ -285,7 +303,7 @@ export function Game({
     return () => {
       current = false;
     };
-  }, [start, sessionReady, wallet, begin, board.id]);
+  }, [start, sessionReady, wallet, begin, borrowed, board.id]);
 
   useEffect(() => () => {
     if (flashTimer.current) clearTimeout(flashTimer.current);

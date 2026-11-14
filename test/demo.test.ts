@@ -5,6 +5,8 @@
 // If the preset it names is renamed, the demo deals nothing and the table reports
 // "nothing to play with" — which reads as a rule rather than as a broken lookup.
 
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { deckProblems } from "@/engine/deck";
@@ -39,5 +41,30 @@ describe("the demo deck", () => {
     for (let seed = 0; seed < 20; seed++) {
       expect(demoOpponentTheme(seed).id).not.toBe(DEMO_THEME.id);
     }
+  });
+});
+
+describe("the way into the demo", () => {
+  // Checked against the source, the way test/live-board.test.ts is, because
+  // what broke here was reachability and no match played in a test can see it.
+  // /play deals nothing until its own bar says so, and that bar offered only
+  // BUILD A DECK to anyone without cards. The demo button on the table's empty
+  // screen therefore sat behind a table that was never mounted: from September
+  // to November 2026 the game could not be tried without owning cards, and
+  // nothing failed.
+  const area = readFileSync(new URL("../components/game/PlayArea.tsx", import.meta.url), "utf8");
+  const game = readFileSync(new URL("../components/game/Game.tsx", import.meta.url), "utf8");
+
+  it("is offered on /play to somebody with no deck", () => {
+    const noDeck = area.slice(area.indexOf(") : !hasDeck ? ("), area.indexOf(") : needsPaying ? ("));
+    expect(noDeck.length).toBeGreaterThan(0);
+    expect(noDeck).toContain("PLAY A DEMO MATCH");
+    expect(noDeck).toContain("setBorrowed(true)");
+    expect(noDeck).toContain("setStarted(true)");
+  });
+
+  it("reaches the table as a demo", () => {
+    expect(area).toContain("borrowed={borrowed}");
+    expect(game).toMatch(/if \(borrowed\) \{\s*start\(true\);/);
   });
 });

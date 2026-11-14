@@ -81,6 +81,8 @@ export function PlayArea() {
     }
   }
   const [started, setStarted] = useState(false);
+  /** Started on the borrowed deck rather than your own. */
+  const [borrowed, setBorrowed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const board = boardOf(chosen) ?? BOARDS[0]!;
 
@@ -97,6 +99,7 @@ export function PlayArea() {
     // A wallet change puts the choice back: the deck on the table has to be the
     // one belonging to whoever is signed in now.
     setStarted(false);
+    setBorrowed(false);
   }, [ready, wallet, stamp]);
 
   // Told by the table rather than set when the button is pressed: the table also
@@ -152,13 +155,31 @@ export function PlayArea() {
                   {wallet === null
                     ? `Connect your wallet and your decks come with it — they belong to the wallet, not to this browser.`
                     : `You need a deck of ${RULES.deckSize} cards first. It is saved to your wallet, so it is there on every device you sign in from.`}
+                  {" "}Or play a demo now on a borrowed deck — the whole game, nothing saved.
                 </p>
-                <Link
-                  href="/deck"
-                  className="glow-pump shrink-0 border border-pump bg-pump/10 px-5 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
-                >
-                  BUILD A DECK →
-                </Link>
+                {/* THE ONLY WAY IN WITHOUT CARDS. This bar used to offer only
+                    BUILD A DECK, and since nothing is dealt until this bar says
+                    so, the demo on the table's own empty screen could not be
+                    reached: somebody with no cards could read about the game and
+                    not play it. */}
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBorrowed(true);
+                      setStarted(true);
+                    }}
+                    className="glow-pump border border-pump bg-pump/10 px-5 py-3 text-[10px] tracking-[0.18em] text-pump transition-colors hover:bg-pump hover:text-ground"
+                  >
+                    PLAY A DEMO MATCH
+                  </button>
+                  <Link
+                    href="/deck"
+                    className="border border-line-strong px-5 py-3 text-[10px] tracking-[0.18em] text-muted transition-colors hover:border-fg hover:text-fg"
+                  >
+                    BUILD A DECK →
+                  </Link>
+                </div>
               </>
             ) : needsPaying ? (
               <>
@@ -226,7 +247,10 @@ export function PlayArea() {
         <div className="mx-auto max-w-4xl px-4 pt-6">
           <button
             type="button"
-            onClick={() => setStarted(false)}
+            onClick={() => {
+              setStarted(false);
+              setBorrowed(false);
+            }}
             className="text-[10px] tracking-[0.18em] text-faint transition-colors hover:text-pump"
           >
             ← PICK ANOTHER OPPONENT
@@ -242,7 +266,13 @@ export function PlayArea() {
           budget. The card type is where legibility was actually wanted here, and
           the cards are full width now. */}
       <div className="dense">
-        <Game key={board.id} board={board} onMatch={onMatch} begin />
+        <Game
+          key={`${board.id}:${borrowed ? "demo" : "own"}`}
+          board={board}
+          onMatch={onMatch}
+          begin
+          borrowed={borrowed}
+        />
       </div>
     </>
   );
