@@ -356,10 +356,10 @@ export const DISCOUNT_CAP = HOLDER_TIERS[0]!.off;
  * would owe anybody less than they have already taken, and reads the answer
  * back afterwards rather than trusting the receipt.
  *
- * Read back off chain on 22 September 2026, after adding 30 mints for a holder.
+ * Sent on 18 November 2026, after adding 60 mints for Matalino.
  */
 export const ALLOWLIST_ROOT =
-  "0x5d9fefb01d3ebb92bf8056b60d56b185d61f2f993548e6ecfb61bcc67c11a35b";
+  "0xf2a0c919c47a89d3d69893111a9bf92852075703ff31df66f1038035872520b2";
 
 /**
  * The contracts, once they exist.

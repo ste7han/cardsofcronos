@@ -607,6 +607,12 @@
       "mints": 50,
       "why": "Given by the maker on 3 October 2026. Adds to the 30 granted on 22 September; an allowance can only go up, so this is 50 more rather than a new total.",
       "at": "2026-10-03"
+    },
+    {
+      "address": "0xdfeba11ef6d8406b5cc770802c063e5efc5d118d",
+      "mints": 60,
+      "why": "Matalino, on trial to run the socials. Given by the maker so he can mint, build a deck and play ranked rather than only read about the game.",
+      "at": "2026-11-18"
     }
   ]
 }
