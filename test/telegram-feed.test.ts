@@ -10,7 +10,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { asText, mirror } from "@/lib/telegram-feed";
-import { announceWeek, boardEmbed } from "@/lib/weekly-news";
+import { announceWeek, boardEmbed, prizeSymbol } from "@/lib/weekly-news";
+import { BOARDS } from "@/data/boards";
+import { CROCARD } from "@/lib/revenue";
 import type { Database, Statement } from "@/lib/store";
 import type { Ran } from "@/lib/publisher";
 
@@ -168,7 +170,7 @@ describe("what the week's result says", () => {
     // the one person who needs to know which it is.
     const embed = boardEmbed({
       week: "2026-W40", boardId: "bot", boardName: "THE MARKET", winner: WINNER,
-      amount: (5n * 10n ** 18n).toString(), symbol: "CRO", paid: null,
+      amount: (5n * 10n ** 18n).toString(), symbol: "$CROCARD", paid: null,
     });
     expect(String(embed.description)).toMatch(/waiting to be claimed/i);
   });
@@ -176,7 +178,7 @@ describe("what the week's result says", () => {
   it("still names a winner when the amount could not be read", () => {
     const embed = boardEmbed({
       week: "2026-W40", boardId: "bot", boardName: "THE MARKET", winner: WINNER,
-      amount: null, symbol: "CRO", paid: "0xdead",
+      amount: null, symbol: "$CROCARD", paid: "0xdead",
     });
     expect(String(embed.description)).toContain("took the week");
   });
@@ -237,6 +239,50 @@ describe("announcing the week", () => {
     const { db } = fakeDb();
     await announceWeek(db, ran({ boards: [] }), { rooms });
     expect(sent).toEqual([]);
+  });
+
+  it("names the prize in $CROCARD, never in CRO", async () => {
+    // It said CRO for every board for weeks: "took the week and 465,722 CRO",
+    // in Discord and on Telegram, about a pot that pays $CROCARD.
+    const sent = catchSends();
+    const { db } = fakeDb();
+    await announceWeek(
+      db,
+      ran({ boards: [{ board: "bot", winner: WINNER, paid: "0xdead", amount: (465_722n * 10n ** 18n).toString(), token: CROCARD }] }),
+      { rooms, fallbackRoom: rooms.DISCORD_SOLO },
+    );
+    const said = JSON.stringify(sent.map((one) => one.body));
+    expect(said).toContain("465,722 $CROCARD");
+    expect(said).not.toMatch(/\d CRO\b/);
+  });
+
+  it("tells a Loaded Lions winner about both payouts, each in its own token", async () => {
+    // One board, two pots, one week. Keyed by board alone the second was never
+    // said, and named from the board the $CROCARD half went out as $LION.
+    const lions = BOARDS.find((one) => one.id === "lions")!;
+    const sent = catchSends();
+    const { db } = fakeDb();
+    await announceWeek(
+      db,
+      ran({
+        boards: [
+          { board: "lions", winner: WINNER, paid: "0x01", amount: (1000n * 10n ** 18n).toString(), token: CROCARD },
+          { board: "lions", winner: WINNER, paid: "0x02", amount: (227n * 10n ** 18n).toString(), token: lions.alsoPays!.token },
+        ],
+      }),
+      { rooms },
+    );
+    const said = sent.map((one) => JSON.stringify(one.body));
+    expect(said).toHaveLength(2);
+    expect(said[0]).toContain("1,000 $CROCARD");
+    expect(said[1]).toContain(`227 ${lions.alsoPays!.symbol}`);
+  });
+
+  it("names a token from what the pot paid, not from the board", () => {
+    const lions = BOARDS.find((one) => one.id === "lions")!;
+    expect(prizeSymbol(lions, CROCARD)).toBe("$CROCARD");
+    expect(prizeSymbol(lions, lions.alsoPays!.token.toUpperCase())).toBe(lions.alsoPays!.symbol);
+    expect(prizeSymbol({ alsoPays: null }, undefined)).toBe("$CROCARD");
   });
 
   it("never fails the job that just moved the money", async () => {

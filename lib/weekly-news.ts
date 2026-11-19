@@ -20,6 +20,7 @@
 import { BOARDS } from "@/data/boards";
 import { post, type Embed } from "@/lib/discord";
 import { mirror } from "@/lib/telegram-feed";
+import { CROCARD } from "@/lib/revenue";
 import { toTokens } from "@/lib/units";
 import type { Ran } from "@/lib/publisher";
 import type { Database } from "@/lib/store";
@@ -45,6 +46,36 @@ async function alreadySaid(db: Database, key: string): Promise<boolean> {
   if (found !== null) return true;
   await db.prepare(`INSERT OR IGNORE INTO feed_posted (id, at) VALUES (?, ?)`).bind(id, Date.now()).run();
   return false;
+}
+
+const CROCARD_SYMBOL = "$CROCARD";
+
+/**
+ * What a payout was in, by name.
+ *
+ * ── IT SAID CRO ──────────────────────────────────────────────────────────────
+ *
+ * This used to be `board.alsoPays?.symbol ?? "CRO"`: CRO for every board, and
+ * for Loaded Lions its own token for both of its payouts. Neither was ever
+ * true. The weekly pot is $CROCARD — the splitter buys it before anything is
+ * paid — so every winner was told they had taken a few hundred thousand CRO,
+ * in Discord and on Telegram, and the Lions' $CROCARD share went out labelled
+ * as $LION. Named from the token the pot actually paid, never from the board.
+ */
+export function prizeSymbol(
+  board: { alsoPays?: { token: string; symbol: string } | null },
+  token: string | undefined,
+): string {
+  const own = board.alsoPays ?? null;
+  if (own !== null && token !== undefined && token.toLowerCase() === own.token.toLowerCase()) {
+    return own.symbol;
+  }
+  if (token !== undefined && token.toLowerCase() !== CROCARD.toLowerCase()) {
+    // A pot this file has no name for. Loud in the log; the message still goes
+    // out, because the winner is the fact and the unit is the detail.
+    console.error(`[weekly-news] no symbol for prize token ${token}`);
+  }
+  return CROCARD_SYMBOL;
 }
 
 /** What one board's result says. Exported because it is the part worth testing. */
@@ -105,7 +136,15 @@ export async function announceWeek(
       const board = BOARDS.find((one) => one.id === result.board);
       if (board === undefined) continue;
 
-      if (await alreadySaid(db, `${ran.week}:${result.board}`)) continue;
+      const symbol = prizeSymbol(board, result.token);
+      // The shared pot keeps the key it always had, so a week announced before
+      // the token was part of it is not announced again. A board's own pot is a
+      // second payout that week and gets a second line of its own.
+      const key =
+        symbol === CROCARD_SYMBOL
+          ? `${ran.week}:${result.board}`
+          : `${ran.week}:${result.board}:${symbol}`;
+      if (await alreadySaid(db, key)) continue;
 
       const embed = boardEmbed({
         week: ran.week,
@@ -113,8 +152,7 @@ export async function announceWeek(
         boardName: board.name,
         winner: result.winner,
         amount: result.amount,
-        // The board's own token when it pays one, and CRO when it does not.
-        symbol: board.alsoPays?.symbol ?? "CRO",
+        symbol,
         paid: result.paid,
       });
 

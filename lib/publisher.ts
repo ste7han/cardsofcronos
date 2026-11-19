@@ -44,6 +44,12 @@ export interface BoardResult {
   paid: string | null;
   /** What the contract allocated, in base units, read before it was claimed. */
   amount: string | null;
+  /**
+   * The token this payout was in, when it got as far as a pot. Loaded Lions is
+   * paid twice a week — $CROCARD and $LION — under one board id, so the board
+   * alone cannot say which of the two a result is about.
+   */
+  token?: string;
   why?: string;
   skipped?: string;
 }
@@ -542,7 +548,7 @@ async function payOne(
   /** What this pot pays in. Part of the key a payout is written under. */
   token: string,
 ): Promise<BoardResult> {
-  const result: BoardResult = { board, winner: winner.wallet, paid: null, amount: null };
+  const result: BoardResult = { board, winner: winner.wallet, paid: null, amount: null, token };
 
   // Read before claiming, because claiming zeroes it. `prizes(bytes32,bytes32)`
   // returns the winner, the amount and whether it has been paid; the amount is
