@@ -61,6 +61,7 @@
     "crooks-card": "tsx scripts/crooks-card.ts",
     "mint-money": "tsx scripts/mint-money.ts",
     "partner-card": "tsx scripts/partner-card.ts",
+    "whos-next-card": "tsx scripts/whos-next-card.ts",
     "state-of-play": "tsx scripts/state-of-play.ts",
     "telegram:check": "tsx --env-file=.env.local scripts/telegram-check.ts",
     "clawback": "tsx scripts/clawback-audit.ts",
