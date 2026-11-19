@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { lastWeek, weekWord } from "@/lib/publisher";
+import { lastWeek, owedBack, weekWord, type Standing } from "@/lib/publisher";
+import { BOARDS } from "@/data/boards";
+import { CONTRACTS, CROCARD } from "@/lib/revenue";
+import type { Database } from "@/lib/store";
 import { weekOf } from "@/lib/tournament";
 
 /**
@@ -271,5 +274,95 @@ describe("a board with two pots", () => {
     expect(query).toContain("AND p.token = ?");
     expect(query).toContain("AND q.token = ?");
     expect(query).toContain("alsoWei");
+  });
+});
+
+describe("catching up an older week", () => {
+  // November 2026: the publisher ran out of gas, week 44's $LION was allocated
+  // and never claimed, week 45 was never closed, and the job only ever looked at
+  // last week — so once week 46 paid, both were owed for ever. These are those
+  // two weeks, and the case that must NOT be paid late.
+  const lion = BOARDS.find((one) => one.id === "lions")!.alsoPays!;
+  const crocard = CROCARD.toLowerCase();
+  const own = lion.token.toLowerCase();
+
+  /** Just enough of D1 for owedBack: who played, and what was paid. */
+  function fakeDb(scored: string[], paid: { board: string; token: string }[]): Database {
+    return {
+      prepare: (sql: string) => ({
+        bind: () => ({
+          all: async () => ({
+            results: sql.includes("FROM tournament_paid")
+              ? paid
+              : scored.map((board) => ({ board })),
+          }),
+        }),
+      }),
+    } as unknown as Database;
+  }
+
+  /** What each pot says, keyed by pot address and board. */
+  function chain(said: Record<string, Standing>) {
+    return async (pot: string, _week: string, board: string): Promise<Standing> =>
+      said[`${pot.toLowerCase()}/${board}`] ?? { closed: false, paid: false };
+  }
+  const shared = (board: string) => `${CONTRACTS.pot!.toLowerCase()}/${board}`;
+  const ownPot = (board: string) => `${lion.contract!.toLowerCase()}/${board}`;
+
+  it("owes a week that was never closed at all — week 45", async () => {
+    const owed = await owedBack(fakeDb(["bot"], []), "2026-W45", chain({}));
+    expect(owed).toEqual([{ board: "bot", token: crocard }]);
+  });
+
+  it("owes a prize allocated and not claimed — week 44's $LION", async () => {
+    const db = fakeDb(
+      ["bot", "lions"],
+      [
+        { board: "bot", token: crocard },
+        { board: "lions", token: crocard },
+      ],
+    );
+    const owed = await owedBack(
+      db,
+      "2026-W44",
+      chain({ [ownPot("lions")]: { closed: true, paid: false } }),
+    );
+    expect(owed).toEqual([{ board: "lions", token: own }]);
+  });
+
+  it("does not close an old week's own pot out of what it holds today", async () => {
+    // The shared prize went out; the $LION pot was never closed for that week.
+    // Either it was empty then or its close failed — and closing it now would
+    // pay that week's winner out of this week's entries.
+    const db = fakeDb(["lions"], [{ board: "lions", token: crocard }]);
+    expect(await owedBack(db, "2026-W40", chain({}))).toEqual([]);
+  });
+
+  it("believes the chain over a missing row when the prize is already paid", async () => {
+    // A payout that went out and failed to be written down is not a debt —
+    // treating it as one would retry a claim every minute for ever.
+    const owed = await owedBack(
+      fakeDb(["bot"], []),
+      "2026-W41",
+      chain({ [shared("bot")]: { closed: true, paid: true } }),
+    );
+    expect(owed).toEqual([]);
+  });
+
+  it("owes nothing for a week nobody played", async () => {
+    expect(await owedBack(fakeDb([], []), "2026-W30", chain({}))).toEqual([]);
+  });
+
+  it("is asked once last week is settled, rather than stopping there", () => {
+    const route = readFileSync(new URL("../app/api/cron/weekly/route.ts", import.meta.url), "utf8");
+    const settled = route.slice(route.indexOf("alreadyClosed(db(), rpcs, week)"));
+    const branch = settled.slice(0, settled.indexOf("const ran = await runWeekly"));
+    expect(branch).toContain("weekToCatchUp(");
+    expect(branch).toContain("catchUp: true");
+  });
+
+  it("only closes an older week's own pot alongside its shared one", () => {
+    const source = readFileSync(new URL("../lib/publisher.ts", import.meta.url), "utf8");
+    expect(source).toContain("options.catchUp && !openBoards.includes(one)");
   });
 });

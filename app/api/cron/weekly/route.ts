@@ -18,7 +18,14 @@
 
 import { db, env } from "@/lib/api";
 import { PUBLIC_RPCS } from "@/lib/cronos";
-import { lastWeek, runWeekly, stillOwed } from "@/lib/publisher";
+import {
+  lastWeek,
+  readStanding,
+  runWeekly,
+  stillOwed,
+  weekToCatchUp,
+  type Ran,
+} from "@/lib/publisher";
 import { announceWeek } from "@/lib/weekly-news";
 import { setCursor } from "@/lib/store";
 import type { Database } from "@/lib/store";
@@ -103,30 +110,45 @@ export async function POST(request: Request) {
   const ourRpc = env().CRONOS_RPC;
   const rpcs = ourRpc ? [ourRpc, ...PUBLIC_RPCS] : PUBLIC_RPCS;
 
+  const secrets = { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC };
+  // announceWeek never throws, and keeps its own once-per-board-per-week guard
+  // so a retried run — or a catch-up of a week already announced — does not say
+  // it twice.
+  const announce = (ran: Ran) =>
+    announceWeek(db(), ran, {
+      rooms: {
+        DISCORD_SOLO: env().DISCORD_SOLO,
+        DISCORD_PVE_LIONS: env().DISCORD_PVE_LIONS,
+      },
+      fallbackRoom: env().DISCORD_SOLO,
+      telegramBotToken: env().TELEGRAM_BOT_TOKEN,
+      telegramChat: env().TELEGRAM_FEED_CHAT,
+    });
+
   if (body.soft === true && (await alreadyClosed(db(), rpcs, week))) {
-    return Response.json({ ok: true, tooSoon: true, week });
+    // ── LAST WEEK IS SETTLED. IS ANY WEEK BEFORE IT NOT? ─────────────────────
+    //
+    // This used to stop here, and so only ever looked at one week. When the
+    // publisher ran out of gas in November 2026, week 45 failed every minute of
+    // its week and then simply stopped being asked: on Monday "last week" became
+    // week 46, which paid the moment the gas came back, and week 45 was owed for
+    // ever with nothing anywhere saying so. See owedBack for what counts.
+    const behind = await weekToCatchUp(db(), readStanding(rpcs), now);
+    if (behind === null) return Response.json({ ok: true, tooSoon: true, week });
+
+    const caught = await runWeekly(db(), secrets, now, { week: behind, catchUp: true });
+    await announce(caught);
+    // Never marked: the marker is about last week, and an older week is settled
+    // by its payouts, which owedBack reads on every tick.
+    return Response.json({ catchUp: true, ...caught });
   }
 
-  const ran = await runWeekly(
-    db(),
-    { publisherKey: env().PUBLISHER_KEY, rpc: env().CRONOS_RPC },
-    now,
-  );
+  const ran = await runWeekly(db(), secrets, now);
 
   // Said out loud, before the marker. The week is closed and the prizes are
   // pushed by now, so an announcement is the last thing to happen and the one
-  // thing that must not be able to fail the job — announceWeek never throws,
-  // and keeps its own once-per-board-per-week guard so a retried run does not
-  // say it twice.
-  await announceWeek(db(), ran, {
-    rooms: {
-      DISCORD_SOLO: env().DISCORD_SOLO,
-      DISCORD_PVE_LIONS: env().DISCORD_PVE_LIONS,
-    },
-    fallbackRoom: env().DISCORD_SOLO,
-    telegramBotToken: env().TELEGRAM_BOT_TOKEN,
-    telegramChat: env().TELEGRAM_FEED_CHAT,
-  });
+  // thing that must not be able to fail the job.
+  await announce(ran);
 
   // Marked after, and only when the week is actually settled.
   //

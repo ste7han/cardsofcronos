@@ -145,6 +145,9 @@ describe("the alarm, which is what actually runs them", () => {
       if (perMinute.includes(job.route)) continue;
       // The clock runs every minute by design and has no cron of its own.
       if (job.route === "/api/cron/clocks") continue;
+      // So does the gas check: one balance read, and it rate-limits its own
+      // warning to once a day rather than leaving that to the schedule.
+      if (job.route === "/api/cron/gas") continue;
       expect(job.soft, `${job.name} should say soft`).toBe(true);
     }
   });

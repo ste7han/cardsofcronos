@@ -129,6 +129,12 @@ interface CloudflareEnv {
    */
   DISCORD_PARTNERS?: string;
   /**
+   * Where the maker is told something needs doing — today, that the publisher
+   * is low on gas. Private, like DISCORD_PARTNERS, which it falls back to when
+   * unset. See app/api/cron/gas/route.ts.
+   */
+  DISCORD_ALERTS?: string;
+  /**
    * The Durable Object holding the feeds' clock. See worker/index.js.
    *
    * Optional because nothing in the app needs it: only the Worker wrapper winds

@@ -176,8 +176,135 @@ export async function stillOwed(
   return owed;
 }
 
+/** What a pot says about one week and one board. */
+export interface Standing {
+  /** Somebody was named. False means the week was never closed on this pot. */
+  closed: boolean;
+  paid: boolean;
+}
+
+/** Asks a pot about one week and one board. */
+export function readStanding(rpcs: readonly string[]) {
+  return async (pot: string, week: string, board: string): Promise<Standing> => {
+    const words = (
+      await rpc<string>(rpcs, "eth_call", [
+        { to: pot, data: selector("prizes(bytes32,bytes32)") + asWord(week) + asWord(board) },
+        "latest",
+      ])
+    ).replace(/^0x/, "");
+    return {
+      closed: BigInt("0x" + words.slice(24, 64)) !== 0n,
+      paid: BigInt("0x" + words.slice(128, 192)) === 1n,
+    };
+  };
+}
+
 /**
- * Closes the week that has just ended and pays every board's winner.
+ * How many weeks back the catch-up looks. Twelve is a quarter: long enough that
+ * a gap nobody noticed is still found, short enough that the every-minute check
+ * stays a handful of reads.
+ */
+export const CATCH_UP_WEEKS = 12;
+
+/**
+ * What an OLDER week still owes, by a stricter rule than stillOwed.
+ *
+ * ── WHY THERE IS A CATCH-UP AT ALL ───────────────────────────────────────────
+ *
+ * The weekly job only ever looked at last week. In November 2026 the publisher
+ * ran out of gas: 2026-W44 got its $CROCARD out and its $LION allocated but not
+ * claimed, 2026-W45 was never closed, and by the time anybody topped it up the
+ * job had moved on to 2026-W46 and paid that. Two weeks owed for ever, with no
+ * error anywhere — "one attempt is not an attempt", in CLAUDE.md, again.
+ *
+ * ── WHY NOT stillOwed ────────────────────────────────────────────────────────
+ *
+ * stillOwed calls a board's own pot a debt when the pot holds more than it has
+ * allocated. That is right for last week and wrong for an old one: a $LION pot
+ * that was empty in week 44 and filled up since would read as week 44 owing,
+ * and closing it now would pay week 44's winner out of this week's entries.
+ *
+ * So for an older week only two things count as owed:
+ *
+ *   - a prize already allocated on chain and not claimed — the money is the
+ *     winner's already, and claiming it is only paying the gas;
+ *   - a board whose SHARED pot was never closed — the whole week was missed,
+ *     and closing it late is what would have happened on time.
+ *
+ * A board's own pot that was never closed while the shared one was is left
+ * alone. Either it was empty then, or a close failed on its own; the first is
+ * nothing owed, and the second is not worth guessing at with somebody's money.
+ */
+export async function owedBack(
+  db: Database,
+  week: string,
+  standing: (pot: string, week: string, board: string) => Promise<Standing>,
+): Promise<{ board: string; token: string }[]> {
+  const pot = CONTRACTS.pot;
+  if (pot === null) return [];
+
+  const { results: scored } = await db
+    .prepare(`SELECT DISTINCT board FROM tournament WHERE week = ?`)
+    .bind(week)
+    .all<{ board: string }>();
+  if (scored.length === 0) return [];
+
+  const { results: paid } = await db
+    .prepare(`SELECT board, token FROM tournament_paid WHERE week = ?`)
+    .bind(week)
+    .all<{ board: string; token: string }>();
+  const done = new Set(paid.map((row) => `${row.board}/${row.token.toLowerCase()}`));
+
+  const owed: { board: string; token: string }[] = [];
+  for (const { board: id } of scored) {
+    const pots = [{ pot, token: CROCARD.toLowerCase(), shared: true }];
+    const also = BOARDS.find((one) => one.id === id)?.alsoPays ?? null;
+    if (also !== null && also.contract !== null) {
+      pots.push({ pot: also.contract, token: also.token.toLowerCase(), shared: false });
+    }
+    for (const one of pots) {
+      if (done.has(`${id}/${one.token}`)) continue;
+      const said = await standing(one.pot, week, id);
+      if (said.closed ? !said.paid : one.shared) owed.push({ board: id, token: one.token });
+    }
+  }
+  return owed;
+}
+
+/**
+ * An older week that still owes somebody, or null.
+ *
+ * One at a time, because each can send several transactions and wait for them,
+ * and the alarm asks again in a minute anyway. Rotated by the minute rather than
+ * always the oldest, so a week that keeps failing cannot hold every later one
+ * behind it.
+ */
+export async function weekToCatchUp(
+  db: Database,
+  standing: (pot: string, week: string, board: string) => Promise<Standing>,
+  now: number,
+): Promise<string | null> {
+  const { results } = await db
+    .prepare(
+      `SELECT DISTINCT week FROM tournament WHERE week < ? AND week >= ? ORDER BY week`,
+    )
+    .bind(lastWeek(now), weekOf(now - (CATCH_UP_WEEKS + 1) * 7 * 86_400_000))
+    .all<{ week: string }>();
+
+  const behind: string[] = [];
+  for (const { week } of results) {
+    if ((await owedBack(db, week, standing)).length > 0) behind.push(week);
+  }
+  if (behind.length === 0) return null;
+  return behind[Math.floor(now / 60_000) % behind.length]!;
+}
+
+/**
+ * Closes a week and pays every board's winner.
+ *
+ * The week that has just ended unless told otherwise. `catchUp` is for an older
+ * one, and changes exactly one thing: a board's own pot is only closed if the
+ * shared pot was closed in the same run — see owedBack for why.
  *
  * Returns what it did rather than throwing on the ordinary nothing-to-do cases,
  * because a scheduled job that errors on "nobody played last week" is a
@@ -187,8 +314,9 @@ export async function runWeekly(
   db: Database,
   secrets: { publisherKey?: string; rpc?: string },
   now: number,
+  options: { week?: string; catchUp?: boolean } = {},
 ): Promise<Ran> {
-  const week = lastWeek(now);
+  const week = options.week ?? lastWeek(now);
   const pot = CONTRACTS.pot;
   const nothing: Ran = { week, boards: [] };
 
@@ -312,6 +440,20 @@ export async function runWeekly(
       "latest",
     ]);
     const shutAlready = BigInt("0x" + already.replace(/^0x/, "").slice(24, 64)) !== 0n;
+
+    // An older week's own pot is closed only alongside its shared one. Closed
+    // on its own, late, it would award that week out of whatever the pot holds
+    // today — see owedBack.
+    if (!shutAlready && options.catchUp && !openBoards.includes(one)) {
+      boards.push({
+        board: one.board,
+        winner: one.winner.wallet,
+        paid: null,
+        amount: null,
+        why: `the ${pays} pot was not closed for ${week} at the time, and a catch-up does not award an old week out of today's pot`,
+      });
+      continue;
+    }
 
     let shut: string | null = null;
     if (!shutAlready) {

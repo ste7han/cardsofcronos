@@ -55,6 +55,9 @@ const JOBS = [
   { name: "daily", route: "/api/cron/daily", soft: true, quiet: ['"tooSoon":true'] },
   // Weekly: close the week that ended and pay whoever won each board.
   { name: "weekly", route: "/api/cron/weekly", soft: true, quiet: ['"tooSoon":true'] },
+  // Every minute, and silent unless the payout key is short of gas. It ran dry
+  // in November 2026 and two weeks went unpaid with only this log to say so.
+  { name: "gas", route: "/api/cron/gas", quiet: ['"low":false', '"toldToday":true'] },
 ];
 
 /**
