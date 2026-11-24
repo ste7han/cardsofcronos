@@ -106,7 +106,11 @@ export function boardEmbed(args: {
         : ""),
     url: `${SITE}/tournament`,
     color: 0xffd700,
-    footer: { text: "A new week is already running. Highest market cap takes it." },
+    // It said "Highest market cap takes it" after the board had moved to ranking
+    // on the margin — a rule stated in words drifting from the rule. The board
+    // is lib/tournament.ts's marginOf, and test/telegram-feed.test.ts holds this
+    // sentence to it.
+    footer: { text: "A new week is already running. The biggest win over the opponent takes it." },
   };
 }
 

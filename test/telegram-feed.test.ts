@@ -165,6 +165,18 @@ describe("what the week's result says", () => {
     expect(String(embed.description)).toContain("1,234 $LION");
   });
 
+  it("states the rule the board actually ranks by", () => {
+    // The board ranks on the gap over the opponent (marginOf), and this footer
+    // went on saying "highest market cap" after it moved.
+    const embed = boardEmbed({
+      week: "2026-W40", boardId: "bot", boardName: "THE MARKET", winner: WINNER,
+      amount: null, symbol: "$CROCARD", paid: "0xdead",
+    });
+    const footer = String(embed.footer?.text);
+    expect(footer).not.toMatch(/highest market cap/i);
+    expect(footer).toMatch(/biggest win over the opponent/i);
+  });
+
   it("says a prize is waiting when it was not pushed", () => {
     // Allocated and unclaimed is a different thing from paid, and the winner is
     // the one person who needs to know which it is.
